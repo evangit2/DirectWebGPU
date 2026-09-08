@@ -220,6 +220,72 @@ index 0000000..d005c5b
 +  assert_eq!(bit_address(0xffff_fffc,32,32),0);
 + }
 +}
+diff --git a/runtime/src/ops/control_flow.rs b/runtime/src/ops/control_flow.rs
+index c904af8..2c16a9c 100644
+--- a/runtime/src/ops/control_flow.rs
++++ b/runtime/src/ops/control_flow.rs
+@@ -41,6 +41,22 @@ impl Context {
+         from
+     }
+ 
++    pub fn jp(&mut self, from: Cont, x: Cont) -> Cont {
++        if self.cpu.flags.contains(Flags::PF) {
++            x
++        } else {
++            from
++        }
++    }
++
++    pub fn jnp(&mut self, from: Cont, x: Cont) -> Cont {
++        if !self.cpu.flags.contains(Flags::PF) {
++            x
++        } else {
++            from
++        }
++    }
++
+     pub fn jb(&mut self, from: Cont, x: Cont) -> Cont {
+         if self.cpu.flags.contains(Flags::CF) {
+             return x;
+@@ -177,3 +193,38 @@ impl Context {
+         }
+     }
+ }
++
++#[cfg(test)]
++mod parity_tests {
++    use super::*;
++    fn taken(ctx: &mut Context) -> Cont {
++        ctx.cpu.regs.eax = 1;
++        Cont(taken)
++    }
++    fn skipped(ctx: &mut Context) -> Cont {
++        ctx.cpu.regs.eax = 0;
++        Cont(skipped)
++    }
++    #[test]
++    fn test_low_byte_parity_branches() {
++        let mut ctx = Context {
++            cpu: Default::default(),
++            thread_handle: 1,
++            thread_id: 1,
++            memory: crate::Memory::leak_new(4096),
++            blocks: &[],
++            cache: Default::default(),
++            recent: [skipped; 4],
++        };
++        for bits in 0u32..=511 {
++            crate::and(bits, 0xffffffff, &mut ctx.cpu.flags);
++            let even = (bits as u8).count_ones() % 2 == 0;
++            let flags = ctx.cpu.flags.bits();
++            ctx.jp(Cont(skipped), Cont(taken)).0(&mut ctx);
++            assert_eq!(ctx.cpu.regs.eax, u32::from(even));
++            ctx.jnp(Cont(skipped), Cont(taken)).0(&mut ctx);
++            assert_eq!(ctx.cpu.regs.eax, u32::from(!even));
++            assert_eq!(ctx.cpu.flags.bits(), flags);
++        }
++    }
++}
 diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
 index a4c06e3..d8640d4 100644
 --- a/runtime/src/ops/misc.rs
@@ -281,6 +347,21 @@ index ff33cee..7a225e3 100644
 +
 +mod bit;
 +pub use bit::*;
+diff --git a/tc/src/codegen/control_flow.rs b/tc/src/codegen/control_flow.rs
+index caf0159..dbb6365 100644
+--- a/tc/src/codegen/control_flow.rs
++++ b/tc/src/codegen/control_flow.rs
+@@ -132,8 +132,8 @@ impl<'a> CodeGen<'a> {
+                     bitness = self.module.bitness()
+                 ));
+             }
+-            Je | Jne | Jb | Js | Jns | Ja | Jae | Jl | Jg | Jge | Jecxz | Jle | Jbe | Jcxz
+-            | Loop | Loopne => {
++            Je | Jne | Jb | Js | Jns | Ja | Jae | Jl | Jg | Jge | Jecxz | Jle | Jbe | Jcxz | Jp
++            | Jnp | Loop | Loopne => {
+                 let next = self.resolve_jmp(instr.next_ip());
+                 let (None, None, cont) = self.jmp_target(instr) else {
+                     panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
 index 3746d0c..139e849 100644
 --- a/tc/src/codegen/fpu.rs
