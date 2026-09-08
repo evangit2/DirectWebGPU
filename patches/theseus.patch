@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..8881c17
+index 0000000..b9f7a0a
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,290 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -533,6 +533,10 @@ index 0000000..8881c17
 +        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetSamplerState_stdcall),vec![dev,0,1,3]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);
 +        assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,0,1,4),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,0,1,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),3);
 +        assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,1,1,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),1);assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,16,1,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,0,8,0x3f800000),D3DERR_INVALIDCALL);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::GetViewport_stdcall),vec![dev,0x1700]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.memory.read::<u32>(0x1708),800);
++        for(i,v)in [10,20,400,300,0x3e800000,0x3f400000].into_iter().enumerate(){ctx.memory.write::<u32>(0x1700+i as u32*4,v)}ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetViewport_stdcall),vec![dev,0x1700]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);
++        ctx.memory.write::<u32>(0x1700,u32::MAX);assert_eq!(IDirect3DDevice9::SetViewport(&mut ctx,dev,0x1700),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetViewport(&mut ctx,dev,0x1700),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1700),10);assert_eq!(ctx.memory.read::<u32>(0x1710),0x3e800000);
++        ctx.memory.write::<u32>(0x1710,0x7fc00000);assert_eq!(IDirect3DDevice9::SetViewport(&mut ctx,dev,0x1700),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetViewport(&mut ctx,dev,0xfffffff0),D3DERR_INVALIDCALL);
 +        let shader=shader::fixture(&mut ctx,dev,0);
 +        assert_eq!(shader::GetFunction(&mut ctx,shader,0,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e00),20);
 +        ctx.memory.write::<u32>(0x1e00,4);ctx.memory.bytes[0x1e10..0x1e24].fill(0xa5);assert_eq!(shader::GetFunction(&mut ctx,shader,0x1e10,0x1e00),D3DERR_INVALIDCALL);assert!(ctx.memory.bytes[0x1e10..0x1e24].iter().all(|b|*b==0xa5));
@@ -1481,16 +1485,16 @@ index 0000000..a00bc83
 +pub(super) fn draw_bytes(this:u32)->Vec<u8>{DECLARATIONS.lock().unwrap().get(&this).expect("invalid draw declaration").bytes.clone()}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..5edc430
+index 0000000..85193bc
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,250 @@
+@@ -0,0 +1,255 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
 +struct Stream{buffer:u32,offset:u32,stride:u32}
 +#[derive(Clone)]
-+struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32,declaration:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32,declaration:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],target_size:[u32;2],constants:std::sync::Arc<Mutex<super::constants::Registers>>}
 +static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
 +pub static mut VTABLE:u32=0;
 +const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
@@ -1503,7 +1507,7 @@ index 0000000..5edc430
 + let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
 + let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
 + let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
-+ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0,declaration:0,shaders:[0;2],textures:[0;16],samplers:[[0,1,1,1,0,1,1,0,0,0,1,0,0,0];16],constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0,declaration:0,shaders:[0;2],textures:[0;16],samplers:[[0,1,1,1,0,1,1,0,0,0,1,0,0,0];16],viewport:[0,0,width,height,0,0x3f800000],target_size:[width,height],constants:Default::default()}).is_none());p
 +}
 +#[win32_derive::dllexport]
 +pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{
@@ -1590,8 +1594,13 @@ index 0000000..5edc430
 +pub fn SetTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetTransform",3)}
 +pub fn GetTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetTransform",3)}
 +pub fn MultiplyTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"MultiplyTransform",3)}
-+pub fn SetViewport_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetViewport",2)}
-+pub fn GetViewport_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetViewport",2)}
++#[win32_derive::dllexport]
++pub fn SetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid viewport device");if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}let v:[u32;6]=std::array::from_fn(|i|ctx.memory.read::<u32>(pointer+i as u32*4));let min=f32::from_bits(v[4]);let max=f32::from_bits(v[5]);
++ if v[2]==0||v[3]==0||v[0]as u64+v[2]as u64>d.target_size[0]as u64||v[1]as u64+v[3]as u64>d.target_size[1]as u64||!min.is_finite()||!max.is_finite()||min<0.0||max>1.0||min>max{return D3DERR_INVALIDCALL}d.viewport=v;D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}for(i,v)in d.viewport.into_iter().enumerate(){ctx.memory.write::<u32>(pointer+i as u32*4,v)}D3D_OK}
 +pub fn SetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetMaterial",2)}
 +pub fn GetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetMaterial",2)}
 +pub fn SetLight_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetLight",3)}
@@ -1728,10 +1737,10 @@ index 0000000..5edc430
 + let factor=match kind{1=>1,2=>2,4=>3,_=>return D3DERR_INVALIDCALL};let Some(count)=primitives.checked_mul(factor)else{return D3DERR_INVALIDCALL};if count==0||count>1048576{return D3DERR_INVALIDCALL}
 + let (index,base,max)=if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
 + let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
-+ let mut words=vec![0x39445245,super::shader::gpu_handle(d.shaders[0]),super::shader::gpu_handle(d.shaders[1]),kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
++ let mut words=vec![0x39445246,super::shader::gpu_handle(d.shaders[0]),super::shader::gpu_handle(d.shaders[1]),kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
 + for stream in d.streams{let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
 + for(k,v)in states{words.extend_from_slice(&[k,v])}for chunk in declaration.chunks_exact(4){words.push(u32::from_le_bytes(chunk.try_into().unwrap()))}d.constants.lock().unwrap().draw_words(&mut words);
-+ for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}
++ for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}words.extend_from_slice(&d.viewport);
 + // The Vec is already in WASM linear memory; its pointer is not a guest address.
 + let result=host::graphics_call(13,&[d.backend,words.as_ptr()as usize as u32,words.len()as u32*4]);if result==1{D3D_OK}else{result}
 +}
