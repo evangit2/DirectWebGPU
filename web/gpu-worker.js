@@ -1,3 +1,4 @@
+import {captureFrame} from './frame-capture.js';
 import {captureDraw} from './draw-diagnostic.js';
 import {deviceCaps,supportsFormat} from './d3d9-caps.js';
 import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
@@ -7,13 +8,13 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let diagnosticDraws=0;
+let diagnosticDraws=0,captureFrames=false;
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;diagnosticDraws=data.drawDiagnostics?3:0;
+ canvas=data.canvas;port=data.port;diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
@@ -70,7 +71,7 @@ async function graphics(op,a,memory){
  }
  if(op===4){ // GPU-to-GPU presentation, with no framebuffer readback.
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);
-  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents)});emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
  }
  if(op>=5&&op<=7){
   try{
