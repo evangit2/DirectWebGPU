@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {PresentationMetrics} from '../web/performance-metrics.js';
+const m=new PresentationMetrics(1000);
+m.present(1100);m.present(6100);m.present(6120);m.present(6140);
+assert.equal(m.snapshot().firstPresentMs,100);
+assert.equal(m.snapshot().totalSteadyIntervals,2);
+assert.equal(m.snapshot().submissionFPS,50);
+assert.deepEqual(m.snapshot().frameTimeMs,{p50:20,p95:20,p99:20,min:20,max:20});
+for(let i=1;i<=9000;i++)m.present(6140+i*20);
+assert.equal(m.samples.length,8192);
+assert.equal(m.snapshot().totalSteadyIntervals,9002);
+assert.equal(m.snapshot().submissionFPS,50);
+console.log('Present warmup, percentiles, aggregate rate and bounded storage passed');
