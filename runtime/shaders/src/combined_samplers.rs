@@ -2,7 +2,8 @@
 //! MojoShader emits direct loads of combined UniformConstant variables. Other
 //! forms (arrays, access chains) are deliberately left for the parser to reject.
 use std::collections::{BTreeMap, BTreeSet};
-pub fn split(bytes: &[u8]) -> Result<Vec<u8>, String> {
+pub fn split(bytes:&[u8])->Result<Vec<u8>,String>{Ok(split_with_bindings(bytes)?.0)}
+pub fn split_with_bindings(bytes: &[u8]) -> Result<(Vec<u8>,Vec<u32>), String> {
     let mut w: Vec<u32> = bytes
         .chunks_exact(4)
         .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
@@ -20,6 +21,8 @@ pub fn split(bytes: &[u8]) -> Result<Vec<u8>, String> {
         insts.push(w[at..at + n].to_vec());
         at += n;
     }
+    let mut dimensions=BTreeMap::new();
+    let mut reflection=Vec::new();
     let mut combined = BTreeMap::new();
     let mut ptrs = BTreeMap::new();
     let mut vars = BTreeMap::new();
@@ -27,6 +30,7 @@ pub fn split(bytes: &[u8]) -> Result<Vec<u8>, String> {
     let mut bindings = BTreeMap::new();
     for i in &insts {
         match i[0] & 65535 {
+            25 if i.len()>=9 => {dimensions.insert(i[1],if i[5]==0&&i[6]==0{i[3]}else{u32::MAX});}
             27 if i.len() == 3 => {
                 combined.insert(i[1], i[2]);
             }
@@ -52,7 +56,7 @@ pub fn split(bytes: &[u8]) -> Result<Vec<u8>, String> {
         }
     }
     if vars.is_empty() {
-        return Ok(bytes.to_vec());
+        return Ok((bytes.to_vec(),reflection));
     }
     if vars.len() > 32 {
         return Err("too many combined shader samplers".into());
@@ -90,6 +94,7 @@ pub fn split(bytes: &[u8]) -> Result<Vec<u8>, String> {
             }
         }
         used.insert((set, binding));
+        reflection.extend([set,*bindings.get(&var).ok_or("missing texture binding")?,binding,*dimensions.get(&vars[&var].1).ok_or("missing image type")?]);
         let sampler = id();
         samplers.insert(var, sampler);
         annotations.extend([
@@ -149,5 +154,5 @@ pub fn split(bytes: &[u8]) -> Result<Vec<u8>, String> {
     w[3] = next;
     w.truncate(5);
     w.extend(result);
-    Ok(w.into_iter().flat_map(u32::to_le_bytes).collect())
+    Ok((w.into_iter().flat_map(u32::to_le_bytes).collect(),reflection))
 }

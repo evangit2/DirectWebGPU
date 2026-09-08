@@ -1,6 +1,6 @@
 // Reusable bytecode translator. No application-specific shaders or geometry.
 import createMojo from './generated/mojoshader.js';
-import initNaga,{spirv_to_wgsl,alpha_test_wgsl,vertex_inputs_wgsl} from './generated/shader_translation.js';
+import initNaga,{spirv_to_wgsl,sampler_bindings,alpha_test_wgsl,vertex_inputs_wgsl} from './generated/shader_translation.js';
 let initialized;
 export async function createShaderTranslator(){
  initialized??=Promise.all([createMojo(),initNaga()]);
@@ -25,7 +25,9 @@ export async function createShaderTranslator(){
     if(count<0||count>4096||constantCount<0||constantCount>4096)throw Error('invalid shader reflection count');
     const uniforms=Array.from({length:count},(_,index)=>{const f=Array.from({length:4},(_,field)=>mojo._shader_uniform_value(stage,index,field));return {type:f[0],index:f[1],count:Math.max(1,f[2]),constant:!!f[3]}});
     const constants=Array.from({length:constantCount},(_,index)=>{const f=Array.from({length:6},(_,field)=>mojo._shader_constant_value(stage,index,field)>>>0);return {type:f[0],index:f[1],words:f.slice(2)}});
-    return {spirvBytes:length,wgsl:spirv_to_wgsl(spv),uniformGroup:stage?3:1,uniforms,constants};
+    const bindings=sampler_bindings(spv);if(bindings.length%4||bindings.length>128)throw Error('invalid sampler reflection');
+    const samplers=Array.from({length:bindings.length/4},(_,i)=>({group:bindings[i*4],textureBinding:bindings[i*4+1],samplerBinding:bindings[i*4+2],dimension:bindings[i*4+3]}));
+    return {samplers,spirvBytes:length,wgsl:spirv_to_wgsl(spv),uniformGroup:stage?3:1,uniforms,constants};
    });
    const inputCount=mojo._shader_input_count();if(inputCount<0||inputCount>16)throw Error('invalid shader input count');
    stages[0].inputs=Array.from({length:inputCount},(_,i)=>({usage:mojo._shader_input_value(i,0),index:mojo._shader_input_value(i,1),location:mojo._shader_input_value(i,2)}));

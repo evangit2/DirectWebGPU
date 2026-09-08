@@ -44,3 +44,10 @@ mod vertex_inputs;
 pub fn vertex_inputs_wgsl(source: &str, widths: &[u32]) -> Result<String, String> {
     vertex_inputs::apply(source, widths)
 }
+
+/// Group, original texture binding, split sampler binding, SPIR-V image dimension.
+#[wasm_bindgen]
+pub fn sampler_bindings(bytes:&[u8])->Result<Vec<u32>,String>{
+ if bytes.len()<20||bytes.len()>4*1024*1024||bytes.len()%4!=0{return Err("invalid sampler reflection SPIR-V length".into())}
+ Ok(combined_samplers::split_with_bindings(bytes)?.1)
+}

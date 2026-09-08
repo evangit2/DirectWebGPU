@@ -43,10 +43,13 @@ export async function testDeviceBridge(){
   assert(await rpc('graphics_call',[6,id,drawVB,0,4096,vertices.byteLength],false,new Uint8Array(vertices.buffer))===1,'draw vertex upload failed');
   const packet=diagnosticDrawPacket(shader,pixel,drawVB);assert(await rpc('graphics_call',[13,id,4096,packet.length],false,packet)===1,'draw RPC failed');
   assert(await rpc('graphics_call',[13,id,4096,packet.length-4],false,packet)===0x8876086c,'truncated draw RPC accepted');
+  const texBytes=new Uint8Array(await(await fetch('/generated/texture.bin')).arrayBuffer()),texPS=await rpc('graphics_call',[8,id,1,4096,texBytes.length],false,texBytes),drawTexture=await rpc('graphics_call',[10,id,1,1,1,21]);
+  assert(await rpc('graphics_call',[11,id,drawTexture,0,4096,4,4],false,new Uint8Array([233,121,17,255]))===1,'draw texture upload RPC failed');
+  const texPacket=diagnosticDrawPacket(shader,texPS,drawVB,0,drawTexture);assert(await rpc('graphics_call',[13,id,4096,texPacket.length],false,texPacket)===1,'textured draw RPC failed');assert(await rpc('graphics_call',[12,id,drawTexture])===1,'draw texture release RPC failed');assert(await rpc('graphics_call',[9,id,texPS])===1,'draw texture shader release failed');
   assert(await rpc('graphics_call',[7,id,drawVB])===1,'draw VB release failed');assert(await rpc('graphics_call',[9,id,pixel])===1,'draw PS release failed');
   assert(await rpc('graphics_call',[9,id,shader])===1,'shader release RPC failed');assert(await rpc('graphics_call',[9,id,shader])===0x8876086c,'stale shader RPC accepted');
   assert(await rpc('graphics_call',[2,id])===1,'release failed');
   assert(await rpc('graphics_call',[3,id,7,0,0x3f800000,0])===0x8876086c,'released device accepted');
-  return{result:'passed',checks:['draw packet RPC submitted GPU work and rejected truncation','texture RPC allocation, mip upload, bounds and lifetime passed','shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
+  return{result:'passed',checks:['textured draw RPC submitted GPU work','draw packet RPC submitted GPU work and rejected truncation','texture RPC allocation, mip upload, bounds and lifetime passed','shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
  }finally{channel.port2.close();worker.terminate()}
 }
