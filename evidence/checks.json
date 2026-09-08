@@ -607,5 +607,18 @@
     "originalRunId": "aa232064-f425-4180-9892-a0fc71a74bec",
     "originalBlocker": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
     "limitations": "FPU arithmetic remains f64; nonrepresentable 80-bit restore values, noncontiguous stacks, unmasked exceptions and exponent ranges outside implemented subset fail explicitly"
+  },
+  "registryAndLuminance": {
+    "registryRevision": "dd66795",
+    "registryTest": "create/read/reopen/access-rights/short-buffer/stdcall passed",
+    "registryTestLogSha256": "de8493a14fb65c01efc712d15e41437696e9bece07814ec85949666aa3a211a7",
+    "luminanceRevision": "8d37e91",
+    "gpuRunId": "dc1ff7e0-fd30-4cd1-aa3d-e638233a7b98",
+    "gpuTests": "all shader diagnostics passed including L8 RGB replication, alpha=1, guest pitch, tail mip and expanded GPU allocation accounting",
+    "cleanRestore": "37 patched files byte-identical",
+    "integerFpuRevision": "d39227f",
+    "limitations": "Registry is per-instance, ASCII names, no cross-launch persistence; general registry enumeration/security and broader texture formats remain incomplete",
+    "originalRunId": "ad15ba8d-6f70-4887-a48b-0875a111823f",
+    "originalBlocker": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan"
   }
 }

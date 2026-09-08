@@ -9,876 +9,866 @@
     "gpuBytes": "not measured",
     "wasmLinearMemoryBytes": 288096256
   },
-  "runId": "ad15ba8d-6f70-4887-a48b-0875a111823f",
-  "status": "failed: panicked at out/humus/src/generated/part_03.rs:527:5:",
+  "runId": "4abe1bc4-7585-47f1-ad16-1088c7791616",
+  "status": "failed: RuntimeError: unreachable",
   "events": [
     {
-      "timeMs": 33666,
+      "timeMs": 33934,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/misc.rs:116 0043777c VirtualAlloc(lpAddress=0x60e7000, dwSize=10000, _flAllocationType=1000, _flProtect=4)"
+    },
+    {
+      "timeMs": 33965,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:110 00487e86 GetModuleHandleA(lpModuleName=0x4c42ec)"
+    },
+    {
+      "timeMs": 33968,
       "type": "log",
       "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
     },
     {
-      "timeMs": 33668,
+      "timeMs": 33970,
       "type": "log",
       "message": "win32/winapi/src/kernel32/dll.rs:128 00487e91 LoadLibraryA(lpLibFileName=0x4c42ec)"
     },
     {
-      "timeMs": 33670,
+      "timeMs": 33972,
       "type": "log",
       "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
     },
     {
-      "timeMs": 33675,
+      "timeMs": 33979,
       "type": "log",
       "message": "win32/winapi/src/kernel32/misc.rs:159 004376f5 VirtualFree(_lpAddress=0x60e7000, _dwSize=0, _dwFreeType=8000)"
     },
     {
-      "timeMs": 33677,
+      "timeMs": 33981,
       "type": "log",
       "message": "win32/winapi/src/kernel32/unsupported.rs:140 004193d7 LeaveCriticalSection(p=4e0d48)"
     },
     {
-      "timeMs": 33679,
+      "timeMs": 33983,
       "type": "log",
       "message": "win32/winapi/src/kernel32/unsupported.rs:50 004193f4 InterlockedCompareExchange(destination=4e0d64, exchange=1, comparand=0)"
     },
     {
-      "timeMs": 33681,
+      "timeMs": 33984,
       "type": "log",
       "message": "win32/winapi/src/kernel32/unsupported.rs:142 0041940b DeleteCriticalSection(p=4e0d48)"
     },
     {
-      "timeMs": 33683,
+      "timeMs": 33986,
       "type": "log",
       "message": "win32/winapi/src/kernel32/unsupported.rs:55 00419414 InterlockedExchange(destination=4e0d64, value=0)"
     },
     {
-      "timeMs": 33685,
+      "timeMs": 33988,
       "type": "log",
       "message": "win32/winapi/src/kernel32/misc.rs:159 004376f5 VirtualFree(_lpAddress=0x5fe7000, _dwSize=0, _dwFreeType=8000)"
     },
     {
-      "timeMs": 33687,
+      "timeMs": 33990,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:221 00403bf8 CreatePixelShader(this=4e7012, pointer=4506594, out=13a10)"
     },
     {
-      "timeMs": 33689,
+      "timeMs": 33992,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d279c, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13900, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
     },
     {
-      "timeMs": 33690,
+      "timeMs": 33994,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=1007)"
     },
     {
-      "timeMs": 33692,
+      "timeMs": 33996,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1007), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13920, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33694,
+      "timeMs": 33998,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1007), lpBuffer=0x4567c50, nNumberOfBytesToRead=29000, lpNumberOfBytesRead=0x13928, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33696,
+      "timeMs": 34000,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1007), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1391c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33698,
+      "timeMs": 34001,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(1007))"
     },
     {
-      "timeMs": 33700,
+      "timeMs": 34003,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=200, height=200, levels=a, usage=0, format=31545844, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 33702,
+      "timeMs": 34007,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=0, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33704,
+      "timeMs": 34009,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=0)"
     },
     {
-      "timeMs": 33706,
+      "timeMs": 34011,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=1, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33708,
+      "timeMs": 34013,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=1)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=1)"
     },
     {
-      "timeMs": 33709,
+      "timeMs": 34015,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=2, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=2, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33713,
+      "timeMs": 34017,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=2)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=2)"
     },
     {
-      "timeMs": 33715,
+      "timeMs": 34018,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=3, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=3, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33717,
+      "timeMs": 34020,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=3)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=3)"
     },
     {
-      "timeMs": 33719,
+      "timeMs": 34022,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=4, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=4, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33720,
+      "timeMs": 34024,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=4)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=4)"
     },
     {
-      "timeMs": 33722,
+      "timeMs": 34026,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=5, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=5, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33724,
+      "timeMs": 34027,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=5)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=5)"
     },
     {
-      "timeMs": 33726,
+      "timeMs": 34029,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=6, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=6, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33728,
+      "timeMs": 34031,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=6)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=6)"
     },
     {
-      "timeMs": 33730,
+      "timeMs": 34033,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=7, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=7, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33732,
+      "timeMs": 34035,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=7)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=7)"
     },
     {
-      "timeMs": 33734,
+      "timeMs": 34037,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=8, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=8, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33736,
+      "timeMs": 34039,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=8)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=8)"
     },
     {
-      "timeMs": 33738,
+      "timeMs": 34041,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=567092, level=9, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=567092, level=9, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 33739,
+      "timeMs": 34043,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=567092, level=9)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=567092, level=9)"
     },
     {
-      "timeMs": 33741,
+      "timeMs": 34045,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d2744, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13950, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
     },
     {
-      "timeMs": 33743,
+      "timeMs": 34047,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=1008)"
     },
     {
-      "timeMs": 33745,
+      "timeMs": 34048,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13978, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33747,
+      "timeMs": 34050,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33749,
+      "timeMs": 34052,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33755,
+      "timeMs": 34060,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33757,
+      "timeMs": 34062,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33901,
+      "timeMs": 34204,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 33904,
+      "timeMs": 34208,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34076,
+      "timeMs": 34378,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34078,
+      "timeMs": 34381,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34257,
+      "timeMs": 34582,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34259,
+      "timeMs": 34584,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34437,
+      "timeMs": 34760,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34439,
+      "timeMs": 34762,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34612,
+      "timeMs": 34935,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34614,
+      "timeMs": 34939,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34792,
+      "timeMs": 35116,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34796,
+      "timeMs": 35119,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34969,
+      "timeMs": 35291,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 34973,
+      "timeMs": 35293,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1008), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 35257,
+      "timeMs": 35576,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(1008))"
     },
     {
-      "timeMs": 38902,
+      "timeMs": 39210,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=200, height=200, levels=a, usage=0, format=15, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 38905,
+      "timeMs": 39214,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=0, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38951,
+      "timeMs": 39260,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=0)"
     },
     {
-      "timeMs": 38954,
+      "timeMs": 39263,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=1, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38965,
+      "timeMs": 39273,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=1)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=1)"
     },
     {
-      "timeMs": 38967,
+      "timeMs": 39275,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=2, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=2, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38970,
+      "timeMs": 39278,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=2)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=2)"
     },
     {
-      "timeMs": 38972,
+      "timeMs": 39279,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=3, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=3, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38974,
+      "timeMs": 39281,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=3)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=3)"
     },
     {
-      "timeMs": 38975,
+      "timeMs": 39283,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=4, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=4, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38977,
+      "timeMs": 39284,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=4)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=4)"
     },
     {
-      "timeMs": 38979,
+      "timeMs": 39286,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=5, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=5, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38980,
+      "timeMs": 39287,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=5)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=5)"
     },
     {
-      "timeMs": 38982,
+      "timeMs": 39289,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=6, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=6, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38984,
+      "timeMs": 39290,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=6)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=6)"
     },
     {
-      "timeMs": 38985,
+      "timeMs": 39292,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=7, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=7, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38987,
+      "timeMs": 39293,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=7)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=7)"
     },
     {
-      "timeMs": 38988,
+      "timeMs": 39295,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=8, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=8, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38990,
+      "timeMs": 39297,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=8)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=8)"
     },
     {
-      "timeMs": 38992,
+      "timeMs": 39298,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6bc5f2, level=9, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6bc5f2, level=9, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 38993,
+      "timeMs": 39300,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6bc5f2, level=9)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6bc5f2, level=9)"
     },
     {
-      "timeMs": 38995,
+      "timeMs": 39301,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d2780, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13900, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
     },
     {
-      "timeMs": 38996,
+      "timeMs": 39303,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=1009)"
     },
     {
-      "timeMs": 38998,
+      "timeMs": 39304,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1009), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13920, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 39000,
+      "timeMs": 39306,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1009), lpBuffer=0x4592714, nNumberOfBytesToRead=29000, lpNumberOfBytesRead=0x13928, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 39001,
+      "timeMs": 39308,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(1009), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1391c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 39003,
+      "timeMs": 39309,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(1009))"
     },
     {
-      "timeMs": 39004,
+      "timeMs": 39311,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=200, height=200, levels=a, usage=0, format=31545844, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 39006,
+      "timeMs": 39312,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=0, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39007,
+      "timeMs": 39315,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=0)"
     },
     {
-      "timeMs": 39009,
+      "timeMs": 39317,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=1, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39010,
+      "timeMs": 39319,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=1)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=1)"
     },
     {
-      "timeMs": 39012,
+      "timeMs": 39320,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=2, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=2, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39014,
+      "timeMs": 39321,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=2)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=2)"
     },
     {
-      "timeMs": 39016,
+      "timeMs": 39323,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=3, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=3, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39017,
+      "timeMs": 39325,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=3)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=3)"
     },
     {
-      "timeMs": 39019,
+      "timeMs": 39326,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=4, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=4, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39020,
+      "timeMs": 39328,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=4)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=4)"
     },
     {
-      "timeMs": 39023,
+      "timeMs": 39329,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=5, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=5, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39025,
+      "timeMs": 39331,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=5)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=5)"
     },
     {
-      "timeMs": 39027,
+      "timeMs": 39333,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=6, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=6, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39028,
+      "timeMs": 39334,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=6)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=6)"
     },
     {
-      "timeMs": 39030,
+      "timeMs": 39336,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=7, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=7, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39032,
+      "timeMs": 39338,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=7)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=7)"
     },
     {
-      "timeMs": 39033,
+      "timeMs": 39340,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=8, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=8, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39035,
+      "timeMs": 39342,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=8)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=8)"
     },
     {
-      "timeMs": 39036,
+      "timeMs": 39345,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=6e70b6, level=9, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=6e70b6, level=9, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 39038,
+      "timeMs": 39348,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=6e70b6, level=9)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=6e70b6, level=9)"
     },
     {
-      "timeMs": 39039,
+      "timeMs": 39350,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d2724, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13950, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
     },
     {
-      "timeMs": 39041,
+      "timeMs": 39352,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=100a)"
     },
     {
-      "timeMs": 39042,
+      "timeMs": 39354,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100a), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13978, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 39044,
+      "timeMs": 39356,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100a), lpBuffer=0x45036d9, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 39046,
+      "timeMs": 39357,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100a), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 39696,
+      "timeMs": 39997,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(100a))"
     },
     {
-      "timeMs": 40680,
+      "timeMs": 40978,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=100, height=100, levels=9, usage=0, format=15, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 40684,
+      "timeMs": 40981,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=0, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40694,
+      "timeMs": 40991,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=0)"
     },
     {
-      "timeMs": 40696,
+      "timeMs": 40993,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=1, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40699,
+      "timeMs": 40996,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=1)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=1)"
     },
     {
-      "timeMs": 40701,
+      "timeMs": 40998,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=2, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=2, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40703,
+      "timeMs": 40999,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=2)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=2)"
     },
     {
-      "timeMs": 40704,
+      "timeMs": 41001,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=3, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=3, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40706,
+      "timeMs": 41004,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=3)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=3)"
     },
     {
-      "timeMs": 40707,
+      "timeMs": 41005,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=4, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=4, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40709,
+      "timeMs": 41007,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=4)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=4)"
     },
     {
-      "timeMs": 40711,
+      "timeMs": 41008,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=5, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=5, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40712,
+      "timeMs": 41010,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=5)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=5)"
     },
     {
-      "timeMs": 40714,
+      "timeMs": 41012,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=6, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=6, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40716,
+      "timeMs": 41013,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=6)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=6)"
     },
     {
-      "timeMs": 40718,
+      "timeMs": 41015,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=7, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=7, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40719,
+      "timeMs": 41016,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=7)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=7)"
     },
     {
-      "timeMs": 40721,
+      "timeMs": 41018,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=73c616, level=8, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=73c616, level=8, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40723,
+      "timeMs": 41019,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=73c616, level=8)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=73c616, level=8)"
     },
     {
-      "timeMs": 40725,
+      "timeMs": 41021,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d2760, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13900, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
     },
     {
-      "timeMs": 40727,
+      "timeMs": 41022,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=100b)"
     },
     {
-      "timeMs": 40728,
+      "timeMs": 41024,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100b), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13920, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 40730,
+      "timeMs": 41025,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100b), lpBuffer=0x45bd1d8, nNumberOfBytesToRead=29000, lpNumberOfBytesRead=0x13928, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 40732,
+      "timeMs": 41027,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100b), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1391c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 40734,
+      "timeMs": 41028,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(100b))"
     },
     {
-      "timeMs": 40735,
+      "timeMs": 41030,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=200, height=200, levels=a, usage=0, format=31545844, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 40737,
+      "timeMs": 41031,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=0, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40740,
+      "timeMs": 41033,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=0)"
     },
     {
-      "timeMs": 40742,
+      "timeMs": 41034,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=1, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40743,
+      "timeMs": 41036,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=1)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=1)"
     },
     {
-      "timeMs": 40745,
+      "timeMs": 41037,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=2, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=2, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 40746,
+      "timeMs": 41039,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=2)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=2)"
     },
     {
-      "timeMs": 40748,
+      "timeMs": 41040,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=3, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40750,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=3)"
-    },
-    {
-      "timeMs": 40751,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=4, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40753,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=4)"
-    },
-    {
-      "timeMs": 40754,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=5, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40756,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=5)"
-    },
-    {
-      "timeMs": 40758,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=6, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40759,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=6)"
-    },
-    {
-      "timeMs": 40761,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=7, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40762,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=7)"
-    },
-    {
-      "timeMs": 40764,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=8, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40766,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=8)"
-    },
-    {
-      "timeMs": 40767,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=7670da, level=9, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 40769,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=7670da, level=9)"
-    },
-    {
-      "timeMs": 40771,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d2700, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13950, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
-    },
-    {
-      "timeMs": 40772,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=100c)"
-    },
-    {
-      "timeMs": 40774,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13978, lpOverlapped=0x0)"
-    },
-    {
-      "timeMs": 40776,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
-    },
-    {
-      "timeMs": 40777,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
-    },
-    {
-      "timeMs": 40780,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
-    },
-    {
-      "timeMs": 40783,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
-    },
-    {
-      "timeMs": 40885,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
-    },
-    {
-      "timeMs": 40887,
-      "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=3, out=139b8, rect=0, flags=0)"
     },
     {
       "timeMs": 41042,
       "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=3)"
     },
     {
       "timeMs": 41044,
       "type": "log",
-      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=4, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 41202,
+      "timeMs": 41045,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=4)"
+    },
+    {
+      "timeMs": 41047,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=5, out=139b8, rect=0, flags=0)"
+    },
+    {
+      "timeMs": 41049,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=5)"
+    },
+    {
+      "timeMs": 41050,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=6, out=139b8, rect=0, flags=0)"
+    },
+    {
+      "timeMs": 41052,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=6)"
+    },
+    {
+      "timeMs": 41053,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=7, out=139b8, rect=0, flags=0)"
+    },
+    {
+      "timeMs": 41055,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=7)"
+    },
+    {
+      "timeMs": 41056,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=8, out=139b8, rect=0, flags=0)"
+    },
+    {
+      "timeMs": 41057,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=8)"
+    },
+    {
+      "timeMs": 41059,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=7670da, level=9, out=139b8, rect=0, flags=0)"
+    },
+    {
+      "timeMs": 41061,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=7670da, level=9)"
+    },
+    {
+      "timeMs": 41062,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d2700, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13950, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
+    },
+    {
+      "timeMs": 41064,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=100c)"
+    },
+    {
+      "timeMs": 41065,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13978, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 41068,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41204,
+      "timeMs": 41069,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41355,
+      "timeMs": 41071,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41357,
+      "timeMs": 41072,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 41175,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 41177,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 41352,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 41353,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
@@ -893,382 +883,390 @@
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41669,
+      "timeMs": 41661,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41671,
+      "timeMs": 41663,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41853,
+      "timeMs": 41816,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41855,
+      "timeMs": 41818,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41943,
+      "timeMs": 41973,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 41945,
+      "timeMs": 41975,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 42102,
+      "timeMs": 42154,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 42156,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 42307,
+      "timeMs": 42244,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4503838, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x1388c, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 42246,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 42401,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100c), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13880, lpOverlapped=0x0)"
+    },
+    {
+      "timeMs": 42604,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(100c))"
     },
     {
-      "timeMs": 45947,
+      "timeMs": 46242,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=200, height=200, levels=a, usage=0, format=15, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 45951,
+      "timeMs": 46246,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=0, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 45997,
+      "timeMs": 46292,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=0)"
     },
     {
-      "timeMs": 45999,
+      "timeMs": 46294,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=1, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46010,
+      "timeMs": 46306,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=1)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=1)"
     },
     {
-      "timeMs": 46012,
+      "timeMs": 46307,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=2, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=2, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46015,
+      "timeMs": 46310,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=2)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=2)"
     },
     {
-      "timeMs": 46037,
+      "timeMs": 46312,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=3, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=3, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46040,
+      "timeMs": 46314,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=3)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=3)"
     },
     {
-      "timeMs": 46043,
+      "timeMs": 46315,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=4, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=4, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46045,
+      "timeMs": 46317,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=4)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=4)"
     },
     {
-      "timeMs": 46047,
+      "timeMs": 46318,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=5, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=5, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46049,
+      "timeMs": 46320,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=5)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=5)"
     },
     {
-      "timeMs": 46050,
+      "timeMs": 46321,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=6, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=6, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46052,
+      "timeMs": 46323,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=6)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=6)"
     },
     {
-      "timeMs": 46054,
+      "timeMs": 46324,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=7, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=7, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46055,
+      "timeMs": 46326,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=7)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=7)"
     },
     {
-      "timeMs": 46057,
+      "timeMs": 46327,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=8, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=8, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46059,
+      "timeMs": 46329,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=8)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=8)"
     },
     {
-      "timeMs": 46061,
+      "timeMs": 46331,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bc63a, level=9, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/d3d9/texture.rs:339 0040393a LockRect(this=8bc63a, level=9, out=139b8, rect=0, flags=0)"
     },
     {
-      "timeMs": 46063,
+      "timeMs": 46332,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bc63a, level=9)"
+      "message": "win32/winapi/src/d3d9/texture.rs:377 00403962 UnlockRect(this=8bc63a, level=9)"
     },
     {
-      "timeMs": 46065,
+      "timeMs": 46334,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:107 00412262 CreateFileA(lpFileName=0x4d26e4, dwDesiredAccess=80000000, _dwShareMode=3, _lpSecurityAttributes=0x13950, dwCreationDisposition=OPEN_EXISTING, _dwFlagsAndAttributes=80, _hTemplateFile=0)"
     },
     {
-      "timeMs": 46067,
+      "timeMs": 46336,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:307 0041226f GetFileType(hFile=100d)"
     },
     {
-      "timeMs": 46069,
+      "timeMs": 46338,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:151 0040f4ef ReadFile(hFile=HANDLE(100d), lpBuffer=0x4501668, nNumberOfBytesToRead=1000, lpNumberOfBytesRead=0x13978, lpOverlapped=0x0)"
     },
     {
-      "timeMs": 46072,
+      "timeMs": 46340,
       "type": "log",
       "message": "win32/winapi/src/kernel32/file.rs:294 0040db4d CloseHandle(hObject=HANDLE(100d))"
     },
     {
-      "timeMs": 46074,
+      "timeMs": 46342,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:78 004038d1 CreateTexture(this=4e7012, width=20, height=20, levels=6, usage=0, format=32, pool=1, out=139e8, shared=0)"
     },
     {
-      "timeMs": 46076,
+      "timeMs": 46344,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bcb9b, level=0, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/user32/misc.rs:82 00409eb8 MessageBoxA(_hWnd=(null), lpText=0x44fe7f0, lpCaption=0x4d22a8, _uType=10)"
     },
     {
-      "timeMs": 46077,
+      "timeMs": 46346,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bcb9b, level=0)"
+      "message": "win32/winapi/src/user32/misc.rs:99 MessageBox: Error / Couldn't create texture\n"
     },
     {
-      "timeMs": 46079,
+      "timeMs": 46347,
       "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bcb9b, level=1, out=139b8, rect=0, flags=0)"
+      "message": "win32/winapi/src/user32/message.rs:480 00401537 PostMessageA(hWnd=HANDLE(1), Msg=10, wParam=0, lParam=0)"
     },
     {
-      "timeMs": 46081,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bcb9b, level=1)"
-    },
-    {
-      "timeMs": 46083,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bcb9b, level=2, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 46085,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bcb9b, level=2)"
-    },
-    {
-      "timeMs": 46087,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bcb9b, level=3, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 46094,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bcb9b, level=3)"
-    },
-    {
-      "timeMs": 46096,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bcb9b, level=4, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 46098,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bcb9b, level=4)"
-    },
-    {
-      "timeMs": 46100,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:341 0040393a LockRect(this=8bcb9b, level=5, out=139b8, rect=0, flags=0)"
-    },
-    {
-      "timeMs": 46102,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/texture.rs:379 00403962 UnlockRect(this=8bcb9b, level=5)"
-    },
-    {
-      "timeMs": 46104,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:82 004032f6 CreateVertexBuffer(this=4e7012, size=4280, usage=8, format_or_fvf=0, pool=1, out=44fa12c, shared=0)"
-    },
-    {
-      "timeMs": 46105,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:303 00403305 Lock(this=8c0e27, offset=0, size=0, out=13a5c, flags=0)"
-    },
-    {
-      "timeMs": 46107,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:325 00403323 Unlock(this=8c0e27)"
-    },
-    {
-      "timeMs": 46109,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:84 00403350 CreateIndexBuffer(this=4e7012, size=7d4, usage=8, format_or_fvf=65, pool=1, out=44fa130, shared=0)"
-    },
-    {
-      "timeMs": 46110,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:303 0040335f Lock(this=8c1607, offset=0, size=0, out=13a5c, flags=0)"
-    },
-    {
-      "timeMs": 46112,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:325 0040337d Unlock(this=8c1607)"
-    },
-    {
-      "timeMs": 46114,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:168 0040342e CreateVertexDeclaration(this=4e7012, elements=44fe814, out=44fa134)"
-    },
-    {
-      "timeMs": 46116,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:82 004032f6 CreateVertexBuffer(this=4e7012, size=93e0, usage=8, format_or_fvf=0, pool=1, out=44fe9e0, shared=0)"
-    },
-    {
-      "timeMs": 46118,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:303 00403305 Lock(this=8ca9fb, offset=0, size=0, out=13a5c, flags=0)"
-    },
-    {
-      "timeMs": 46119,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:325 00403323 Unlock(this=8ca9fb)"
-    },
-    {
-      "timeMs": 46121,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:84 00403350 CreateIndexBuffer(this=4e7012, size=96c, usage=8, format_or_fvf=65, pool=1, out=44fe9e4, shared=0)"
-    },
-    {
-      "timeMs": 46122,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:303 0040335f Lock(this=8cb373, offset=0, size=0, out=13a5c, flags=0)"
-    },
-    {
-      "timeMs": 46124,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:325 0040337d Unlock(this=8cb373)"
-    },
-    {
-      "timeMs": 46125,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:168 0040342e CreateVertexDeclaration(this=4e7012, elements=44fe814, out=44fe9e8)"
-    },
-    {
-      "timeMs": 46127,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:82 004032f6 CreateVertexBuffer(this=4e7012, size=540, usage=8, format_or_fvf=0, pool=1, out=4507ae0, shared=0)"
-    },
-    {
-      "timeMs": 46129,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:303 00403305 Lock(this=8cb8c7, offset=0, size=0, out=13a5c, flags=0)"
-    },
-    {
-      "timeMs": 46130,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:325 00403323 Unlock(this=8cb8c7)"
-    },
-    {
-      "timeMs": 46132,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:84 00403350 CreateIndexBuffer(this=4e7012, size=90, usage=8, format_or_fvf=65, pool=1, out=4507ae4, shared=0)"
-    },
-    {
-      "timeMs": 46133,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:303 0040335f Lock(this=8cb963, offset=0, size=0, out=13a5c, flags=0)"
-    },
-    {
-      "timeMs": 46135,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/buffers.rs:325 0040337d Unlock(this=8cb963)"
-    },
-    {
-      "timeMs": 46136,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9/device.rs:168 0040342e CreateVertexDeclaration(this=4e7012, elements=44fe814, out=4507ae8)"
-    },
-    {
-      "timeMs": 46138,
-      "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:100 00406e20 GetAdapterIdentifier(this=4e700a, index=0, flags=0, out=13a8c)"
-    },
-    {
-      "timeMs": 46139,
+      "timeMs": 46349,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 46141,
+      "timeMs": 46350,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 46142,
+      "timeMs": 46352,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 46146,
-      "type": "gpu-submission",
-      "kind": "clear",
-      "count": 1,
-      "sceneFrames": 0
-    },
-    {
-      "timeMs": 46148,
+      "timeMs": 46354,
       "type": "log",
-      "message": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan\n\nStack:\n\nError\n    at __wbg_new_227d7c05414eb861 (http://127.0.0.1:8765/generated/humus.js:71:25)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::Error>::new::__wbg_new_227d7c05414eb861 externref shim (wasm://wasm/humus.wasm-0459bb76:wasm-function[66734]:0xb6fbfa)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::Error>::new (wasm://wasm/humus.wasm-0459bb76:wasm-function[54960]:0xaedb6e)\n    at humus.wasm.console_error_panic_hook[8f861984cca8149d]::hook_impl (wasm://wasm/humus.wasm-0459bb76:wasm-function[16069]:0x6d1f89)\n    at humus.wasm.console_error_panic_hook[8f861984cca8149d]::hook (wasm://wasm/humus.wasm-0459bb76:wasm-function[62633]:0xb5309a)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::hook as core[2a9fb8971baa249d]::ops::function::Fn<(&std[76655ebda4cdcfc8]::panic::PanicHookInfo,)>>::call (wasm://wasm/humus.wasm-0459bb76:wasm-function[61054]:0xb430e1)\n    at humus.wasm.<alloc[711e24f4107952bc]::boxed::Box<dyn for<'a, 'b> core[2a9fb8971baa249d]::ops::function::Fn<(&'a std[76655ebda4cdcfc8]::panic::PanicHookInfo<'b>,), Output = ()> + core[2a9fb8971baa249d]::marker::Sync + core[2a9fb8971baa249d]::marker::Send> as core[2a9fb8971baa249d]::ops::function::Fn<(&std[76655ebda4cdcfc8]::panic::PanicHookInfo,)>>::call (wasm://wasm/humus.wasm-0459bb76:wasm-function[54331]:0xae348c)\n    at humus.wasm.std[76655ebda4cdcfc8]::panicking::panic_with_hook (wasm://wasm/humus.wasm-0459bb76:wasm-function[503]:0x171ab4)\n    at humus.wasm.std[76655ebda4cdcfc8]::panicking::panic_handler::{closure#0} (wasm://wasm/humus.wasm-0459bb76:wasm-function[9913]:0x57f7e9)\n    at humus.wasm.std[76655ebda4cdcfc8]::sys::backtrace::__rust_end_short_backtrace::<std[76655ebda4cdcfc8]::panicking::panic_handler::{closure#0}, !> (wasm://wasm/humus.wasm-0459bb76:wasm-function[61144]:0xb44189)\n\n"
+      "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(SHOWWINDOW), wParam=1, lParam=0)"
     },
     {
-      "timeMs": 46151,
+      "timeMs": 46355,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
+    },
+    {
+      "timeMs": 46357,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46359,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46361,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(ACTIVATEAPP), wParam=1, lParam=0)"
+    },
+    {
+      "timeMs": 46363,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
+    },
+    {
+      "timeMs": 46365,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46367,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46369,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(ACTIVATE), wParam=1, lParam=0)"
+    },
+    {
+      "timeMs": 46371,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
+    },
+    {
+      "timeMs": 46372,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46374,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46376,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(SETFOCUS), wParam=0, lParam=0)"
+    },
+    {
+      "timeMs": 46378,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
+    },
+    {
+      "timeMs": 46380,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46382,
+      "type": "log",
+      "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
+    },
+    {
+      "timeMs": 46383,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:122 004045db SetRenderState(this=4e7012, kind=7, value=1)"
+    },
+    {
+      "timeMs": 46385,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:122 004045ed SetRenderState(this=4e7012, kind=17, value=4)"
+    },
+    {
+      "timeMs": 46387,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=0, pointer=0)"
+    },
+    {
+      "timeMs": 46389,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=1, pointer=0)"
+    },
+    {
+      "timeMs": 46390,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=2, pointer=0)"
+    },
+    {
+      "timeMs": 46392,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=3, pointer=0)"
+    },
+    {
+      "timeMs": 46394,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=4, pointer=0)"
+    },
+    {
+      "timeMs": 46395,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=5, pointer=0)"
+    },
+    {
+      "timeMs": 46397,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=6, pointer=0)"
+    },
+    {
+      "timeMs": 46399,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/device.rs:138 00403a21 SetTexture(this=4e7012, stage=7, pointer=0)"
+    },
+    {
+      "timeMs": 46401,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:221 004039ff Release(this=8bc63a)"
+    },
+    {
+      "timeMs": 46402,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:221 004039ff Release(this=7670da)"
+    },
+    {
+      "timeMs": 46410,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:221 004039ff Release(this=73c616)"
+    },
+    {
+      "timeMs": 46413,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:221 004039ff Release(this=6e70b6)"
+    },
+    {
+      "timeMs": 46415,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9/texture.rs:221 004039ff Release(this=6bc5f2)"
+    },
+    {
+      "timeMs": 46419,
       "type": "failed",
-      "message": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan",
+      "message": "RuntimeError: unreachable\n    at humus.wasm.std[76655ebda4cdcfc8]::sys::exit::exit (wasm://wasm/humus.wasm-0459b786:wasm-function[66701]:0xb6f856)\n    at humus.wasm.std[76655ebda4cdcfc8]::process::exit (wasm://wasm/humus.wasm-0459b786:wasm-function[63659]:0xb5be5c)\n    at humus.wasm.winapi[7a9f31d4deb18145]::kernel32::process::ExitProcess (wasm://wasm/humus.wasm-0459b786:wasm-function[62747]:0xb53ffa)\n    at humus.wasm.winapi[7a9f31d4deb18145]::kernel32::process::ExitProcess_stdcall (wasm://wasm/humus.wasm-0459b786:wasm-function[1528]:0x25351a)\n    at humus.wasm.<runtime[3eef60045c63da84]::machine::Context>::call_builtin (wasm://wasm/humus.wasm-0459b786:wasm-function[52850]:0xaca017)\n    at humus.wasm.humus[b4b5c1fa93f6284]::generated::part_04::x40f8de (wasm://wasm/humus.wasm-0459b786:wasm-function[27463]:0x87f655)\n    at humus.wasm.<runtime[3eef60045c63da84]::machine::Context>::cpu_loop (wasm://wasm/humus.wasm-0459b786:wasm-function[13655]:0x659e64)\n    at humus.wasm.<runtime[3eef60045c63da84]::machine::Context>::call32_x86 (wasm://wasm/humus.wasm-0459b786:wasm-function[11210]:0x5d1104)\n    at humus.wasm.winapi[7a9f31d4deb18145]::start (wasm://wasm/humus.wasm-0459b786:wasm-function[37293]:0x98f808)\n    at humus.wasm.winapi[7a9f31d4deb18145]::run (wasm://wasm/humus.wasm-0459b786:wasm-function[58183]:0xb1e0f3)",
       "wasmLinearMemoryBytes": 288096256
     }
   ],
-  "droppedEvents": 259,
+  "droppedEvents": 257,
   "build": {
-    "revision": "d39227f8752580116b412a9c8556b2de6445a0a9",
+    "revision": "cc749efe08b368097c6e3d79da7ee1520ea64d9f",
     "dirty": true,
     "dependencies": {
       "theseus": {
@@ -1393,12 +1391,12 @@
     ],
     "wasm_available": true,
     "runtimeBuild": {
-      "translatedTreeSha256": "a533f7bb7e2377a7c94ca35087ded897959948a0353ebf532fabaad18d1f6d78",
+      "translatedTreeSha256": "f9e11b6bb08f1836bd0003ebb87b08a30e251f88ef5a5ef3da4a778c1ea21f70",
       "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-      "builtAt": "2026-09-08T18:31:53.743806+00:00",
-      "revision": "d39227f8752580116b412a9c8556b2de6445a0a9",
+      "builtAt": "2026-09-08T18:25:44.058475+00:00",
+      "revision": "cc749efe08b368097c6e3d79da7ee1520ea64d9f",
       "workingTreeDirty": true,
-      "sourceSha256": "45a6ec5162dca9f2dea94098d098654177f458562950620a00265842c60c97c6",
+      "sourceSha256": "f4f75767dea26e4b22104544fe6c6ead0a19884137b5400c44b831b012fbcab3",
       "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
       "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
       "translationEntryPoints": [
@@ -1411,14 +1409,14 @@
           "bytes": 12071
         },
         "humus_bg.wasm": {
-          "sha256": "a009575d3d84cc2b7afaf834242327c7fa444a36e8d9d0d534d17130f9e67bc0",
-          "bytes": 18247389
+          "sha256": "936f771d92d135388f35c6c1b307c88139603d45865506803537888c91555d54",
+          "bytes": 18247137
         }
       }
     }
   },
-  "startTimeMs": 294.0499999523163,
-  "startedAt": "2026-09-08T18:32:09.073Z",
+  "startTimeMs": 584.1150000095367,
+  "startedAt": "2026-09-08T18:25:56.120Z",
   "requestedDurationMs": null,
   "visibility": "visible",
   "browser": {
@@ -1480,8 +1478,7 @@
     "validation": "passed",
     "sceneFrames": 0
   },
-  "gpuSubmissions": 1,
-  "blocker": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan",
-  "endedAt": "2026-09-08T18:32:54.931Z",
-  "diagnosticAttemptMs": 45858.81500005722
+  "blocker": "RuntimeError: unreachable\n    at humus.wasm.std[76655ebda4cdcfc8]::sys::exit::exit (wasm://wasm/humus.wasm-0459b786:wasm-function[66701]:0xb6f856)\n    at humus.wasm.std[76655ebda4cdcfc8]::process::exit (wasm://wasm/humus.wasm-0459b786:wasm-function[63659]:0xb5be5c)\n    at humus.wasm.winapi[7a9f31d4deb18145]::kernel32::process::ExitProcess (wasm://wasm/humus.wasm-0459b786:wasm-function[62747]:0xb53ffa)\n    at humus.wasm.winapi[7a9f31d4deb18145]::kernel32::process::ExitProcess_stdcall (wasm://wasm/humus.wasm-0459b786:wasm-function[1528]:0x25351a)\n    at humus.wasm.<runtime[3eef60045c63da84]::machine::Context>::call_builtin (wasm://wasm/humus.wasm-0459b786:wasm-function[52850]:0xaca017)\n    at humus.wasm.humus[b4b5c1fa93f6284]::generated::part_04::x40f8de (wasm://wasm/humus.wasm-0459b786:wasm-function[27463]:0x87f655)\n    at humus.wasm.<runtime[3eef60045c63da84]::machine::Context>::cpu_loop (wasm://wasm/humus.wasm-0459b786:wasm-function[13655]:0x659e64)\n    at humus.wasm.<runtime[3eef60045c63da84]::machine::Context>::call32_x86 (wasm://wasm/humus.wasm-0459b786:wasm-function[11210]:0x5d1104)\n    at humus.wasm.winapi[7a9f31d4deb18145]::start (wasm://wasm/humus.wasm-0459b786:wasm-function[37293]:0x98f808)\n    at humus.wasm.winapi[7a9f31d4deb18145]::run (wasm://wasm/humus.wasm-0459b786:wasm-function[58183]:0xb1e0f3)",
+  "endedAt": "2026-09-08T18:26:41.957Z",
+  "diagnosticAttemptMs": 45837.24000000954
 }
