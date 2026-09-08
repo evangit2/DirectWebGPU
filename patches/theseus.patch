@@ -71,7 +71,7 @@ index 92da1ea..443e1fb 100644
 +    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
 +}
 diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
-index c6a4023..f73c83e 100644
+index c6a4023..4868d6e 100644
 --- a/runtime/src/fpu.rs
 +++ b/runtime/src/fpu.rs
 @@ -18,8 +18,13 @@ pub struct FPU {
@@ -103,7 +103,7 @@ index c6a4023..f73c83e 100644
              control: 0x037f,
          }
      }
-@@ -91,21 +101,352 @@ impl FPU {
+@@ -91,21 +101,396 @@ impl FPU {
          self.st[self.st_offset(ofs)] = val;
      }
  
@@ -116,6 +116,7 @@ index c6a4023..f73c83e 100644
 +            );
 +            self.invalid = true;
 +        }
++        self.status_extra &= !0x600;
 +        self.unordered = a.is_nan() || b.is_nan();
 +        self.cmp = a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal);
 +    }
@@ -179,6 +180,18 @@ index c6a4023..f73c83e 100644
 +            "unsupported x87 FSCALE overflow/underflow"
 +        );
 +        self.set(0, value);
++    }
++    pub fn tangent_push_one(&mut self) {
++        let x = self.get(0);
++        assert!(x.is_finite(), "unsupported x87 FPTAN exceptional input {x}");
++        self.unordered = false;
++        if x.abs() >= 9223372036854775808.0 {
++            self.status_extra |= 0x400;
++            return;
++        }
++        self.status_extra &= !0x600;
++        self.set(0, x.tan());
++        self.push(1.0);
 +    }
 +    pub fn initialize(&mut self) {
 +        *self = Self {
@@ -375,7 +388,7 @@ index c6a4023..f73c83e 100644
 +        } else {
 +            std::cmp::Ordering::Greater
 +        };
-+        f.status_extra = status & !0x7d01;
++        f.status_extra = status & !0x7901;
 +        f.instruction = (dword(12), word(16), word(18) & 0x7ff);
 +        f.operand = (dword(20), word(24));
 +        for i in 0..8 {
@@ -462,6 +475,37 @@ index c6a4023..f73c83e 100644
 +        f.set(1, -2.9);
 +        f.scale();
 +        assert_eq!(f.get(0), 1.5);
++    }
++}
++
++#[cfg(test)]
++mod tangent_tests {
++    #[test]
++    fn tangent_stack_range_and_signed_zero() {
++        let mut f = super::FPU::default();
++        f.push(42.0);
++        f.push(std::f64::consts::FRAC_PI_4);
++        f.tangent_push_one();
++        assert_eq!(f.get(0), 1.0);
++        assert!((f.get(1) - 1.0).abs() < 1e-15);
++        assert_eq!(f.get(2), 42.0);
++        assert_eq!(f.st_top, 5);
++        f.pop();
++        f.set(0, -0.0);
++        f.tangent_push_one();
++        assert_eq!(f.get(1).to_bits(), (-0.0f64).to_bits());
++        f.pop();
++        f.set(0, 9223372036854775808.0);
++        let top = f.st_top;
++        f.tangent_push_one();
++        assert_eq!(f.st_top, top);
++        assert_eq!(f.status() & 0x400, 0x400);
++        let image = f.save_image32();
++        f.restore_image32(image);
++        assert_eq!(f.status() & 0x400, 0x400);
++        f.set(0, 0.0);
++        f.tangent_push_one();
++        assert_eq!(f.status() & 0x400, 0);
      }
  }
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
@@ -710,7 +754,7 @@ index caf0159..dbb6365 100644
                  let (None, None, cont) = self.jmp_target(instr) else {
                      panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
-index 3746d0c..90a9d6c 100644
+index 3746d0c..2966c9b 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
 @@ -71,6 +71,30 @@ impl<'a> CodeGen<'a> {
@@ -846,7 +890,7 @@ index 3746d0c..90a9d6c 100644
              }
  
              Fnstcw => {
-@@ -227,6 +276,29 @@ impl<'a> CodeGen<'a> {
+@@ -227,6 +276,30 @@ impl<'a> CodeGen<'a> {
                  self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
              }
  
@@ -866,6 +910,7 @@ index 3746d0c..90a9d6c 100644
 +                    ));
 +                }
 +            }
++            Fptan => self.line("ctx.cpu.fpu.tangent_push_one();"),
 +            F2xm1 => self.line("ctx.cpu.fpu.exp2_minus_one();"),
 +            Fscale => self.line("ctx.cpu.fpu.scale();"),
 +            Frndint => self.line(
