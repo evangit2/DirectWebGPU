@@ -29,12 +29,17 @@ export async function testDeviceBridge(){
   assert(await rpc('graphics_call',[6,id,vb,12,4096,8])===0x8876086c,'out-of-bounds upload accepted');
   assert(await rpc('graphics_call',[7,id,vb])===1,'buffer release failed');
   assert(await rpc('graphics_call',[7,id,vb])===0x8876086c,'stale buffer accepted');
+  const texture=await rpc('graphics_call',[10,id,8,8,0,21]);assert(texture>0&&texture<0x80000000,'texture creation RPC failed');
+  assert(await rpc('graphics_call',[11,id,texture,3,4096,4,4])===1,'small mip texture upload RPC failed');
+  assert(await rpc('graphics_call',[11,id,texture,4,4096,4,4])===0x8876086c,'invalid mip RPC accepted');
+  assert(await rpc('graphics_call',[12,id,texture])===1,'texture release RPC failed');
+  assert(await rpc('graphics_call',[12,id,texture])===0x8876086c,'stale texture RPC accepted');
   const shaderBytes=new Uint8Array(await(await fetch('/generated/vertexExplicit.bin')).arrayBuffer());
   const shader=await rpc('graphics_call',[8,id,0,4096,shaderBytes.length],false,shaderBytes);assert(shader>0&&shader<0x80000000,'shader creation RPC failed');
   assert(await rpc('graphics_call',[8,id,1,4096,shaderBytes.length],false,shaderBytes)===0x8876086c,'wrong-stage shader RPC accepted');
   assert(await rpc('graphics_call',[9,id,shader])===1,'shader release RPC failed');assert(await rpc('graphics_call',[9,id,shader])===0x8876086c,'stale shader RPC accepted');
   assert(await rpc('graphics_call',[2,id])===1,'release failed');
   assert(await rpc('graphics_call',[3,id,7,0,0x3f800000,0])===0x8876086c,'released device accepted');
-  return{result:'passed',checks:['shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
+  return{result:'passed',checks:['texture RPC allocation, mip upload, bounds and lifetime passed','shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
  }finally{channel.port2.close();worker.terminate()}
 }

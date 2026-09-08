@@ -1,3 +1,4 @@
+import {TextureStorage} from './gpu-textures.js';
 import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
@@ -12,7 +13,7 @@ async function init(data){
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
- device=await adapter.requestDevice();device.addEventListener('uncapturederror',e=>emit('gpu-error',{message:e.error.message}));device.lost.then(i=>emit('gpu-lost',{reason:i.reason,message:i.message}));
+ device=await adapter.requestDevice({requiredFeatures:adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[]});device.addEventListener('uncapturederror',e=>emit('gpu-error',{message:e.error.message}));device.lost.then(i=>emit('gpu-lost',{reason:i.reason,message:i.message}));
  result.deviceCreated=true;result.hardwareAcceleration='GPU device available; no Humus scene verified';
  let chain=Promise.resolve();port.onmessage=({data})=>{if(++pending>64){emit('gpu-error',{message:'GPU command queue limit exceeded'});return}chain=chain.then(()=>dispatch(data)).catch(e=>emit('gpu-error',{message:String(e)})).finally(()=>pending--)};
  port.start();port.postMessage({ready:true,result});emit('probe',{result});
@@ -47,11 +48,11 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),shaders:null,presents:0,submissions:0};
+  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device),shaders:null,presents:0,submissions:0};
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
- if(op===2){backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
+ if(op===2){backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
   const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
@@ -83,6 +84,14 @@ async function graphics(op,a,memory){
    if(op===9&&a.length===2){if(!backend.shaders)return INVALID;backend.shaders.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){emit('shader-rejected',{message:String(e)});return INVALID;}
+ }
+ if(op>=10&&op<=12){
+  try{
+   if(op===10&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4]);
+   if(op===11&&a.length===6){await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
+   if(op===12&&a.length===2){backend.textures.destroy(a[1]);return 1;}
+   return INVALID;
+  }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  throw Error('unsupported graphics opcode '+op);
 }

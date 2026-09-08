@@ -1,3 +1,4 @@
+import {testTextures} from './texture-test.js';
 import {ShaderObjects} from './shader-objects.js';
 import {testCompactInputs} from './compact-input-test.js';
 import {vertexLayout} from './vertex-layout.js';
@@ -25,7 +26,7 @@ document.getElementById('run').onclick=async()=>{
   try{tr.translatePair(vs.slice(0,7),ps);throw Error('malformed bytecode accepted');}catch(e){if(!String(e).includes('invalid DX9 bytecode length'))throw e;report.checks.push('misaligned/truncated bytecode rejected');}
   const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('no GPU adapter');
   report.adapter={vendor:adapter.info.vendor,architecture:adapter.info.architecture,isFallbackAdapter:adapter.info.isFallbackAdapter};
-  device=await adapter.requestDevice();report.geometryBuffers=await testGeometryBuffers(device);const errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+  device=await adapter.requestDevice({requiredFeatures:adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[]});report.textures=await testTextures(device);report.geometryBuffers=await testGeometryBuffers(device);const errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
   device.pushErrorScope('validation');
   const modules=[shaders.vertex,shaders.pixel].map(s=>device.createShaderModule({code:s.wgsl}));
   for(const mod of modules){const info=await mod.getCompilationInfo();if(info.messages.some(m=>m.type==='error'))throw Error(JSON.stringify(info.messages));}
