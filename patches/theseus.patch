@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..07b8902
+index 0000000..8881c17
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,282 @@
+@@ -0,0 +1,286 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -564,6 +564,10 @@ index 0000000..07b8902
 +        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
 +        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,1,vb,0,0),D3D_OK);
 +        assert_eq!(IDirect3DDevice9::SetIndices(&mut ctx,dev,ib),D3D_OK);
++        let draw_pixel=shader::fixture(&mut ctx,dev,1);assert_eq!(IDirect3DDevice9::SetPixelShader(&mut ctx,dev,draw_pixel),D3D_OK);shader::Release(&mut ctx,draw_pixel);
++        assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,4,0,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::BeginScene(&mut ctx,dev),D3D_OK);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::DrawPrimitive_stdcall),vec![dev,4,0,1]);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);assert_eq!(ctx.cpu.regs.esp,original_sp); // Native host has no GPU; packet reached its real boundary.
++        assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,6,0,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,4,u32::MAX,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::DrawIndexedPrimitive(&mut ctx,dev,4,0,0,3,u32::MAX,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::EndScene(&mut ctx,dev),D3D_OK);
 +        assert_eq!(buffers::Release(&mut ctx,vb),0);assert_eq!(buffers::Release(&mut ctx,ib),0);
 +        assert_ne!(ctx.memory.read::<u32>(vb),0); // bindings keep storage alive
 +        assert_eq!(IDirect3DDevice9::GetStreamSource(&mut ctx,dev,0,0x1200,0x1204,0x1208),D3D_OK);
@@ -602,10 +606,10 @@ index 0000000..07b8902
 +}
 diff --git a/win32/winapi/src/d3d9/buffers.rs b/win32/winapi/src/d3d9/buffers.rs
 new file mode 100644
-index 0000000..36abbb3
+index 0000000..5073f2f
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/buffers.rs
-@@ -0,0 +1,455 @@
+@@ -0,0 +1,460 @@
 +//! Vertex/index buffer COM storage with persistent guest lock memory.
 +use super::*;
 +#[derive(Clone)]
@@ -1061,12 +1065,17 @@ index 0000000..36abbb3
 +        BUFFERS.lock().unwrap().remove(&this);
 +    }
 +}
++pub(super) fn draw_handle(this:u32)->Option<u32>{let b=buffer(this);if b.locked.is_some(){None}else{Some(b.gpu)}}
++pub(super) fn index_range(ctx:&Context,this:u32,first:u32,count:u32,base:i32,min:u32,num:u32)->Option<u32>{
++ let b=buffer(this);if b.kind!=7||b.locked.is_some(){return None}let width=if b.format==101{2}else{4};if (first as u64+count as u64)*width as u64>b.size as u64{return None}let mut max=0;
++ for i in 0..count{let at=b.data+(first+i)*width;let index=if width==2{ctx.memory.read::<u16>(at)as u32}else{ctx.memory.read::<u32>(at)};if index<min||index as u64>=min as u64+num as u64{return None}let vertex=index as i64+base as i64;if vertex<0||vertex>u32::MAX as i64{return None}max=max.max(vertex as u32)}Some(max)
++}
 diff --git a/win32/winapi/src/d3d9/constants.rs b/win32/winapi/src/d3d9/constants.rs
 new file mode 100644
-index 0000000..49c5d7a
+index 0000000..993ab95
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/constants.rs
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,164 @@
 +//! D3D9 shader register state. Float/int registers preserve all input bits.
 +use super::*;
 +#[derive(Clone, Copy)]
@@ -1230,12 +1239,13 @@ index 0000000..49c5d7a
 +        );
 +    }
 +}
++impl Registers{pub fn draw_words(&self,out:&mut Vec<u32>){out.extend_from_slice(&self.vertex.floats);out.extend_from_slice(&self.vertex.ints);out.extend_from_slice(&self.vertex.bools);out.extend_from_slice(&self.pixel.floats[..128]);out.extend_from_slice(&self.pixel.ints);out.extend_from_slice(&self.pixel.bools);}}
 diff --git a/win32/winapi/src/d3d9/declaration.rs b/win32/winapi/src/d3d9/declaration.rs
 new file mode 100644
-index 0000000..88ffc7f
+index 0000000..a00bc83
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/declaration.rs
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,233 @@
 +//! Owned copies of D3DVERTEXELEMENT9 arrays. Conversion at draw time is separate.
 +use super::*;
 +#[derive(Clone)]
@@ -1468,12 +1478,13 @@ index 0000000..88ffc7f
 +        assert!(parse(&ctx, 0x2ffc).is_none());
 +    }
 +}
++pub(super) fn draw_bytes(this:u32)->Vec<u8>{DECLARATIONS.lock().unwrap().get(&this).expect("invalid draw declaration").bytes.clone()}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..f5a0a4a
+index 0000000..d2e52c8
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,249 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
@@ -1629,8 +1640,10 @@ index 0000000..f5a0a4a
 +pub fn GetSoftwareVertexProcessing_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSoftwareVertexProcessing",1)}
 +pub fn SetNPatchMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetNPatchMode",2)}
 +pub fn GetNPatchMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetNPatchMode",1)}
-+pub fn DrawPrimitive_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawPrimitive",4)}
-+pub fn DrawIndexedPrimitive_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitive",7)}
++#[win32_derive::dllexport]
++pub fn DrawPrimitive(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32)->u32{draw(ctx,this,kind,first,primitives,None)}
++#[win32_derive::dllexport]
++pub fn DrawIndexedPrimitive(ctx:&mut Context,this:u32,kind:u32,base:i32,min:u32,num:u32,first:u32,primitives:u32)->u32{draw(ctx,this,kind,first,primitives,Some((base,min,num)))}
 +pub fn DrawPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawPrimitiveUP",5)}
 +pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitiveUP",9)}
 +pub fn ProcessVertices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ProcessVertices",7)}
@@ -1709,12 +1722,24 @@ index 0000000..f5a0a4a
 +pub fn DrawTriPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawTriPatch",4)}
 +pub fn DeletePatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DeletePatch",2)}
 +pub fn CreateQuery_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateQuery",3)}
++
++fn draw(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>)->u32{
++ let d=device(this);if !d.scene||d.declaration==0||d.shaders.contains(&0){return D3DERR_INVALIDCALL}
++ let factor=match kind{1=>1,2=>2,4=>3,_=>return D3DERR_INVALIDCALL};let Some(count)=primitives.checked_mul(factor)else{return D3DERR_INVALIDCALL};if count==0||count>1048576{return D3DERR_INVALIDCALL}
++ let (index,base,max)=if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
++ let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
++ let mut words=vec![0x39445244,super::shader::gpu_handle(d.shaders[0]),super::shader::gpu_handle(d.shaders[1]),kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
++ for stream in d.streams{let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
++ for(k,v)in states{words.extend_from_slice(&[k,v])}for chunk in declaration.chunks_exact(4){words.push(u32::from_le_bytes(chunk.try_into().unwrap()))}d.constants.lock().unwrap().draw_words(&mut words);
++ // The Vec is already in WASM linear memory; its pointer is not a guest address.
++ let result=host::graphics_call(13,&[d.backend,words.as_ptr()as usize as u32,words.len()as u32*4]);if result==1{D3D_OK}else{result}
++}
 diff --git a/win32/winapi/src/d3d9/shader.rs b/win32/winapi/src/d3d9/shader.rs
 new file mode 100644
-index 0000000..fa932c8
+index 0000000..ca269e5
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/shader.rs
-@@ -0,0 +1,296 @@
+@@ -0,0 +1,297 @@
 +//! Shader COM objects retain original bytecode; GPU translation occurs on draw.
 +use super::*;
 +#[derive(Clone)]
@@ -2011,6 +2036,7 @@ index 0000000..fa932c8
 +        assert!(bytecode(&ctx, 0x1000, 0).is_none());
 +    }
 +}
++pub(super) fn gpu_handle(this:u32)->u32{shader(this).gpu}
 diff --git a/win32/winapi/src/d3d9/surface.rs b/win32/winapi/src/d3d9/surface.rs
 new file mode 100644
 index 0000000..a7a9ee7

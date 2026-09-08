@@ -1,3 +1,4 @@
+import {testDrawPackets} from './draw-test.js';
 import {TextureStorage} from './gpu-textures.js';
 import {SamplerCache,defaultSampler} from './d3d9-samplers.js';
 import {PipelineCache} from './d3d9-pipelines.js';
@@ -31,7 +32,7 @@ document.getElementById('run').onclick=async()=>{
   try{tr.translatePair(vs.slice(0,7),ps);throw Error('malformed bytecode accepted');}catch(e){if(!String(e).includes('invalid DX9 bytecode length'))throw e;report.checks.push('misaligned/truncated bytecode rejected');}
   const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('no GPU adapter');
   report.adapter={vendor:adapter.info.vendor,architecture:adapter.info.architecture,isFallbackAdapter:adapter.info.isFallbackAdapter};
-  device=await adapter.requestDevice({requiredFeatures:adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[]});report.samplers=await testSamplers(device);report.textures=await testTextures(device);report.geometryBuffers=await testGeometryBuffers(device);const errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+  device=await adapter.requestDevice({requiredFeatures:adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[]});report.drawPackets=await testDrawPackets(device,tr,vs,ps);report.samplers=await testSamplers(device);report.textures=await testTextures(device);report.geometryBuffers=await testGeometryBuffers(device);const errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
   device.pushErrorScope('validation');
   const modules=[shaders.vertex,shaders.pixel].map(s=>device.createShaderModule({code:s.wgsl}));
   for(const mod of modules){const info=await mod.getCompilationInfo();if(info.messages.some(m=>m.type==='error'))throw Error(JSON.stringify(info.messages));}
@@ -84,7 +85,7 @@ document.getElementById('run').onclick=async()=>{
   report.indexedGeometry={result:'passed',indexCount:3,indexFormat:'uint16',source:'GeometryBuffers shared-memory uploads',HumusFrames:0};
   report.checks.push('indexed draw consumed persistent vertex/index buffers','browser WGSL compilation and pipeline validation passed','GPU draw completed; sampled interpolated color matched');
   report.deviceBridge=await testDeviceBridge();
-  report.diagnosticDraws=2+report.alphaStencil.draws+report.shaderConstants.draws+report.compactInputs.draws;report.result='passed';geometry.dispose();target.destroy();read.destroy();
+  report.diagnosticDraws=2+report.drawPackets.draws+report.alphaStencil.draws+report.shaderConstants.draws+report.compactInputs.draws;report.result='passed';geometry.dispose();target.destroy();read.destroy();
  }catch(e){report.result='failed';report.error=String(e.stack??e);}
  finally{device?.destroy();status.textContent=JSON.stringify(report,null,2);const session=await(await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.token,report})});}
 };

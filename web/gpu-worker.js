@@ -1,3 +1,4 @@
+import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
 import {TextureStorage} from './gpu-textures.js';
 import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
@@ -52,7 +53,7 @@ async function graphics(op,a,memory){
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
- if(op===2){backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
+ if(op===2){backend.draws?.dispose();backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
   const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
@@ -92,6 +93,9 @@ async function graphics(op,a,memory){
    if(op===12&&a.length===2){backend.textures.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ if(op===13&&a.length===3){
+  try{if(!backend.shaders)return INVALID;const packet=decodeDraw(memory,a[1],a[2]);backend.draws??=new DrawRenderer(device,backend);device.pushErrorScope('validation');try{await backend.draws.draw(packet)}finally{const error=await device.popErrorScope();if(error)throw Error(error.message)}emit('gpu-submission',{kind:'draw',count:++backend.submissions,sceneFrames:0});return 1;}catch(e){emit('draw-rejected',{message:String(e)});return INVALID;}
  }
  throw Error('unsupported graphics opcode '+op);
 }
