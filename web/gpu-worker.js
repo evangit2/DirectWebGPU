@@ -1,3 +1,4 @@
+import {captureDraw} from './draw-diagnostic.js';
 import {deviceCaps,supportsFormat} from './d3d9-caps.js';
 import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
 import {TextureStorage} from './gpu-textures.js';
@@ -6,12 +7,13 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
+let diagnosticDraws=0;
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;
+ canvas=data.canvas;port=data.port;diagnosticDraws=data.drawDiagnostics?3:0;
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
@@ -99,7 +101,7 @@ async function graphics(op,a,memory){
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  if(op===13&&a.length===3){
-  try{if(!backend.shaders)return INVALID;const packet=decodeDraw(memory,a[1],a[2]);backend.draws??=new DrawRenderer(device,backend);device.pushErrorScope('validation');try{await backend.draws.draw(packet)}finally{const error=await device.popErrorScope();if(error)throw Error(error.message)}emit('gpu-submission',{kind:'draw',count:++backend.submissions,sceneFrames:0});return 1;}catch(e){emit('draw-rejected',{message:String(e)});return INVALID;}
+  try{if(!backend.shaders)return INVALID;const packet=decodeDraw(memory,a[1],a[2]);backend.draws??=new DrawRenderer(device,backend);if(diagnosticDraws>0){diagnosticDraws--;emit("draw-diagnostic",{sample:await captureDraw(device,backend,packet)});}device.pushErrorScope('validation');try{await backend.draws.draw(packet)}finally{const error=await device.popErrorScope();if(error)throw Error(error.message)}emit('gpu-submission',{kind:'draw',count:++backend.submissions,sceneFrames:0});return 1;}catch(e){emit('draw-rejected',{message:String(e)});return INVALID;}
  }
  throw Error('unsupported graphics opcode '+op);
 }
