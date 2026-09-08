@@ -71,28 +71,36 @@ index 92da1ea..443e1fb 100644
 +    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
 +}
 diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
-index c6a4023..824c005 100644
+index c6a4023..79d2e62 100644
 --- a/runtime/src/fpu.rs
 +++ b/runtime/src/fpu.rs
-@@ -18,6 +18,8 @@ pub struct FPU {
+@@ -18,6 +18,11 @@ pub struct FPU {
      pub st_top: usize,
      /// The result of the last fcmp, used to generate status word.
      pub cmp: std::cmp::Ordering,
 +    unordered: bool,
 +    invalid: bool,
++    status_extra: u16,
++    pub instruction: (u32, u16, u16),
++    pub operand: (u32, u16),
      /// Control word, as managed by fldcw/fnstcw. We only round-trip the value;
      /// precision/rounding control bits are not honored.
      pub control: u16,
-@@ -29,6 +31,8 @@ impl Default for FPU {
+@@ -28,7 +33,12 @@ impl Default for FPU {
+         Self {
              st: [0.; 8],
              st_top: 8,
-             cmp: std::cmp::Ordering::Equal,
+-            cmp: std::cmp::Ordering::Equal,
++            cmp: std::cmp::Ordering::Greater,
 +            unordered: false,
 +            invalid: false,
++            status_extra: 0,
++            instruction: (0, 0, 0),
++            operand: (0, 0),
              control: 0x037f,
          }
      }
-@@ -91,21 +95,112 @@ impl FPU {
+@@ -91,21 +101,277 @@ impl FPU {
          self.st[self.st_offset(ofs)] = val;
      }
  
@@ -110,6 +118,7 @@ index c6a4023..824c005 100644
 +    }
 +    pub fn clear_exceptions(&mut self) {
 +        self.invalid = false;
++        self.status_extra &= !0x80ff;
 +    }
      pub fn status(&self) -> u16 {
 -        let status = match self.cmp {
@@ -127,7 +136,7 @@ index c6a4023..824c005 100644
          };
          // Our status register impl doesn't include st_top so include it here.
 -        let mut status = status.bits();
-+        let mut status = status.bits() | u16::from(self.invalid);
++        let mut status = status.bits() | u16::from(self.invalid) | self.status_extra;
          status |= (self.st_top as u16 & 0b111) << 11;
          status
      }
@@ -208,6 +217,170 @@ index c6a4023..824c005 100644
 +        f.push(1.0);
 +        f.push(-1.0);
 +        f.log2_multiply_pop();
++    }
++}
++
++// FSAVE/FRSTOR image: Intel SDM volume 1, figure 8-9. Arithmetic remains f64.
++fn encode80(v: f64) -> [u8; 10] {
++    let bits = v.to_bits();
++    let sign = ((bits >> 63) as u16) << 15;
++    let exp = ((bits >> 52) & 0x7ff) as i32;
++    let frac = bits & 0x000fffffffffffff;
++    let (mant, e) = if exp == 0 {
++        if frac == 0 {
++            (0, 0)
++        } else {
++            let n = 63 - frac.leading_zeros();
++            (frac << (63 - n), (n as i32 - 1074 + 16383) as u16)
++        }
++    } else if exp == 2047 {
++        ((1u64 << 63) | (frac << 11), 0x7fff)
++    } else {
++        (((1u64 << 52) | frac) << 11, (exp - 1023 + 16383) as u16)
++    };
++    let mut out = [0; 10];
++    out[..8].copy_from_slice(&mant.to_le_bytes());
++    out[8..].copy_from_slice(&(sign | e).to_le_bytes());
++    out
++}
++fn decode80(v: [u8; 10]) -> f64 {
++    let mant = u64::from_le_bytes(v[..8].try_into().unwrap());
++    let se = u16::from_le_bytes(v[8..].try_into().unwrap());
++    let e = se & 0x7fff;
++    let sign = u64::from(se >> 15) << 63;
++    let value = if e == 0 && mant == 0 {
++        f64::from_bits(sign)
++    } else if e == 0x7fff {
++        assert!(
++            mant >> 63 == 1 && mant & 2047 == 0,
++            "unsupported extended x87 NaN encoding"
++        );
++        f64::from_bits(sign | 0x7ff0000000000000 | ((mant & 0x7fffffffffffffff) >> 11))
++    } else {
++        assert!(
++            e != 0 && mant >> 63 == 1,
++            "unsupported extended x87 denormal/unnormal"
++        );
++        let power = i32::from(e) - 16383;
++        assert!(
++            (-1074..=1023).contains(&power),
++            "unsupported extended x87 exponent"
++        );
++        let magnitude = (mant as f64 / 9223372036854775808.0) * 2.0f64.powi(power.max(-1022));
++        let magnitude = if power < -1022 {
++            magnitude * 2.0f64.powi(power + 1022)
++        } else {
++            magnitude
++        };
++        f64::from_bits(magnitude.to_bits() | sign)
++    };
++    assert_eq!(encode80(value), v, "unsupported x87 precision beyond f64");
++    value
++}
++impl FPU {
++    pub fn save_image32(&self) -> [u8; 108] {
++        let mut b = [0u8; 108];
++        b[0..2].copy_from_slice(&self.control.to_le_bytes());
++        b[4..6].copy_from_slice(&self.status().to_le_bytes());
++        let mut tags = 0u16;
++        for i in 0..8 {
++            let v = self.st[i];
++            let tag = if i < self.st_top {
++                3
++            } else if v == 0.0 {
++                1
++            } else if !v.is_finite() {
++                2
++            } else {
++                0
++            };
++            tags |= tag << (2 * i);
++        }
++        b[8..10].copy_from_slice(&tags.to_le_bytes());
++        b[12..16].copy_from_slice(&self.instruction.0.to_le_bytes());
++        b[16..18].copy_from_slice(&self.instruction.1.to_le_bytes());
++        b[18..20].copy_from_slice(&self.instruction.2.to_le_bytes());
++        b[20..24].copy_from_slice(&self.operand.0.to_le_bytes());
++        b[24..26].copy_from_slice(&self.operand.1.to_le_bytes());
++        for i in 0..8 {
++            b[28 + i * 10..38 + i * 10].copy_from_slice(&encode80(self.st[(self.st_top + i) & 7]));
++        }
++        b
++    }
++    pub fn restore_image32(&mut self, b: [u8; 108]) {
++        let word = |o| u16::from_le_bytes(b[o..o + 2].try_into().unwrap());
++        let dword = |o| u32::from_le_bytes(b[o..o + 4].try_into().unwrap());
++        let status = word(4);
++        let tags = word(8);
++        let top = usize::from((status >> 11) & 7);
++        let mut f = Self::default();
++        f.control = word(0);
++        assert_eq!(
++            status & !f.control & 0x3f,
++            0,
++            "unsupported restored unmasked x87 exception"
++        );
++        f.st_top = if tags == 0xffff && top == 0 { 8 } else { top };
++        for i in 0..8 {
++            assert_eq!(
++                (tags >> (2 * i)) & 3 == 3,
++                i < f.st_top,
++                "unsupported noncontiguous restored x87 stack"
++            );
++        }
++        f.invalid = status & 1 != 0;
++        f.unordered = status & 0x4500 == 0x4500;
++        f.cmp = if status & 0x4000 != 0 {
++            std::cmp::Ordering::Equal
++        } else if status & 0x100 != 0 {
++            std::cmp::Ordering::Less
++        } else {
++            std::cmp::Ordering::Greater
++        };
++        f.status_extra = status & !0x7d01;
++        f.instruction = (dword(12), word(16), word(18) & 0x7ff);
++        f.operand = (dword(20), word(24));
++        for i in 0..8 {
++            f.st[(top + i) & 7] = decode80(b[28 + i * 10..38 + i * 10].try_into().unwrap());
++        }
++        *self = f;
++    }
++}
++#[cfg(test)]
++mod state_tests {
++    use super::*;
++    #[test]
++    fn extended_encoding_and_save_layout() {
++        for bits in [
++            0,
++            1,
++            0x8000000000000000,
++            0x3ff0000000000000,
++            0x4008000000000000,
++            0x7fefffffffffffff,
++            0x0010000000000000,
++            0x000fffffffffffff,
++            0x7ff0000000000000,
++            0x7ff8000000000001,
++        ] {
++            assert_eq!(decode80(encode80(f64::from_bits(bits))).to_bits(), bits);
++        }
++        assert_eq!(encode80(1.0), [0, 0, 0, 0, 0, 0, 0, 128, 255, 63]);
++        let mut f = FPU::default();
++        assert_eq!(f.status(), 0);
++        f.push(3.0);
++        f.push(-0.0);
++        f.compare(1.0, 2.0, true);
++        f.instruction = (0x421000, 0x1b, 0x123);
++        f.operand = (0x12000, 0x23);
++        let image = f.save_image32();
++        assert_eq!(u16::from_le_bytes(image[8..10].try_into().unwrap()), 0x1fff);
++        assert_eq!(&image[28..38], &encode80(-0.0));
++        assert_eq!(&image[38..48], &encode80(3.0));
++        let mut g = FPU::default();
++        g.restore_image32(image);
++        assert_eq!(g.save_image32(), image);
++        assert_eq!(g.get(1), 3.0);
 +    }
 +}
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
@@ -407,10 +580,41 @@ index caf0159..dbb6365 100644
                  let (None, None, cont) = self.jmp_target(instr) else {
                      panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
-index 3746d0c..c7e0fa8 100644
+index 3746d0c..88ca609 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
-@@ -85,6 +85,11 @@ impl<'a> CodeGen<'a> {
+@@ -71,6 +71,30 @@ impl<'a> CodeGen<'a> {
+ 
+     pub fn codegen_fpu(&mut self, instr: &iced_x86::Instruction) -> bool {
+         use iced_x86::Mnemonic::*;
++        if format!("{:?}", instr.mnemonic()).starts_with('F')
++            && !matches!(
++                instr.mnemonic(),
++                Fnclex | Fninit | Fnstsw | Fnstcw | Fldcw | Fnsave | Frstor | Fnstenv | Fldenv
++            )
++            && self.module.bitness() == 32
++        {
++            let bytes = self.mem.slice(instr.ip32(), instr.len() as u32);
++            if let Some(i) = bytes.iter().position(|b| (0xd8..=0xdf).contains(b)) {
++                let opcode = (u16::from(bytes[i] & 7) << 8) | u16::from(bytes[i + 1]);
++                self.line(format!(
++                    "ctx.cpu.fpu.instruction = ({}, ctx.cpu.regs.cs, {});",
++                    instr.ip32(),
++                    opcode
++                ));
++                if (0..instr.op_count()).any(|n| instr.op_kind(n) == iced_x86::OpKind::Memory) {
++                    self.line(format!(
++                        "ctx.cpu.fpu.operand = ({}, {});",
++                        self.gen_addr(instr),
++                        crate::codegen::get_reg(instr.memory_segment())
++                    ));
++                }
++            }
++        }
+         match instr.mnemonic() {
+             Fld => {
+                 let expr = self.fpu_get_op(instr, 0);
+@@ -85,6 +109,11 @@ impl<'a> CodeGen<'a> {
              }
              Fldz => self.line("ctx.cpu.fpu.push(0.0);"),
              Fld1 => self.line("ctx.cpu.fpu.push(1.0);"),
@@ -422,7 +626,7 @@ index 3746d0c..c7e0fa8 100644
  
              Fst | Fstp => {
                  self.line(self.fpu_set_op(instr, 0, self.fpu_get_reg(0)));
-@@ -166,6 +171,10 @@ impl<'a> CodeGen<'a> {
+@@ -166,6 +195,10 @@ impl<'a> CodeGen<'a> {
                  ));
              }
  
@@ -433,7 +637,7 @@ index 3746d0c..c7e0fa8 100644
              Fchs => {
                  self.line(self.fpu_set_reg(0, format!("-{}", self.fpu_get_reg(0))));
              }
-@@ -187,17 +196,23 @@ impl<'a> CodeGen<'a> {
+@@ -187,17 +220,23 @@ impl<'a> CodeGen<'a> {
                  self.line(self.fpu_set_op(instr, 1, "t".into()));
              }
  
@@ -461,7 +665,7 @@ index 3746d0c..c7e0fa8 100644
                      self.line("ctx.cpu.fpu.pop();");
                  }
              }
-@@ -207,14 +222,15 @@ impl<'a> CodeGen<'a> {
+@@ -207,14 +246,15 @@ impl<'a> CodeGen<'a> {
                  self.line(self.set_op(instr, 0, "ctx.cpu.fpu.status()".into()));
              }
  
@@ -481,10 +685,26 @@ index 3746d0c..c7e0fa8 100644
              }
  
              Fnstcw => {
-@@ -227,6 +243,8 @@ impl<'a> CodeGen<'a> {
+@@ -227,6 +267,24 @@ impl<'a> CodeGen<'a> {
                  self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
              }
  
++            Fnsave | Frstor => {
++                if self.module.bitness() != 32 || instr.memory_size().size() != 108 {
++                    return false;
++                }
++                let addr = self.gen_addr(instr);
++                if instr.mnemonic() == Fnsave {
++                    self.line(format!(
++                        "ctx.memory.write::<[u8;108]>({addr}, ctx.cpu.fpu.save_image32());"
++                    ));
++                    self.line("ctx.cpu.fpu = Default::default();");
++                } else {
++                    self.line(format!(
++                        "ctx.cpu.fpu.restore_image32(ctx.memory.read::<[u8;108]>({addr}));"
++                    ));
++                }
++            }
 +            Fyl2x => self.line("ctx.cpu.fpu.log2_multiply_pop();"),
 +
              Fpatan => {
