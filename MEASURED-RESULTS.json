@@ -156,7 +156,7 @@
     "diagnosticAttemptDurationMs": 63725.97499990463,
     "diagnosticTimingCaveat": "one debug/traced run; may include opt-in GPU readback captures; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "Complete scene alpha/stencil correctness validation and measure cold/warm startup, steady-state delivery, memory and stability.",
+  "Exact remaining blocker": "Complete alpha/stencil scene validation, repeated cold/warm startup and stability measurements, and batch graphics RPCs. Exploratory optimized run measured 1.73-second first Present and 74.12 Present submissions/s at 800x600.",
   "Terminal runtime diagnostic": null,
   "Original application rejection": null,
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
@@ -888,5 +888,103 @@
       "earlierWTest": "no movement; binary defaults use Arrow Up"
     }
   },
-  "evidenceFile": "evidence/browser-direct3d-attempt.json"
+  "evidenceFile": "evidence/browser-direct3d-attempt.json",
+  "Performance evidence from separate runs": {
+    "status": "exploratory debug/release comparison; three cold/warm trials incomplete",
+    "debug": {
+      "status": "single debug baseline; required three cold/warm trials incomplete",
+      "runId": "7af38b2f-213d-4486-bb7b-4b81904eee33",
+      "revision": "98ba41b43985531abd6329fe4ae29e7060976afe",
+      "profile": "debug",
+      "resolution": [
+        800,
+        600
+      ],
+      "firstPresentMs": 45558.669921875,
+      "submissionFPS": 29.483621746706373,
+      "frameTimeMs": {
+        "p50": 33.369873046875,
+        "p95": 37.2451171875,
+        "p99": 42.429931640625,
+        "min": 30.375,
+        "max": 101.7998046875
+      },
+      "steadyIntervals": 1599,
+      "steadyDurationMs": 54233.5,
+      "applicationPresents": 1762,
+      "captureEnabled": false,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "workerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 20387907,
+        "encodedBodySize": 20381907,
+        "decodedBodySize": 20381907,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "limitations": [
+        "First Present is not independently timed first correct scene in this run",
+        "One uncached network trial; browser compilation/OS cache state uncontrolled",
+        "No display scan-out FPS or shader execution timing",
+        "JS heap and driver allocation totals unavailable",
+        "No prolonged stability result; run ended normally after 60 seconds of presentation"
+      ],
+      "rawEvidence": "evidence/performance-baseline.json",
+      "debugArtifacts": "web/generated/debug-baseline-98ba41b (local ignored artifacts with preserved hash manifest)"
+    },
+    "release": {
+      "runId": "0b7223b0-fe04-4d2a-8c81-7d8125cd6921",
+      "revision": "f0bbfc0dd3efea09e026bbcb83c7415dc26bfb90",
+      "profile": "release",
+      "resolution": [
+        800,
+        600
+      ],
+      "firstPresentMs": 1728.445068359375,
+      "submissionFPS": 74.1245359985557,
+      "frameTimeMs": {
+        "p50": 13.429931640625,
+        "p95": 14.72021484375,
+        "p99": 21.114990234375,
+        "min": 8.985107421875,
+        "max": 53.6298828125
+      },
+      "steadyIntervals": 4070,
+      "steadyDurationMs": 54907.594970703125,
+      "applicationPresents": 4446,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "wasmArtifactBytes": 22612475,
+      "workerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 24683132,
+        "encodedBodySize": 24677132,
+        "decodedBodySize": 24677132,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "measurementReview": {
+        "profile": "release",
+        "trialClass": "exploratory single uncached trial",
+        "externalCapture": "One CUA UI screenshot during run; repeat without screenshots for formal series",
+        "visualInspection": "Recognizable original pillar room and colored lighting observed"
+      },
+      "rawEvidence": "evidence/performance-release.json"
+    },
+    "limitations": [
+      "One trial per build; no browser/OS cache reset or formal warm-cache mode",
+      "Present submissions are not display refresh FPS",
+      "First Present timing is not an independently captured first correct scene timestamp",
+      "One UI screenshot in exploratory release run",
+      "Memory categories overlap or omit driver allocations; no exact total",
+      "1280x720 and long stability not measured"
+    ]
+  }
 }

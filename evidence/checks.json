@@ -721,5 +721,23 @@
       "limitation": "State trace proves submitted state, not all resulting scene pixels"
     },
     "earlierWTest": "no movement; binary defaults use Arrow Up"
+  },
+  "presentationMetrics": {
+    "revision": "98ba41b",
+    "unitTest": "scripts/test_presentation_metrics.mjs passed: warmup exclusion, percentiles, rate, bounded 8192 samples",
+    "debugRunId": "7af38b2f-213d-4486-bb7b-4b81904eee33",
+    "releaseRevision": "f0bbfc0",
+    "releaseBuild": "passed",
+    "releaseRunId": "0b7223b0-fe04-4d2a-8c81-7d8125cd6921",
+    "releaseVisualInspection": "Original textured pillar room and colored lights visible in CUA screenshot",
+    "errors": [],
+    "limitations": [
+      "One trial per build; no browser/OS cache reset or formal warm-cache mode",
+      "Present submissions are not display refresh FPS",
+      "First Present timing is not an independently captured first correct scene timestamp",
+      "One UI screenshot in exploratory release run",
+      "Memory categories overlap or omit driver allocations; no exact total",
+      "1280x720 and long stability not measured"
+    ]
   }
 }
