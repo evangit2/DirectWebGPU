@@ -1020,7 +1020,7 @@ index c5eb4fc..b56cafb 100644
 +    panic!("unsupported API: shell32!SHGetSpecialFolderPathA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
 diff --git a/win32/winapi/src/user32/message.rs b/win32/winapi/src/user32/message.rs
-index fcb31c4..48e8e8d 100644
+index fcb31c4..f2e0538 100644
 --- a/win32/winapi/src/user32/message.rs
 +++ b/win32/winapi/src/user32/message.rs
 @@ -180,6 +180,13 @@ pub fn WaitMessage(_ctx: &mut Context) -> bool {
@@ -1037,6 +1037,50 @@ index fcb31c4..48e8e8d 100644
      fn paint_msg(&self) -> Option<MSG> {
          let window = self.window.as_ref()?.borrow();
          if !window.dirty {
+@@ -318,14 +325,16 @@ pub fn DispatchMessageA(ctx: &mut Context, lpMsg: Ptr<MSG>) -> u32 {
+ 
+ #[win32_derive::dllexport]
+ pub fn DispatchMessageW(ctx: &mut Context, lpMsg: Ptr<MSG>) -> u32 {
+-    let wndproc = state().wndclass.borrow().as_ref().unwrap().wndproc.clone();
+     let msg = lpMsg.read(&ctx.memory).unwrap();
++    // Thread messages (including WM_QUIT) have no window procedure.
++    if msg.hwnd.is_null() { return 0; }
++    let wndproc = state().wndclass.borrow().as_ref().unwrap().wndproc.clone();
+     // WNDPROC
+     ctx.call32_x86(
+         wndproc,
+         vec![msg.hwnd.to_raw(), msg.message, msg.wParam, msg.lParam],
+     );
+-    0
++    ctx.cpu.regs.eax
+ }
+ 
+ #[win32_derive::dllexport]
+@@ -490,3 +499,24 @@ pub fn SendMessageW(
+ ) -> u32 {
+     todo!()
+ }
++
++#[cfg(test)]
++mod lifecycle_tests {
++    use super::*;
++
++    #[test]
++    fn detached_window_messages_do_not_hide_thread_quit() {
++        let hwnd = HWND::from_raw(1);
++        let message = |hwnd, message| MSG {
++            hwnd, message, wParam: 0, lParam: 0, time: 0, pt: POINT::default(),
++        };
++        let mut queue = MessageQueue::default();
++        queue.messages.push_back(message(hwnd, WM::PAINT as u32));
++        queue.messages.push_back(message(HWND::null(), 0x400));
++        queue.quit = Some(message(HWND::null(), WM::QUIT as u32));
++        queue.detach_window(hwnd);
++        assert_eq!(queue.pop().unwrap().message, 0x400);
++        assert_eq!(queue.pop().unwrap().message, WM::QUIT as u32);
++        assert!(queue.pop().is_none());
++    }
++}
 diff --git a/win32/winapi/src/user32/mod.rs b/win32/winapi/src/user32/mod.rs
 index c0ace47..313e3f1 100644
 --- a/win32/winapi/src/user32/mod.rs
