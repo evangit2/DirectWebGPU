@@ -1,11 +1,11 @@
 // Reusable bytecode translator. No application-specific shaders or geometry.
 import createMojo from './generated/mojoshader.js';
-import initNaga,{spirv_to_wgsl,alpha_test_wgsl} from './generated/shader_translation.js';
+import initNaga,{spirv_to_wgsl,alpha_test_wgsl,vertex_inputs_wgsl} from './generated/shader_translation.js';
 let initialized;
 export async function createShaderTranslator(){
  initialized??=Promise.all([createMojo(),initNaga()]);
  const [mojo]=await initialized;
- return {alphaTest:alpha_test_wgsl,translatePair(vertex,pixel){
+ return {vertexInputs:vertex_inputs_wgsl,alphaTest:alpha_test_wgsl,translatePair(vertex,pixel){
   for(const input of [vertex,pixel])if(!(input instanceof Uint8Array)||input.length<8||input.length>1048576||input.length%4)throw Error('invalid DX9 bytecode length');
   let vp=0,pp=0;
   try{

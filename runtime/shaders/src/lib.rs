@@ -39,3 +39,8 @@ mod alpha_test;
 pub fn alpha_test_wgsl(source: &str, compare: u32, reference: u32) -> Result<String, String> {
     alpha_test::apply(source, compare, reference)
 }
+mod vertex_inputs;
+#[wasm_bindgen]
+pub fn vertex_inputs_wgsl(source: &str, widths: &[u32]) -> Result<String, String> {
+    vertex_inputs::apply(source, widths)
+}

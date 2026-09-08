@@ -13,10 +13,15 @@ export function vertexLayout(bytes,inputs,streams){
  for(const input of inputs){
   if(!Number.isInteger(input.location)||input.location<0||input.location>=16||locations.has(input.location))throw Error('invalid shader input location');locations.add(input.location);
   const e=elements.get(input.usage+':'+input.index);if(!e)throw Error('declaration missing shader semantic '+input.usage+':'+input.index);
-  if(e.type!==3)throw Error('FLOAT1..FLOAT3 shader input expansion not implemented');
-  const stride=streams[e.stream]?.stride;if(!Number.isInteger(stride)||stride<e.offset+16||stride>2048||stride%4)throw Error('invalid vertex stream stride');
+  const stride=streams[e.stream]?.stride;if(!Number.isInteger(stride)||stride<e.offset+4*(e.type+1)||stride>2048||stride%4)throw Error('invalid vertex stream stride');
   if(!groups.has(e.stream))groups.set(e.stream,{stream:e.stream,arrayStride:stride,stepMode:'vertex',attributes:[]});
-  groups.get(e.stream).attributes.push({shaderLocation:input.location,offset:e.offset,format:'float32x4'});
+  groups.get(e.stream).attributes.push({shaderLocation:input.location,offset:e.offset,format:e.type===0?'float32':'float32x'+(e.type+1)});
  }
  return [...groups.values()].sort((a,b)=>a.stream-b.stream);
+}
+
+export function vertexWidths(layout){
+ const widths=new Uint32Array(16);
+ for(const group of layout)for(const a of group.attributes)widths[a.shaderLocation]=a.format==='float32'?1:Number(a.format.at(-1));
+ return widths;
 }

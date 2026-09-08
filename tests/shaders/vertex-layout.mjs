@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {vertexLayout} from '../../web/vertex-layout.js';
+import {vertexLayout,vertexWidths} from '../../web/vertex-layout.js';
 const bytes=new Uint8Array([2,0,16,0,3,0,10,0, 0,0,0,0,3,0,0,0, 255,0,0,0,17,0,0,0]);
 const inputs=[{usage:0,index:0,location:0},{usage:10,index:0,location:9}],streams=[{stride:16},null,{stride:32}];
 const layout=vertexLayout(bytes,inputs,streams);
@@ -7,5 +7,5 @@ assert.equal(layout[0].stream,0);assert.equal(layout[1].stream,2);assert.deepEqu
 assert.throws(()=>vertexLayout(bytes,[{usage:5,index:0,location:1}],streams),/missing shader semantic/);
 assert.throws(()=>vertexLayout(bytes,inputs,[{stride:16},null,{stride:16}]),/stride/);
 assert.throws(()=>vertexLayout(bytes.slice(0,16),inputs,streams),/terminator/);
-const short=bytes.slice();short[4]=2;assert.throws(()=>vertexLayout(short,inputs,streams),/expansion not implemented/);
-console.log('PASS: semantic matching across reordered declarations and sparse streams; missing semantics, short strides and unsupported expansion rejected');
+const short=bytes.slice();short[4]=2;assert.equal(vertexWidths(vertexLayout(short,inputs,streams))[9],3);
+console.log('PASS: semantic matching across reordered declarations and sparse streams; missing semantics, short strides and compact widths mapped');
