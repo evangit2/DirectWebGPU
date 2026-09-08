@@ -7,7 +7,7 @@ Evidence source: original archive from https://humus.name/index.php?ID=50&page=3
 | Win32 | 6 imported DLLs; kernel32/user32/advapi32/shell32/gdi32/d3d9 | Reused subset with known incomplete upstream stubs; no claim of full compatibility; explicit new missing-import traps |
 | Heap | Original model preparation repeatedly calls HeapReAlloc | Implemented copy/grow/shrink, zero-new bytes and allocation-failure preservation; regression test passes |
 | Virtual display | EnumDisplaySettingsA and CreateWindowExA | Single 1280×720 virtual display; EXE requests an 800×600 window; OffscreenCanvas receives those actual dimensions |
-| Callbacks | RegisterClassA receives original wndproc 0x00409a00 | Callback included in translation inputs; synchronous ANSI NCCREATE/CREATE callbacks execute original code and initialize its HWND; broader lifecycle pending |
+| Callbacks | RegisterClassA receives original wndproc 0x00409a00 | Callback included in translation inputs; synchronous ANSI NCCREATE/CREATE callbacks execute original code and initialize its HWND; synchronous DESTROY/NCDESTROY callbacks and thread WM_QUIT preservation implemented |
 | Registry | RegOpenKeyExA, enumeration, query and writes | Empty isolated registry returns missing-key failure; writes/enumeration not implemented, trap if reached |
 | Timing | QueryPerformanceFrequency/Counter | Monotonic host milliseconds, reported frequency 1000; virtual 1 MHz RDTSC counter. No physical CPU-speed or high-resolution timing claim |
 | Exceptions | SetUnhandledExceptionFilter, RaiseException, RtlUnwind | Filter registration stores/replaces pointer; complete exception dispatch not implemented |
@@ -17,7 +17,7 @@ Evidence source: original archive from https://humus.name/index.php?ID=50&page=3
 | Assets | ../Models/PillarRoom/Map.hmdl; DDS bases/font, PNG normal-height maps/particle, .font | Original directory relationships preserved; browser mounts each integrity-checked file with /DynamicBranching cwd |
 | Geometry | Model upload and indexed draws; DrawPrimitiveUP triangle fans for lights | Required vertex/index buffers, declarations, FVF/fixed-function paths not implemented |
 | Correctness | Ambient/depth first; alpha <255 passes replace stencil with 1; lighting tests stencil==1; additive blending | IR alpha-discard transform and D3D9 state mapping implemented. Diagnostic GPU tests prove LESS255 discard preserves stencil/depth and equality gates additive light. Application integration/reference comparison still pending |
-| Input | PeekMessage/DispatchMessage, keyboard, cursor positioning; settings F1 | Startup subset only; controlled camera acceptance pending |
+| Input | PeekMessage/DispatchMessage, keyboard, cursor positioning; settings F1 | Bounded keyboard/pointer delivery through GPU worker, polling and waiting implemented; controlled camera acceptance pending |
 | WebGPU | Actual adapter/device request with error/loss events | Apple/metal-3 non-fallback adapter observed; original device attachments created; no Humus draw submission |
 | Baseline | No local CheerpX artifacts or verified rendering found | Unavailable; historical Linux initialization is not a performance baseline |
 

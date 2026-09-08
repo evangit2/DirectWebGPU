@@ -11,17 +11,24 @@
   "testLogSha256": {
     "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
     "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b",
-    "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2"
+    "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2",
+    "device-com-tests.log": "a521fa4f12a469c6a908282aee5b2293d0274aa71cbdf317771d6f2f136bf476",
+    "bit-tests.log": "850c28e2e2c49bf126956e93dd08b0afd0b7bc6bae6eded388b8211690c5c65a",
+    "window-lifecycle-tests.log": "e7ad22a1623c42eeb601c7035c93e1787b529766e1e25c8936e7ffccbbc384d4"
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "b2d0952d83898663fcebe321d60c72bc8a1c3cc0",
+  "currentRuntimeRevision": "8502098b255ea3f71f87e26e3aff536f2f7d6256",
   "currentRevisionChecks": {
-    "D3D9 COM identity/lifetime/invalid pointers/stdcall cleanup": "passed: cargo test -p winapi d3d9::tests",
-    "dependency restoration": "passed: all 20 patched files compared byte-for-byte",
-    "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
+    "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
+    "CPU bit-string operations": "passed: evidence/bit-tests.log",
+    "window destruction message retention": "passed: evidence/window-lifecycle-tests.log",
+    "dependency restoration": "passed: all 27 patched files byte-identical",
+    "server bounds and completed-session retirement": "passed: python3 scripts/test_server.py",
     "WASM build": "passed: scripts/build_wasm.sh",
-    "original EXE browser launch": "reached IDirect3D9::GetDeviceCaps; no rendering"
+    "original EXE browser launch": "created validated device; rejected missing PS 2.0/VS 1.1; cleanup trapped at RegCreateKeyExA",
+    "GPU/input diagnostic": "passed: evidence/shader-browser-tests.json; zero Humus frames",
+    "browser Stop control": "passed: UI stopped after active run; both workers terminated by stop handler"
   },
   "shaderMilestone": {
     "revision": "d3548f77aca316a61fbb4b5c04ad4c551b4c8e47",

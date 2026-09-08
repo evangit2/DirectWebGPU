@@ -1,15 +1,15 @@
 {
   "Humus": "failed",
   "Runtime": "Theseus AOT x86 \u2192 Rust \u2192 WASM",
-  "Graphics backend": "WebGPU adapter/device probe only; D3D9 backend not implemented",
+  "Graphics backend": "WebGPU device/attachment backend; D3D9 draw and resource integration incomplete",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Runtime build": {
-    "translatedTreeSha256": "ba3e0b9823ffba9286dbb70d2d5c513edcbde32fbe1c6216fc8c9d00527bb405",
+    "translatedTreeSha256": "13b2dc529f1944ee8e4fabab0f31ac0e95b50541064d5a7ca0b2c1a572dbf1c3",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T14:56:17.096753+00:00",
-    "revision": "66eb417d90116aa9c25c63cf56c4d3b3ba6f9f2d",
+    "builtAt": "2026-09-08T15:37:25.921836+00:00",
+    "revision": "8502098b255ea3f71f87e26e3aff536f2f7d6256",
     "workingTreeDirty": true,
-    "sourceSha256": "57ee6d810a03784075bea17a14018e4beccfc59af021bbdc14852395ac775182",
+    "sourceSha256": "76a8ad2bbf73e5fff7e62f4661dd24b614c874ef6ae7220f803d6d7a9535c683",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
@@ -21,12 +21,12 @@
         "bytes": 12071
       },
       "humus_bg.wasm": {
-        "sha256": "bc94dd34aad2b6741a7960e9286b8318981f18ba84f529384fd62e523d11d493",
-        "bytes": 16294886
+        "sha256": "6ee3201d67d1486363064be386b7431f64c42f237bae4b4be0a0b0acb2bd4675",
+        "bytes": 16453196
       }
     }
   },
-  "Run ID": "26e19608-8cda-42a4-8db5-c8f7196b09d4",
+  "Run ID": "b501634d-6054-4b2d-81af-13218558da53",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -57,8 +57,8 @@
       "texture-compression-etc2",
       "depth-clip-control",
       "texture-compression-bc-sliced-3d",
-      "timestamp-query",
       "shader-f16",
+      "timestamp-query",
       "texture-formats-tier2",
       "clip-distances",
       "primitive-index",
@@ -66,11 +66,20 @@
       "subgroups"
     ],
     "deviceCreated": true,
-    "hardwareAcceleration": "adapter/device available; Humus GPU rendering not verified"
+    "hardwareAcceleration": "GPU device available; no Humus scene verified"
   },
   "Original executable execution": {
     "verified": true,
-    "milestone": "original scene model read/processed, window created, IDirect3D9 created; CreateDevice reached after unavailable-capabilities result",
+    "device": {
+      "backendId": 1,
+      "width": 800,
+      "height": 600,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed",
+      "sceneFrames": 0
+    },
+    "milestone": "original EXE created a validated WebGPU-backed D3D9 device",
     "window": {
       "title": "Title",
       "width": 800,
@@ -99,10 +108,12 @@
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptToFailureMs": 31887.514999985695,
+    "diagnosticAttemptToFailureMs": 32724.72000002861,
     "diagnosticTimingCaveat": "one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "panicked at win32/winapi/src/d3d9.rs:27:5:\nunsupported API: d3d9!IDirect3D9::CreateDevice; args=[\n    0x4e700a,\n    0x0,\n    0x1,\n    0x1,\n    0x40,\n    0x44f8fec,\n    0x44f8fe8,\n]; stack_return=0x00402cf0; graphics capability not implemented",
+  "Exact remaining blocker": "IDirect3D9::GetDeviceCaps returns D3DERR_NOTAVAILABLE; original EXE rejects missing PS 2.0 / VS 1.1 support. Resource, shader and draw integration remains incomplete.",
+  "Terminal runtime diagnostic": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
+  "Original application rejection": "win32/winapi/src/user32/misc.rs:99 MessageBox: Error / This demo requires pixel shader 2.0 and vertex shader 1.1.\nYour card/driver only supports pixel shader 0.0 and vertex shader 0.0\n",
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
   "4-hour test": "not run; user-started only",
   "CheerpX baseline": "unavailable in empty initial workspace; no comparison",
@@ -120,17 +131,24 @@
     "testLogSha256": {
       "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
       "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b",
-      "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2"
+      "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2",
+      "device-com-tests.log": "a521fa4f12a469c6a908282aee5b2293d0274aa71cbdf317771d6f2f136bf476",
+      "bit-tests.log": "850c28e2e2c49bf126956e93dd08b0afd0b7bc6bae6eded388b8211690c5c65a",
+      "window-lifecycle-tests.log": "e7ad22a1623c42eeb601c7035c93e1787b529766e1e25c8936e7ffccbbc384d4"
     },
     "note": "Recorded checks from this session, not newly executed by record_results.py.",
     "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-    "currentRuntimeRevision": "b2d0952d83898663fcebe321d60c72bc8a1c3cc0",
+    "currentRuntimeRevision": "8502098b255ea3f71f87e26e3aff536f2f7d6256",
     "currentRevisionChecks": {
-      "D3D9 COM identity/lifetime/invalid pointers/stdcall cleanup": "passed: cargo test -p winapi d3d9::tests",
-      "dependency restoration": "passed: all 20 patched files compared byte-for-byte",
-      "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
+      "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
+      "CPU bit-string operations": "passed: evidence/bit-tests.log",
+      "window destruction message retention": "passed: evidence/window-lifecycle-tests.log",
+      "dependency restoration": "passed: all 27 patched files byte-identical",
+      "server bounds and completed-session retirement": "passed: python3 scripts/test_server.py",
       "WASM build": "passed: scripts/build_wasm.sh",
-      "original EXE browser launch": "reached IDirect3D9::GetDeviceCaps; no rendering"
+      "original EXE browser launch": "created validated device; rejected missing PS 2.0/VS 1.1; cleanup trapped at RegCreateKeyExA",
+      "GPU/input diagnostic": "passed: evidence/shader-browser-tests.json; zero Humus frames",
+      "browser Stop control": "passed: UI stopped after active run; both workers terminated by stop handler"
     },
     "shaderMilestone": {
       "revision": "d3548f77aca316a61fbb4b5c04ad4c551b4c8e47",
@@ -155,50 +173,5 @@
       }
     }
   },
-  "evidenceFile": "evidence/browser-direct3d-attempt.json",
-  "Separate shader diagnostic": {
-    "result": "passed",
-    "evidence": "evidence/shader-browser-tests.json",
-    "scope": "authored shaders; alpha LESS255, stencil equality, additive blend and depth preservation; not Humus acceptance",
-    "diagnosticDraws": 5,
-    "alphaStencil": {
-      "result": "passed",
-      "draws": 3,
-      "stencilSamples": [
-        [
-          64,
-          0,
-          26,
-          255
-        ],
-        [
-          0,
-          0,
-          26,
-          255
-        ]
-      ],
-      "depthSamples": [
-        [
-          64,
-          0,
-          26,
-          255
-        ],
-        [
-          0,
-          255,
-          0,
-          255
-        ]
-      ],
-      "checks": [
-        "alpha LESS255 passes .5 and rejects 1",
-        "discarded fragments leave stencil unchanged",
-        "stencil equality gates additive lighting",
-        "discarded fragments leave depth unchanged"
-      ]
-    },
-    "HumusFrames": 0
-  }
+  "evidenceFile": "evidence/browser-direct3d-attempt.json"
 }
