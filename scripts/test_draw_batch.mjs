@@ -12,3 +12,8 @@ let calls=0;await assert.rejects(()=>executeDrawBatch({buffer,commands},async()=
 await assert.rejects(()=>executeDrawBatch({buffer,commands:[[9,4096,5500],[9,4096,5500]]},async()=>{throw Error('must prevalidate');}),/command/);
 const failure=new DrawBatch(data=>Atomics.store(new Int32Array(data.buffer),0,2));failure.enqueue([13,9,4096,5500],memory);assert.throws(()=>failure.flush(),/deferred/);assert.throws(()=>failure.enqueue([13,9,4096,5500],memory),/failed/);
 console.log('Draw batch ownership, 64-command bound, pointer validation, ordering and fail-stop tests passed');
+// Exercise the real blocking handoff, including notification before/after wait.
+const {Worker}=await import('node:worker_threads');
+const worker=new Worker(`const {parentPort}=require('node:worker_threads'); import(${JSON.stringify(new URL('../web/draw-batch.js',import.meta.url).href)}).then(({executeDrawBatch})=>parentPort.on('message',data=>executeDrawBatch(data,async()=>1)));`,{eval:true});
+try{const concurrent=new DrawBatch(data=>worker.postMessage(data));concurrent.enqueue([13,9,4096,5500],memory);concurrent.flush();assert.equal(concurrent.commands.length,0);}finally{await worker.terminate();}
+console.log('Cross-worker Atomics handoff passed');

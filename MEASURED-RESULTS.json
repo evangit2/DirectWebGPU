@@ -1534,5 +1534,30 @@
       "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
     },
     "scope": "60 seconds after first Present at 800x600; no screenshot or controlled input"
+  },
+  "Draw batching milestone": {
+    "revision": "fbf8fc42ee7f0f4936f889bd6c92e38a696b00a5",
+    "cameraRun": "48366511-c15b-47ab-942f-7f8a781e7c73",
+    "performanceRun": "72228cf0-5522-4066-a492-4465a95b5cdd",
+    "performanceEvidence": "evidence/performance-draw-batch.json",
+    "visualEvidence": "evidence/draw-batch-review.json",
+    "firstPresentMs": 1619.130126953125,
+    "submissionFPS": 77.66104523348942,
+    "frameTimeMs": {
+      "p50": 12.72509765625,
+      "p95": 14.2099609375,
+      "p99": 20.10986328125,
+      "min": 8.494873046875,
+      "max": 87.489990234375
+    },
+    "drawBridge": {
+      "drawBatches": 55450,
+      "batchedDraws": 184810,
+      "maxBatchCommands": 9,
+      "stagingBytes": 1052672
+    },
+    "drawRoundTripReductionFraction": 0.6999621232617282,
+    "comparison": "Single warm-cache screenshot-free trials at 800x600, same Chromium152 / Apple Metal3; previous unbatched 72.93374 vs batched 77.66105 Present submissions/s. Not display FPS; no statistical speedup claim.",
+    "remaining": "Full-scene alpha/stencil reference agreement; resource-update batching; 1280x720 target test; longer stability and broader memory/CPU/GPU timing coverage."
   }
 }
