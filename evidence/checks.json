@@ -587,5 +587,15 @@
     "unsupportedDiagnostics": "Explicit runtime failures for SSE/AVX register operands and 16-bit addressing in 32-bit code; neither silently approximated",
     "originalRunId": "35e53c33-2546-4efd-9f76-2667908383ef",
     "originalResult": "panicked at out/humus/src/generated/part_08.rs:19021:5:\nunsupported instruction at 004221b0: fldln2"
+  },
+  "x87Logarithm": {
+    "revision": "62c1d5b",
+    "nativeTests": "11 passed; logarithm value, stack-pop and unsupported-domain checks included",
+    "testLogSha256": "b841a918a6693271d4232145a4b6de548c6f12fc0af7330dfb9ae36ba8ae3b6a",
+    "cleanRestore": "36 patched files byte-identical",
+    "build": "WASM passed",
+    "originalRunId": "d8a5bb8e-b8d5-4401-83f4-967fcd91b429",
+    "result": "Original executes past FLDLN2/FYL2X; now FNSAVE at 0x004b9da2",
+    "limitations": "f64 approximation; FYL2X exceptional inputs fail explicitly, full x87 precision/exception behavior incomplete"
   }
 }
