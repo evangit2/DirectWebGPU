@@ -11,8 +11,10 @@ export function decodeDraw(memory,pointer,length){
  for(let i=0;i<stateCount;i++){const [type,value]=take(2);if(seen.has(type))throw RangeError('duplicate render state');seen.add(type);state.set(type,value)}
  const declaration=new Uint8Array(take(declarationLength/4).buffer),registers=[[take(1024),take(64),take(16)],[take(128),take(64),take(16)]];
  const textures=take(16),samplers=Array.from({length:16},()=>take(14)),viewport=take(6);
+ const fixed=vertex===0&&pixel===0?take(48):null;
+ if(fixed)registers[0][0].set(fixed);
  if(p!==w.length)throw RangeError('trailing draw packet data');
- return{vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,viewport};
+ return{fixed,vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,viewport};
 }
 export class DrawRenderer{
  constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniforms=[0,1].map(()=>device.createBuffer({size:4608,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));}
@@ -20,7 +22,7 @@ export class DrawRenderer{
   const d=this.device,b=this.backend,topology=({1:'point-list',2:'line-list',4:'triangle-list'})[packet.kind];
   const [x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=new Float32Array(new Uint32Array([minBits]).buffer)[0],maxDepth=new Float32Array(new Uint32Array([maxBits]).buffer)[0];
   if(!width||!height||x+width>b.color.width||y+height>b.color.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
-  const entry=await this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology});
+  const entry=await this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology,fixed:!!packet.fixed,textured:!!packet.textures[0]});
   const bindings=entry.layout.map(layout=>{const s=packet.streams[layout.stream],buffer=b.buffers.get(s.id),extent=Math.max(...layout.attributes.map(a=>a.offset+(a.format==='float32'?1:Number(a.format.at(-1)))*4));if(buffer.kind!==6||s.offset%4||s.offset+packet.max*s.stride+extent>buffer.size)throw RangeError('draw exceeds vertex buffer');return {buffer:buffer.buffer,offset:s.offset,size:buffer.size-s.offset};});
   let index;if(packet.index){index=b.buffers.get(packet.index);const width=index.format===101?2:4;if(index.kind!==7||(packet.first+packet.count)*width>index.size)throw RangeError('draw exceeds index buffer');}else if(packet.max!==packet.first+packet.count-1)throw RangeError('invalid nonindexed vertex range');
   const packed=[entry.shaders.vertex,entry.shaders.pixel].map((s,i)=>packShaderUniforms(s,packet.registers[i]));

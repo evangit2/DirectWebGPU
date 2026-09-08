@@ -1,3 +1,4 @@
+import {testFixed} from './fixed-test.js';
 import {defaultSampler} from './d3d9-samplers.js';
 import {TextureStorage} from './gpu-textures.js';
 import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
@@ -22,6 +23,8 @@ export async function testDrawPackets(device,translator,vs,ps){
   const sparseBytes=new Uint8Array(await(await fetch('/generated/texture.bin')).arrayBuffer()),sparseWords=new Uint32Array(sparseBytes.buffer);sparseWords[6]|=7;sparseWords[10]|=7;
   const sparsePixel=objects.create(1,sparseBytes),reflection=objects.pair(vertex,sparsePixel).pixel.samplers;if(reflection.length!==1||reflection[0].textureBinding!==7||reflection[0].samplerBinding!==0)throw Error('sparse sampler reflection mismatch');
   const sparsePayload=diagnosticDrawPacket(vertex,sparsePixel,vb,ib,texture,7);new Uint8Array(memory,4096,sparsePayload.length).set(sparsePayload);await renderer.draw(decodeDraw(memory,4096,sparsePayload.length));const sparseEncoder=device.createCommandEncoder();sparseEncoder.copyTextureToBuffer({texture:color},{buffer:read,bytesPerRow:256},[32,32]);device.queue.submit([sparseEncoder.finish()]);await read.mapAsync(GPUMapMode.READ);const sparseResult=Array.from(new Uint8Array(read.getMappedRange(),16*256+16*4,4));read.unmap();if(sparseResult.join(',')!=='233,121,17,255')throw Error('sparse texture binding mismatch');samples.push({samplerSlot:7,rgba:[17,121,233,255]});
+  const fixedFunction=await testFixed(device,renderer,buffers,textures,color,read,memory,texture);
+  new Uint8Array(memory,4096,sparsePayload.length).set(sparsePayload);
   textures.destroy(texture);let staleTextureRejected=false;try{await renderer.draw(decodeDraw(memory,4096,sparsePayload.length))}catch(e){staleTextureRejected=e instanceof RangeError}if(!staleTextureRejected)throw Error('released texture accepted by draw');
   const payload=diagnosticDrawPacket(vertex,pixel,vb);new Uint8Array(memory,4096,payload.length).set(payload);const packet=decodeDraw(memory,4096,payload.length);packet.max=100;let rejected=false;try{await renderer.draw(packet)}catch(e){rejected=e instanceof RangeError}if(!rejected)throw Error('out-of-bounds draw accepted');
   rejected=false;try{decodeDraw(memory,4096,payload.length-4)}catch{rejected=true}if(!rejected)throw Error('truncated draw packet accepted');
@@ -31,6 +34,6 @@ export async function testDrawPackets(device,translator,vs,ps){
   await renderer.draw(viewportPacket);const rejectedDepth=await viewportSamples();if(rejectedDepth[0].join(',')!=='0,0,0,255')throw Error('viewport depth range was ignored');
   const compiled=renderer.cache.compilations;viewportPacket.viewport[4]=0;await renderer.draw(viewportPacket);const viewportPixels=await viewportSamples();if(viewportPixels[0].join(',')!=='191,128,64,255'||viewportPixels[1].join(',')!=='0,0,0,255'||renderer.cache.compilations!==compiled)throw Error('viewport bounds or dynamic pipeline reuse failed');
   viewportPacket.viewport[2]=33;let viewportRejected=false;try{await renderer.draw(viewportPacket)}catch(e){viewportRejected=e instanceof RangeError}if(!viewportRejected)throw Error('oversized viewport accepted');samples.push({viewport:[4,8,16,16],depthRangeRejected:rejectedDepth,insideOutsideBGRA:viewportPixels});
-  return{result:'passed',samples,draws:6,checks:['viewport rectangle and depth range verified by GPU pixels','viewport changes reuse pipeline','reflected sampler slots 0 and 7 produce expected textured pixels','released texture draw rejected','decoded draw packets reach GPU rendering','indexed and nonindexed output matched','buffer overflow and truncated packets rejected'],HumusFrames:0};
+  return{result:'passed',fixedFunction,samples,draws:6,checks:['viewport rectangle and depth range verified by GPU pixels','viewport changes reuse pipeline','reflected sampler slots 0 and 7 produce expected textured pixels','released texture draw rejected','decoded draw packets reach GPU rendering','indexed and nonindexed output matched','buffer overflow and truncated packets rejected'],HumusFrames:0};
  }finally{renderer.dispose();textures.dispose();objects.dispose();buffers.dispose();color.destroy();depth.destroy();read.destroy();const error=await device.popErrorScope();if(error)throw Error(error.message)}
 }

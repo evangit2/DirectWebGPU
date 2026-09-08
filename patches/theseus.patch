@@ -2692,10 +2692,10 @@ index 0000000..629b941
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..709e7b5
+index 0000000..588fc9b
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,296 @@
+@@ -0,0 +1,298 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
@@ -2881,7 +2881,6 @@ index 0000000..709e7b5
 + if size>16*1024*1024||!valid(ctx,pointer,size as usize){return D3DERR_INVALIDCALL;}
 + let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);
 + let Some(prepared)=super::up::prepare(kind,primitives,stride,&declaration,&ctx.memory.bytes[pointer as usize..(pointer+size)as usize])else{return D3DERR_INVALIDCALL;};
-+ if d.shaders.contains(&0){panic!("unsupported D3D9 DrawPrimitiveUP fixed-function pipeline: vertex_shader={:#x} pixel_shader={:#x} fvf={:#x} lighting={} topology={} primitives={} stride={} prepared_vertices={} prepared_stride={}",d.shaders[0],d.shaders[1],d.fvf,d.states[&137],kind,primitives,stride,prepared.bytes.len()/prepared.stride as usize,prepared.stride);}
 + // User memory is consumed before returning. The serial RPC copies into a GPU
 + // buffer before the draw; destruction is deferred by WebGPU for submitted work.
 + let gpu=host::graphics_call(5,&[d.backend,6,prepared.bytes.len()as u32,100]);
@@ -2981,14 +2980,17 @@ index 0000000..709e7b5
 + draw_prepared(ctx,this,kind,first,primitives,indexed,None)
 +}
 +fn draw_prepared(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>,up:Option<(u32,u32,&[u8])>)->u32{
-+ let d=device(this);if !d.scene||d.declaration==0||d.shaders.contains(&0){return D3DERR_INVALIDCALL}
++ let d=device(this);if !d.scene||d.declaration==0{return D3DERR_INVALIDCALL}
++ let fixed=d.shaders==[0,0];if d.shaders.contains(&0)&&!fixed{panic!("unsupported D3D9 mixed fixed/programmable shader stages");}
++ if fixed&&d.states[&137]!=0{panic!("unsupported D3D9 fixed-function vertex lighting");}
 + let factor=match kind{1=>1,2=>2,4=>3,_=>return D3DERR_INVALIDCALL};let Some(count)=primitives.checked_mul(factor)else{return D3DERR_INVALIDCALL};if count==0||count>1048576{return D3DERR_INVALIDCALL}
 + let (index,base,max)=if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
 + let owned_declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let declaration=up.map(|u|u.2).unwrap_or(&owned_declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
-+ let mut words=vec![0x39445246,super::shader::gpu_handle(d.shaders[0]),super::shader::gpu_handle(d.shaders[1]),kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
++ let mut words=vec![0x39445246,if fixed{0}else{super::shader::gpu_handle(d.shaders[0])},if fixed{0}else{super::shader::gpu_handle(d.shaders[1])},kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
 + for (slot,stream) in d.streams.into_iter().enumerate(){if let Some((gpu,stride,_))=up{words.extend_from_slice(&if slot==0{[gpu,0,stride]}else{[0,0,0]});continue;}let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
 + for(k,v)in states{words.extend_from_slice(&[k,v])}for chunk in declaration.chunks_exact(4){words.push(u32::from_le_bytes(chunk.try_into().unwrap()))}d.constants.lock().unwrap().draw_words(&mut words);
 + for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}words.extend_from_slice(&d.viewport);
++ if fixed{for kind in [256,2,3]{words.extend_from_slice(d.transforms.get(&kind).unwrap_or(&identity_transform()));}}
 + // The Vec is already in WASM linear memory; its pointer is not a guest address.
 + let result=host::graphics_call(13,&[d.backend,words.as_ptr()as usize as u32,words.len()as u32*4]);if result==1{D3D_OK}else{result}
 +}
