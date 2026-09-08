@@ -1,0 +1,36 @@
+{
+  "runId": "ef19337e-14f4-469d-94fd-88aa53f7ce4b",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "inspectedFrames": [
+    1,
+    30,
+    60
+  ],
+  "images": [
+    {
+      "path": "evidence/scene-frames/guest-memory-1.jpg",
+      "sha256": "6ad7a761a37e4f361bfce6a3b7d4e69a5771c5535fc3c1b19a6d3f6b2c33c35e",
+      "present": 1
+    },
+    {
+      "path": "evidence/scene-frames/guest-memory-30.jpg",
+      "sha256": "4bdb91b54ba1a66bc23e45fd83c9b4f1872ad98f3f680ab1b20afad986271c21",
+      "present": 30
+    },
+    {
+      "path": "evidence/scene-frames/guest-memory-60.jpg",
+      "sha256": "3ebbbeeb3d70bf767a7863d6243a7b45a68a1117d533d59a528c93d6711867f1",
+      "present": 60
+    }
+  ],
+  "finding": "Individually inspected all three captures: recognizable textured room, pillars and colored moving lights. No controlled camera input requested for this memory diagnostic.",
+  "validation": {
+    "nativeTests": "17 passed, including allocation/free/failed-reallocation occupancy test",
+    "restore": "39 patched vendor files byte-identical after clean patch application",
+    "browser": "3525 original Presents; no recorded gpu-error, gpu-lost or failed events"
+  },
+  "limitations": [
+    "No new independent rasterization comparison in this allocation-only revision.",
+    "Diagnostic capture and allocator sampling enabled; do not use its throughput as an ordinary performance benchmark."
+  ]
+}

@@ -11,7 +11,7 @@
   "Historical measurements": "evidence/historical-measured-results.json",
   "Acceptance audit": "evidence/acceptance-audit.json",
   "Exact remaining blocker": [
-    "JS/application allocation and complete pre-first-frame transfer measurements are incomplete; current counters cover narrower scopes.",
+    "Total browser memory and complete pre-first-frame transfer measurements remain incomplete. Guest mapped ranges and compatibility heap occupancy are now measured; CRT suballocations remain outside those heap counters.",
     "Identical current 60-second runs measured 56.55 and 77.17 Present submissions/s; cause of variability unmeasured, sustained 60 FPS target not established.",
     "Longer stability evidence predates the pixel-center correction."
   ],
@@ -31,5 +31,8 @@
   "Corrected original scene evidence": "evidence/pixel-center-review.json",
   "GPU timing evidence": "evidence/gpu-timing-summary.json",
   "Memory and resource coverage": "evidence/memory-resource-summary.json",
-  "Startup visual review": "evidence/startup-corrected-review.json"
+  "Startup visual review": "evidence/startup-corrected-review.json",
+  "Guest allocation measurements": "evidence/guest-memory-summary.json",
+  "Latest original launch": "evidence/guest-memory-run.json",
+  "Next memory optimization": "Test lower guest capacity against original execution and stability; highest mapped end currently 102658048 bytes within fixed 268435456-byte capacity."
 }

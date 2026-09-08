@@ -48,8 +48,8 @@
       "objectiveSections": "6,9",
       "requirement": "Memory component coverage",
       "status": "partial",
-      "evidence": "evidence/memory-resource-summary.json; evidence/stability-summary.json",
-      "finding": "WASM/tracked GPU/cache measured separately. Browser-wide API exposed but timed out after 30s during original execution; total browser memory and guest allocation detail remain unmeasured."
+      "evidence": "evidence/memory-resource-summary.json; evidence/stability-summary.json; evidence/guest-memory-summary.json; evidence/guest-memory-review.json",
+      "finding": "Measured guest capacity, mapped ranges and compatibility heap occupancy separately: 256 MiB capacity, 97 MiB mapped, 84 MiB heap capacity, 8253107 heap-occupied bytes including headers. Two samples unchanged. Guest CRT suballocations and total browser memory remain unmeasured; browser-wide API previously timed out."
     },
     {
       "objectiveSections": "7",
@@ -94,5 +94,5 @@
       "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
     }
   ],
-  "nextAction": "Investigate current throughput variability, refresh longer stability, and complete available memory/transfer accounting."
+  "nextAction": "Test a measured reduction of guest capacity, refresh stability, investigate throughput variability, and complete available transfer accounting."
 }
