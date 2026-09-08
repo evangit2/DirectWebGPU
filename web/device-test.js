@@ -12,7 +12,7 @@ export async function testDeviceBridge(){
    if(payload)new Uint8Array(buffer,4096,payload.length).set(payload);
    channel.port2.postMessage({func,args,buffer,retAddr:4});
    const wait=Atomics.waitAsync(words,1,0,10000);await wait.value;
-   const result=Atomics.load(words,1)>>>0;if(!result)throw Error('GPU RPC timed out');if(error)throw Error(error);return details?Array.from(words.slice(1,5)):result;
+   const result=Atomics.load(words,1)>>>0;if(!result)throw Error('GPU RPC timed out');if(error)throw Error(error);return details==='caps'?Array.from(words.slice(1024,1100),v=>v>>>0):details?Array.from(words.slice(1,5)):result;
   }
   const assert=(condition,message)=>{if(!condition)throw Error(message)};
   assert(await rpc('create_window',['device diagnostic',64,64])===1,'window creation failed');
@@ -23,6 +23,8 @@ export async function testDeviceBridge(){
   const invalid=[...params];invalid[4]=8;
   assert(await rpc('graphics_call',[1,...invalid])===0x8876086a,'unsupported multisampling should fail');
   const id=await rpc('graphics_call',[1,...params]);assert(id>0&&id<0x80000000,'device allocation failed');
+  const caps=await rpc('graphics_call',[14,4096],'caps');assert(caps[49]===0xfffe0101&&caps[51]===0xffff0200&&caps[22]===4096&&caps[27]===1,'capability profile mismatch');
+  assert(await rpc('graphics_call',[15,0,3,21])===1,'supported texture format rejected');assert(await rpc('graphics_call',[15,0,4,21])===0x8876086a,'volume texture advertised');
   assert(await rpc('graphics_call',[3,id,7,0xff336699,0x3f800000,3])===1,'clear failed');
   assert(await rpc('graphics_call',[4,id])===1,'GPU presentation failed');
   const vb=await rpc('graphics_call',[5,id,6,14,100]);assert(vb>0&&vb<0x80000000,'vertex buffer creation failed');
@@ -50,6 +52,6 @@ export async function testDeviceBridge(){
   assert(await rpc('graphics_call',[9,id,shader])===1,'shader release RPC failed');assert(await rpc('graphics_call',[9,id,shader])===0x8876086c,'stale shader RPC accepted');
   assert(await rpc('graphics_call',[2,id])===1,'release failed');
   assert(await rpc('graphics_call',[3,id,7,0,0x3f800000,0])===0x8876086c,'released device accepted');
-  return{result:'passed',checks:['textured draw RPC submitted GPU work','draw packet RPC submitted GPU work and rejected truncation','texture RPC allocation, mip upload, bounds and lifetime passed','shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
+  return{result:'passed',checks:['capability profile and format rejection verified','textured draw RPC submitted GPU work','draw packet RPC submitted GPU work and rejected truncation','texture RPC allocation, mip upload, bounds and lifetime passed','shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
  }finally{channel.port2.close();worker.terminate()}
 }

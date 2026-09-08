@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..b9f7a0a
+index 0000000..ee2e530
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,290 @@
+@@ -0,0 +1,294 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -456,17 +456,21 @@ index 0000000..b9f7a0a
 +    // Unsupported slots retain their ABI positions and stop at the exact operation.
 +    pub fn RegisterSoftwareDevice_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"RegisterSoftwareDevice",2)}
 +    pub fn CheckDeviceType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceType",6)}
-+    pub fn CheckDeviceFormat_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceFormat",7)}
++    #[win32_derive::dllexport]
++    pub fn CheckDeviceFormat(ctx:&mut Context,this:u32,index:u32,device_type:u32,adapter_format:u32,usage:u32,resource_type:u32,format:u32)->u32{
++        if !adapter(this,index)||device_type!=1||adapter_format!=22{return D3DERR_NOTAVAILABLE}
++        let result=host::graphics_call(15,&[usage,resource_type,format]);if result==1{D3D_OK}else{result}
++    }
 +    pub fn CheckDeviceMultiSampleType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceMultiSampleType",7)}
 +    pub fn CheckDepthStencilMatch_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDepthStencilMatch",6)}
 +    pub fn CheckDeviceFormatConversion_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceFormatConversion",5)}
 +    #[win32_derive::dllexport]
 +    pub fn GetDeviceCaps(ctx: &mut Context, this:u32, index:u32, device_type:u32, out:u32)->u32 {
 +        if !adapter(this,index) || !valid(ctx,out,304) || !(1..=4).contains(&device_type) {return D3DERR_INVALIDCALL;}
-+        // The browser shader/state modules are not connected to a D3D9 device yet.
-+        // Report a documented failure, leave output untouched, and do not invent caps.
-+        log::info!("D3D9_CAPS_UNAVAILABLE adapter={index} type={device_type}");
-+        D3DERR_NOTAVAILABLE
++        if device_type!=1{return D3DERR_NOTAVAILABLE}
++        let pointer=ctx.memory.bytes[out as usize..].as_ptr()as usize as u32;
++        let result=host::graphics_call(14,&[pointer]);
++        if result==1{log::info!("D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset");D3D_OK}else{result}
 +    }
 +    #[win32_derive::dllexport]
 +    pub fn CreateDevice(ctx:&mut Context,this:u32,index:u32,kind:u32,focus:u32,behavior:u32,presentation:u32,out:u32)->u32{
@@ -2963,10 +2967,10 @@ index 92a0c4b..64a60de 100644
  mod event;
 diff --git a/win32/winapi/src/kernel32/unsupported.rs b/win32/winapi/src/kernel32/unsupported.rs
 new file mode 100644
-index 0000000..cf405b5
+index 0000000..6b0b9c5
 --- /dev/null
 +++ b/win32/winapi/src/kernel32/unsupported.rs
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,143 @@
 +// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
 +pub fn CreateFileMappingA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
@@ -2976,14 +2980,8 @@ index 0000000..cf405b5
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!CreateFileW; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
-+pub fn DeleteCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!DeleteCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
-+pub fn EnterCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!EnterCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
++
++
 +pub fn EnumSystemLocalesA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!EnumSystemLocalesA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
@@ -3004,26 +3002,32 @@ index 0000000..cf405b5
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!GetLocaleInfoW; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
-+pub fn GetSystemInfo_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!GetSystemInfo; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++#[win32_derive::dllexport]
++pub fn GetSystemInfo(ctx:&mut runtime::Context,out:u32){
++ assert!(out>=0x1000&&(out as usize).checked_add(36).is_some_and(|end|end<=ctx.memory.bytes.len()),"invalid GetSystemInfo output pointer {out:#x}");
++ // The virtual single x86 worker, matching CPUID family 5. Address bounds and
++ // 4 KiB allocation granularity describe this runtime, not the physical Mac.
++ let values=[0,4096,0x1000,ctx.memory.bytes.len() as u32-1,1,1,586,4096,5];
++ for(i,value)in values.into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,value)}
 +}
++
 +pub fn GetUserDefaultLCID_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!GetUserDefaultLCID; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
-+pub fn InitializeCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!InitializeCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++
++fn atomic_word(ctx:&mut runtime::Context,pointer:u32)->&std::sync::atomic::AtomicU32{
++ assert!(pointer>=0x1000&&pointer%4==0&&(pointer as usize).checked_add(4).is_some_and(|end|end<=ctx.memory.bytes.len()),"invalid interlocked pointer {pointer:#x}");
++ unsafe{std::sync::atomic::AtomicU32::from_ptr(ctx.memory.bytes.as_mut_ptr().add(pointer as usize).cast())}
 +}
-+pub fn InterlockedCompareExchange_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!InterlockedCompareExchange; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++#[win32_derive::dllexport]
++pub fn InterlockedCompareExchange(ctx:&mut runtime::Context,destination:u32,exchange:u32,comparand:u32)->u32{
++ use std::sync::atomic::Ordering::SeqCst;
++ match atomic_word(ctx,destination).compare_exchange(comparand,exchange,SeqCst,SeqCst){Ok(old)|Err(old)=>old}
 +}
-+pub fn InterlockedExchange_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!InterlockedExchange; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
++#[win32_derive::dllexport]
++pub fn InterlockedExchange(ctx:&mut runtime::Context,destination:u32,value:u32)->u32{atomic_word(ctx,destination).swap(value,std::sync::atomic::Ordering::SeqCst)}
++
 +pub fn IsBadCodePtr_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!IsBadCodePtr; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
@@ -3048,10 +3052,7 @@ index 0000000..cf405b5
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!IsValidLocale; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
-+pub fn LeaveCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!LeaveCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
++
 +pub fn MapViewOfFile_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!MapViewOfFile; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
@@ -3089,6 +3090,30 @@ index 0000000..cf405b5
 +/// Virtual 1 MHz timestamp counter, quantized to host milliseconds.
 +/// This is not the physical CPU cycle count.
 +pub fn virtual_timestamp_counter() -> u64 { host::host().time() as u64 * 1000 }
++#[cfg(test)]
++mod system_info_tests{
++ #[test]
++ fn virtual_system_info_layout_and_stdcall(){
++  crate::trace::init("");
++  let mut ctx=runtime::Context{cpu:Default::default(),thread_handle:1,thread_id:1,memory:runtime::Memory::leak_new(0x4000),blocks:&[(runtime::RETURN_FROM_X86_ADDR32,runtime::Context::return_from_x86)],cache:Default::default(),recent:[runtime::Context::return_from_x86;4]};ctx.cpu.regs.esp=0x3000;ctx.memory.bytes[0x1100..0x1128].fill(0xa5);
++  ctx.call32_x86(runtime::Cont(super::GetSystemInfo_stdcall),vec![0x1100]);assert_eq!(ctx.cpu.regs.esp,0x3000);assert_eq!((0..9).map(|i|ctx.memory.read::<u32>(0x1100+i*4)).collect::<Vec<_>>(),vec![0,4096,0x1000,0x3fff,1,1,586,4096,5]);assert_eq!(ctx.memory.read::<u32>(0x1124),0xa5a5a5a5);
++  ctx.memory.write::<u32>(0x1200,17);ctx.call32_x86(runtime::Cont(super::InterlockedCompareExchange_stdcall),vec![0x1200,23,17]);assert_eq!(ctx.cpu.regs.eax,17);assert_eq!(ctx.cpu.regs.esp,0x3000);assert_eq!(ctx.memory.read::<u32>(0x1200),23);
++  assert_eq!(super::InterlockedCompareExchange(&mut ctx,0x1200,31,17),23);assert_eq!(ctx.memory.read::<u32>(0x1200),23);assert_eq!(super::InterlockedExchange(&mut ctx,0x1200,u32::MAX),23);assert_eq!(ctx.memory.read::<u32>(0x1200),u32::MAX);
++  ctx.call32_x86(runtime::Cont(super::InitializeCriticalSection_stdcall),vec![0x1300]);assert_eq!(ctx.cpu.regs.esp,0x3000);assert_eq!(ctx.memory.read::<u32>(0x1304),u32::MAX);super::EnterCriticalSection(&mut ctx,0x1300);super::EnterCriticalSection(&mut ctx,0x1300);assert_eq!(ctx.memory.read::<u32>(0x1308),2);assert_eq!(ctx.memory.read::<u32>(0x130c),1);super::LeaveCriticalSection(&mut ctx,0x1300);super::LeaveCriticalSection(&mut ctx,0x1300);assert_eq!(ctx.memory.read::<u32>(0x1304),u32::MAX);super::DeleteCriticalSection(&mut ctx,0x1300);assert!(!super::CRITICALS.lock().unwrap().contains_key(&0x1300));
++ }
++}
++
++static CRITICALS:std::sync::LazyLock<std::sync::Mutex<std::collections::HashMap<u32,(u32,u32)>>>=std::sync::LazyLock::new(||std::sync::Mutex::new(std::collections::HashMap::new()));
++fn critical_pointer(ctx:&runtime::Context,p:u32){assert!(p>=0x1000&&p%4==0&&(p as usize).checked_add(24).is_some_and(|end|end<=ctx.memory.bytes.len()),"invalid critical section pointer {p:#x}");}
++fn write_critical(ctx:&mut runtime::Context,p:u32,owner:u32,depth:u32){ctx.memory.write::<u32>(p+4,depth.wrapping_sub(1));ctx.memory.write::<u32>(p+8,depth);ctx.memory.write::<u32>(p+12,owner);}
++#[win32_derive::dllexport]
++pub fn InitializeCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);assert!(CRITICALS.lock().unwrap().insert(p,(0,0)).is_none(),"critical section initialized twice");ctx.memory.bytes[p as usize..p as usize+24].fill(0);write_critical(ctx,p,0,0);}
++#[win32_derive::dllexport]
++pub fn EnterCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);let mut map=CRITICALS.lock().unwrap();let (owner,depth)=map.get_mut(&p).expect("uninitialized critical section");assert!(*owner==0||*owner==ctx.thread_id,"critical section contention requires an unsupported guest thread scheduler");*owner=ctx.thread_id;*depth=depth.checked_add(1).expect("critical recursion overflow");write_critical(ctx,p,*owner,*depth);}
++#[win32_derive::dllexport]
++pub fn LeaveCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);let mut map=CRITICALS.lock().unwrap();let (owner,depth)=map.get_mut(&p).expect("uninitialized critical section");assert!(*depth>0&&*owner==ctx.thread_id,"critical section not owned by current thread");*depth-=1;if *depth==0{*owner=0}write_critical(ctx,p,*owner,*depth);}
++#[win32_derive::dllexport]
++pub fn DeleteCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);let mut map=CRITICALS.lock().unwrap();assert_eq!(map.get(&p).expect("uninitialized critical section").1,0,"delete of owned critical section");map.remove(&p);ctx.memory.bytes[p as usize..p as usize+24].fill(0);}
 diff --git a/win32/winapi/src/lib.rs b/win32/winapi/src/lib.rs
 index da97218..1832ca4 100644
 --- a/win32/winapi/src/lib.rs

@@ -1,3 +1,4 @@
+import {deviceCaps,supportsFormat} from './d3d9-caps.js';
 import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
 import {TextureStorage} from './gpu-textures.js';
 import {ShaderObjects} from './shader-objects.js';
@@ -39,6 +40,9 @@ async function dispatch({func,args,buffer,retAddr}){
  finally{reply(buffer,retAddr,result)}
 }
 async function graphics(op,a,memory){
+ if(op===14){if(a.length!==1||!(memory instanceof SharedArrayBuffer)||a[0]<4096||a[0]%4||a[0]+304>memory.byteLength)return INVALID;new Uint32Array(memory,a[0],76).set(deviceCaps());return 1;}
+ if(op===15){return a.length===3&&supportsFormat(device,...a)?1:UNAVAILABLE;}
+
  if(op===1){
   if(backend)throw Error('second D3D9 device unsupported');
   const [width,height,format,count,multi,quality,swap,hwnd,windowed,autoDepth,depthFormat,flags,refresh,interval]=a;
