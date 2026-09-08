@@ -236,10 +236,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..d78bf21
+index 0000000..5256d5b
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,181 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -364,8 +364,22 @@ index 0000000..d78bf21
 +    pub fn CheckDeviceMultiSampleType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceMultiSampleType",7)}
 +    pub fn CheckDepthStencilMatch_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDepthStencilMatch",6)}
 +    pub fn CheckDeviceFormatConversion_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceFormatConversion",5)}
-+    pub fn GetDeviceCaps_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"GetDeviceCaps",4)}
-+    pub fn CreateDevice_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CreateDevice",7)}
++    #[win32_derive::dllexport]
++    pub fn GetDeviceCaps(ctx: &mut Context, this:u32, index:u32, device_type:u32, out:u32)->u32 {
++        if !adapter(this,index) || !valid(ctx,out,304) || !(1..=4).contains(&device_type) {return D3DERR_INVALIDCALL;}
++        // The browser shader/state modules are not connected to a D3D9 device yet.
++        // Report a documented failure, leave output untouched, and do not invent caps.
++        log::info!("D3D9_CAPS_UNAVAILABLE adapter={index} type={device_type}");
++        D3DERR_NOTAVAILABLE
++    }
++    pub fn CreateDevice_stdcall(ctx: &mut Context) -> runtime::Cont {
++        let ptr=ctx.memory.read::<u32>(ctx.cpu.regs.esp+24);
++        if valid(ctx,ptr,56) {
++            let params:Vec<_>=(0..14).map(|i|ctx.memory.read::<u32>(ptr+i*4)).collect();
++            log::info!("D3D9_CREATE_DEVICE_PRESENT_PARAMETERS {params:#x?}");
++        }
++        unsupported(ctx,"CreateDevice",7)
++    }
 +}
 +
 +#[cfg(test)]
@@ -396,6 +410,11 @@ index 0000000..d78bf21
 +        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,1,0x1300),D3DERR_INVALIDCALL);
 +        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,0,0x1300),D3D_OK);
 +        assert_eq!(ctx.memory.read::<u32>(0x1300),1280);
++        ctx.memory.bytes[0x1400..0x1530].fill(0xa5);
++        ctx.call32_x86(runtime::Cont(IDirect3D9::GetDeviceCaps_stdcall),vec![obj,0,1,0x1400]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);
++        assert!(ctx.memory.bytes[0x1400..0x1530].iter().all(|b|*b==0xa5));
++        assert_eq!(IDirect3D9::GetDeviceCaps(&mut ctx,obj,0,1,0),D3DERR_INVALIDCALL);
 +        assert_eq!(IDirect3D9::Release(&mut ctx,obj),1);
 +        assert_eq!(IDirect3D9::Release(&mut ctx,obj),0);
 +        assert_eq!(ctx.memory.read::<u32>(obj),0);
@@ -722,3 +741,53 @@ index 0000000..929f27a
 +    }
 +    true
 +}
+diff --git a/win32/winapi/src/user32/window.rs b/win32/winapi/src/user32/window.rs
+index f3e64e4..3b3a4b6 100644
+--- a/win32/winapi/src/user32/window.rs
++++ b/win32/winapi/src/user32/window.rs
+@@ -143,13 +143,29 @@ pub fn CreateWindowExA(
+     _lpParam: Ptr<()>,
+ ) -> HWND {
+     let name = ctx.memory.read_str(lpWindowName.addr);
+-    state().create_window(CreateWindowArgs {
+-        name: name.into(),
+-        x: X,
+-        y: Y,
+-        width: nWidth.value(),
+-        height: nHeight.value(),
+-    })
++    let hwnd=state().create_window(CreateWindowArgs {
++        name: name.into(), x:X, y:Y, width:nWidth.value(), height:nHeight.value(),
++    });
++    // CREATESTRUCTA has twelve 32-bit fields. Its pointers remain valid through
++    // both synchronous callbacks; no RefCell borrow is held while guest code runs.
++    let creation=kernel32::lock().process_heap.alloc(&mut ctx.memory,48);
++    let fields=[_lpParam.addr,_hInstance,_hMenu,_hWndParent.to_raw(),nHeight.value().unwrap_or(480),nWidth.value().unwrap_or(640),Y as u32,X as u32,_dwStyle,lpWindowName.addr,_lpClassName.addr,_dwExStyle];
++    for (i,v) in fields.into_iter().enumerate(){ctx.memory.write::<u32>(creation+i as u32*4,v);}
++    let proc=state().wndclass.borrow().as_ref().expect("window class not registered").wndproc.clone();
++    ctx.call32_x86(proc.clone(),vec![hwnd.to_raw(),0x81,0,creation]); // WM_NCCREATE
++    let mut success=ctx.cpu.regs.eax!=0;
++    if success {
++        ctx.call32_x86(proc,vec![hwnd.to_raw(),1,0,creation]); // WM_CREATE
++        success=ctx.cpu.regs.eax!=u32::MAX;
++    }
++    kernel32::lock().process_heap.free(&mut ctx.memory,creation);
++    if !success {
++        *state().window.borrow_mut()=None;
++        state().message_queue.borrow_mut().window=None;
++        return HWND::null();
++    }
++    log::info!("WINDOW_CREATION_CALLBACKS hwnd={:#x}",hwnd.to_raw());
++    hwnd
+ }
+ 
+ #[win32_derive::dllexport]
+@@ -245,6 +261,8 @@ pub fn DefWindowProcW(
+     _wParam: u32,
+     _lParam: u32,
+ ) -> u32 {
++    // DefWindowProc accepts non-client creation by default.
++    if matches!(msg,Err(0x81)){return 1;}
+     let msg = match msg {
+         Ok(msg) => msg,
+         Err(n) => {

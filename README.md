@@ -1,6 +1,6 @@
 # Humus original-binary browser runtime
 
-**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. The D3D9 frontend creates a COM object at `Direct3DCreate9(31)` and execution reaches `IDirect3D9::GetDeviceCaps` after reading/processing the real scene model. D3D9 rendering is not implemented; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
+**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. The D3D9 frontend creates a COM object at `Direct3DCreate9(31)` and execution reaches `IDirect3D9::CreateDevice` after the capability query returns `D3DERR_NOTAVAILABLE` after reading/processing the real scene model. D3D9 rendering is not implemented; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
 
 This repository contains local runtime patches and a test harness, not a source port of the demo. The official archive and generated programs remain ignored. The input EXE SHA-256 is `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`.
 
@@ -48,7 +48,7 @@ Continue at `patches/theseus.patch` / `vendor/theseus/win32/winapi/src/d3d9.rs`.
 
 ## Shader translation diagnostic
 
-A reusable shader module now translates D3D9 bytecode through unmodified MojoShader SPIR-V and Naga WGSL, compiled locally to WASM. The adapter adds explicit inputs for implicit VS 1.1 registers and splits combined texture/sampler resources for WebGPU. Translation allocations are bounded and reclaimed per shader pair. Integer vertex inputs, preshaders, full instruction coverage, alpha testing, and integration with the D3D9 device remain incomplete; capability reporting still traps rather than promising them.
+A reusable shader module now translates D3D9 bytecode through unmodified MojoShader SPIR-V and Naga WGSL, compiled locally to WASM. The adapter adds explicit inputs for implicit VS 1.1 registers and splits combined texture/sampler resources for WebGPU. Translation allocations are bounded and reclaimed per shader pair. Integer vertex inputs, preshaders, full instruction coverage, and integration with the D3D9 device remain incomplete; the capability query returns a documented unavailable-device failure. Alpha testing is inserted into the actual translated color output through Naga IR. D3D9 depth/stencil/blend/color-write states map to WebGPU; ordered GPU tests verify that discarded fragments update neither stencil nor depth and that stencil equality limits additive lighting.
 
 ```sh
 python3 scripts/bootstrap_shaders.py
@@ -57,3 +57,5 @@ python3 scripts/test_shaders.py
 ```
 
 Open http://127.0.0.1:8765/shader-test.html and click **Run shader diagnostic**. The tests use authored diagnostic VS 1.1/PS 2.0 bytecode, including a texture lookup. They are separate from the original asset mount and do not count as Humus acceptance. A one-time GPU readback verifies output; this is not the application's presentation path. The browser uploads its report through the same bounded evidence receiver. `runtime/shaders/Cargo.lock` pins Naga dependencies; `dependencies.json` pins MojoShader and Emscripten. Third-party notices remain in their source checkouts.
+
+`CreateWindowExA` now dispatches synchronous `WM_NCCREATE` and `WM_CREATE` callbacks with a guest CREATESTRUCTA. The original Humus callback stores HWND 1 before its device request. This is a narrow creation path; complete Win32 window lifecycle and Unicode creation remain unimplemented.

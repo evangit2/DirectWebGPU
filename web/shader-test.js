@@ -1,3 +1,4 @@
+import {testStencil} from './stencil-test.js';
 import {createShaderTranslator} from './shaders.js';
 const status=document.getElementById('status');
 document.getElementById('run').onclick=async()=>{
@@ -44,9 +45,10 @@ document.getElementById('run').onclick=async()=>{
   await read.mapAsync(GPUMapMode.READ);const sampled=new Uint8Array(read.getMappedRange().slice((64*128+64)*4,(64*128+64)*4+4));read.unmap();
   report.textureRGBA=Array.from(sampled);if(report.textureRGBA.join(',')!=='17,121,233,255')throw Error('texture sampling output mismatch: '+report.textureRGBA);
   report.checks.push('PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA');tex.destroy();
+  report.alphaStencil=await testStencil(device,tr,shaders);
   const scoped=await device.popErrorScope();if(scoped||errors.length)throw Error(scoped?.message??errors.join('\n'));
   report.checks.push('browser WGSL compilation and pipeline validation passed','GPU draw completed; sampled interpolated color matched');
-  report.diagnosticDraws=2;report.result='passed';vb.destroy();target.destroy();read.destroy();
+  report.diagnosticDraws=2+report.alphaStencil.draws;report.result='passed';vb.destroy();target.destroy();read.destroy();
  }catch(e){report.result='failed';report.error=String(e.stack??e);}
  finally{device?.destroy();status.textContent=JSON.stringify(report,null,2);const session=await(await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.token,report})});}
 };
