@@ -1,10 +1,10 @@
 {
   "translatedTreeSha256": "101762715471d44cb66edfab2db1a5037fc08c0cd627c35b6b6cef971f36a1ac",
   "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-  "builtAt": "2026-09-08T15:44:48.201212+00:00",
-  "revision": "58b3ae567b3767bdb75cb67ffabe91ca2da9cc06",
+  "builtAt": "2026-09-08T15:49:49.505833+00:00",
+  "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
   "workingTreeDirty": false,
-  "sourceSha256": "2fa768b76a70e3f71fe410845cce0e8faf36a4e4236c151407e29d1df6d60806",
+  "sourceSha256": "7e0277240aeffefd0320fab107fbe1c0f00cf932514429767069db65fea34e56",
   "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
   "translationEntryPoints": [
@@ -16,8 +16,8 @@
       "bytes": 12071
     },
     "humus_bg.wasm": {
-      "sha256": "cc407b5012a869a12bb8009525d711cbb48d8cb440431b3a424843b1343e4307",
-      "bytes": 16508987
+      "sha256": "104677267d49f2cd4a5a258fda055afb78f49909f288ef2aaeff66309af654db",
+      "bytes": 16527755
     }
   }
 }

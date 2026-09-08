@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "58b3ae567b3767bdb75cb67ffabe91ca2da9cc06",
+  "currentRuntimeRevision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -60,5 +60,14 @@
     "originalEXE": "device creation verified; rejects missing shader capabilities before buffer creation",
     "limitations": "stream/index binding and application-driven geometry draw not yet implemented",
     "logSha256": "38817901a0b0abc7c2dc7b5dcfd624ad27e690e4b823590caf2f62a9d80ff23a"
+  },
+  "streamBindingMilestone": {
+    "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+    "COM": "passed: buffer kind/range validation, stdcall cleanup, multiple stream ownership, getter reference retention, device destruction without binding cycles",
+    "GPU": "passed: indexed triangle uses GeometryBuffers shared-memory uploads; sampled RGBA [63,66,126,255]",
+    "restoration": "passed: 28 patched files byte-identical",
+    "originalEXE": "created device; rejected missing shader capabilities; terminal RegCreateKeyExA trap",
+    "scope": "D3D9 bindings tested natively; GPU indexed draw is a separate diagnostic. Original EXE has not exercised these bindings yet.",
+    "logSha256": "3e7e6d28120732a6d6814d59d6385826211cbe833a7d0858faa0f8124d81361b"
   }
 }
