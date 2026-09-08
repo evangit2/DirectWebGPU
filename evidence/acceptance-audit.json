@@ -1,0 +1,98 @@
+{
+  "status": "incomplete",
+  "scope": "Section-level audit; not a completed item-by-item proof of every requirement",
+  "entries": [
+    {
+      "objectiveSections": "1,2",
+      "requirement": "Original EXE and permitted local user-mode execution",
+      "status": "verified",
+      "evidence": "dependencies.json; scripts/bootstrap.py; runtime/humus/src/lib.rs; evidence/current-render-summary.json",
+      "finding": "Original hash checked each browser launch; source is inspection input only."
+    },
+    {
+      "objectiveSections": "3",
+      "requirement": "Inspection, shaders, imports, licenses, native reference attempt",
+      "status": "verified within recorded scope",
+      "evidence": "evidence/pe-inspection.json; dependencies.json; evidence/native-reference.json; DECISION.md",
+      "finding": "No native scene reference was obtained; local-only distribution constraint remains."
+    },
+    {
+      "objectiveSections": "4",
+      "requirement": "Concrete execution path and preserved baseline",
+      "status": "verified",
+      "evidence": "DECISION.md; master branch; patches/theseus.patch",
+      "finding": "Historical architecture note needs current-state reading; implementation owns GPU in a separate worker."
+    },
+    {
+      "objectiveSections": "5",
+      "requirement": "Real scene, required resources, original shaders and alpha/stencil ordering",
+      "status": "verified for sampled executable subset",
+      "evidence": "evidence/scene-equivalence-summary.json; evidence/shader-browser-tests.json; web/d3d9-draw.js",
+      "finding": "Independent rasterization conformance is not proved by shared-path equivalence."
+    },
+    {
+      "objectiveSections": "5",
+      "requirement": "Coordinate conventions, culling and pixel-center reference coverage",
+      "status": "incomplete",
+      "evidence": "runtime/shaders/src/vertex_inputs.rs; web/fixed-function.js; web/d3d9-state.js",
+      "finding": "No explicit D3D9 integer-center adjustment or targeted coverage oracle found; investigate before acceptance."
+    },
+    {
+      "objectiveSections": "6",
+      "requirement": "Bounded queue, resource lifetimes, resident caches and sampled capture",
+      "status": "verified within tests",
+      "evidence": "web/draw-batch.js; scripts/test_draw_batch.mjs; evidence/upload-batch-review.json",
+      "finding": "Large uploads remain synchronous after flushing; queue has explicit bounds/backpressure."
+    },
+    {
+      "objectiveSections": "6,9",
+      "requirement": "Memory component coverage",
+      "status": "partial",
+      "evidence": "evidence/stability-summary.json; web/asset-cache.js",
+      "finding": "WASM, tracked GPU resources and asset cache measured. JS/application allocation coverage missing; no total-memory claim."
+    },
+    {
+      "objectiveSections": "7",
+      "requirement": "Historical CheerpX checkpoint",
+      "status": "not applicable to selected path",
+      "evidence": "DECISION.md; master branch",
+      "finding": "No Wine-based solution selected; historical Linux checkpoint is not a rendering comparison."
+    },
+    {
+      "objectiveSections": "8",
+      "requirement": "Hardware browser, local page, controls, bounded upload and isolation",
+      "status": "verified within local scope",
+      "evidence": "web/app.js; scripts/serve.py; scripts/test_server.py; evidence/current-render-summary.json",
+      "finding": "No public deployment; user-started four-hour run not executed."
+    },
+    {
+      "objectiveSections": "9",
+      "requirement": "Recognizable multi-frame scene and controlled input",
+      "status": "verified",
+      "evidence": "evidence/scene-equivalence-summary.json",
+      "finding": "Three inspected captures with camera changed while held and stable after release."
+    },
+    {
+      "objectiveSections": "9",
+      "requirement": "Repeated startup and steady-state/stability",
+      "status": "partial",
+      "evidence": "evidence/startup-metrics.json; evidence/performance-upload-batch.json; evidence/stability-summary.json",
+      "finding": "Repeated startup predates current revision; need repeat after remaining correctness work. Submission timing, not display delivery."
+    },
+    {
+      "objectiveSections": "9",
+      "requirement": "Available GPU/CPU timing and complete transfer accounting",
+      "status": "incomplete",
+      "evidence": "web/gpu-worker.js; evidence/current-performance-summary.json",
+      "finding": "Adapter advertises timestamp-query but GPU shader duration is not measured. CPU-worker resource totals exclude page/GPU-worker fetches."
+    },
+    {
+      "objectiveSections": "10",
+      "requirement": "Reproducible scripts, original launch, evidence and current report",
+      "status": "verified with reporting repair",
+      "evidence": "scripts/restore.sh; scripts/record_results.py; MEASURED-RESULTS.json",
+      "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
+    }
+  ],
+  "nextAction": "Inspect generated vertex output for hidden coordinate adjustment, then add an independent pixel-center coverage diagnostic and implement any confirmed correction."
+}

@@ -1,20 +1,75 @@
-"""Summarize a real uploaded browser run; never infer scene success from UI activity."""
-import pathlib,json,subprocess
-r=pathlib.Path(__file__).resolve().parents[1]
-runs=[]
-for p in (r/'evidence/sessions').rglob('*.json'):
- d=json.loads(p.read_text())['report']
- if d.get('direct3DCreate9Reached'):runs.append(d)
-if not runs:raise SystemExit('No actual browser Direct3D attempt found')
-d=max(runs,key=lambda d:d['startedAt'])
-rejection=next((e.get('message','') for e in d.get('events',[]) if 'This demo requires pixel shader' in e.get('message','')),None)
-review_path=r/'evidence/scene-review.json'
-review=json.loads(review_path.read_text()) if review_path.exists() else {}
-review=review if review.get('runId')==d['runId'] else {}
-remaining=('IDirect3D9::GetDeviceCaps returns D3DERR_NOTAVAILABLE; original EXE rejects missing PS 2.0 / VS 1.1 support. Resource, shader and draw integration remains incomplete.' if rejection else d.get('blocker') or ('Original EXE presents frames, but scene region is black; only FPS overlay visible. Coordinate/state/shader correctness investigation pending.' if d.get('applicationPresents',0) else 'Executable stopped without a verified scene'))
-if review:remaining=review['remaining']
-(r/'evidence/browser-direct3d-attempt.json').write_text(json.dumps(d,indent=2)+'\n')
-result={'Humus':'rendered' if review else 'failed','Runtime':'Theseus AOT x86 → Rust → WASM','Graphics backend':'WebGPU device/attachment backend; D3D9 draw and resource integration incomplete','Executable SHA-256':d['executableSha256'],'Runtime build':d['build']['runtimeBuild'],'Run ID':d['runId'],'Browser/device':d['browser'],'Original executable execution':{'verified':True,'device':d.get('d3d9Device'),'milestone': 'original EXE created a validated WebGPU-backed D3D9 device' if d.get('d3d9Device') else ('original scene model read/processed, window created, IDirect3D9 created; CreateDevice reached after unavailable-capabilities result' if 'IDirect3D9::CreateDevice' in d.get('blocker','') else 'IDirect3D9 created; GetDeviceCaps reached') if d.get('direct3D9ObjectCreated') else 'Direct3DCreate9 reached','window':d['window']},'Correct browser rendering':review.get('correctness','not verified'),'Hardware acceleration evidence':{'adapter':'non-fallback Apple Metal adapter/device','retainedOriginalDrawSubmissions':sum(e.get('type')=='gpu-submission' and e.get('kind')=='draw' for e in d.get('events',[])),'limitation':'bounded trace count; submitted draws do not establish correct scene output'},'Screenshot and frame evidence':{'sceneFrames':len(review.get('frames',[])),'applicationPresents':d.get('applicationPresents',0),'submittedFrames':d.get('submittedFrames',0),'correctSceneScreenshots':review.get('frames',[]),'visualResult':review.get('visualResult') or ('black scene region with FPS overlay; original Presents are not rendering acceptance' if d.get('applicationPresents',0) else 'blank canvas; failed launch, not acceptance')},'Startup/FPS/memory':{'coldToCorrectFrame':'not measured','warmToCorrectFrame':'not measured','fps':'not measured','frameTimePercentiles':'not measured','bytesBeforeFirstFrame':'not measured','steadyState':'not measured','linearMemoryBytesAtFailure':d['performance']['wasmLinearMemoryBytes'],'guestMemoryBytesContainedInLinearMemory':268435456,'applicationAllocations':'not measured','JSHeap':'not measured','GPUAllocations':'not measured','totalMemory':'not measured; do not sum overlapping values','diagnosticAttemptDurationMs':d['diagnosticAttemptMs'],'diagnosticTimingCaveat':'one debug/traced run; may include opt-in GPU readback captures; not time to first scene or a benchmark'},'Exact remaining blocker':remaining,'Terminal runtime diagnostic':d.get('blocker',d.get('phase')),'Original application rejection':rejection,'Reproduction command':'python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus','4-hour test':'not run; user-started only','CheerpX baseline':'unavailable in empty initial workspace; no comparison','Native Wine reference':'original EXE and d3d9 loaded; no scene image verified','checks':json.loads((r/'evidence/checks.json').read_text()) if (r/'evidence/checks.json').exists() else 'not run','evidenceFile':'evidence/browser-direct3d-attempt.json'}
-(r/'MEASURED-RESULTS.json').write_text(json.dumps(result,indent=2)+'\n')
-(r/'evidence/runtime-build.json').write_text(json.dumps(d['build']['runtimeBuild'],indent=2)+'\n')
-print(json.dumps({k:result[k] for k in ['Humus','Run ID','Exact remaining blocker']},indent=2))
+"""Summarize explicit run evidence without inferring visual success or failure."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def summarize(run, review=None):
+    if 'report' in run:
+        run = run['report']
+    if not run.get('runId'):
+        raise ValueError('runId missing')
+    frames = []
+    if review is not None:
+        if review.get('runId', review.get('cameraRun')) != run['runId']:
+            raise ValueError('visual review belongs to a different run')
+        if review.get('executableSha256') != run.get('executableSha256'):
+            raise ValueError('visual review executable hash mismatch')
+        reviewed = review.get('visuallyInspectedFrames') or review.get('framesVisuallyInspected')
+        if not reviewed:
+            raise ValueError('visual review does not identify inspected frames')
+        captured = {f['present'] for f in run.get('frameCaptures', [])}
+        if not set(reviewed).issubset(captured):
+            raise ValueError('reviewed frames are absent from run captures')
+        for item in review.get('images', []):
+            path = (ROOT / item['path']).resolve()
+            if not path.is_relative_to(ROOT / 'evidence'):
+                raise ValueError('review image outside evidence directory')
+            if hashlib.sha256(path.read_bytes()).hexdigest() != item['sha256']:
+                raise ValueError('review image hash mismatch')
+            frames.append(item)
+        if len(frames) != len(reviewed):
+            raise ValueError('review image count does not match inspected frames')
+    errors = [e for e in run.get('events', []) if e.get('type') in
+              ('failed', 'gpu-error', 'gpu-lost', 'draw-rejected', 'worker-error')]
+    return {
+        'runId': run['runId'],
+        'revision': run.get('build', {}).get('revision'),
+        'executableSha256': run.get('executableSha256'),
+        'originalExecutionAttempted': run.get('originalExecutionAttempted', False),
+        'visualStatus': 'reviewed' if review else 'not reviewed',
+        'visualFinding': review.get('finding') if review else None,
+        'reviewedImages': frames,
+        'cameraChangedWhileHeld': review.get('cameraChangedWhileHeld') if review else None,
+        'cameraStableAfterRelease': review.get('cameraStableAfterRelease') if review else None,
+        'browserEvidence': run.get('browser'),
+        'device': run.get('d3d9Device'),
+        'applicationPresents': run.get('applicationPresents', 0),
+        'submittedFrames': run.get('submittedFrames', 0),
+        'presentationMetrics': run.get('presentationMetrics'),
+        'assetCacheMetrics': run.get('assetCacheMetrics'),
+        'stabilitySamples': run.get('stabilitySamples'),
+        'sceneEquivalence': run.get('sceneEquivalence'),
+        'terminalStatus': run.get('status'),
+        'terminalDiagnostic': run.get('blocker'),
+        'recordedErrors': errors,
+        'limitations': 'Presents are not verified scene frames or display FPS. Missing visual review is not a black-scene finding. Bounded logs cannot prove absence of all errors. No overall acceptance claim is inferred.'
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--run', type=Path, required=True)
+    parser.add_argument('--review', type=Path)
+    parser.add_argument('--output', type=Path, default=ROOT/'evidence/latest-run-summary.json')
+    args = parser.parse_args()
+    result = summarize(json.loads(args.run.read_text()), json.loads(args.review.read_text()) if args.review else None)
+    args.output.write_text(json.dumps(result, indent=2)+'\n')
+    print(json.dumps({k: result[k] for k in ('runId', 'visualStatus', 'terminalStatus')}))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,264 @@
+{
+  "runId": "79aaadc8-3c92-44fc-a9bf-1b14c13dee25",
+  "revision": "7100c4328cd0f2af8be2ab983fcb9658bf2a1520",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "originalExecutionAttempted": true,
+  "visualStatus": "not reviewed",
+  "visualFinding": null,
+  "reviewedImages": [],
+  "cameraChangedWhileHeld": null,
+  "cameraStableAfterRelease": null,
+  "browserEvidence": {
+    "secureContext": true,
+    "crossOriginIsolated": true,
+    "sharedArrayBuffer": true,
+    "webgpu": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "features": [
+      "depth32float-stencil8",
+      "rg11b10ufloat-renderable",
+      "texture-formats-tier1",
+      "bgra8unorm-storage",
+      "texture-compression-bc",
+      "dual-source-blending",
+      "core-features-and-limits",
+      "float32-filterable",
+      "indirect-first-instance",
+      "texture-compression-astc-sliced-3d",
+      "float32-blendable",
+      "subgroup-size-control",
+      "texture-compression-astc",
+      "texture-compression-etc2",
+      "depth-clip-control",
+      "texture-compression-bc-sliced-3d",
+      "texture-formats-tier2",
+      "shader-f16",
+      "timestamp-query",
+      "clip-distances",
+      "primitive-index",
+      "texture-component-swizzle",
+      "subgroups"
+    ],
+    "deviceCreated": true,
+    "hardwareAcceleration": "GPU device available; no Humus scene verified"
+  },
+  "device": {
+    "backendId": 1,
+    "width": 1280,
+    "height": 720,
+    "colorFormat": "bgra8unorm",
+    "depthFormat": "depth24plus-stencil8",
+    "validation": "passed",
+    "sceneFrames": 0
+  },
+  "applicationPresents": 4529,
+  "submittedFrames": 4529,
+  "presentationMetrics": {
+    "firstPresentMs": 1618.150146484375,
+    "totalSteadyIntervals": 4134,
+    "steadyDurationMs": 54627.800048828125,
+    "submissionFPS": 75.6757547678086,
+    "frameTimeMs": {
+      "p50": 12.89501953125,
+      "p95": 15.574951171875,
+      "p99": 20.3701171875,
+      "min": 8.699951171875,
+      "max": 72.304931640625
+    },
+    "retainedIntervals": 4134,
+    "warmupMs": 5000,
+    "queueCompletionSamples": [
+      {
+        "present": 2580,
+        "latencyMs": 0.7850000858306885
+      },
+      {
+        "present": 2640,
+        "latencyMs": 0.7549999952316284
+      },
+      {
+        "present": 2700,
+        "latencyMs": 0.7200000286102295
+      },
+      {
+        "present": 2760,
+        "latencyMs": 0.8300000429153442
+      },
+      {
+        "present": 2820,
+        "latencyMs": 4.759999990463257
+      },
+      {
+        "present": 2880,
+        "latencyMs": 3.8550000190734863
+      },
+      {
+        "present": 2940,
+        "latencyMs": 1.3849999904632568
+      },
+      {
+        "present": 3000,
+        "latencyMs": 0.8799999952316284
+      },
+      {
+        "present": 3060,
+        "latencyMs": 0.8499999046325684
+      },
+      {
+        "present": 3120,
+        "latencyMs": 3.1700000762939453
+      },
+      {
+        "present": 3180,
+        "latencyMs": 2.09499990940094
+      },
+      {
+        "present": 3240,
+        "latencyMs": 0.7599999904632568
+      },
+      {
+        "present": 3300,
+        "latencyMs": 0.75
+      },
+      {
+        "present": 3360,
+        "latencyMs": 1.9299999475479126
+      },
+      {
+        "present": 3420,
+        "latencyMs": 0.7599999904632568
+      },
+      {
+        "present": 3480,
+        "latencyMs": 1.7100000381469727
+      },
+      {
+        "present": 3540,
+        "latencyMs": 0.8399999141693115
+      },
+      {
+        "present": 3600,
+        "latencyMs": 1.7400000095367432
+      },
+      {
+        "present": 3660,
+        "latencyMs": 4.179999947547913
+      },
+      {
+        "present": 3720,
+        "latencyMs": 4.254999995231628
+      },
+      {
+        "present": 3780,
+        "latencyMs": 3.8799999952316284
+      },
+      {
+        "present": 3840,
+        "latencyMs": 0.9550000429153442
+      },
+      {
+        "present": 3900,
+        "latencyMs": 0.9649999141693115
+      },
+      {
+        "present": 3960,
+        "latencyMs": 0.8999999761581421
+      },
+      {
+        "present": 4020,
+        "latencyMs": 0.8849999904632568
+      },
+      {
+        "present": 4080,
+        "latencyMs": 0.8950001001358032
+      },
+      {
+        "present": 4140,
+        "latencyMs": 3.2850000858306885
+      },
+      {
+        "present": 4200,
+        "latencyMs": 0.9350000619888306
+      },
+      {
+        "present": 4260,
+        "latencyMs": 1.0449999570846558
+      },
+      {
+        "present": 4320,
+        "latencyMs": 1.2799999713897705
+      },
+      {
+        "present": 4380,
+        "latencyMs": 0.9300000667572021
+      },
+      {
+        "present": 4440,
+        "latencyMs": 0.9850000143051147
+      }
+    ],
+    "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+    "drawBridge": {
+      "drawBatches": 54046,
+      "batchedDraws": 180030,
+      "batchedUploads": 31611,
+      "uploadedBytes": 10892233,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "wasmLinearMemoryBytes": 288096256,
+    "geometryGPUBytes": 60784,
+    "textureGPUBytes": 4025064,
+    "colorLogicalBytes": 3686400,
+    "depthStencilLogicalMinimumBytes": 3686400,
+    "pipelineCacheEntries": 5,
+    "shaderObjects": 6,
+    "captureEnabled": false,
+    "cameraTestEnabled": false
+  },
+  "assetCacheMetrics": {
+    "mode": "warm",
+    "hits": 19,
+    "misses": 0,
+    "cacheBytes": 24689227,
+    "networkBodyBytes": 0,
+    "verifiedBytes": 24689227,
+    "repairedEntries": 0,
+    "limitBytes": 134217728,
+    "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+  },
+  "stabilitySamples": [
+    {
+      "elapsedMs": 1618.4900000095367,
+      "applicationPresents": 0,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": null
+    },
+    {
+      "elapsedMs": 31899.669999957085,
+      "applicationPresents": 2279,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 75.71302851689134
+    }
+  ],
+  "sceneEquivalence": null,
+  "terminalStatus": "60-second frame-delivery measurement completed",
+  "terminalDiagnostic": null,
+  "recordedErrors": [],
+  "limitations": "Presents are not verified scene frames or display FPS. Missing visual review is not a black-scene finding. Bounded logs cannot prove absence of all errors. No overall acceptance claim is inferred."
+}

@@ -1,6 +1,6 @@
 # Humus original-binary browser runtime
 
-**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. The D3D9 frontend creates a COM object at `Direct3DCreate9(31)` and the browser creates an `IDirect3DDevice9` backed by validated WebGPU color/depth attachments after reading/processing the real scene model. D3D9 draw/resource support is incomplete; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
+**Current milestone:** the original EXE renders the textured scene at 800×600 and 1280×720 through hardware WebGPU. Camera movement, bounded draw/upload batching, sampled lighting equivalence and three-minute stability are verified within their documented scopes. Full acceptance remains incomplete: see `evidence/acceptance-audit.json` and `MEASURED-RESULTS.json`. The detailed development notes below include historical checkpoints.
 
 This repository contains local runtime patches and a test harness, not a source port of the demo. The official archive and generated programs remain ignored. The input EXE SHA-256 is `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`.
 
@@ -14,6 +14,7 @@ rustup toolchain install 1.98.1 --profile minimal --component rustfmt
 rustup toolchain install nightly-2026-09-07 --profile minimal --component rust-src --target wasm32-unknown-unknown
 cargo +1.98.1 install wasm-bindgen-cli --version 0.2.121 --locked
 scripts/restore.sh
+scripts/build_wasm.sh release
 python3 scripts/serve.py 8765
 ```
 

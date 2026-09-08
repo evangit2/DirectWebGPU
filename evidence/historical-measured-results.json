@@ -1,0 +1,1817 @@
+{
+  "Humus": "rendered",
+  "Runtime": "Theseus AOT x86 \u2192 Rust \u2192 WASM",
+  "Graphics backend": "WebGPU device/attachment backend; D3D9 draw and resource integration incomplete",
+  "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "Runtime build": {
+    "translatedTreeSha256": "4e48b571ff67be8f634998749b693fe11d220ef5c4485f2917814eabb44b32e9",
+    "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
+    "builtAt": "2026-09-08T19:24:52.761222+00:00",
+    "revision": "6e64e4d010cb794e44d03dde506eadc39efe9045",
+    "workingTreeDirty": true,
+    "sourceSha256": "cbc252c878e86b634c46d9655cb5c7d43e75ccd85bfe3ea22eda2ac8a4f678fa",
+    "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+    "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "translationEntryPoints": [
+      "409a00",
+      "004233f4"
+    ],
+    "artifacts": {
+      "humus.js": {
+        "sha256": "7d409c198ed4c6b63f563fa2f09edbf466ee08b743b9579b595c87f4575aba6e",
+        "bytes": 12071
+      },
+      "humus_bg.wasm": {
+        "sha256": "8e2167c033415b8ba761eac4200d203a686947f51a73e73ab0115b8938c3bc85",
+        "bytes": 18317250
+      }
+    }
+  },
+  "Run ID": "75ca1907-369c-4b83-87ac-6ff1a26b2de9",
+  "Browser/device": {
+    "secureContext": true,
+    "crossOriginIsolated": true,
+    "sharedArrayBuffer": true,
+    "webgpu": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "features": [
+      "depth32float-stencil8",
+      "rg11b10ufloat-renderable",
+      "bgra8unorm-storage",
+      "texture-formats-tier1",
+      "texture-compression-bc",
+      "dual-source-blending",
+      "core-features-and-limits",
+      "float32-filterable",
+      "indirect-first-instance",
+      "texture-compression-astc-sliced-3d",
+      "float32-blendable",
+      "subgroup-size-control",
+      "texture-compression-astc",
+      "texture-compression-etc2",
+      "depth-clip-control",
+      "texture-compression-bc-sliced-3d",
+      "shader-f16",
+      "timestamp-query",
+      "clip-distances",
+      "texture-formats-tier2",
+      "primitive-index",
+      "texture-component-swizzle",
+      "subgroups"
+    ],
+    "deviceCreated": true,
+    "hardwareAcceleration": "GPU device available; no Humus scene verified"
+  },
+  "Original executable execution": {
+    "verified": true,
+    "device": {
+      "backendId": 1,
+      "width": 800,
+      "height": 600,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed",
+      "sceneFrames": 0
+    },
+    "milestone": "original EXE created a validated WebGPU-backed D3D9 device",
+    "window": {
+      "title": "Title",
+      "width": 800,
+      "height": 600
+    }
+  },
+  "Correct browser rendering": "recognizable scene and controlled camera input verified; original alpha/stencil states match intended passes and diagnostic stencil GPU tests pass; full scene pixel/reference agreement remains unverified",
+  "Hardware acceleration evidence": {
+    "adapter": "non-fallback Apple Metal adapter/device",
+    "retainedOriginalDrawSubmissions": 218,
+    "limitation": "bounded trace count; submitted draws do not establish correct scene output"
+  },
+  "Screenshot and frame evidence": {
+    "sceneFrames": 3,
+    "applicationPresents": 284,
+    "submittedFrames": 284,
+    "correctSceneScreenshots": [
+      {
+        "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-1.jpg",
+        "sha256": "e9c472cdc31d3a8a6613440ed04f2dead671b5183bde482de75bcb8d3aa75749",
+        "present": 1,
+        "sourceSceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 800,
+          "height": 536,
+          "nonblackPixels": 428712,
+          "pixels": 428800
+        }
+      },
+      {
+        "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-30.jpg",
+        "sha256": "bb5f5459c4134cafa8e5832f06184f38c97ec2df2708127a0a19142be3ebee16",
+        "present": 30,
+        "sourceSceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 800,
+          "height": 536,
+          "nonblackPixels": 428563,
+          "pixels": 428800
+        }
+      },
+      {
+        "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-60.jpg",
+        "sha256": "4f7983f96279a5f51746bf01a38a6ad375c37533d313d7388aded2cc63799236",
+        "present": 60,
+        "sourceSceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 800,
+          "height": 536,
+          "nonblackPixels": 428213,
+          "pixels": 428800
+        }
+      }
+    ],
+    "visualResult": "Three inspected captures show recognizable pillar room; Arrow Up moves camera from entrance toward wall; view stops moving after key release while lighting continues to animate."
+  },
+  "Startup/FPS/memory": {
+    "coldToCorrectFrame": "not measured",
+    "warmToCorrectFrame": "not measured",
+    "fps": "not measured",
+    "frameTimePercentiles": "not measured",
+    "bytesBeforeFirstFrame": "not measured",
+    "steadyState": "not measured",
+    "linearMemoryBytesAtFailure": 19202048,
+    "guestMemoryBytesContainedInLinearMemory": 268435456,
+    "applicationAllocations": "not measured",
+    "JSHeap": "not measured",
+    "GPUAllocations": "not measured",
+    "totalMemory": "not measured; do not sum overlapping values",
+    "diagnosticAttemptDurationMs": 63725.97499990463,
+    "diagnosticTimingCaveat": "one debug/traced run; may include opt-in GPU readback captures; not time to first scene or a benchmark"
+  },
+  "Exact remaining blocker": "Complete scene alpha/stencil correctness validation, batch graphics RPCs and run longer stability/target-resolution measurements. Repeated cache-defined cold/warm startup and a screenshot-free steady-state trial are recorded.",
+  "Terminal runtime diagnostic": null,
+  "Original application rejection": null,
+  "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
+  "4-hour test": "not run; user-started only",
+  "CheerpX baseline": "unavailable in empty initial workspace; no comparison",
+  "Native Wine reference": "original EXE and d3d9 loaded; no scene image verified",
+  "checks": {
+    "results": {
+      "CPU feature reporting": "passed: cargo test -p runtime virtual_cpu_tests",
+      "heap grow/shrink/failure preservation": "passed: cargo test -p winapi realloc_tests",
+      "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
+      "clean dependency restoration": "passed: patched Rust sources compared byte-for-byte with a clean checkout",
+      "browser Stop control": "passed: active WASM worker stopped and Start re-enabled",
+      "diagnostics POST": "verified saved report with matching run ID and executable hash",
+      "diagnostics download": "button invoked; saved-file destination not verified"
+    },
+    "testLogSha256": {
+      "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
+      "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b",
+      "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2",
+      "device-com-tests.log": "a521fa4f12a469c6a908282aee5b2293d0274aa71cbdf317771d6f2f136bf476",
+      "bit-tests.log": "850c28e2e2c49bf126956e93dd08b0afd0b7bc6bae6eded388b8211690c5c65a",
+      "window-lifecycle-tests.log": "e7ad22a1623c42eeb601c7035c93e1787b529766e1e25c8936e7ffccbbc384d4"
+    },
+    "note": "Recorded checks from this session, not newly executed by record_results.py.",
+    "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
+    "currentRuntimeRevision": "3f0b2688ef2298df7b4c00139053959b158d43a3",
+    "currentRevisionChecks": {
+      "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
+      "CPU bit-string operations": "passed: evidence/bit-tests.log",
+      "window destruction message retention": "passed: evidence/window-lifecycle-tests.log",
+      "dependency restoration": "passed: all 27 patched files byte-identical",
+      "server bounds and completed-session retirement": "passed: python3 scripts/test_server.py",
+      "WASM build": "passed: scripts/build_wasm.sh",
+      "original EXE browser launch": "created validated device; rejected missing PS 2.0/VS 1.1; cleanup trapped at RegCreateKeyExA",
+      "GPU/input diagnostic": "passed: evidence/shader-browser-tests.json; zero Humus frames",
+      "browser Stop control": "passed: UI stopped after active run; both workers terminated by stop handler"
+    },
+    "shaderMilestone": {
+      "revision": "d3548f77aca316a61fbb4b5c04ad4c551b4c8e47",
+      "nativeTests": "evidence/shader-native-tests.json",
+      "browserTests": "evidence/shader-browser-tests.json",
+      "dependencyBootstrap": "passed: pinned revisions verified; toolchain install/activation idempotent",
+      "shaderBuild": "passed: C\u2192WASM and Rust\u2192WASM",
+      "originalRuntimeBuild": "passed: scripts/build_wasm.sh",
+      "server": "passed: scripts/test_server.py",
+      "acceptance": "diagnostics only; not Humus rendering"
+    },
+    "alphaStencilMilestone": {
+      "revision": "66eb417",
+      "IRTests": "passed: nested returns, all comparisons, MRT/depth output preservation",
+      "capabilityABI": "passed: HRESULT failure leaves caps output unchanged; stdcall cleanup preserved",
+      "windowCallbacks": "original WM_CREATE stores HWND 1; native CreateDevice receives it",
+      "restoration": "passed: 21 patched dependency files match clean restoration",
+      "server": "passed",
+      "logs": {
+        "alpha-unit-tests.log": "4c7d59ef7a90164b033708bff8cffed0608c01219897a48b2ea5f4f819d14931",
+        "alpha-d3d9-tests.log": "d4f4268236f2258507c435f86a66debe7ca3c24720a45a67af264953a3e984d7"
+      }
+    },
+    "bufferMilestone": {
+      "revision": "58b3ae567b3767bdb75cb67ffabe91ca2da9cc06",
+      "GPU": "passed: geometryBuffers and deviceBridge in evidence/shader-browser-tests.json",
+      "COM": "passed: 3 d3d9 unit tests, including descriptor, pointer, calling convention, lock flags and ranges",
+      "restoration": "passed: 28 patched files byte-identical",
+      "originalEXE": "device creation verified; rejects missing shader capabilities before buffer creation",
+      "limitations": "stream/index binding and application-driven geometry draw not yet implemented",
+      "logSha256": "38817901a0b0abc7c2dc7b5dcfd624ad27e690e4b823590caf2f62a9d80ff23a"
+    },
+    "streamBindingMilestone": {
+      "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+      "COM": "passed: buffer kind/range validation, stdcall cleanup, multiple stream ownership, getter reference retention, device destruction without binding cycles",
+      "GPU": "passed: indexed triangle uses GeometryBuffers shared-memory uploads; sampled RGBA [63,66,126,255]",
+      "restoration": "passed: 28 patched files byte-identical",
+      "originalEXE": "created device; rejected missing shader capabilities; terminal RegCreateKeyExA trap",
+      "scope": "D3D9 bindings tested natively; GPU indexed draw is a separate diagnostic. Original EXE has not exercised these bindings yet.",
+      "logSha256": "3e7e6d28120732a6d6814d59d6385826211cbe833a7d0858faa0f8124d81361b"
+    },
+    "shaderRegisterMilestone": {
+      "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
+      "COM": "passed: 4 D3D9 tests; constant stdcall adapters, stage isolation, bounds, bit preservation and booleans",
+      "packing": "passed: node tests/shaders/uniforms.mjs; sparse/array packing, shader-local overrides and std140 bool padding",
+      "GPU": "passed: VS1.1 c7 constant mapped to uniform buffer; exact RGBA [64,128,191,255]",
+      "nativeShaderRegression": "passed: scripts/test_shaders.py",
+      "restoration": "passed: 29 patched files byte-identical",
+      "originalEXE": "device creation verified; no scene; same capability rejection and RegCreateKeyExA cleanup trap",
+      "scope": "Register COM APIs and GPU uniform use tested separately; original EXE has not exercised shader registers yet.",
+      "logSha256": "e45c119615bbf752a1bd24e95e23d2b2171c44ebf0c585788550f4165e526b7f"
+    },
+    "vertexDeclarationMilestone": {
+      "revision": "67d16fc9b926a0527dc95105b1c7ee8d13a24e99",
+      "COM": "passed: 5 D3D9 tests; owned copy, bounded parser, terminator retrieval, stdcall cleanup and binding lifetime",
+      "restoration": "passed: 30 patched files byte-identical",
+      "originalEXE": "created device; same missing shader capability rejection and RegCreateKeyExA cleanup trap",
+      "limitations": "FLOAT1..FLOAT4 only. Declaration-to-shader/GPU input mapping remains unimplemented.",
+      "logSha256": "8248aaa87fee2908c2196cb977c6a6ecfac3d7b0ae43a71240cdd340efcade34"
+    },
+    "inputNormalizationMilestone": {
+      "revision": "d88ba8eab67133fe1d2ae3d4dcec4f8981a86b90",
+      "native": "passed: implicit inputs plus explicit [0,1] and sparse [0,9], no invented v5",
+      "layout": "passed: tests/shaders/vertex-layout.mjs; reordered semantics, sparse streams, missing semantics and stride bounds",
+      "GPU": "passed: declaration order COLOR/POSITION correctly maps to v1/v0; exact sampled RGBA [63,66,126,255]",
+      "originalEXE": "retested; same capability rejection and RegCreateKeyExA cleanup trap",
+      "limitations": "FLOAT4 layout conversion only; smaller float attribute expansion pending. No original-EXE shader/draw acceptance.",
+      "dirtyTreeAtTest": "Only evidence/shader-native-tests.json differed from the implementation commit; runtime/shader source was committed"
+    },
+    "compactVertexMilestone": {
+      "revision": "848de786af9fce8bcc624aa036f073f0fc1b3193",
+      "IR": "passed: 3 shader IR tests, including compact input wrappers and alpha-test regressions",
+      "layout": "passed: tests/shaders/vertex-layout.mjs",
+      "GPU": {
+        "result": "passed",
+        "cases": [
+          {
+            "colorComponents": 1,
+            "positionComponents": 3,
+            "centerRGBA": [
+              64,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "colorComponents": 2,
+            "positionComponents": 3,
+            "centerRGBA": [
+              64,
+              128,
+              0,
+              255
+            ]
+          },
+          {
+            "colorComponents": 3,
+            "positionComponents": 3,
+            "centerRGBA": [
+              64,
+              128,
+              191,
+              255
+            ]
+          }
+        ],
+        "draws": 3,
+        "HumusFrames": 0
+      },
+      "originalEXE": "device creation and same shader-capability rejection; terminal RegCreateKeyExA trap",
+      "scope": "FLOAT1..FLOAT4 flat input locations. Packed formats, shader objects, textures and application-driven draws remain incomplete.",
+      "semanticReference": "https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3ddecltype",
+      "logSha256": "92d21046d0fd58e3d3ea61d04d3039b39b49723e8f4f3c3f1e3b0bbeb06eb3e1"
+    },
+    "shaderObjectMilestone": {
+      "revision": "3f0b2688ef2298df7b4c00139053959b158d43a3",
+      "COM": "passed: 6 D3D9 tests; token boundaries, GetFunction size/copy, stdcall cleanup, stage-specific binding and lifetime",
+      "worker": "passed: shader creation, wrong-stage rejection, release and stale handles",
+      "GPU": {
+        "result": "passed",
+        "checks": [
+          "owned bytecode",
+          "stage validation",
+          "malformed instruction rejection",
+          "paired translation",
+          "released handles rejected"
+        ],
+        "HumusFrames": 0
+      },
+      "regressions": "native shader translation, uniform packing, vertex layouts and browser GPU diagnostics passed",
+      "restoration": "passed: 31 patched files byte-identical",
+      "originalEXE": "device creation verified; capability rejection before shader creation; cleanup RegCreateKeyExA trap",
+      "scope": "Native COM fixtures and GPU worker validation are separate tests; original EXE shader creation has not yet been reached.",
+      "logSha256": "b3ed2e93f7a91c860f4cf22a309746c27af0a9267900396c2bdbb8fcd34396c1"
+    },
+    "textureStorage": {
+      "revision": "8b1f4246382142e34328aaf30b2f1a70101360a0",
+      "browserDiagnosticRunId": "8f2c2f2e-5e35-4906-8fae-38c65e9ee242",
+      "result": "passed",
+      "checks": {
+        "result": "passed",
+        "compressed": [
+          {
+            "format": 827611204,
+            "levels": 4,
+            "smallestMip": [
+              1,
+              1
+            ]
+          },
+          {
+            "format": 861165636,
+            "levels": 4,
+            "smallestMip": [
+              1,
+              1
+            ]
+          },
+          {
+            "format": 894720068,
+            "levels": 4,
+            "smallestMip": [
+              1,
+              1
+            ]
+          }
+        ],
+        "checks": [
+          "GPU readback verifies pitched BGRA rows",
+          "XRGB samples opaque without modifying guest",
+          "compressed mip payloads including 2x2 and 1x1 copied exactly",
+          "invalid ranges and stale handles rejected",
+          "resource budget released"
+        ],
+        "HumusFrames": 0
+      },
+      "workerRPC": "passed allocation/upload/mip bounds/release/stale handles",
+      "serverRegression": "passed scripts/test_server.py",
+      "limitations": "Texture COM, sampler and application draw integration pending; zero Humus scene frames."
+    },
+    "textureCOM": {
+      "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6",
+      "nativeTests": "7 D3D9 tests passed; includes compressed mip layout and texture stdcall/lock/binding ownership checks",
+      "nativeLogSha256": "abf07937de60ce9a2e8f61d4a51a0bed46ccd1b8319d68b8c80ebaa305265356",
+      "build": "WASM compilation and generated 22-slot texture vtable completed",
+      "cleanRestore": "32 patched files byte-identical",
+      "limitations": "Original application texture calls not reached; GetSurfaceLevel, samplers and draw binding pending",
+      "browserDiagnostic": {
+        "runId": "37844328-f065-4a6a-8399-bc691a5b7993",
+        "result": "passed",
+        "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6"
+      },
+      "originalRunId": "9b83a399-ff77-481a-b70b-6a31be416aa0"
+    },
+    "mipSurface": {
+      "revision": "5ed93ba2298efab7b71b386e371c0169db84c926",
+      "nativeTests": "7 D3D9 tests passed, including mip surface identity, stdcall, container lifetime, shared lock state and compressed rectangle offsets",
+      "nativeLogSha256": "c721f0aece67ed34fa8d03162c3e9f5f2a9e0376140bbfdb7973663c1ed1f24d",
+      "build": "WASM compiled successfully",
+      "cleanRestore": "32 patched files byte-identical",
+      "limitations": "No original application texture calls reached; full-mip uploads for rectangle writes; sampler and draw integration pending",
+      "originalRunId": "c09455bb-0cb7-4291-86e1-96afd505b345",
+      "originalResult": "failed"
+    },
+    "samplers": {
+      "revision": "0712be682516a340040fffd17a5ee816bc3f1da4",
+      "nativeTests": "7 D3D9 tests passed, including sampler stdcall, default state, slot isolation and rejected-update preservation",
+      "nativeLogSha256": "a083cd87765784c9e86225733f92cc9ad7080eb45cae0057d8df9f56d7f1ed4a",
+      "cleanRestore": "32 patched files byte-identical",
+      "build": "WASM compiled successfully",
+      "limitations": "Sampler mapper GPU-tested; original draw integration pending",
+      "browser": {
+        "runId": "b72b1cd9-d79d-466a-bbf9-a43b32da5c89",
+        "result": "passed",
+        "samplers": {
+          "result": "passed",
+          "samples": [
+            {
+              "name": "repeat",
+              "rgba": [
+                1,
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "name": "clamp",
+              "rgba": [
+                0,
+                0,
+                1,
+                1
+              ]
+            },
+            {
+              "name": "mirror",
+              "rgba": [
+                0,
+                0,
+                1,
+                1
+              ]
+            },
+            {
+              "name": "bilinear",
+              "rgba": [
+                0.5,
+                0,
+                0.5,
+                1
+              ]
+            },
+            {
+              "name": "mip filtering disabled",
+              "rgba": [
+                1,
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "name": "nearest mip",
+              "rgba": [
+                0,
+                1,
+                0,
+                1
+              ]
+            },
+            {
+              "name": "linear mip",
+              "rgba": [
+                0.5,
+                0.5,
+                0,
+                1
+              ]
+            },
+            {
+              "name": "largest mip restriction",
+              "rgba": [
+                0,
+                1,
+                0,
+                1
+              ]
+            }
+          ],
+          "cacheEntries": 7,
+          "HumusFrames": 0
+        }
+      },
+      "originalRunId": "6a42a94d-7913-40cb-b561-8731c9636933"
+    },
+    "pipelines": {
+      "revision": "42d9423f3b858043843fe664f6d1a8745105385f",
+      "implementation": "cached shader-pair linking, semantic vertex layouts, alpha variants and render-state pipeline creation",
+      "runtimeArtifact": "WASM unchanged; JS source manifest refreshed",
+      "limits": "128 entries and 16 MiB per shader-pair/pipeline cache",
+      "limitations": "DrawPrimitive/DrawIndexedPrimitive bridge and original scene acceptance pending",
+      "browser": {
+        "runId": "34672139-e88f-4a48-bd66-3ab3155b1ef9",
+        "result": "passed",
+        "pipelineCache": {
+          "result": "passed",
+          "compilations": 5,
+          "translations": 2,
+          "checks": [
+            "unchanged draw reuses linked shader pair and pipeline",
+            "dynamic stencil reference does not compile a new pipeline",
+            "alpha/stencil/blend/depth variants produce verified GPU samples"
+          ],
+          "HumusFrames": 0
+        }
+      },
+      "originalRunId": "b679ad67-8672-4d64-b6c6-74a1b0e13be8"
+    },
+    "drawBridge": {
+      "revision": "c119870d98a86b3e110cedb2ccab67aca90fa081",
+      "nativeTests": "7 D3D9 tests passed, including DrawPrimitive stdcall, missing scene rejection, primitive/range rejection and native no-GPU return",
+      "nativeLogSha256": "17264d10f53da1ae068751abe37aebcc2cf39731e013c70368ceade1ec4fd446",
+      "cleanRestore": "32 patched files byte-identical",
+      "limitations": "Textured draws and viewport changes unsupported; first actual Humus scene still unverified",
+      "browser": {
+        "runId": "a4b49f94-8af6-4613-b63b-0b55f366d377",
+        "result": "passed",
+        "drawPackets": {
+          "result": "passed",
+          "samples": [
+            {
+              "indexed": false,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            }
+          ],
+          "draws": 2,
+          "checks": [
+            "decoded draw packets reach GPU rendering",
+            "indexed and nonindexed output matched",
+            "buffer overflow and truncated packets rejected"
+          ],
+          "HumusFrames": 0
+        },
+        "workerRPC": "passed"
+      },
+      "originalRunId": "ded2ccbc-81e8-4d1b-bd25-732ee48c8d6e"
+    },
+    "texturedDraw": {
+      "revision": "3a62518556fc093ab74beaff6d9255d2fe0cef6e",
+      "nativeTests": "7 D3D9 tests and 3 shader IR tests passed; scripts/test_shaders.py passed",
+      "nativeLogSha256": "55a4d7d7b141842b7e8ac7e5b3cea37a73744a5edd30bbea11cf5168536cc2eb",
+      "cleanRestore": "32 patched files byte-identical",
+      "build": "WASM runtime and shader translation rebuilt",
+      "limitations": "Original executable still gated by unavailable shader caps; viewport and broader draw/state support pending",
+      "browser": {
+        "runId": "d9f7ab18-deae-4e20-bd83-faebc0b682d5",
+        "result": "passed",
+        "drawPackets": {
+          "result": "passed",
+          "samples": [
+            {
+              "indexed": false,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "textured": true,
+              "rgba": [
+                17,
+                121,
+                233,
+                255
+              ]
+            },
+            {
+              "samplerSlot": 7,
+              "rgba": [
+                17,
+                121,
+                233,
+                255
+              ]
+            }
+          ],
+          "draws": 4,
+          "checks": [
+            "reflected sampler slots 0 and 7 produce expected textured pixels",
+            "released texture draw rejected",
+            "decoded draw packets reach GPU rendering",
+            "indexed and nonindexed output matched",
+            "buffer overflow and truncated packets rejected"
+          ],
+          "HumusFrames": 0
+        },
+        "workerRPC": "passed"
+      },
+      "originalRunId": "109a36a3-2058-4258-af8b-d2b0599861b9"
+    },
+    "viewport": {
+      "revision": "0c6930ee24ee964ebff19dee671ef337a4d64f7a",
+      "nativeTests": "7 D3D9 tests passed, including viewport stdcall, defaults, state preservation and pointer/NaN/rectangle rejection",
+      "nativeLogSha256": "b68379476fcd12143bf42b7abd9f41eee044ad2ddcf3a2f7cf8f7fa1d2f4ecc9",
+      "cleanRestore": "32 patched files byte-identical",
+      "build": "WASM runtime rebuilt",
+      "limitations": "Original executable still gated by unavailable shader capabilities; pixel-center conventions need validation",
+      "browser": {
+        "runId": "9cd83825-dec6-4abe-ac5b-3be445355a7e",
+        "result": "passed",
+        "drawPackets": {
+          "result": "passed",
+          "samples": [
+            {
+              "indexed": false,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "textured": true,
+              "rgba": [
+                17,
+                121,
+                233,
+                255
+              ]
+            },
+            {
+              "samplerSlot": 7,
+              "rgba": [
+                17,
+                121,
+                233,
+                255
+              ]
+            },
+            {
+              "viewport": [
+                4,
+                8,
+                16,
+                16
+              ],
+              "depthRangeRejected": [
+                [
+                  0,
+                  0,
+                  0,
+                  255
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  255
+                ]
+              ],
+              "insideOutsideBGRA": [
+                [
+                  191,
+                  128,
+                  64,
+                  255
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  255
+                ]
+              ]
+            }
+          ],
+          "draws": 6,
+          "checks": [
+            "viewport rectangle and depth range verified by GPU pixels",
+            "viewport changes reuse pipeline",
+            "reflected sampler slots 0 and 7 produce expected textured pixels",
+            "released texture draw rejected",
+            "decoded draw packets reach GPU rendering",
+            "indexed and nonindexed output matched",
+            "buffer overflow and truncated packets rejected"
+          ],
+          "HumusFrames": 0
+        }
+      },
+      "originalRunId": "c4969d9a-8bf0-42f7-a57b-b55eb2bf3e33"
+    },
+    "capabilitiesAndInitialization": {
+      "revision": "73f6e627f514c360477a4b024494a346bd18847f",
+      "nativeTests": "7 D3D9 tests and virtual-system-info/atomic/critical-section test passed",
+      "systemInfoLogSha256": "b13c4a9dccbff637315a1850d5909d65faa30272d7334bd450df193185d2e850",
+      "cleanRestore": "32 patched files byte-identical",
+      "build": "WASM runtime rebuilt",
+      "originalProgress": "Passed original shader-version gate; implemented three subsequently observed initialization blockers",
+      "limitations": "Full D3D9 conformance, cross-thread scheduling and scene acceptance unverified",
+      "gpuRunId": "91786d84-15db-4392-a07c-fecf12d32c1c"
+    },
+    "x87AndParity": {
+      "revision": "75acee278aa1f548d15c7752f92c94ce509282bf",
+      "nativeTests": "9 runtime tests passed, including signed zero, quiet/signaling NaN, FCOM versus FUCOM, double pop, and parity branches over 512 inputs",
+      "cleanRestore": "36 files byte-identical",
+      "limitations": "Runtime retains f64 rather than full 80-bit x87 precision; unmasked invalid exception fails explicitly",
+      "fabsRevision": "83b34bd",
+      "indirectTarget": "Observed 0x004233f4 added to evidence/entry-points.txt at 06de284"
+    },
+    "callbackDiscovery": {
+      "revision": "0b3f3239eb7648bde3fcac9ef83cc57373fcc759",
+      "translation": "56,431 blocks, 95.2% static code coverage; immediate callback pointer scan enabled",
+      "runtimeTests": "9 passed",
+      "runtimeTestLogSha256": "d543b73cdeff49e0d3b6b76cb51150afaf5d4b64ef51487425c3b75a0201f4a9",
+      "WASMBuild": "passed",
+      "cleanRestore": "36 patched files byte-identical",
+      "unsupportedDiagnostics": "Explicit runtime failures for SSE/AVX register operands and 16-bit addressing in 32-bit code; neither silently approximated",
+      "originalRunId": "35e53c33-2546-4efd-9f76-2667908383ef",
+      "originalResult": "panicked at out/humus/src/generated/part_08.rs:19021:5:\nunsupported instruction at 004221b0: fldln2"
+    },
+    "x87Logarithm": {
+      "revision": "62c1d5b",
+      "nativeTests": "11 passed; logarithm value, stack-pop and unsupported-domain checks included",
+      "testLogSha256": "b841a918a6693271d4232145a4b6de548c6f12fc0af7330dfb9ae36ba8ae3b6a",
+      "cleanRestore": "36 patched files byte-identical",
+      "build": "WASM passed",
+      "originalRunId": "d8a5bb8e-b8d5-4401-83f4-967fcd91b429",
+      "result": "Original executes past FLDLN2/FYL2X; now FNSAVE at 0x004b9da2",
+      "limitations": "f64 approximation; FYL2X exceptional inputs fail explicitly, full x87 precision/exception behavior incomplete"
+    },
+    "x87StateAndFlags": {
+      "revision": "fd8a4ca",
+      "nativeTests": "15 runtime tests passed",
+      "testLogSha256": "41f2b2c96845782af3c22d4a44182ccfee80c441b60df8a3267043ba6252cbc8",
+      "cleanRestore": "37 patched files byte-identical",
+      "WASMBuild": "passed",
+      "originalRunId": "aa232064-f425-4180-9892-a0fc71a74bec",
+      "originalBlocker": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
+      "limitations": "FPU arithmetic remains f64; nonrepresentable 80-bit restore values, noncontiguous stacks, unmasked exceptions and exponent ranges outside implemented subset fail explicitly"
+    },
+    "registryAndLuminance": {
+      "registryRevision": "dd66795",
+      "registryTest": "create/read/reopen/access-rights/short-buffer/stdcall passed",
+      "registryTestLogSha256": "de8493a14fb65c01efc712d15e41437696e9bece07814ec85949666aa3a211a7",
+      "luminanceRevision": "8d37e91",
+      "gpuRunId": "dc1ff7e0-fd30-4cd1-aa3d-e638233a7b98",
+      "gpuTests": "all shader diagnostics passed including L8 RGB replication, alpha=1, guest pitch, tail mip and expanded GPU allocation accounting",
+      "cleanRestore": "37 patched files byte-identical",
+      "integerFpuRevision": "d39227f",
+      "limitations": "Registry is per-instance, ASCII names, no cross-launch persistence; general registry enumeration/security and broader texture formats remain incomplete",
+      "originalRunId": "ad15ba8d-6f70-4887-a48b-0875a111823f",
+      "originalBlocker": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan"
+    },
+    "tangentAndTransforms": {
+      "tangentRevision": "765449f",
+      "transformRevision": "98db63e",
+      "nativeTests": "16 runtime tests and 7 D3D9 tests passed",
+      "cleanRestore": "37 patched files byte-identical",
+      "build": "WASM passed",
+      "limitations": "FPU remains f64 approximation; transforms are device state, fixed-function draws remain unsupported",
+      "originalRunId": "a3197b97-f12b-4c44-8d3f-73e570b6c3d1",
+      "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::SetFVF; args=[\n    0x4e7012,\n    0x142,\n]; stack_return=0x00407109"
+    },
+    "fvfAndFloatLimits": {
+      "FVFRevision": "a6a9e38",
+      "floatLiteralRevision": "d5b6970",
+      "nativeTests": "8 D3D9 tests passed; FVF declaration layout, invalid formats, getter, bindings and stdcall verified",
+      "cleanRestore": "37 files byte-identical",
+      "WASMBuild": "passed",
+      "originalRunId": "2ff5cf82-f247-4488-a331-698430d185b8",
+      "retainedOriginalGPUDrawSubmissions": 33,
+      "retainedDrawRejections": 0,
+      "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::DrawPrimitiveUP; args=[\n    0x4e7012,\n    0x6,\n    0x2,\n    0x13da4,\n    0x18,\n]; stack_return=0x00407121",
+      "limitations": "DrawPrimitiveUP triangle fan remains unsupported; packed D3DCOLOR and fixed-function drawing integration pending; no original Present or scene evidence"
+    },
+    "userPointerGeometry": {
+      "revision": "10fd430",
+      "nativeTests": "10 D3D9 tests passed; fan expansion, alternating strip winding, line strips, packed BGRA conversion and bounded input rejection",
+      "testLogSha256": "7b22613a7086b9d24ee0c3991a07cc6e863632223e69894aa735a1d57d05a5c4",
+      "cleanRestore": "38 patched files byte-identical",
+      "WASMBuild": "passed",
+      "originalRunId": "6194abc7-8882-45ea-acf5-816705dd5483",
+      "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:186:28:\nunsupported D3D9 DrawPrimitiveUP fixed-function pipeline: vertex_shader=0x0 pixel_shader=0x0 fvf=0x142 lighting=0 topology=6 primitives=2 stride=24 prepared_vertices=6 prepared_stride=36",
+      "retainedOriginalGPUDrawSubmissions": 33,
+      "limitations": "Original UP geometry is prepared but not submitted: fixed-function VS and PS are both missing. Programmable UP upload/draw integration has native conversion coverage, not a dedicated browser UP fixture. Temporary GPU buffer allocation per UP call; caching remains pending."
+    },
+    "fixedFunction": {
+      "revision": "fe8c757",
+      "nativeTests": "10 D3D9 tests passed",
+      "testLogSha256": "bd7a7eb5993330e0941ed4d525ae9170e08b6a76a613a7d239987a53276c7498",
+      "cleanRestore": "38 patched files byte-identical",
+      "WASMBuild": "passed",
+      "gpuRunId": "f849fd39-e795-428a-b0f1-198b12876d79",
+      "gpuResult": {
+        "result": "passed",
+        "outsideInsideBGRA": [
+          [
+            0,
+            0,
+            0,
+            255
+          ],
+          [
+            175,
+            61,
+            4,
+            255
+          ]
+        ],
+        "checks": [
+          "three transform matrices applied in order",
+          "texture RGB multiplied by diffuse",
+          "texture alpha independent of diffuse alpha",
+          "fixed-function alpha-test pipeline compiled"
+        ]
+      },
+      "originalRunId": "cdda1549-4d2c-4717-bc29-7a3020c6ce5d",
+      "applicationPresents": 288,
+      "submittedFrames": 288,
+      "sceneFrames": 0,
+      "visualResult": "CUA screenshot: black scene region with original FPS overlay; acceptance fails",
+      "termination": "bounded 60 second watchdog stopped both workers; no unsupported API trap",
+      "limitations": "Unlit XYZ + normalized diffuse + optional TEX2; default texture stage only. Fixed-function lighting, mixed shader stages and other declarations remain unsupported. Correct scene rendering and input acceptance pending."
+    },
+    "initialWindowPlacement": {
+      "revision": "f4996f6",
+      "nativeTests": "16 Win32 tests passed",
+      "testLogSha256": "b25b0d4288e5552545adef44f4cccb42554479123f039e8ee9d94b45b6de724d",
+      "cleanRestore": "38 patched files byte-identical",
+      "WASMBuild": "passed",
+      "rootCause": "Missing initial WM_WINDOWPOSCHANGED left original width/height globals zero; aspect ratio 0/0 produced NaN projection Y",
+      "fix": "Deliver initial placement to original wndproc; DefWindowProc sends SIZE/MOVE unless suppressed by flags",
+      "finiteProjectionVerified": true,
+      "originalRunId": "913e32fa-7f01-471e-9544-41c9464bf61b",
+      "frameCaptures": 3,
+      "applicationPresents": 197
+    },
+    "controlledCamera": {
+      "revision": "6e64e4d",
+      "runId": "75ca1907-369c-4b83-87ac-6ff1a26b2de9",
+      "applicationPresents": 284,
+      "keyDownAfterPresent": 1,
+      "keyUpAfterPresent": 30,
+      "cameraMatrixChangedWhileHeld": true,
+      "cameraMatrixStableAtPresent60": true,
+      "capturesInspected": 3,
+      "stencilTrace": {
+        "alphaLess255ReplaceWrites": 15,
+        "stencilEqualLightingDraws": 15,
+        "totalDraws": 40,
+        "limitation": "State trace proves submitted state, not all resulting scene pixels"
+      },
+      "earlierWTest": "no movement; binary defaults use Arrow Up"
+    }
+  },
+  "evidenceFile": "evidence/browser-direct3d-attempt.json",
+  "Performance evidence from separate runs": {
+    "status": "exploratory debug/release comparison; three cold/warm trials incomplete",
+    "debug": {
+      "status": "single debug baseline; required three cold/warm trials incomplete",
+      "runId": "7af38b2f-213d-4486-bb7b-4b81904eee33",
+      "revision": "98ba41b43985531abd6329fe4ae29e7060976afe",
+      "profile": "debug",
+      "resolution": [
+        800,
+        600
+      ],
+      "firstPresentMs": 45558.669921875,
+      "submissionFPS": 29.483621746706373,
+      "frameTimeMs": {
+        "p50": 33.369873046875,
+        "p95": 37.2451171875,
+        "p99": 42.429931640625,
+        "min": 30.375,
+        "max": 101.7998046875
+      },
+      "steadyIntervals": 1599,
+      "steadyDurationMs": 54233.5,
+      "applicationPresents": 1762,
+      "captureEnabled": false,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "workerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 20387907,
+        "encodedBodySize": 20381907,
+        "decodedBodySize": 20381907,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "limitations": [
+        "First Present is not independently timed first correct scene in this run",
+        "One uncached network trial; browser compilation/OS cache state uncontrolled",
+        "No display scan-out FPS or shader execution timing",
+        "JS heap and driver allocation totals unavailable",
+        "No prolonged stability result; run ended normally after 60 seconds of presentation"
+      ],
+      "rawEvidence": "evidence/performance-baseline.json",
+      "debugArtifacts": "web/generated/debug-baseline-98ba41b (local ignored artifacts with preserved hash manifest)"
+    },
+    "release": {
+      "runId": "0b7223b0-fe04-4d2a-8c81-7d8125cd6921",
+      "revision": "f0bbfc0dd3efea09e026bbcb83c7415dc26bfb90",
+      "profile": "release",
+      "resolution": [
+        800,
+        600
+      ],
+      "firstPresentMs": 1728.445068359375,
+      "submissionFPS": 74.1245359985557,
+      "frameTimeMs": {
+        "p50": 13.429931640625,
+        "p95": 14.72021484375,
+        "p99": 21.114990234375,
+        "min": 8.985107421875,
+        "max": 53.6298828125
+      },
+      "steadyIntervals": 4070,
+      "steadyDurationMs": 54907.594970703125,
+      "applicationPresents": 4446,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "wasmArtifactBytes": 22612475,
+      "workerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 24683132,
+        "encodedBodySize": 24677132,
+        "decodedBodySize": 24677132,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "measurementReview": {
+        "profile": "release",
+        "trialClass": "exploratory single uncached trial",
+        "externalCapture": "One CUA UI screenshot during run; repeat without screenshots for formal series",
+        "visualInspection": "Recognizable original pillar room and colored lighting observed"
+      },
+      "rawEvidence": "evidence/performance-release.json"
+    },
+    "limitations": [
+      "One trial per build; no browser/OS cache reset or formal warm-cache mode",
+      "Present submissions are not display refresh FPS",
+      "First Present timing is not an independently captured first correct scene timestamp",
+      "One UI screenshot in exploratory release run",
+      "Memory categories overlap or omit driver allocations; no exact total",
+      "1280x720 and long stability not measured"
+    ]
+  },
+  "Repeated startup measurements": {
+    "metrics": {
+      "trials": [
+        {
+          "runId": "06275cca-591b-46f8-b477-65f3e9a256d1",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "warm",
+          "captureEnabled": false,
+          "firstPresentMs": 1622.784912109375,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/06275cca-591b-46f8-b477-65f3e9a256d1.json"
+        },
+        {
+          "runId": "36923ccc-197a-490a-95c3-980ac47e839e",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "warm",
+          "captureEnabled": false,
+          "firstPresentMs": 1551.380126953125,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/36923ccc-197a-490a-95c3-980ac47e839e.json"
+        },
+        {
+          "runId": "3b592c5e-af84-4f20-a3e8-cba034aa5142",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "cold",
+          "captureEnabled": false,
+          "firstPresentMs": 1610.885009765625,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/3b592c5e-af84-4f20-a3e8-cba034aa5142.json"
+        },
+        {
+          "runId": "4aa57a26-999e-4b95-bd25-764b009afd91",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "cold",
+          "captureEnabled": true,
+          "firstPresentMs": 1682.990234375,
+          "sceneReadbackCompletedMs": 1685.78515625,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/4aa57a26-999e-4b95-bd25-764b009afd91.json"
+        },
+        {
+          "runId": "7422109f-27bf-48ff-91ed-f2801796a39d",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "cold",
+          "captureEnabled": true,
+          "firstPresentMs": 1649.330078125,
+          "sceneReadbackCompletedMs": 1650.594970703125,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/7422109f-27bf-48ff-91ed-f2801796a39d.json"
+        },
+        {
+          "runId": "74c0774c-746b-4399-bf1f-a1f23ba3729a",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "warm",
+          "captureEnabled": true,
+          "firstPresentMs": 1624.4951171875,
+          "sceneReadbackCompletedMs": 1628.675048828125,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/74c0774c-746b-4399-bf1f-a1f23ba3729a.json"
+        },
+        {
+          "runId": "7be6e53d-482d-4ca1-aefe-3ba1a2148b50",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "warm",
+          "captureEnabled": true,
+          "firstPresentMs": 1648.639892578125,
+          "sceneReadbackCompletedMs": 1650.080078125,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/7be6e53d-482d-4ca1-aefe-3ba1a2148b50.json"
+        },
+        {
+          "runId": "8ec2f478-ca9b-4368-8867-42eb6d0af96e",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "cold",
+          "captureEnabled": false,
+          "firstPresentMs": 1667.770263671875,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/8ec2f478-ca9b-4368-8867-42eb6d0af96e.json"
+        },
+        {
+          "runId": "b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "warm",
+          "captureEnabled": false,
+          "firstPresentMs": 1592.369873046875,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42.json"
+        },
+        {
+          "runId": "be194e84-14d1-451a-a25d-d003c5a845eb",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "cold",
+          "captureEnabled": true,
+          "firstPresentMs": 1649.814697265625,
+          "sceneReadbackCompletedMs": 1651.08984375,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/be194e84-14d1-451a-a25d-d003c5a845eb.json"
+        },
+        {
+          "runId": "e4873e43-d49b-485f-9929-241f5449b1df",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "warm",
+          "captureEnabled": true,
+          "firstPresentMs": 1617.07470703125,
+          "sceneReadbackCompletedMs": 1618.334716796875,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/e4873e43-d49b-485f-9929-241f5449b1df.json"
+        },
+        {
+          "runId": "f968232f-81f7-4bb0-936c-d76d83656860",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "cold",
+          "captureEnabled": false,
+          "firstPresentMs": 1674.27001953125,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/f968232f-81f7-4bb0-936c-d76d83656860.json"
+        }
+      ],
+      "groups": {
+        "cold-timing-only": {
+          "count": 3,
+          "medianMs": 1667.770263671875,
+          "minMs": 1610.885009765625,
+          "maxMs": 1674.27001953125
+        },
+        "warm-timing-only": {
+          "count": 3,
+          "medianMs": 1592.369873046875,
+          "minMs": 1551.380126953125,
+          "maxMs": 1622.784912109375
+        },
+        "cold-scene-readback": {
+          "count": 3,
+          "medianMs": 1651.08984375,
+          "minMs": 1650.594970703125,
+          "maxMs": 1685.78515625
+        },
+        "warm-scene-readback": {
+          "count": 3,
+          "medianMs": 1628.675048828125,
+          "minMs": 1618.334716796875,
+          "maxMs": 1650.080078125
+        }
+      },
+      "definitions": {
+        "cold": "App-owned immutable asset/WASM cache cleared before launch",
+        "warm": "Same cache populated and each body hash verified",
+        "scene-readback": "Upper bound from GPU readback completion; capture overhead included; visual review stored separately",
+        "timing-only": "No framebuffer capture; timestamp is first Present submission"
+      },
+      "limitations": [
+        "Browser compiler and OS cache state uncontrolled",
+        "JS modules, shader-runtime and page downloads outside asset-cache byte count",
+        "No display scan-out timing",
+        "Same release WASM, 800x600, visible Chromium152/Apple Metal3"
+      ]
+    },
+    "sceneValidation": {
+      "trials": [
+        {
+          "runId": "4aa57a26-999e-4b95-bd25-764b009afd91",
+          "mode": "cold",
+          "firstPresentMs": 1682.990234375,
+          "readbackCompletedMs": 1685.78515625,
+          "image": "evidence/scene-frames/startup-4aa57a26-999e-4b95-bd25-764b009afd91.jpg",
+          "cache": {
+            "mode": "cold",
+            "hits": 0,
+            "misses": 19,
+            "cacheBytes": 0,
+            "networkBodyBytes": 24665061,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "6184855d5c386bc62bb2a4c89f5c777536ccf68195ce580b95ae4c8a491dd859",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "e4873e43-d49b-485f-9929-241f5449b1df",
+          "mode": "warm",
+          "firstPresentMs": 1617.07470703125,
+          "readbackCompletedMs": 1618.334716796875,
+          "image": "evidence/scene-frames/startup-e4873e43-d49b-485f-9929-241f5449b1df.jpg",
+          "cache": {
+            "mode": "warm",
+            "hits": 19,
+            "misses": 0,
+            "cacheBytes": 24665061,
+            "networkBodyBytes": 0,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "e1c468d679c39ec24235de68fa132ae6a793897cc3ed8528377a8415aebdcb33",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "be194e84-14d1-451a-a25d-d003c5a845eb",
+          "mode": "cold",
+          "firstPresentMs": 1649.814697265625,
+          "readbackCompletedMs": 1651.08984375,
+          "image": "evidence/scene-frames/startup-be194e84-14d1-451a-a25d-d003c5a845eb.jpg",
+          "cache": {
+            "mode": "cold",
+            "hits": 0,
+            "misses": 19,
+            "cacheBytes": 0,
+            "networkBodyBytes": 24665061,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428734,
+            "pixels": 428800
+          },
+          "imageSha256": "2a619dee463b91544384999ceae5afeece24ce4ef2ec9a5fd02d86aa8c587ebf",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "7be6e53d-482d-4ca1-aefe-3ba1a2148b50",
+          "mode": "warm",
+          "firstPresentMs": 1648.639892578125,
+          "readbackCompletedMs": 1650.080078125,
+          "image": "evidence/scene-frames/startup-7be6e53d-482d-4ca1-aefe-3ba1a2148b50.jpg",
+          "cache": {
+            "mode": "warm",
+            "hits": 19,
+            "misses": 0,
+            "cacheBytes": 24665061,
+            "networkBodyBytes": 0,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "52dc8a1e2faa1c218224fda4e3dda7d48b6ea824e376b3b6a488a29f1f440665",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "7422109f-27bf-48ff-91ed-f2801796a39d",
+          "mode": "cold",
+          "firstPresentMs": 1649.330078125,
+          "readbackCompletedMs": 1650.594970703125,
+          "image": "evidence/scene-frames/startup-7422109f-27bf-48ff-91ed-f2801796a39d.jpg",
+          "cache": {
+            "mode": "cold",
+            "hits": 0,
+            "misses": 19,
+            "cacheBytes": 0,
+            "networkBodyBytes": 24665061,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "e1c468d679c39ec24235de68fa132ae6a793897cc3ed8528377a8415aebdcb33",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "74c0774c-746b-4399-bf1f-a1f23ba3729a",
+          "mode": "warm",
+          "firstPresentMs": 1624.4951171875,
+          "readbackCompletedMs": 1628.675048828125,
+          "image": "evidence/scene-frames/startup-74c0774c-746b-4399-bf1f-a1f23ba3729a.jpg",
+          "cache": {
+            "mode": "warm",
+            "hits": 19,
+            "misses": 0,
+            "cacheBytes": 24665061,
+            "networkBodyBytes": 0,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "fd15766d4ba511765883509bf8f2b3e22983e961e4f52c19840ba9a0cbb19379",
+          "recognizableSceneVerified": true
+        }
+      ],
+      "groups": {
+        "cold": {
+          "count": 3,
+          "medianSceneReadbackCompletedMs": 1651.08984375,
+          "minMs": 1650.594970703125,
+          "maxMs": 1685.78515625
+        },
+        "warm": {
+          "count": 3,
+          "medianSceneReadbackCompletedMs": 1628.675048828125,
+          "minMs": 1618.334716796875,
+          "maxMs": 1650.080078125
+        }
+      },
+      "interpretation": "GPU readback completion upper bound on first scene availability; first-Present counters are lower bounds in same runs. Images require visual inspection.",
+      "limitations": "Includes initial readback; separate from timing-only trials and steady-state run. Cache scope is assets/WASM only.",
+      "visualInspection": "All six first-Present JPEGs inspected: recognizable textured pillar room with colored lights; scene region excludes FPS overlay."
+    }
+  },
+  "Screenshot-free steady-state measurement": {
+    "runId": "3527410a-efd8-48c7-89b0-4d1dcf9a05b3",
+    "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+    "metrics": {
+      "firstPresentMs": 1666.385009765625,
+      "totalSteadyIntervals": 3967,
+      "steadyDurationMs": 54391.8349609375,
+      "submissionFPS": 72.93374093462694,
+      "frameTimeMs": {
+        "p50": 13.550048828125,
+        "p95": 14.7548828125,
+        "p99": 21.26513671875,
+        "min": 8.889892578125,
+        "max": 61.829833984375
+      },
+      "retainedIntervals": 3967,
+      "warmupMs": 5000,
+      "queueCompletionSamples": [
+        {
+          "present": 2400,
+          "latencyMs": 0.8050000667572021
+        },
+        {
+          "present": 2460,
+          "latencyMs": 0.8149999380111694
+        },
+        {
+          "present": 2520,
+          "latencyMs": 1.2400000095367432
+        },
+        {
+          "present": 2580,
+          "latencyMs": 0.875
+        },
+        {
+          "present": 2640,
+          "latencyMs": 0.8250000476837158
+        },
+        {
+          "present": 2700,
+          "latencyMs": 0.7949999570846558
+        },
+        {
+          "present": 2760,
+          "latencyMs": 0.9150000810623169
+        },
+        {
+          "present": 2820,
+          "latencyMs": 1.875
+        },
+        {
+          "present": 2880,
+          "latencyMs": 0.744999885559082
+        },
+        {
+          "present": 2940,
+          "latencyMs": 1.1999999284744263
+        },
+        {
+          "present": 3000,
+          "latencyMs": 0.8849999904632568
+        },
+        {
+          "present": 3060,
+          "latencyMs": 0.9250000715255737
+        },
+        {
+          "present": 3120,
+          "latencyMs": 0.9049999713897705
+        },
+        {
+          "present": 3180,
+          "latencyMs": 0.7450000047683716
+        },
+        {
+          "present": 3240,
+          "latencyMs": 0.7599999904632568
+        },
+        {
+          "present": 3300,
+          "latencyMs": 0.8550000190734863
+        },
+        {
+          "present": 3360,
+          "latencyMs": 0.8550000190734863
+        },
+        {
+          "present": 3420,
+          "latencyMs": 0.9500000476837158
+        },
+        {
+          "present": 3480,
+          "latencyMs": 1.1449999809265137
+        },
+        {
+          "present": 3540,
+          "latencyMs": 1.1549999713897705
+        },
+        {
+          "present": 3600,
+          "latencyMs": 0.7799999713897705
+        },
+        {
+          "present": 3660,
+          "latencyMs": 0.9700000286102295
+        },
+        {
+          "present": 3720,
+          "latencyMs": 0.7799999713897705
+        },
+        {
+          "present": 3780,
+          "latencyMs": 2.059999942779541
+        },
+        {
+          "present": 3840,
+          "latencyMs": 3.825000047683716
+        },
+        {
+          "present": 3900,
+          "latencyMs": 0.9750000238418579
+        },
+        {
+          "present": 3960,
+          "latencyMs": 0.9199999570846558
+        },
+        {
+          "present": 4020,
+          "latencyMs": 0.875
+        },
+        {
+          "present": 4080,
+          "latencyMs": 0.934999942779541
+        },
+        {
+          "present": 4140,
+          "latencyMs": 2.6850000619888306
+        },
+        {
+          "present": 4200,
+          "latencyMs": 0.8999999761581421
+        },
+        {
+          "present": 4260,
+          "latencyMs": 0.9099999666213989
+        }
+      ],
+      "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "captureEnabled": false,
+      "cameraTestEnabled": false
+    },
+    "assetCache": {
+      "mode": "warm",
+      "hits": 19,
+      "misses": 0,
+      "cacheBytes": 24665061,
+      "networkBodyBytes": 0,
+      "verifiedBytes": 24665061,
+      "repairedEntries": 0,
+      "limitBytes": 134217728,
+      "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    "scope": "60 seconds after first Present at 800x600; no screenshot or controlled input"
+  },
+  "Draw batching milestone": {
+    "revision": "fbf8fc42ee7f0f4936f889bd6c92e38a696b00a5",
+    "cameraRun": "48366511-c15b-47ab-942f-7f8a781e7c73",
+    "performanceRun": "72228cf0-5522-4066-a492-4465a95b5cdd",
+    "performanceEvidence": "evidence/performance-draw-batch.json",
+    "visualEvidence": "evidence/draw-batch-review.json",
+    "firstPresentMs": 1619.130126953125,
+    "submissionFPS": 77.66104523348942,
+    "frameTimeMs": {
+      "p50": 12.72509765625,
+      "p95": 14.2099609375,
+      "p99": 20.10986328125,
+      "min": 8.494873046875,
+      "max": 87.489990234375
+    },
+    "drawBridge": {
+      "drawBatches": 55450,
+      "batchedDraws": 184810,
+      "maxBatchCommands": 9,
+      "stagingBytes": 1052672
+    },
+    "drawRoundTripReductionFraction": 0.6999621232617282,
+    "comparison": "Single warm-cache screenshot-free trials at 800x600, same Chromium152 / Apple Metal3; previous unbatched 72.93374 vs batched 77.66105 Present submissions/s. Not display FPS; no statistical speedup claim.",
+    "remaining": "Full-scene alpha/stencil reference agreement; resource-update batching; 1280x720 target test; longer stability and broader memory/CPU/GPU timing coverage."
+  },
+  "1280x720 milestone": {
+    "revision": "107fc3d5406c80b286f29790975382803d8058da",
+    "runtimeBuild": {
+      "wasmProfile": "release",
+      "translatedTreeSha256": "fe5f97fbd71d843f80a8be7ea411d085d0a3250e4f227743650375326aa69b39",
+      "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
+      "builtAt": "2026-09-08T20:08:25.219961+00:00",
+      "revision": "107fc3d5406c80b286f29790975382803d8058da",
+      "workingTreeDirty": true,
+      "sourceSha256": "722d351eb1fc38123917ede56b1affaa7eb7dfcb8b08be860234deb8bd68c3cb",
+      "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+      "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+      "translationEntryPoints": [
+        "409a00",
+        "004233f4"
+      ],
+      "artifacts": {
+        "humus.js": {
+          "sha256": "6f0b11681802df270a64e54f02bee3679851fd7bad38f1f4fea417819c2616f0",
+          "bytes": 12805
+        },
+        "humus_bg.wasm": {
+          "sha256": "8f6a12b4062857a68601869f596ac94e7b4c9597313d114e216a2c1e34cb7c3b",
+          "bytes": 22636641
+        }
+      }
+    },
+    "cameraRun": "bff3c8ce-a206-454b-ac39-f031b527fa8f",
+    "performanceRun": "c52b9918-03cd-42d4-8de9-a1086b43978b",
+    "sourceResolution": [
+      1280,
+      720
+    ],
+    "firstPresentMs": 1588.920166015625,
+    "submissionFPS": 75.86968930297125,
+    "frameTimeMs": {
+      "p50": 12.97509765625,
+      "p95": 15.114990234375,
+      "p99": 20.275146484375,
+      "min": 8.844970703125,
+      "max": 70.81005859375
+    },
+    "applicationPresents": 4534,
+    "captureEnabled": false,
+    "visibility": "visible",
+    "performanceEvidence": "evidence/performance-720.json",
+    "visualEvidence": "evidence/resolution-720-review.json",
+    "memory": {
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 3686400,
+      "depthStencilLogicalMinimumBytes": 3686400
+    },
+    "limitations": "Single 60-second warm app-asset-cache trial, five-second warmup. Submission timing is not display FPS. GPU allocation figures are logical estimates, not an exact total. Full scene alpha/stencil reference agreement and longer stability remain pending."
+  },
+  "Three-minute stability milestone": {
+    "runId": "0e9ee678-ef0b-4525-a69e-64589e7a7a4e",
+    "revision": "d86cb32d02d4a236e852d0ad05e031526d34e0ab",
+    "resolution": [
+      1280,
+      720
+    ],
+    "durationAfterFirstPresentMs": 180000,
+    "applicationPresents": 13503,
+    "submissionFPS": 75.10530193681878,
+    "frameTimeMs": {
+      "p50": 13.02001953125,
+      "p95": 15.60986328125,
+      "p99": 20.83984375,
+      "min": 8.735107421875,
+      "max": 76.93505859375
+    },
+    "retainedIntervals": 8192,
+    "sampledResourceRanges": {
+      "wasmLinearMemoryBytes": {
+        "min": 288096256,
+        "max": 288096256
+      },
+      "geometryGPUBytes": {
+        "min": 60784,
+        "max": 60784
+      },
+      "textureGPUBytes": {
+        "min": 4025064,
+        "max": 4025064
+      },
+      "pipelineCacheEntries": {
+        "min": 5,
+        "max": 5
+      },
+      "shaderObjects": {
+        "min": 6,
+        "max": 6
+      }
+    },
+    "recordedErrors": [],
+    "visibilityChanges": [],
+    "evidence": "evidence/stability-720-180s.json",
+    "limitations": "Three minutes, static camera with animated lights, screenshot-free. No claim of display FPS, multi-hour stability or leak freedom. Samples cover WASM size and logical tracked GPU/cache resources only; browser JS and driver allocations remain unmeasured. Percentiles cover last 8192 intervals; aggregate submission rate covers all post-warmup intervals."
+  },
+  "Resource-upload batching milestone": {
+    "revision": "7100c4328cd0f2af8be2ab983fcb9658bf2a1520",
+    "cameraRun": "ed3dedb4-1560-466b-9109-7595d946d38a",
+    "performanceRun": "79aaadc8-3c92-44fc-a9bf-1b14c13dee25",
+    "performanceEvidence": "evidence/performance-upload-batch.json",
+    "visualEvidence": "evidence/upload-batch-review.json",
+    "resolution": [
+      1280,
+      720
+    ],
+    "firstPresentMs": 1618.150146484375,
+    "submissionFPS": 75.6757547678086,
+    "frameTimeMs": {
+      "p50": 12.89501953125,
+      "p95": 15.574951171875,
+      "p99": 20.3701171875,
+      "min": 8.699951171875,
+      "max": 72.304931640625
+    },
+    "drawBridge": {
+      "drawBatches": 54046,
+      "batchedDraws": 180030,
+      "batchedUploads": 31611,
+      "uploadedBytes": 10892233,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "limitations": "One capture-free 60-second trial; no speedup established. Submission intervals are not display FPS. Larger-than-1MiB uploads still use the synchronous bounded path. Full-scene alpha/stencil reference validation and completion audit remain pending."
+  },
+  "Scene lighting equivalence milestone": {
+    "revision": "7f2364c9e505d9cd790eddbcc51b49e3d5b35fe0",
+    "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+    "cameraRun": "f914691f-b76e-40ad-9161-fa351c007189",
+    "staticRun": "7aebdb29-9534-4526-9fd5-371a7f5c3d18",
+    "negativeControlRun": "47efae03-db01-403c-a91e-4076fcb8c0cc",
+    "sourceResolution": [
+      1280,
+      720
+    ],
+    "comparedFrames": [
+      {
+        "present": 1,
+        "width": 1280,
+        "height": 720,
+        "negativeControl": null,
+        "sceneY": 64,
+        "pixels": 839680,
+        "nonblackPixels": 839333,
+        "differentPixels": 0,
+        "maxChannelError": 0,
+        "meanAbsoluteChannelError": 0,
+        "counts": {
+          "maskDraws": 15,
+          "lightingDraws": 15,
+          "otherDraws": 10
+        },
+        "fullBufferSha256": {
+          "original": "61b26482894225d95f93c8f18a738018a79dacf99ed6ee2eeb543fd47fee7535",
+          "unmaskedDiagnostic": "61b26482894225d95f93c8f18a738018a79dacf99ed6ee2eeb543fd47fee7535"
+        },
+        "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+      },
+      {
+        "present": 30,
+        "width": 1280,
+        "height": 720,
+        "negativeControl": null,
+        "sceneY": 64,
+        "pixels": 839680,
+        "nonblackPixels": 839143,
+        "differentPixels": 0,
+        "maxChannelError": 0,
+        "meanAbsoluteChannelError": 0,
+        "counts": {
+          "maskDraws": 450,
+          "lightingDraws": 450,
+          "otherDraws": 300
+        },
+        "fullBufferSha256": {
+          "original": "a9a1c9afec46f5d53ba75e3cfac4c9736fed08d299bcaf20b2f6bfd50dc1c4dd",
+          "unmaskedDiagnostic": "a9a1c9afec46f5d53ba75e3cfac4c9736fed08d299bcaf20b2f6bfd50dc1c4dd"
+        },
+        "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+      },
+      {
+        "present": 60,
+        "width": 1280,
+        "height": 720,
+        "negativeControl": null,
+        "sceneY": 64,
+        "pixels": 839680,
+        "nonblackPixels": 838585,
+        "differentPixels": 0,
+        "maxChannelError": 0,
+        "meanAbsoluteChannelError": 0,
+        "counts": {
+          "maskDraws": 900,
+          "lightingDraws": 900,
+          "otherDraws": 600
+        },
+        "fullBufferSha256": {
+          "original": "8dc9d5e8d2bee69ae438e7d4042154b669e3229437731a6ae9f3850ab817048b",
+          "unmaskedDiagnostic": "8dc9d5e8d2bee69ae438e7d4042154b669e3229437731a6ae9f3850ab817048b"
+        },
+        "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+      }
+    ],
+    "negativeControl": {
+      "present": 1,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": "omit lighting on diagnostic target only",
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 839325,
+      "differentPixels": 268620,
+      "maxChannelError": 219,
+      "meanAbsoluteChannelError": 6.047882129700203,
+      "counts": {
+        "maskDraws": 15,
+        "lightingDraws": 15,
+        "otherDraws": 10
+      },
+      "fullBufferSha256": {
+        "original": "0bcc0203fd771d865629bc978bf91d336fcaf8884e3b9308fa1e8a53aec1ba3d",
+        "unmaskedDiagnostic": "8b9bd6d67c29cab47e06dff72186c7c1a9d90efa13f40b5743aa1d0740ce93a5"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    },
+    "cameraChangedWhileHeld": true,
+    "cameraStableAfterRelease": true,
+    "visuallyInspectedFrames": [
+      1,
+      30,
+      60
+    ],
+    "images": [
+      {
+        "path": "evidence/scene-frames/equivalence-1.jpg",
+        "sha256": "ceb6753a0a07e1151c439484e38d7588292ac94abe1051d4e688c7bf4dfa8515"
+      },
+      {
+        "path": "evidence/scene-frames/equivalence-30.jpg",
+        "sha256": "8ddecf3a5bddd505959f33f6fe3d2a86d6cc407746dd68f43ca60f5320cd8266"
+      },
+      {
+        "path": "evidence/scene-frames/equivalence-60.jpg",
+        "sha256": "a203ff784a62e89e552a0d545a871c2263a728402ff0ef50a66cddbe86a46cd3"
+      }
+    ],
+    "finding": "Exact RGB scene agreement for static and moving camera samples. Separate-target negative control detects missing lighting. Original canvas always retains application alpha/stencil state.",
+    "limitations": "Optimization equivalence on sampled actual frames, not independent native D3D9 conformance. Shared shader/rasterization translation errors can affect both paths. Diagnostic extra rendering/readback is excluded from performance claims. Final requirement-by-requirement audit remains pending."
+  }
+}

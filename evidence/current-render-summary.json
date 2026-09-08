@@ -1,0 +1,335 @@
+{
+  "runId": "f914691f-b76e-40ad-9161-fa351c007189",
+  "revision": "7f2364c9e505d9cd790eddbcc51b49e3d5b35fe0",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "originalExecutionAttempted": true,
+  "visualStatus": "reviewed",
+  "visualFinding": "Exact RGB scene agreement for static and moving camera samples. Separate-target negative control detects missing lighting. Original canvas always retains application alpha/stencil state.",
+  "reviewedImages": [
+    {
+      "path": "evidence/scene-frames/equivalence-1.jpg",
+      "sha256": "ceb6753a0a07e1151c439484e38d7588292ac94abe1051d4e688c7bf4dfa8515"
+    },
+    {
+      "path": "evidence/scene-frames/equivalence-30.jpg",
+      "sha256": "8ddecf3a5bddd505959f33f6fe3d2a86d6cc407746dd68f43ca60f5320cd8266"
+    },
+    {
+      "path": "evidence/scene-frames/equivalence-60.jpg",
+      "sha256": "a203ff784a62e89e552a0d545a871c2263a728402ff0ef50a66cddbe86a46cd3"
+    }
+  ],
+  "cameraChangedWhileHeld": true,
+  "cameraStableAfterRelease": true,
+  "browserEvidence": {
+    "secureContext": true,
+    "crossOriginIsolated": true,
+    "sharedArrayBuffer": true,
+    "webgpu": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "features": [
+      "depth32float-stencil8",
+      "rg11b10ufloat-renderable",
+      "bgra8unorm-storage",
+      "texture-formats-tier1",
+      "texture-compression-bc",
+      "dual-source-blending",
+      "core-features-and-limits",
+      "float32-filterable",
+      "indirect-first-instance",
+      "texture-compression-astc-sliced-3d",
+      "float32-blendable",
+      "subgroup-size-control",
+      "texture-compression-astc",
+      "texture-compression-etc2",
+      "depth-clip-control",
+      "texture-compression-bc-sliced-3d",
+      "clip-distances",
+      "shader-f16",
+      "texture-formats-tier2",
+      "timestamp-query",
+      "primitive-index",
+      "texture-component-swizzle",
+      "subgroups"
+    ],
+    "deviceCreated": true,
+    "hardwareAcceleration": "GPU device available; no Humus scene verified"
+  },
+  "device": {
+    "backendId": 1,
+    "width": 1280,
+    "height": 720,
+    "colorFormat": "bgra8unorm",
+    "depthFormat": "depth24plus-stencil8",
+    "validation": "passed",
+    "sceneFrames": 0
+  },
+  "applicationPresents": 2255,
+  "submittedFrames": 2255,
+  "presentationMetrics": {
+    "firstPresentMs": 1617,
+    "totalSteadyIntervals": 1872,
+    "steadyDurationMs": 24629.844970703125,
+    "submissionFPS": 76.00535050978678,
+    "frameTimeMs": {
+      "p50": 12.945068359375,
+      "p95": 15.02490234375,
+      "p99": 19.594970703125,
+      "min": 9.05517578125,
+      "max": 58.780029296875
+    },
+    "retainedIntervals": 1872,
+    "warmupMs": 5000,
+    "queueCompletionSamples": [
+      {
+        "present": 300,
+        "latencyMs": 0.3250000476837158
+      },
+      {
+        "present": 360,
+        "latencyMs": 0.23000001907348633
+      },
+      {
+        "present": 420,
+        "latencyMs": 1.7599999904632568
+      },
+      {
+        "present": 480,
+        "latencyMs": 0.30000007152557373
+      },
+      {
+        "present": 540,
+        "latencyMs": 0.30500006675720215
+      },
+      {
+        "present": 600,
+        "latencyMs": 0.6599999666213989
+      },
+      {
+        "present": 660,
+        "latencyMs": 0.6649999618530273
+      },
+      {
+        "present": 720,
+        "latencyMs": 0.2200000286102295
+      },
+      {
+        "present": 780,
+        "latencyMs": 4.350000023841858
+      },
+      {
+        "present": 840,
+        "latencyMs": 0.809999942779541
+      },
+      {
+        "present": 900,
+        "latencyMs": 0.28999996185302734
+      },
+      {
+        "present": 960,
+        "latencyMs": 0.6949999332427979
+      },
+      {
+        "present": 1020,
+        "latencyMs": 0.4099999666213989
+      },
+      {
+        "present": 1080,
+        "latencyMs": 0.3400000333786011
+      },
+      {
+        "present": 1140,
+        "latencyMs": 4.265000104904175
+      },
+      {
+        "present": 1200,
+        "latencyMs": 0.25999999046325684
+      },
+      {
+        "present": 1260,
+        "latencyMs": 4.115000009536743
+      },
+      {
+        "present": 1320,
+        "latencyMs": 2.0149999856948853
+      },
+      {
+        "present": 1380,
+        "latencyMs": 0.32499992847442627
+      },
+      {
+        "present": 1440,
+        "latencyMs": 0.6649999618530273
+      },
+      {
+        "present": 1500,
+        "latencyMs": 0.43999993801116943
+      },
+      {
+        "present": 1560,
+        "latencyMs": 0.3500000238418579
+      },
+      {
+        "present": 1620,
+        "latencyMs": 0.36000001430511475
+      },
+      {
+        "present": 1680,
+        "latencyMs": 1.2100000381469727
+      },
+      {
+        "present": 1740,
+        "latencyMs": 0.43999993801116943
+      },
+      {
+        "present": 1800,
+        "latencyMs": 0.41999995708465576
+      },
+      {
+        "present": 1860,
+        "latencyMs": 0.4549999237060547
+      },
+      {
+        "present": 1920,
+        "latencyMs": 0.42500007152557373
+      },
+      {
+        "present": 1980,
+        "latencyMs": 0.7699999809265137
+      },
+      {
+        "present": 2040,
+        "latencyMs": 0.48500001430511475
+      },
+      {
+        "present": 2100,
+        "latencyMs": 0.5349999666213989
+      },
+      {
+        "present": 2160,
+        "latencyMs": 0.4950000047683716
+      }
+    ],
+    "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+    "drawBridge": {
+      "drawBatches": 26656,
+      "batchedDraws": 88800,
+      "batchedUploads": 15621,
+      "uploadedBytes": 7438393,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "wasmLinearMemoryBytes": 288096256,
+    "geometryGPUBytes": 60784,
+    "textureGPUBytes": 4025064,
+    "colorLogicalBytes": 3686400,
+    "depthStencilLogicalMinimumBytes": 3686400,
+    "pipelineCacheEntries": 5,
+    "shaderObjects": 6,
+    "captureEnabled": true,
+    "sceneEquivalenceEnabled": true,
+    "cameraTestEnabled": true
+  },
+  "assetCacheMetrics": {
+    "mode": "warm",
+    "hits": 19,
+    "misses": 0,
+    "cacheBytes": 24689227,
+    "networkBodyBytes": 0,
+    "verifiedBytes": 24689227,
+    "repairedEntries": 0,
+    "limitBytes": 134217728,
+    "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+  },
+  "stabilitySamples": [
+    {
+      "elapsedMs": 1617.3599998950958,
+      "applicationPresents": 0,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": null
+    }
+  ],
+  "sceneEquivalence": [
+    {
+      "present": 1,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": null,
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 839333,
+      "differentPixels": 0,
+      "maxChannelError": 0,
+      "meanAbsoluteChannelError": 0,
+      "counts": {
+        "maskDraws": 15,
+        "lightingDraws": 15,
+        "otherDraws": 10
+      },
+      "fullBufferSha256": {
+        "original": "61b26482894225d95f93c8f18a738018a79dacf99ed6ee2eeb543fd47fee7535",
+        "unmaskedDiagnostic": "61b26482894225d95f93c8f18a738018a79dacf99ed6ee2eeb543fd47fee7535"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    },
+    {
+      "present": 30,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": null,
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 839143,
+      "differentPixels": 0,
+      "maxChannelError": 0,
+      "meanAbsoluteChannelError": 0,
+      "counts": {
+        "maskDraws": 450,
+        "lightingDraws": 450,
+        "otherDraws": 300
+      },
+      "fullBufferSha256": {
+        "original": "a9a1c9afec46f5d53ba75e3cfac4c9736fed08d299bcaf20b2f6bfd50dc1c4dd",
+        "unmaskedDiagnostic": "a9a1c9afec46f5d53ba75e3cfac4c9736fed08d299bcaf20b2f6bfd50dc1c4dd"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    },
+    {
+      "present": 60,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": null,
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 838585,
+      "differentPixels": 0,
+      "maxChannelError": 0,
+      "meanAbsoluteChannelError": 0,
+      "counts": {
+        "maskDraws": 900,
+        "lightingDraws": 900,
+        "otherDraws": 600
+      },
+      "fullBufferSha256": {
+        "original": "8dc9d5e8d2bee69ae438e7d4042154b669e3229437731a6ae9f3850ab817048b",
+        "unmaskedDiagnostic": "8dc9d5e8d2bee69ae438e7d4042154b669e3229437731a6ae9f3850ab817048b"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    }
+  ],
+  "terminalStatus": "stopped",
+  "terminalDiagnostic": null,
+  "recordedErrors": [],
+  "limitations": "Presents are not verified scene frames or display FPS. Missing visual review is not a black-scene finding. Bounded logs cannot prove absence of all errors. No overall acceptance claim is inferred."
+}
