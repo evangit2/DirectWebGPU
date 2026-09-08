@@ -947,40 +947,402 @@ index d13fb54..ee57444 100644
              ("dinput", winapi::dinput::VTABLES.as_slice()),
          ] {
 diff --git a/win32/winapi/src/advapi32.rs b/win32/winapi/src/advapi32.rs
-index c8b11ff..7f5a75e 100644
+index c8b11ff..11c76db 100644
 --- a/win32/winapi/src/advapi32.rs
 +++ b/win32/winapi/src/advapi32.rs
-@@ -53,7 +53,8 @@ pub fn RegOpenKeyExA(
-     _samDesired: u32, /* REG_SAM_FLAGS */
-     _phkResult: HKEY,
- ) -> u32 /* WIN32_ERROR */ {
+@@ -6,11 +6,6 @@ pub type HKEY = u32;
+ 
+ const ERROR_FILE_NOT_FOUND: u32 = 2;
+ 
+-#[win32_derive::dllexport]
+-pub fn RegCloseKey(_ctx: &mut Context, _hKey: HKEY) -> u32 /* WIN32_ERROR */ {
 -    stub!(0)
-+    // The isolated registry starts empty. Do not claim success without a handle.
-+    ERROR_FILE_NOT_FOUND
+-}
+-
+ #[win32_derive::dllexport]
+ pub fn GetUserNameA(
+     ctx: &mut Context,
+@@ -44,31 +39,6 @@ pub fn RegCreateKeyExW(
+     stub!(0)
  }
  
+-#[win32_derive::dllexport]
+-pub fn RegOpenKeyExA(
+-    _ctx: &mut Context,
+-    _hKey: HKEY,
+-    _lpSubKey: u32, /* STR */
+-    _ulOptions: u32,
+-    _samDesired: u32, /* REG_SAM_FLAGS */
+-    _phkResult: HKEY,
+-) -> u32 /* WIN32_ERROR */ {
+-    stub!(0)
+-}
+-
+-#[win32_derive::dllexport]
+-pub fn RegQueryValueExA(
+-    _ctx: &mut Context,
+-    _hKey: HKEY,
+-    _lpValueName: u32, /* STR */
+-    _lpReserved: u32,
+-    _lpType: u32, /* REG_VALUE_TYPE */
+-    _lpData: u32,
+-    _lpcbData: u32,
+-) -> u32 /* WIN32_ERROR */ {
+-    stub!(ERROR_FILE_NOT_FOUND)
+-}
+-
  #[win32_derive::dllexport]
-@@ -94,3 +95,21 @@ pub fn RegSetValueExW(
+ pub fn RegQueryValueExW(
+     _ctx: &mut Context,
+@@ -94,3 +64,349 @@ pub fn RegSetValueExW(
  ) -> u32 /* WIN32_ERROR */ {
      stub!(0)
  }
 +
 +// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
-+pub fn RegCreateKeyExA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: advapi32!RegCreateKeyExA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
++
 +pub fn RegEnumValueA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: advapi32!RegEnumValueA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++    panic!(
++        "unsupported API: advapi32!RegEnumValueA; prior_builtin_return={ret:#010x} esp={:#010x}",
++        ctx.cpu.regs.esp
++    );
 +}
 +pub fn RegOpenKeyA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: advapi32!RegOpenKeyA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++    panic!(
++        "unsupported API: advapi32!RegOpenKeyA; prior_builtin_return={ret:#010x} esp={:#010x}",
++        ctx.cpu.regs.esp
++    );
 +}
-+pub fn RegSetValueExA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: advapi32!RegSetValueExA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++
++// Per-WASM-instance virtual registry. No host registry access or cross-launch persistence.
++use std::{
++    collections::HashMap,
++    sync::{LazyLock, Mutex},
++};
++#[derive(Default)]
++struct Registry {
++    keys: HashMap<String, HashMap<String, (u32, Vec<u8>)>>,
++    handles: HashMap<u32, (String, u32)>,
++    next: u32,
++    bytes: usize,
++}
++static REGISTRY: LazyLock<Mutex<Registry>> = LazyLock::new(|| {
++    Mutex::new(Registry {
++        next: 0x10000,
++        ..Default::default()
++    })
++});
++fn range(ctx: &Context, p: u32, n: usize) -> bool {
++    p >= 0x1000
++        && (p as usize)
++            .checked_add(n)
++            .is_some_and(|end| end <= ctx.memory.bytes.len())
++}
++fn name(ctx: &Context, p: u32) -> Result<String, u32> {
++    if p == 0 {
++        return Ok(String::new());
++    }
++    if !range(ctx, p, 1) {
++        return Err(87);
++    }
++    let bytes = &ctx.memory.bytes[p as usize..];
++    let Some(n) = bytes.iter().take(4097).position(|&b| b == 0) else {
++        return Err(87);
++    };
++    if !bytes[..n].is_ascii() {
++        return Err(50);
++    }
++    Ok(String::from_utf8(bytes[..n].to_vec())
++        .unwrap()
++        .to_ascii_lowercase())
++}
++fn key(r: &Registry, h: u32) -> Result<(String, u32), u32> {
++    if (0x80000000..=0x80000003).contains(&h) {
++        return Ok((format!("{h:08x}"), 0xf003f));
++    }
++    r.handles.get(&h).cloned().ok_or(6)
++}
++fn open_key(
++    ctx: &mut Context,
++    h: u32,
++    sub: u32,
++    access: u32,
++    out: u32,
++    disposition: u32,
++    create: bool,
++) -> u32 {
++    if !range(ctx, out, 4) || (disposition != 0 && !range(ctx, disposition, 4)) {
++        return 87;
++    }
++    if access & !0xf023f != 0 {
++        return 50;
++    }
++    let sub = match name(ctx, sub) {
++        Ok(n) => n,
++        Err(e) => return e,
++    };
++    let mut r = REGISTRY.lock().unwrap();
++    let (base, rights) = match key(&r, h) {
++        Ok(k) => k,
++        Err(e) => return e,
++    };
++    if create && rights & 4 == 0 {
++        return 5;
++    }
++    let path = if sub.is_empty() {
++        base
++    } else {
++        format!("{}\\{}", base, sub.trim_matches('\\'))
++    };
++    let existed = r.keys.contains_key(&path);
++    if !existed && !create {
++        return ERROR_FILE_NOT_FOUND;
++    }
++    if r.handles.len() >= 4096 || (!existed && r.keys.len() >= 4096) {
++        return 8;
++    }
++    if !existed {
++        r.keys.insert(path.clone(), HashMap::new());
++    }
++    let handle = r.next;
++    r.next = r.next.checked_add(1).expect("registry handle exhaustion");
++    r.handles.insert(handle, (path.clone(), access));
++    ctx.memory.write::<u32>(out, handle);
++    if disposition != 0 {
++        ctx.memory
++            .write::<u32>(disposition, if existed { 2 } else { 1 });
++    }
++    log::info!(
++        "VIRTUAL_REGISTRY_OPEN path={path} handle={handle:#x} created={}",
++        !existed
++    );
++    0
++}
++#[win32_derive::dllexport]
++pub fn RegCreateKeyExA(
++    ctx: &mut Context,
++    hKey: u32,
++    lpSubKey: u32,
++    Reserved: u32,
++    lpClass: u32,
++    dwOptions: u32,
++    samDesired: u32,
++    lpSecurityAttributes: u32,
++    phkResult: u32,
++    lpdwDisposition: u32,
++) -> u32 {
++    if Reserved != 0 {
++        return 87;
++    }
++    if dwOptions > 1 || lpSecurityAttributes != 0 {
++        return 50;
++    }
++    if let Err(e) = name(ctx, lpClass) {
++        return e;
++    }
++    open_key(
++        ctx,
++        hKey,
++        lpSubKey,
++        samDesired,
++        phkResult,
++        lpdwDisposition,
++        true,
++    )
++}
++#[win32_derive::dllexport]
++pub fn RegOpenKeyExA(
++    ctx: &mut Context,
++    hKey: u32,
++    lpSubKey: u32,
++    ulOptions: u32,
++    samDesired: u32,
++    phkResult: u32,
++) -> u32 {
++    if ulOptions != 0 {
++        return 87;
++    }
++    open_key(ctx, hKey, lpSubKey, samDesired, phkResult, 0, false)
++}
++#[win32_derive::dllexport]
++pub fn RegCloseKey(_ctx: &mut Context, hKey: u32) -> u32 {
++    if (0x80000000..=0x80000003).contains(&hKey) {
++        return 0;
++    }
++    if REGISTRY.lock().unwrap().handles.remove(&hKey).is_some() {
++        0
++    } else {
++        6
++    }
++}
++#[win32_derive::dllexport]
++pub fn RegSetValueExA(
++    ctx: &mut Context,
++    hKey: u32,
++    lpValueName: u32,
++    Reserved: u32,
++    dwType: u32,
++    lpData: u32,
++    cbData: u32,
++) -> u32 {
++    if Reserved != 0 || (cbData != 0 && !range(ctx, lpData, cbData as usize)) {
++        return 87;
++    }
++    if cbData > 65536 {
++        return 8;
++    }
++    if !matches!(dwType, 1 | 3 | 4 | 7) {
++        return 50;
++    }
++    if dwType == 4 && cbData != 4 {
++        return 87;
++    }
++    let n = match name(ctx, lpValueName) {
++        Ok(n) => n,
++        Err(e) => return e,
++    };
++    let data = if cbData == 0 {
++        vec![]
++    } else {
++        ctx.memory.bytes[lpData as usize..lpData as usize + cbData as usize].to_vec()
++    };
++    let mut r = REGISTRY.lock().unwrap();
++    let (path, rights) = match key(&r, hKey) {
++        Ok(k) => k,
++        Err(e) => return e,
++    };
++    if rights & 2 == 0 {
++        return 5;
++    }
++    let Some(values) = r.keys.get(&path) else {
++        return 6;
++    };
++    let old = values.get(&n).map_or(0, |v| v.1.len());
++    if r.bytes - old + data.len() > 1048576
++        || (!values.contains_key(&n) && r.keys.values().map(|v| v.len()).sum::<usize>() >= 4096)
++    {
++        return 8;
++    }
++    r.bytes = r.bytes - old + data.len();
++    r.keys
++        .get_mut(&path)
++        .unwrap()
++        .insert(n.clone(), (dwType, data));
++    log::info!("VIRTUAL_REGISTRY_SET path={path} name={n} type={dwType} bytes={cbData}");
++    0
++}
++#[win32_derive::dllexport]
++pub fn RegQueryValueExA(
++    ctx: &mut Context,
++    hKey: u32,
++    lpValueName: u32,
++    lpReserved: u32,
++    lpType: u32,
++    lpData: u32,
++    lpcbData: u32,
++) -> u32 {
++    if lpReserved != 0
++        || (lpType != 0 && !range(ctx, lpType, 4))
++        || (lpcbData != 0 && !range(ctx, lpcbData, 4))
++        || (lpData != 0 && lpcbData == 0)
++    {
++        return 87;
++    }
++    let n = match name(ctx, lpValueName) {
++        Ok(n) => n,
++        Err(e) => return e,
++    };
++    let r = REGISTRY.lock().unwrap();
++    let (path, rights) = match key(&r, hKey) {
++        Ok(k) => k,
++        Err(e) => return e,
++    };
++    if rights & 1 == 0 {
++        return 5;
++    }
++    let Some((kind, data)) = r.keys.get(&path).and_then(|v| v.get(&n)) else {
++        return ERROR_FILE_NOT_FOUND;
++    };
++    let cap = if lpcbData != 0 {
++        ctx.memory.read::<u32>(lpcbData) as usize
++    } else {
++        0
++    };
++    if lpData != 0 && cap >= data.len() && !range(ctx, lpData, data.len()) {
++        return 87;
++    }
++    if lpType != 0 {
++        ctx.memory.write::<u32>(lpType, *kind);
++    }
++    if lpcbData != 0 {
++        ctx.memory.write::<u32>(lpcbData, data.len() as u32);
++    }
++    if lpData != 0 {
++        if cap < data.len() {
++            return 234;
++        }
++        ctx.memory.bytes[lpData as usize..lpData as usize + data.len()].copy_from_slice(data);
++    }
++    0
++}
++
++#[cfg(test)]
++mod registry_tests {
++    use super::*;
++    #[test]
++    fn create_query_reopen_rights_and_stdcall() {
++        crate::trace::init("");
++        let mut ctx = Context {
++            cpu: Default::default(),
++            thread_handle: 1,
++            thread_id: 1,
++            memory: runtime::Memory::leak_new(0x5000),
++            blocks: &[(runtime::RETURN_FROM_X86_ADDR32, Context::return_from_x86)],
++            cache: Default::default(),
++            recent: [Context::return_from_x86; 4],
++        };
++        ctx.cpu.regs.esp = 0x4000;
++        let path = b"Software\\RegistryTest\0";
++        ctx.memory.bytes[0x1100..0x1100 + path.len()].copy_from_slice(path);
++        ctx.memory.bytes[0x1200..0x1206].copy_from_slice(b"Value\0");
++        ctx.call32_x86(
++            runtime::Cont(RegCreateKeyExA_stdcall),
++            vec![0x80000002, 0x1100, 0, 0, 0, 0x20006, 0, 0x1300, 0x1304],
++        );
++        assert_eq!(ctx.cpu.regs.eax, 0);
++        assert_eq!(ctx.cpu.regs.esp, 0x4000);
++        assert_eq!(ctx.memory.read::<u32>(0x1304), 1);
++        let h = ctx.memory.read::<u32>(0x1300);
++        ctx.memory.write::<u32>(0x1400, 0x12345678);
++        assert_eq!(RegSetValueExA(&mut ctx, h, 0x1200, 0, 4, 0x1400, 4), 0);
++        assert_eq!(RegQueryValueExA(&mut ctx, h, 0x1200, 0, 0, 0, 0x1500), 5);
++        assert_eq!(RegCloseKey(&mut ctx, h), 0);
++        assert_eq!(RegCloseKey(&mut ctx, h), 6);
++        assert_eq!(RegOpenKeyExA(&mut ctx, 0x80000002, 0x1100, 0, 1, 0x1300), 0);
++        let h = ctx.memory.read::<u32>(0x1300);
++        assert_eq!(
++            RegQueryValueExA(&mut ctx, h, 0x1200, 0, 0x1504, 0, 0x1500),
++            0
++        );
++        assert_eq!(ctx.memory.read::<u32>(0x1500), 4);
++        assert_eq!(ctx.memory.read::<u32>(0x1504), 4);
++        ctx.memory.write::<u32>(0x1500, 2);
++        ctx.memory.write::<u32>(0x1600, 0xa5a5a5a5);
++        assert_eq!(
++            RegQueryValueExA(&mut ctx, h, 0x1200, 0, 0, 0x1600, 0x1500),
++            234
++        );
++        assert_eq!(ctx.memory.read::<u32>(0x1600), 0xa5a5a5a5);
++        assert_eq!(
++            RegQueryValueExA(&mut ctx, h, 0x1200, 0, 0, 0x1600, 0x1500),
++            0
++        );
++        assert_eq!(ctx.memory.read::<u32>(0x1600), 0x12345678);
++        assert_eq!(RegSetValueExA(&mut ctx, h, 0x1200, 0, 4, 0x1400, 4), 5);
++        assert_eq!(RegCloseKey(&mut ctx, h), 0);
++    }
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
