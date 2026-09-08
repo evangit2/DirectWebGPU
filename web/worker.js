@@ -1,5 +1,6 @@
+import {DrawBatch} from './draw-batch.js';
 import {AssetCache} from './asset-cache.js';
-let memory, device, lastPanic, gpuPort, logCount=0;
+let memory, device, lastPanic, gpuPort, drawBatch, logCount=0;
 const send=(type,data={})=>{if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
@@ -31,7 +32,13 @@ self.send_to_host=(func,args,retAddr)=>{
  }
  if(['create_window','graphics_call','poll_message','wait_message'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
-  gpuPort.postMessage({func,args:Array.from(args),buffer:memory.buffer,retAddr});return;
+  const values=Array.from(args);
+  if(func==='graphics_call'&&values[0]===13){
+   if(!Number.isInteger(retAddr)||retAddr<4||retAddr%4||retAddr+4>memory.buffer.byteLength)throw Error('invalid queued draw reply pointer');
+   drawBatch.enqueue(values,memory.buffer);Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;
+  }
+  drawBatch.flush();
+  gpuPort.postMessage({func,args:values,buffer:memory.buffer,retAddr});return;
  }
  // Unsupported host operations fail locally instead of leaving a blocked worker.
  throw Error(`unsupported host operation: ${func}; args=${JSON.stringify(args)} returnPointer=${retAddr}`);
@@ -40,7 +47,7 @@ self.onmessage=async({data})=>{
  try{
   if(data.type==='probe'){send('probe',{result:await gpuProbe()});return}
   if(data.type!=='start')throw Error('unsupported worker command');
-  gpuPort=data.gpuPort;
+  gpuPort=data.gpuPort;drawBatch=new DrawBatch(message=>gpuPort.postMessage(message));
   await new Promise((resolve,reject)=>{gpuPort.onmessage=({data})=>{if(data.ready)resolve(data.result);else reject(Error(data.error??'GPU initialization failed'))};gpuPort.start();});
   const build=data.build;
   const exeFile=build.files.find(f=>f.path===build.dependencies.executable.path);
@@ -71,6 +78,7 @@ self.onmessage=async({data})=>{
   send('execution-start',{wasmLinearMemoryBytes:memory.buffer.byteLength});
   const started=performance.now();
   exe.main();
+  drawBatch.flush();
   send('returned',{executionMs:performance.now()-started,wasmLinearMemoryBytes:memory.buffer.byteLength});
  }catch(error){send('failed',{message:text(lastPanic||error.stack||error),wasmLinearMemoryBytes:memory?.buffer.byteLength??null});}
 };

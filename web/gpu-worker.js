@@ -1,3 +1,4 @@
+import {executeDrawBatch} from './draw-batch.js';
 import {PresentationMetrics} from './performance-metrics.js';
 import {captureFrame} from './frame-capture.js';
 import {captureDraw} from './draw-diagnostic.js';
@@ -9,7 +10,7 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;
+let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,maxBatchCommands:0,stagingBytes:1052672};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
@@ -25,7 +26,9 @@ async function init(data){
  port.start();port.postMessage({ready:true,result});emit('probe',{result});
 }
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}
-async function dispatch({func,args,buffer,retAddr}){
+async function dispatch(data){
+ const {func,args,buffer,retAddr}=data;
+ if(func==='draw_batch'){await executeDrawBatch(data,graphics);bridgeMetrics.drawBatches++;bridgeMetrics.batchedDraws+=data.commands.length;bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
@@ -72,7 +75,7 @@ async function graphics(op,a,memory){
  }
  if(op===4){ // GPU-to-GPU presentation, with no framebuffer readback.
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);
-  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,captureEnabled:captureFrames,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,captureEnabled:captureFrames,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
  }
  if(op>=5&&op<=7){
   try{

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {DrawBatch,executeDrawBatch,BATCH_BYTES} from '../web/draw-batch.js';
+const memory=new SharedArrayBuffer(20000),source=new Uint8Array(memory,4096,5500);source.fill(7);
+const sent=[];const batch=new DrawBatch(data=>{sent.push({...data,commands:data.commands.map(a=>a.slice())});assert.equal(new Uint8Array(data.buffer,4096,1)[0],7);Atomics.store(new Int32Array(data.buffer),0,1);});
+batch.enqueue([13,9,4096,5500],memory);source.fill(8);assert.equal(new Uint8Array(batch.buffer,4096,1)[0],7);source.fill(7);
+for(let i=1;i<65;i++)batch.enqueue([13,9,4096,5500],memory);
+assert.equal(sent.length,1);assert.equal(sent[0].commands.length,64);batch.flush();assert.equal(sent.length,2);batch.flush();assert.equal(sent.length,2);
+assert.throws(()=>batch.enqueue([13,9,19999,5500],memory),/range/);
+const buffer=new SharedArrayBuffer(BATCH_BYTES+4096),commands=[[9,4096,5500],[9,9596,5500]],order=[];
+await executeDrawBatch({buffer,commands},async(op,a)=>{order.push(a[1]);return 1;});assert.deepEqual(order,[4096,9596]);assert.equal(new Int32Array(buffer)[0],1);
+let calls=0;await assert.rejects(()=>executeDrawBatch({buffer,commands},async()=>{calls++;return 0x8876086c;}),/rejected/);assert.equal(calls,1);assert.equal(new Int32Array(buffer)[0],2);
+await assert.rejects(()=>executeDrawBatch({buffer,commands:[[9,4096,5500],[9,4096,5500]]},async()=>{throw Error('must prevalidate');}),/command/);
+const failure=new DrawBatch(data=>Atomics.store(new Int32Array(data.buffer),0,2));failure.enqueue([13,9,4096,5500],memory);assert.throws(()=>failure.flush(),/deferred/);assert.throws(()=>failure.enqueue([13,9,4096,5500],memory),/failed/);
+console.log('Draw batch ownership, 64-command bound, pointer validation, ordering and fail-stop tests passed');
