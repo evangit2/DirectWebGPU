@@ -348,5 +348,48 @@
       }
     },
     "originalRunId": "b679ad67-8672-4d64-b6c6-74a1b0e13be8"
+  },
+  "drawBridge": {
+    "revision": "c119870d98a86b3e110cedb2ccab67aca90fa081",
+    "nativeTests": "7 D3D9 tests passed, including DrawPrimitive stdcall, missing scene rejection, primitive/range rejection and native no-GPU return",
+    "nativeLogSha256": "17264d10f53da1ae068751abe37aebcc2cf39731e013c70368ceade1ec4fd446",
+    "cleanRestore": "32 patched files byte-identical",
+    "limitations": "Textured draws and viewport changes unsupported; first actual Humus scene still unverified",
+    "browser": {
+      "runId": "a4b49f94-8af6-4613-b63b-0b55f366d377",
+      "result": "passed",
+      "drawPackets": {
+        "result": "passed",
+        "samples": [
+          {
+            "indexed": false,
+            "rgba": [
+              64,
+              128,
+              191,
+              255
+            ]
+          },
+          {
+            "indexed": true,
+            "rgba": [
+              64,
+              128,
+              191,
+              255
+            ]
+          }
+        ],
+        "draws": 2,
+        "checks": [
+          "decoded draw packets reach GPU rendering",
+          "indexed and nonindexed output matched",
+          "buffer overflow and truncated packets rejected"
+        ],
+        "HumusFrames": 0
+      },
+      "workerRPC": "passed"
+    },
+    "originalRunId": "ded2ccbc-81e8-4d1b-bd25-732ee48c8d6e"
   }
 }

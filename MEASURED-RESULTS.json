@@ -6,10 +6,10 @@
   "Runtime build": {
     "translatedTreeSha256": "fb125b2bc35606f434cc13e956326b6c53a5ca036368bdfea74b677e7bca403c",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T17:01:37.887956+00:00",
-    "revision": "42d9423f3b858043843fe664f6d1a8745105385f",
+    "builtAt": "2026-09-08T17:08:45.299497+00:00",
+    "revision": "c119870d98a86b3e110cedb2ccab67aca90fa081",
     "workingTreeDirty": false,
-    "sourceSha256": "e9f6fd20070a0897eb8ed6c1c605938fd7192c3c2e5b2ee00266ab5a7d16c014",
+    "sourceSha256": "2c7242a4cbb3007b15d4c3e4b5afae2eb7b340d766a3a992d7b2e0a749e24316",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
@@ -17,16 +17,16 @@
     ],
     "artifacts": {
       "humus.js": {
-        "sha256": "cc5f324995cb88da1da7f0dd08cb1e130ae5a10056466282e9d2893e24648dad",
+        "sha256": "7d409c198ed4c6b63f563fa2f09edbf466ee08b743b9579b595c87f4575aba6e",
         "bytes": 12071
       },
       "humus_bg.wasm": {
-        "sha256": "1fddd4dd47e73207b652663aedd4797d4a9a3c5c3a2050bcc13cd78c0224e1aa",
-        "bytes": 16793651
+        "sha256": "2a27ee5008580e813194766041f8ac89dc26f3b3d4a33e76cc2316830270225c",
+        "bytes": 16870626
       }
     }
   },
-  "Run ID": "b679ad67-8672-4d64-b6c6-74a1b0e13be8",
+  "Run ID": "ded2ccbc-81e8-4d1b-bd25-732ee48c8d6e",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -57,8 +57,8 @@
       "texture-compression-etc2",
       "depth-clip-control",
       "texture-compression-bc-sliced-3d",
-      "clip-distances",
       "shader-f16",
+      "clip-distances",
       "timestamp-query",
       "texture-formats-tier2",
       "primitive-index",
@@ -108,7 +108,7 @@
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptToFailureMs": 32504.375,
+    "diagnosticAttemptToFailureMs": 32193.865000009537,
     "diagnosticTimingCaveat": "one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark"
   },
   "Exact remaining blocker": "IDirect3D9::GetDeviceCaps returns D3DERR_NOTAVAILABLE; original EXE rejects missing PS 2.0 / VS 1.1 support. Resource, shader and draw integration remains incomplete.",
@@ -451,7 +451,30 @@
       "implementation": "cached shader-pair linking, semantic vertex layouts, alpha variants and render-state pipeline creation",
       "runtimeArtifact": "WASM unchanged; JS source manifest refreshed",
       "limits": "128 entries and 16 MiB per shader-pair/pipeline cache",
-      "limitations": "DrawPrimitive/DrawIndexedPrimitive bridge and original scene acceptance pending"
+      "limitations": "DrawPrimitive/DrawIndexedPrimitive bridge and original scene acceptance pending",
+      "browser": {
+        "runId": "34672139-e88f-4a48-bd66-3ab3155b1ef9",
+        "result": "passed",
+        "pipelineCache": {
+          "result": "passed",
+          "compilations": 5,
+          "translations": 2,
+          "checks": [
+            "unchanged draw reuses linked shader pair and pipeline",
+            "dynamic stencil reference does not compile a new pipeline",
+            "alpha/stencil/blend/depth variants produce verified GPU samples"
+          ],
+          "HumusFrames": 0
+        }
+      },
+      "originalRunId": "b679ad67-8672-4d64-b6c6-74a1b0e13be8"
+    },
+    "drawBridge": {
+      "revision": "c119870d98a86b3e110cedb2ccab67aca90fa081",
+      "nativeTests": "7 D3D9 tests passed, including DrawPrimitive stdcall, missing scene rejection, primitive/range rejection and native no-GPU return",
+      "nativeLogSha256": "17264d10f53da1ae068751abe37aebcc2cf39731e013c70368ceade1ec4fd446",
+      "cleanRestore": "32 patched files byte-identical",
+      "limitations": "Textured draws and viewport changes unsupported; first actual Humus scene still unverified"
     }
   },
   "evidenceFile": "evidence/browser-direct3d-attempt.json"
