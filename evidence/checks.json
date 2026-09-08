@@ -642,5 +642,16 @@
     "retainedDrawRejections": 0,
     "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::DrawPrimitiveUP; args=[\n    0x4e7012,\n    0x6,\n    0x2,\n    0x13da4,\n    0x18,\n]; stack_return=0x00407121",
     "limitations": "DrawPrimitiveUP triangle fan remains unsupported; packed D3DCOLOR and fixed-function drawing integration pending; no original Present or scene evidence"
+  },
+  "userPointerGeometry": {
+    "revision": "10fd430",
+    "nativeTests": "10 D3D9 tests passed; fan expansion, alternating strip winding, line strips, packed BGRA conversion and bounded input rejection",
+    "testLogSha256": "7b22613a7086b9d24ee0c3991a07cc6e863632223e69894aa735a1d57d05a5c4",
+    "cleanRestore": "38 patched files byte-identical",
+    "WASMBuild": "passed",
+    "originalRunId": "6194abc7-8882-45ea-acf5-816705dd5483",
+    "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:186:28:\nunsupported D3D9 DrawPrimitiveUP fixed-function pipeline: vertex_shader=0x0 pixel_shader=0x0 fvf=0x142 lighting=0 topology=6 primitives=2 stride=24 prepared_vertices=6 prepared_stride=36",
+    "retainedOriginalGPUDrawSubmissions": 33,
+    "limitations": "Original UP geometry is prepared but not submitted: fixed-function VS and PS are both missing. Programmable UP upload/draw integration has native conversion coverage, not a dedicated browser UP fixture. Temporary GPU buffer allocation per UP call; caching remains pending."
   }
 }
