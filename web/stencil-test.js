@@ -1,17 +1,14 @@
 import {D3D9RenderState,RS} from './d3d9-state.js';
 // Diagnostic geometry only. The production module above consumes API state.
-export async function testStencil(device,translator,shaders){
+export async function testStencil(device,translator,shaders,pipelineCache,shaderIds){
  const size=64;
  const color=device.createTexture({size:[size,size],format:'rgba8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
  const depth=device.createTexture({size:[size,size],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
  const read=device.createBuffer({size:256*size,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
  const buffers=[];const state=new D3D9RenderState();
  state.set(RS.CULLMODE,1);
- const vertex=device.createShaderModule({code:shaders.vertex.wgsl});
- async function pipeline(){
-  const fragment=device.createShaderModule({code:state.alphaVariant(shaders.pixel.wgsl,translator)});
-  return device.createRenderPipelineAsync({layout:'auto',vertex:{module:vertex,entryPoint:'main',buffers:[{arrayStride:32,attributes:[{shaderLocation:0,offset:0,format:'float32x4'},{shaderLocation:1,offset:16,format:'float32x4'}]}]},fragment:{module:fragment,entryPoint:'main',targets:[state.colorTarget('rgba8unorm')]},depthStencil:state.depthStencil(),primitive:state.primitive()});
- }
+ const declaration=new Uint8Array([0,0,0,0,3,0,0,0,0,0,16,0,3,0,10,0,255,0,0,0,17,0,0,0]);
+ async function pipeline(){return (await pipelineCache.get(...shaderIds,declaration,[{stride:32}],state,{colorFormat:'rgba8unorm'})).pipeline;}
  function geometry(regions,z){
   const data=[];for(const [left,right,rgba] of regions){for(const [x,y]of[[left,-1],[right,-1],[left,1],[left,1],[right,-1],[right,1]])data.push(x,y,z,1,...rgba)}
   const buffer=device.createBuffer({size:data.length*4,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});device.queue.writeBuffer(buffer,0,new Float32Array(data));buffers.push(buffer);return{buffer,count:data.length/8};
