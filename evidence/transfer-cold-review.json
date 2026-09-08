@@ -1,0 +1,19 @@
+{
+  "runId": "2beb205e-1668-401e-879f-5dd97afa93da",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "visuallyInspectedFrames": [
+    1
+  ],
+  "images": [
+    {
+      "path": "evidence/startup-128/2beb205e-1668-401e-879f-5dd97afa93da.jpg",
+      "sha256": "8dd10a0c784be2d7e67190307f10c3b77a30d2c8af6b607192e747e3ed0d6a3c"
+    }
+  ],
+  "finding": "Individually inspected first-frame JPEG shows the original textured pillar room and colored lighting.",
+  "sceneReadbackCompletedMs": 1917.1748046875,
+  "limitations": [
+    "One cold capture trial; repeated reduced-memory startup series remains incomplete.",
+    "Readback completion is an upper bound including capture overhead."
+  ]
+}

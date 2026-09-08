@@ -76,15 +76,15 @@
       "objectiveSections": "9",
       "requirement": "Repeated startup and steady-state/stability",
       "status": "partial",
-      "evidence": "evidence/startup-corrected-summary.json; evidence/startup-corrected-review.json; evidence/performance-corrected-summary.json; evidence/stability-summary.json; evidence/memory-reduction.json",
-      "finding": "Corrected rendering startup series and ordinary 60-second runs are retained. Reduced-capacity build passes three-minute instrumented stability; startup/ordinary throughput must be refreshed on that build."
+      "evidence": "evidence/startup-corrected-summary.json; evidence/startup-corrected-review.json; evidence/performance-corrected-summary.json; evidence/stability-summary.json; evidence/memory-reduction.json; evidence/performance-128.json",
+      "finding": "Reduced-memory build has a three-minute instrumented stability run and separate 60-second ordinary run at 77.16 Present submissions/s. Repeated startup series remains to be completed on this build."
     },
     {
       "objectiveSections": "9",
       "requirement": "Available GPU/CPU timing and complete transfer accounting",
       "status": "partial",
-      "evidence": "evidence/gpu-timing-summary.json; evidence/memory-resource-summary.json",
-      "finding": "GPU/host draw timings measured. Resource snapshots now cover page, CPU and GPU workers including shader WASM; navigation document and exact wire accounting remain outside this scope."
+      "evidence": "evidence/gpu-timing-summary.json; evidence/memory-resource-summary.json; evidence/transfer-summary.json",
+      "finding": "GPU/host draw timing sampled. Resource snapshots include navigation plus page/CPU/GPU entries, clock origins and completed-by-first-Present cutoff. Exposed transferSize sums: cold 27114225, warm 2402060 bytes. Exact packet-level totals and missing browser resource entries remain outside scope."
     },
     {
       "objectiveSections": "10",
@@ -94,5 +94,5 @@
       "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
     }
   ],
-  "nextAction": "Refresh reduced-memory startup/ordinary throughput and complete available transfer accounting; finish requirement-by-requirement audit."
+  "nextAction": "Complete reduced-memory repeated startup series, then finish requirement-by-requirement audit with explicit measurement limitations."
 }

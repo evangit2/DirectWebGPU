@@ -1,0 +1,14 @@
+{
+  "cold": "evidence/transfer-cold-summary.json",
+  "warm": "evidence/transfer-warm-summary.json",
+  "coldExposedTransferBytes": 27114225,
+  "warmExposedTransferBytes": 2402060,
+  "finding": "Browser-exposed completed entries now include navigation plus page/CPU/GPU resources with epoch-aligned first-Present cutoff.",
+  "limitations": [
+    "Sums cover browser-exposed completed entries, not exact wire traffic or all required downloads. Missing module timing entries and browser caching may undercount.",
+    "Navigation included separately; page setup before Start included. First Present is submission, not correct-scene display timing.",
+    "No URL-based deduplication: repeat requests are separate resource entries. Cross-realm browser accounting is not an independent network capture.",
+    "Browser transferSize includes reported overhead; it is not packet-level bytes. Asset-cache metrics overlap CPU resource entries and must not be added.",
+    "Resources unfinished at first Present have no partial byte measurement."
+  ]
+}
