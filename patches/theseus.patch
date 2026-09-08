@@ -1422,10 +1422,10 @@ index c8b11ff..11c76db 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..0f52093
+index 0000000..fb65692
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,303 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -1727,6 +1727,8 @@ index 0000000..0f52093
 +        assert!(!OBJECTS.lock().unwrap().contains_key(&obj));
 +    }
 +}
++
++mod up;
 diff --git a/win32/winapi/src/d3d9/buffers.rs b/win32/winapi/src/d3d9/buffers.rs
 new file mode 100644
 index 0000000..5073f2f
@@ -2690,10 +2692,10 @@ index 0000000..629b941
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..4ba5c66
+index 0000000..709e7b5
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,273 @@
+@@ -0,0 +1,296 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
@@ -2868,7 +2870,27 @@ index 0000000..4ba5c66
 +pub fn DrawPrimitive(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32)->u32{draw(ctx,this,kind,first,primitives,None)}
 +#[win32_derive::dllexport]
 +pub fn DrawIndexedPrimitive(ctx:&mut Context,this:u32,kind:u32,base:i32,min:u32,num:u32,first:u32,primitives:u32)->u32{draw(ctx,this,kind,first,primitives,Some((base,min,num)))}
-+pub fn DrawPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawPrimitiveUP",5)}
++#[win32_derive::dllexport]
++pub fn DrawPrimitiveUP(ctx:&mut Context,this:u32,kind:u32,primitives:u32,pointer:u32,stride:u32)->u32{
++ let d=device(this);
++ // User-pointer draws leave stream zero unbound, including validation failures.
++ SetStreamSource(ctx,this,0,0,0,0);
++ if !d.scene||d.declaration==0{return D3DERR_INVALIDCALL;}
++ let Some(vertices)=super::up::vertex_count(kind,primitives)else{return D3DERR_INVALIDCALL;};
++ let Some(size)=vertices.checked_mul(stride)else{return D3DERR_INVALIDCALL;};
++ if size>16*1024*1024||!valid(ctx,pointer,size as usize){return D3DERR_INVALIDCALL;}
++ let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);
++ let Some(prepared)=super::up::prepare(kind,primitives,stride,&declaration,&ctx.memory.bytes[pointer as usize..(pointer+size)as usize])else{return D3DERR_INVALIDCALL;};
++ if d.shaders.contains(&0){panic!("unsupported D3D9 DrawPrimitiveUP fixed-function pipeline: vertex_shader={:#x} pixel_shader={:#x} fvf={:#x} lighting={} topology={} primitives={} stride={} prepared_vertices={} prepared_stride={}",d.shaders[0],d.shaders[1],d.fvf,d.states[&137],kind,primitives,stride,prepared.bytes.len()/prepared.stride as usize,prepared.stride);}
++ // User memory is consumed before returning. The serial RPC copies into a GPU
++ // buffer before the draw; destruction is deferred by WebGPU for submitted work.
++ let gpu=host::graphics_call(5,&[d.backend,6,prepared.bytes.len()as u32,100]);
++ if gpu==0||gpu>=0x80000000{return D3DERR_NOTAVAILABLE;}
++ let uploaded=host::graphics_call(6,&[d.backend,gpu,0,prepared.bytes.as_ptr()as usize as u32,prepared.bytes.len()as u32]);
++ let result=if uploaded==1{draw_prepared(ctx,this,prepared.kind,0,primitives,None,Some((gpu,prepared.stride,&prepared.declaration)))}else{uploaded};
++ host::graphics_call(7,&[d.backend,gpu]);
++ result
++}
 +pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitiveUP",9)}
 +pub fn ProcessVertices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ProcessVertices",7)}
 +#[win32_derive::dllexport]
@@ -2956,12 +2978,15 @@ index 0000000..4ba5c66
 +pub fn CreateQuery_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateQuery",3)}
 +
 +fn draw(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>)->u32{
++ draw_prepared(ctx,this,kind,first,primitives,indexed,None)
++}
++fn draw_prepared(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>,up:Option<(u32,u32,&[u8])>)->u32{
 + let d=device(this);if !d.scene||d.declaration==0||d.shaders.contains(&0){return D3DERR_INVALIDCALL}
 + let factor=match kind{1=>1,2=>2,4=>3,_=>return D3DERR_INVALIDCALL};let Some(count)=primitives.checked_mul(factor)else{return D3DERR_INVALIDCALL};if count==0||count>1048576{return D3DERR_INVALIDCALL}
 + let (index,base,max)=if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
-+ let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
++ let owned_declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let declaration=up.map(|u|u.2).unwrap_or(&owned_declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
 + let mut words=vec![0x39445246,super::shader::gpu_handle(d.shaders[0]),super::shader::gpu_handle(d.shaders[1]),kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
-+ for stream in d.streams{let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
++ for (slot,stream) in d.streams.into_iter().enumerate(){if let Some((gpu,stride,_))=up{words.extend_from_slice(&if slot==0{[gpu,0,stride]}else{[0,0,0]});continue;}let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
 + for(k,v)in states{words.extend_from_slice(&[k,v])}for chunk in declaration.chunks_exact(4){words.push(u32::from_le_bytes(chunk.try_into().unwrap()))}d.constants.lock().unwrap().draw_words(&mut words);
 + for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}words.extend_from_slice(&d.viewport);
 + // The Vec is already in WASM linear memory; its pointer is not a guest address.
@@ -4074,6 +4099,63 @@ index 0000000..3d1b3d0
 +}
 +
 +pub(super) fn draw_handle(this:u32)->Option<u32>{let t=texture(this);if t.mips.iter().any(|m|m.locked.is_some()){None}else{Some(t.gpu)}}
+diff --git a/win32/winapi/src/d3d9/up.rs b/win32/winapi/src/d3d9/up.rs
+new file mode 100644
+index 0000000..6d3ac35
+--- /dev/null
++++ b/win32/winapi/src/d3d9/up.rs
+@@ -0,0 +1,51 @@
++//! Bounded user-pointer vertex normalization; no rasterization or geometry replacement.
++pub struct Prepared{pub kind:u32,pub stride:u32,pub declaration:Vec<u8>,pub bytes:Vec<u8>}
++pub fn vertex_count(kind:u32,primitives:u32)->Option<u32>{
++ if primitives==0||primitives>349525{return None;}
++ match kind{1=>Some(primitives),2=>primitives.checked_mul(2),3=>primitives.checked_add(1),4=>primitives.checked_mul(3),5|6=>primitives.checked_add(2),_=>None}
++}
++pub fn prepare(kind:u32,primitives:u32,stride:u32,declaration:&[u8],source:&[u8])->Option<Prepared>{
++ let count=vertex_count(kind,primitives)?;
++ if stride==0||stride>2048||stride%4!=0||source.len()!=count.checked_mul(stride)? as usize||source.len()>16*1024*1024||declaration.len()<16||declaration.len()>520||declaration.len()%8!=0{return None;}
++ let end=[255,0,0,0,17,0,0,0];if declaration[declaration.len()-8..]!=end{return None;}
++ let mut layout=Vec::new();let mut fields=Vec::new();let mut width=0u32;
++ for e in declaration[..declaration.len()-8].chunks_exact(8){
++  let offset=u16::from_le_bytes([e[2],e[3]])as u32;let ty=e[4];
++  if e[0]!=0||e[1]!=0||ty>4||e[5]!=0||offset%4!=0{return None;}
++  let input=if ty==4{4}else{4*(ty as u32+1)};let output=if ty==4{16}else{input};
++  if offset.checked_add(input)?>stride||width+output>2048{return None;}
++  let mut normalized=e.to_vec();normalized[2..4].copy_from_slice(&(width as u16).to_le_bytes());if ty==4{normalized[4]=3;}layout.extend_from_slice(&normalized);
++  fields.push((offset as usize,input as usize,ty));width+=output;
++ }
++ layout.extend_from_slice(&end);
++ let output_kind=match kind{3=>2,5|6=>4,_=>kind};let factor=match output_kind{1=>1,2=>2,4=>3,_=>return None};
++ let bytes_len=primitives.checked_mul(factor)?.checked_mul(width)?as usize;if bytes_len>16*1024*1024{return None;}
++ let mut bytes=Vec::with_capacity(bytes_len);
++ for i in 0..primitives*factor{
++  let vertex=match kind{3=>i/2+i%2,5=>{let triangle=i/3;let corner=i%3;triangle+if triangle%2==1&&corner<2{1-corner}else{corner}},6=>{let corner=i%3;if corner==0{0}else{i/3+corner}},_=>i};
++  let start=(vertex*stride)as usize;
++  for &(offset,input,ty) in &fields{
++   let raw=&source[start+offset..start+offset+input];
++   if ty==4{for channel in [raw[2],raw[1],raw[0],raw[3]]{bytes.extend_from_slice(&(channel as f32/255.0).to_le_bytes());}}
++   else{bytes.extend_from_slice(raw);}
++  }
++ }
++ Some(Prepared{kind:output_kind,stride:width,declaration:layout,bytes})
++}
++#[cfg(test)]mod tests{
++ use super::*;
++ #[test]fn fan_color_and_input_bounds(){
++  let declaration=crate::d3d9::IDirect3DVertexDeclaration9::from_fvf(0x142).unwrap();
++  let mut source=Vec::new();for i in 0..4{source.extend_from_slice(&(i as f32).to_le_bytes());source.extend_from_slice(&[0;8]);source.extend_from_slice(&[0x11,0x22,0x33,0x44]);source.extend_from_slice(&[0;8]);}
++  let p=prepare(6,2,24,&declaration,&source).unwrap();assert_eq!((p.kind,p.stride,p.bytes.len()),(4,36,216));
++  for (record,id) in p.bytes.chunks_exact(36).zip([0.,1.,2.,0.,2.,3.]){assert_eq!(f32::from_le_bytes(record[..4].try_into().unwrap()),id);for (offset,value) in [(12,0x33),(16,0x22),(20,0x11),(24,0x44)]{assert_eq!(f32::from_le_bytes(record[offset..offset+4].try_into().unwrap()),value as f32/255.);}}
++  assert_eq!(&p.declaration[10..13],&[12,0,3]);assert_eq!(&p.declaration[18..20],&[28,0]);
++  assert!(prepare(6,2,24,&declaration,&source[..95]).is_none());assert!(prepare(6,u32::MAX,24,&declaration,&source).is_none());
++  let mut invalid=declaration.clone();invalid[0]=1;assert!(prepare(6,2,24,&invalid,&source).is_none());
++ }
++ #[test]fn strip_winding_and_line_segments(){
++  let decl=[0,0,0,0,0,0,0,0,255,0,0,0,17,0,0,0];let source:Vec<u8>=(0u32..5).flat_map(u32::to_le_bytes).collect();
++  let p=prepare(5,3,4,&decl,&source).unwrap();let ids:Vec<u32>=p.bytes.chunks_exact(4).map(|b|u32::from_le_bytes(b.try_into().unwrap())).collect();assert_eq!(ids,[0,1,2,2,1,3,2,3,4]);
++  let p=prepare(3,4,4,&decl,&source).unwrap();let ids:Vec<u32>=p.bytes.chunks_exact(4).map(|b|u32::from_le_bytes(b.try_into().unwrap())).collect();assert_eq!(ids,[0,1,1,2,2,3,3,4]);
++ }
++}
 diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
 index 22d8d8e..b0d1fa9 100644
 --- a/win32/winapi/src/heap.rs
