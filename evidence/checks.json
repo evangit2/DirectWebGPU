@@ -739,5 +739,17 @@
       "Memory categories overlap or omit driver allocations; no exact total",
       "1280x720 and long stability not measured"
     ]
+  },
+  "verifiedAssetCache": {
+    "revision": "34420f1",
+    "unitTest": "Cold clear, warm hit, corruption repair, manifest budget, obsolete-entry eviction and namespace isolation passed",
+    "timingTrials": 6,
+    "firstSceneCaptureTrials": 6,
+    "allFirstSceneCapturesInspected": true,
+    "coldMedianSceneReadbackMs": 1651.08984375,
+    "warmMedianSceneReadbackMs": 1628.675048828125,
+    "steadyRunId": "3527410a-efd8-48c7-89b0-4d1dcf9a05b3",
+    "steadySubmissionFPS": 72.93374093462694,
+    "limitations": "Asset-cache definition excludes JS/shader-runtime/browser compiler/OS caches; readback timing is upper bound; 1280x720 and prolonged stability remain pending"
   }
 }

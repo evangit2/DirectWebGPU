@@ -1,0 +1,186 @@
+{
+  "trials": [
+    {
+      "runId": "8ec2f478-ca9b-4368-8867-42eb6d0af96e",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "cold",
+      "firstPresentMs": 1667.770263671875,
+      "cache": {
+        "mode": "cold",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 24665061,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "CPUWorkerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 24683132,
+        "encodedBodySize": 24677132,
+        "decodedBodySize": 24677132,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "visibility": "visible",
+      "captures": 0
+    },
+    {
+      "runId": "b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "warm",
+      "firstPresentMs": 1592.369873046875,
+      "cache": {
+        "mode": "warm",
+        "hits": 19,
+        "misses": 0,
+        "cacheBytes": 24665061,
+        "networkBodyBytes": 0,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "CPUWorkerResourceMetrics": {
+        "resourceCount": 1,
+        "transferSize": 12371,
+        "encodedBodySize": 12071,
+        "decodedBodySize": 12071,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "visibility": "visible",
+      "captures": 0
+    },
+    {
+      "runId": "3b592c5e-af84-4f20-a3e8-cba034aa5142",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "cold",
+      "firstPresentMs": 1610.885009765625,
+      "cache": {
+        "mode": "cold",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 24665061,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "CPUWorkerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 24683132,
+        "encodedBodySize": 24677132,
+        "decodedBodySize": 24677132,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "visibility": "visible",
+      "captures": 0
+    },
+    {
+      "runId": "06275cca-591b-46f8-b477-65f3e9a256d1",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "warm",
+      "firstPresentMs": 1622.784912109375,
+      "cache": {
+        "mode": "warm",
+        "hits": 19,
+        "misses": 0,
+        "cacheBytes": 24665061,
+        "networkBodyBytes": 0,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "CPUWorkerResourceMetrics": {
+        "resourceCount": 1,
+        "transferSize": 12371,
+        "encodedBodySize": 12071,
+        "decodedBodySize": 12071,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "visibility": "visible",
+      "captures": 0
+    },
+    {
+      "runId": "f968232f-81f7-4bb0-936c-d76d83656860",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "cold",
+      "firstPresentMs": 1674.27001953125,
+      "cache": {
+        "mode": "cold",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 24665061,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "CPUWorkerResourceMetrics": {
+        "resourceCount": 20,
+        "transferSize": 24683132,
+        "encodedBodySize": 24677132,
+        "decodedBodySize": 24677132,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "visibility": "visible",
+      "captures": 0
+    },
+    {
+      "runId": "36923ccc-197a-490a-95c3-980ac47e839e",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "warm",
+      "firstPresentMs": 1551.380126953125,
+      "cache": {
+        "mode": "warm",
+        "hits": 19,
+        "misses": 0,
+        "cacheBytes": 24665061,
+        "networkBodyBytes": 0,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "CPUWorkerResourceMetrics": {
+        "resourceCount": 1,
+        "transferSize": 12371,
+        "encodedBodySize": 12071,
+        "decodedBodySize": 12071,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      "visibility": "visible",
+      "captures": 0
+    }
+  ],
+  "groups": {
+    "cold": {
+      "count": 3,
+      "medianFirstPresentMs": 1667.770263671875,
+      "minMs": 1610.885009765625,
+      "maxMs": 1674.27001953125
+    },
+    "warm": {
+      "count": 3,
+      "medianFirstPresentMs": 1592.369873046875,
+      "minMs": 1551.380126953125,
+      "maxMs": 1622.784912109375
+    }
+  },
+  "limitations": [
+    "App asset cache cold/warm; browser compiler and OS cache state uncontrolled",
+    "First Present only; first correct scene not captured in these timing runs",
+    "CPU worker resource totals exclude page and GPU worker downloads",
+    "All tests same visible Chromium152/Apple Metal3, original default 800x600 scene, release WASM"
+  ]
+}

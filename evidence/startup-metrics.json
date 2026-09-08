@@ -1,0 +1,186 @@
+{
+  "trials": [
+    {
+      "runId": "06275cca-591b-46f8-b477-65f3e9a256d1",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "warm",
+      "captureEnabled": false,
+      "firstPresentMs": 1622.784912109375,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0,
+      "source": "evidence/startup-trials/06275cca-591b-46f8-b477-65f3e9a256d1.json"
+    },
+    {
+      "runId": "36923ccc-197a-490a-95c3-980ac47e839e",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "warm",
+      "captureEnabled": false,
+      "firstPresentMs": 1551.380126953125,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0,
+      "source": "evidence/startup-trials/36923ccc-197a-490a-95c3-980ac47e839e.json"
+    },
+    {
+      "runId": "3b592c5e-af84-4f20-a3e8-cba034aa5142",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "cold",
+      "captureEnabled": false,
+      "firstPresentMs": 1610.885009765625,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24665061,
+      "source": "evidence/startup-trials/3b592c5e-af84-4f20-a3e8-cba034aa5142.json"
+    },
+    {
+      "runId": "4aa57a26-999e-4b95-bd25-764b009afd91",
+      "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+      "mode": "cold",
+      "captureEnabled": true,
+      "firstPresentMs": 1682.990234375,
+      "sceneReadbackCompletedMs": 1685.78515625,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24665061,
+      "source": "evidence/startup-trials/4aa57a26-999e-4b95-bd25-764b009afd91.json"
+    },
+    {
+      "runId": "7422109f-27bf-48ff-91ed-f2801796a39d",
+      "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+      "mode": "cold",
+      "captureEnabled": true,
+      "firstPresentMs": 1649.330078125,
+      "sceneReadbackCompletedMs": 1650.594970703125,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24665061,
+      "source": "evidence/startup-trials/7422109f-27bf-48ff-91ed-f2801796a39d.json"
+    },
+    {
+      "runId": "74c0774c-746b-4399-bf1f-a1f23ba3729a",
+      "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+      "mode": "warm",
+      "captureEnabled": true,
+      "firstPresentMs": 1624.4951171875,
+      "sceneReadbackCompletedMs": 1628.675048828125,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0,
+      "source": "evidence/startup-trials/74c0774c-746b-4399-bf1f-a1f23ba3729a.json"
+    },
+    {
+      "runId": "7be6e53d-482d-4ca1-aefe-3ba1a2148b50",
+      "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+      "mode": "warm",
+      "captureEnabled": true,
+      "firstPresentMs": 1648.639892578125,
+      "sceneReadbackCompletedMs": 1650.080078125,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0,
+      "source": "evidence/startup-trials/7be6e53d-482d-4ca1-aefe-3ba1a2148b50.json"
+    },
+    {
+      "runId": "8ec2f478-ca9b-4368-8867-42eb6d0af96e",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "cold",
+      "captureEnabled": false,
+      "firstPresentMs": 1667.770263671875,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24665061,
+      "source": "evidence/startup-trials/8ec2f478-ca9b-4368-8867-42eb6d0af96e.json"
+    },
+    {
+      "runId": "b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "warm",
+      "captureEnabled": false,
+      "firstPresentMs": 1592.369873046875,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0,
+      "source": "evidence/startup-trials/b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42.json"
+    },
+    {
+      "runId": "be194e84-14d1-451a-a25d-d003c5a845eb",
+      "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+      "mode": "cold",
+      "captureEnabled": true,
+      "firstPresentMs": 1649.814697265625,
+      "sceneReadbackCompletedMs": 1651.08984375,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24665061,
+      "source": "evidence/startup-trials/be194e84-14d1-451a-a25d-d003c5a845eb.json"
+    },
+    {
+      "runId": "e4873e43-d49b-485f-9929-241f5449b1df",
+      "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+      "mode": "warm",
+      "captureEnabled": true,
+      "firstPresentMs": 1617.07470703125,
+      "sceneReadbackCompletedMs": 1618.334716796875,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0,
+      "source": "evidence/startup-trials/e4873e43-d49b-485f-9929-241f5449b1df.json"
+    },
+    {
+      "runId": "f968232f-81f7-4bb0-936c-d76d83656860",
+      "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+      "mode": "cold",
+      "captureEnabled": false,
+      "firstPresentMs": 1674.27001953125,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24665061,
+      "source": "evidence/startup-trials/f968232f-81f7-4bb0-936c-d76d83656860.json"
+    }
+  ],
+  "groups": {
+    "cold-timing-only": {
+      "count": 3,
+      "medianMs": 1667.770263671875,
+      "minMs": 1610.885009765625,
+      "maxMs": 1674.27001953125
+    },
+    "warm-timing-only": {
+      "count": 3,
+      "medianMs": 1592.369873046875,
+      "minMs": 1551.380126953125,
+      "maxMs": 1622.784912109375
+    },
+    "cold-scene-readback": {
+      "count": 3,
+      "medianMs": 1651.08984375,
+      "minMs": 1650.594970703125,
+      "maxMs": 1685.78515625
+    },
+    "warm-scene-readback": {
+      "count": 3,
+      "medianMs": 1628.675048828125,
+      "minMs": 1618.334716796875,
+      "maxMs": 1650.080078125
+    }
+  },
+  "definitions": {
+    "cold": "App-owned immutable asset/WASM cache cleared before launch",
+    "warm": "Same cache populated and each body hash verified",
+    "scene-readback": "Upper bound from GPU readback completion; capture overhead included; visual review stored separately",
+    "timing-only": "No framebuffer capture; timestamp is first Present submission"
+  },
+  "limitations": [
+    "Browser compiler and OS cache state uncontrolled",
+    "JS modules, shader-runtime and page downloads outside asset-cache byte count",
+    "No display scan-out timing",
+    "Same release WASM, 800x600, visible Chromium152/Apple Metal3"
+  ]
+}

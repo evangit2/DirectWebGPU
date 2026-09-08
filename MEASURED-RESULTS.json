@@ -156,7 +156,7 @@
     "diagnosticAttemptDurationMs": 63725.97499990463,
     "diagnosticTimingCaveat": "one debug/traced run; may include opt-in GPU readback captures; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "Complete alpha/stencil scene validation, repeated cold/warm startup and stability measurements, and batch graphics RPCs. Exploratory optimized run measured 1.73-second first Present and 74.12 Present submissions/s at 800x600.",
+  "Exact remaining blocker": "Complete scene alpha/stencil correctness validation, batch graphics RPCs and run longer stability/target-resolution measurements. Repeated cache-defined cold/warm startup and a screenshot-free steady-state trial are recorded.",
   "Terminal runtime diagnostic": null,
   "Original application rejection": null,
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
@@ -986,5 +986,553 @@
       "Memory categories overlap or omit driver allocations; no exact total",
       "1280x720 and long stability not measured"
     ]
+  },
+  "Repeated startup measurements": {
+    "metrics": {
+      "trials": [
+        {
+          "runId": "06275cca-591b-46f8-b477-65f3e9a256d1",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "warm",
+          "captureEnabled": false,
+          "firstPresentMs": 1622.784912109375,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/06275cca-591b-46f8-b477-65f3e9a256d1.json"
+        },
+        {
+          "runId": "36923ccc-197a-490a-95c3-980ac47e839e",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "warm",
+          "captureEnabled": false,
+          "firstPresentMs": 1551.380126953125,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/36923ccc-197a-490a-95c3-980ac47e839e.json"
+        },
+        {
+          "runId": "3b592c5e-af84-4f20-a3e8-cba034aa5142",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "cold",
+          "captureEnabled": false,
+          "firstPresentMs": 1610.885009765625,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/3b592c5e-af84-4f20-a3e8-cba034aa5142.json"
+        },
+        {
+          "runId": "4aa57a26-999e-4b95-bd25-764b009afd91",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "cold",
+          "captureEnabled": true,
+          "firstPresentMs": 1682.990234375,
+          "sceneReadbackCompletedMs": 1685.78515625,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/4aa57a26-999e-4b95-bd25-764b009afd91.json"
+        },
+        {
+          "runId": "7422109f-27bf-48ff-91ed-f2801796a39d",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "cold",
+          "captureEnabled": true,
+          "firstPresentMs": 1649.330078125,
+          "sceneReadbackCompletedMs": 1650.594970703125,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/7422109f-27bf-48ff-91ed-f2801796a39d.json"
+        },
+        {
+          "runId": "74c0774c-746b-4399-bf1f-a1f23ba3729a",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "warm",
+          "captureEnabled": true,
+          "firstPresentMs": 1624.4951171875,
+          "sceneReadbackCompletedMs": 1628.675048828125,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/74c0774c-746b-4399-bf1f-a1f23ba3729a.json"
+        },
+        {
+          "runId": "7be6e53d-482d-4ca1-aefe-3ba1a2148b50",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "warm",
+          "captureEnabled": true,
+          "firstPresentMs": 1648.639892578125,
+          "sceneReadbackCompletedMs": 1650.080078125,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/7be6e53d-482d-4ca1-aefe-3ba1a2148b50.json"
+        },
+        {
+          "runId": "8ec2f478-ca9b-4368-8867-42eb6d0af96e",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "cold",
+          "captureEnabled": false,
+          "firstPresentMs": 1667.770263671875,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/8ec2f478-ca9b-4368-8867-42eb6d0af96e.json"
+        },
+        {
+          "runId": "b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "warm",
+          "captureEnabled": false,
+          "firstPresentMs": 1592.369873046875,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/b1106acb-3d9b-4ecb-9bf4-5b2c4c5d6b42.json"
+        },
+        {
+          "runId": "be194e84-14d1-451a-a25d-d003c5a845eb",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "cold",
+          "captureEnabled": true,
+          "firstPresentMs": 1649.814697265625,
+          "sceneReadbackCompletedMs": 1651.08984375,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/be194e84-14d1-451a-a25d-d003c5a845eb.json"
+        },
+        {
+          "runId": "e4873e43-d49b-485f-9929-241f5449b1df",
+          "revision": "34420f1304a73901c02543f5fb0de4d66a7084a9",
+          "mode": "warm",
+          "captureEnabled": true,
+          "firstPresentMs": 1617.07470703125,
+          "sceneReadbackCompletedMs": 1618.334716796875,
+          "assetCacheHits": 19,
+          "assetCacheMisses": 0,
+          "assetNetworkBodyBytes": 0,
+          "source": "evidence/startup-trials/e4873e43-d49b-485f-9929-241f5449b1df.json"
+        },
+        {
+          "runId": "f968232f-81f7-4bb0-936c-d76d83656860",
+          "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+          "mode": "cold",
+          "captureEnabled": false,
+          "firstPresentMs": 1674.27001953125,
+          "sceneReadbackCompletedMs": null,
+          "assetCacheHits": 0,
+          "assetCacheMisses": 19,
+          "assetNetworkBodyBytes": 24665061,
+          "source": "evidence/startup-trials/f968232f-81f7-4bb0-936c-d76d83656860.json"
+        }
+      ],
+      "groups": {
+        "cold-timing-only": {
+          "count": 3,
+          "medianMs": 1667.770263671875,
+          "minMs": 1610.885009765625,
+          "maxMs": 1674.27001953125
+        },
+        "warm-timing-only": {
+          "count": 3,
+          "medianMs": 1592.369873046875,
+          "minMs": 1551.380126953125,
+          "maxMs": 1622.784912109375
+        },
+        "cold-scene-readback": {
+          "count": 3,
+          "medianMs": 1651.08984375,
+          "minMs": 1650.594970703125,
+          "maxMs": 1685.78515625
+        },
+        "warm-scene-readback": {
+          "count": 3,
+          "medianMs": 1628.675048828125,
+          "minMs": 1618.334716796875,
+          "maxMs": 1650.080078125
+        }
+      },
+      "definitions": {
+        "cold": "App-owned immutable asset/WASM cache cleared before launch",
+        "warm": "Same cache populated and each body hash verified",
+        "scene-readback": "Upper bound from GPU readback completion; capture overhead included; visual review stored separately",
+        "timing-only": "No framebuffer capture; timestamp is first Present submission"
+      },
+      "limitations": [
+        "Browser compiler and OS cache state uncontrolled",
+        "JS modules, shader-runtime and page downloads outside asset-cache byte count",
+        "No display scan-out timing",
+        "Same release WASM, 800x600, visible Chromium152/Apple Metal3"
+      ]
+    },
+    "sceneValidation": {
+      "trials": [
+        {
+          "runId": "4aa57a26-999e-4b95-bd25-764b009afd91",
+          "mode": "cold",
+          "firstPresentMs": 1682.990234375,
+          "readbackCompletedMs": 1685.78515625,
+          "image": "evidence/scene-frames/startup-4aa57a26-999e-4b95-bd25-764b009afd91.jpg",
+          "cache": {
+            "mode": "cold",
+            "hits": 0,
+            "misses": 19,
+            "cacheBytes": 0,
+            "networkBodyBytes": 24665061,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "6184855d5c386bc62bb2a4c89f5c777536ccf68195ce580b95ae4c8a491dd859",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "e4873e43-d49b-485f-9929-241f5449b1df",
+          "mode": "warm",
+          "firstPresentMs": 1617.07470703125,
+          "readbackCompletedMs": 1618.334716796875,
+          "image": "evidence/scene-frames/startup-e4873e43-d49b-485f-9929-241f5449b1df.jpg",
+          "cache": {
+            "mode": "warm",
+            "hits": 19,
+            "misses": 0,
+            "cacheBytes": 24665061,
+            "networkBodyBytes": 0,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "e1c468d679c39ec24235de68fa132ae6a793897cc3ed8528377a8415aebdcb33",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "be194e84-14d1-451a-a25d-d003c5a845eb",
+          "mode": "cold",
+          "firstPresentMs": 1649.814697265625,
+          "readbackCompletedMs": 1651.08984375,
+          "image": "evidence/scene-frames/startup-be194e84-14d1-451a-a25d-d003c5a845eb.jpg",
+          "cache": {
+            "mode": "cold",
+            "hits": 0,
+            "misses": 19,
+            "cacheBytes": 0,
+            "networkBodyBytes": 24665061,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428734,
+            "pixels": 428800
+          },
+          "imageSha256": "2a619dee463b91544384999ceae5afeece24ce4ef2ec9a5fd02d86aa8c587ebf",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "7be6e53d-482d-4ca1-aefe-3ba1a2148b50",
+          "mode": "warm",
+          "firstPresentMs": 1648.639892578125,
+          "readbackCompletedMs": 1650.080078125,
+          "image": "evidence/scene-frames/startup-7be6e53d-482d-4ca1-aefe-3ba1a2148b50.jpg",
+          "cache": {
+            "mode": "warm",
+            "hits": 19,
+            "misses": 0,
+            "cacheBytes": 24665061,
+            "networkBodyBytes": 0,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "52dc8a1e2faa1c218224fda4e3dda7d48b6ea824e376b3b6a488a29f1f440665",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "7422109f-27bf-48ff-91ed-f2801796a39d",
+          "mode": "cold",
+          "firstPresentMs": 1649.330078125,
+          "readbackCompletedMs": 1650.594970703125,
+          "image": "evidence/scene-frames/startup-7422109f-27bf-48ff-91ed-f2801796a39d.jpg",
+          "cache": {
+            "mode": "cold",
+            "hits": 0,
+            "misses": 19,
+            "cacheBytes": 0,
+            "networkBodyBytes": 24665061,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "e1c468d679c39ec24235de68fa132ae6a793897cc3ed8528377a8415aebdcb33",
+          "recognizableSceneVerified": true
+        },
+        {
+          "runId": "74c0774c-746b-4399-bf1f-a1f23ba3729a",
+          "mode": "warm",
+          "firstPresentMs": 1624.4951171875,
+          "readbackCompletedMs": 1628.675048828125,
+          "image": "evidence/scene-frames/startup-74c0774c-746b-4399-bf1f-a1f23ba3729a.jpg",
+          "cache": {
+            "mode": "warm",
+            "hits": 19,
+            "misses": 0,
+            "cacheBytes": 24665061,
+            "networkBodyBytes": 0,
+            "verifiedBytes": 24665061,
+            "repairedEntries": 0,
+            "limitBytes": 134217728,
+            "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+          },
+          "sceneRegion": {
+            "x": 0,
+            "y": 64,
+            "width": 800,
+            "height": 536,
+            "nonblackPixels": 428733,
+            "pixels": 428800
+          },
+          "imageSha256": "fd15766d4ba511765883509bf8f2b3e22983e961e4f52c19840ba9a0cbb19379",
+          "recognizableSceneVerified": true
+        }
+      ],
+      "groups": {
+        "cold": {
+          "count": 3,
+          "medianSceneReadbackCompletedMs": 1651.08984375,
+          "minMs": 1650.594970703125,
+          "maxMs": 1685.78515625
+        },
+        "warm": {
+          "count": 3,
+          "medianSceneReadbackCompletedMs": 1628.675048828125,
+          "minMs": 1618.334716796875,
+          "maxMs": 1650.080078125
+        }
+      },
+      "interpretation": "GPU readback completion upper bound on first scene availability; first-Present counters are lower bounds in same runs. Images require visual inspection.",
+      "limitations": "Includes initial readback; separate from timing-only trials and steady-state run. Cache scope is assets/WASM only.",
+      "visualInspection": "All six first-Present JPEGs inspected: recognizable textured pillar room with colored lights; scene region excludes FPS overlay."
+    }
+  },
+  "Screenshot-free steady-state measurement": {
+    "runId": "3527410a-efd8-48c7-89b0-4d1dcf9a05b3",
+    "revision": "375a680a72a90a0aa0563eed21ef979831a47bf3",
+    "metrics": {
+      "firstPresentMs": 1666.385009765625,
+      "totalSteadyIntervals": 3967,
+      "steadyDurationMs": 54391.8349609375,
+      "submissionFPS": 72.93374093462694,
+      "frameTimeMs": {
+        "p50": 13.550048828125,
+        "p95": 14.7548828125,
+        "p99": 21.26513671875,
+        "min": 8.889892578125,
+        "max": 61.829833984375
+      },
+      "retainedIntervals": 3967,
+      "warmupMs": 5000,
+      "queueCompletionSamples": [
+        {
+          "present": 2400,
+          "latencyMs": 0.8050000667572021
+        },
+        {
+          "present": 2460,
+          "latencyMs": 0.8149999380111694
+        },
+        {
+          "present": 2520,
+          "latencyMs": 1.2400000095367432
+        },
+        {
+          "present": 2580,
+          "latencyMs": 0.875
+        },
+        {
+          "present": 2640,
+          "latencyMs": 0.8250000476837158
+        },
+        {
+          "present": 2700,
+          "latencyMs": 0.7949999570846558
+        },
+        {
+          "present": 2760,
+          "latencyMs": 0.9150000810623169
+        },
+        {
+          "present": 2820,
+          "latencyMs": 1.875
+        },
+        {
+          "present": 2880,
+          "latencyMs": 0.744999885559082
+        },
+        {
+          "present": 2940,
+          "latencyMs": 1.1999999284744263
+        },
+        {
+          "present": 3000,
+          "latencyMs": 0.8849999904632568
+        },
+        {
+          "present": 3060,
+          "latencyMs": 0.9250000715255737
+        },
+        {
+          "present": 3120,
+          "latencyMs": 0.9049999713897705
+        },
+        {
+          "present": 3180,
+          "latencyMs": 0.7450000047683716
+        },
+        {
+          "present": 3240,
+          "latencyMs": 0.7599999904632568
+        },
+        {
+          "present": 3300,
+          "latencyMs": 0.8550000190734863
+        },
+        {
+          "present": 3360,
+          "latencyMs": 0.8550000190734863
+        },
+        {
+          "present": 3420,
+          "latencyMs": 0.9500000476837158
+        },
+        {
+          "present": 3480,
+          "latencyMs": 1.1449999809265137
+        },
+        {
+          "present": 3540,
+          "latencyMs": 1.1549999713897705
+        },
+        {
+          "present": 3600,
+          "latencyMs": 0.7799999713897705
+        },
+        {
+          "present": 3660,
+          "latencyMs": 0.9700000286102295
+        },
+        {
+          "present": 3720,
+          "latencyMs": 0.7799999713897705
+        },
+        {
+          "present": 3780,
+          "latencyMs": 2.059999942779541
+        },
+        {
+          "present": 3840,
+          "latencyMs": 3.825000047683716
+        },
+        {
+          "present": 3900,
+          "latencyMs": 0.9750000238418579
+        },
+        {
+          "present": 3960,
+          "latencyMs": 0.9199999570846558
+        },
+        {
+          "present": 4020,
+          "latencyMs": 0.875
+        },
+        {
+          "present": 4080,
+          "latencyMs": 0.934999942779541
+        },
+        {
+          "present": 4140,
+          "latencyMs": 2.6850000619888306
+        },
+        {
+          "present": 4200,
+          "latencyMs": 0.8999999761581421
+        },
+        {
+          "present": 4260,
+          "latencyMs": 0.9099999666213989
+        }
+      ],
+      "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "captureEnabled": false,
+      "cameraTestEnabled": false
+    },
+    "assetCache": {
+      "mode": "warm",
+      "hits": 19,
+      "misses": 0,
+      "cacheBytes": 24665061,
+      "networkBodyBytes": 0,
+      "verifiedBytes": 24665061,
+      "repairedEntries": 0,
+      "limitBytes": 134217728,
+      "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    "scope": "60 seconds after first Present at 800x600; no screenshot or controlled input"
   }
 }

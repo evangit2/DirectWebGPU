@@ -1,0 +1,189 @@
+{
+  "trials": [
+    {
+      "runId": "4aa57a26-999e-4b95-bd25-764b009afd91",
+      "mode": "cold",
+      "firstPresentMs": 1682.990234375,
+      "readbackCompletedMs": 1685.78515625,
+      "image": "evidence/scene-frames/startup-4aa57a26-999e-4b95-bd25-764b009afd91.jpg",
+      "cache": {
+        "mode": "cold",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 24665061,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428733,
+        "pixels": 428800
+      },
+      "imageSha256": "6184855d5c386bc62bb2a4c89f5c777536ccf68195ce580b95ae4c8a491dd859",
+      "recognizableSceneVerified": true
+    },
+    {
+      "runId": "e4873e43-d49b-485f-9929-241f5449b1df",
+      "mode": "warm",
+      "firstPresentMs": 1617.07470703125,
+      "readbackCompletedMs": 1618.334716796875,
+      "image": "evidence/scene-frames/startup-e4873e43-d49b-485f-9929-241f5449b1df.jpg",
+      "cache": {
+        "mode": "warm",
+        "hits": 19,
+        "misses": 0,
+        "cacheBytes": 24665061,
+        "networkBodyBytes": 0,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428733,
+        "pixels": 428800
+      },
+      "imageSha256": "e1c468d679c39ec24235de68fa132ae6a793897cc3ed8528377a8415aebdcb33",
+      "recognizableSceneVerified": true
+    },
+    {
+      "runId": "be194e84-14d1-451a-a25d-d003c5a845eb",
+      "mode": "cold",
+      "firstPresentMs": 1649.814697265625,
+      "readbackCompletedMs": 1651.08984375,
+      "image": "evidence/scene-frames/startup-be194e84-14d1-451a-a25d-d003c5a845eb.jpg",
+      "cache": {
+        "mode": "cold",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 24665061,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428734,
+        "pixels": 428800
+      },
+      "imageSha256": "2a619dee463b91544384999ceae5afeece24ce4ef2ec9a5fd02d86aa8c587ebf",
+      "recognizableSceneVerified": true
+    },
+    {
+      "runId": "7be6e53d-482d-4ca1-aefe-3ba1a2148b50",
+      "mode": "warm",
+      "firstPresentMs": 1648.639892578125,
+      "readbackCompletedMs": 1650.080078125,
+      "image": "evidence/scene-frames/startup-7be6e53d-482d-4ca1-aefe-3ba1a2148b50.jpg",
+      "cache": {
+        "mode": "warm",
+        "hits": 19,
+        "misses": 0,
+        "cacheBytes": 24665061,
+        "networkBodyBytes": 0,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428733,
+        "pixels": 428800
+      },
+      "imageSha256": "52dc8a1e2faa1c218224fda4e3dda7d48b6ea824e376b3b6a488a29f1f440665",
+      "recognizableSceneVerified": true
+    },
+    {
+      "runId": "7422109f-27bf-48ff-91ed-f2801796a39d",
+      "mode": "cold",
+      "firstPresentMs": 1649.330078125,
+      "readbackCompletedMs": 1650.594970703125,
+      "image": "evidence/scene-frames/startup-7422109f-27bf-48ff-91ed-f2801796a39d.jpg",
+      "cache": {
+        "mode": "cold",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 24665061,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428733,
+        "pixels": 428800
+      },
+      "imageSha256": "e1c468d679c39ec24235de68fa132ae6a793897cc3ed8528377a8415aebdcb33",
+      "recognizableSceneVerified": true
+    },
+    {
+      "runId": "74c0774c-746b-4399-bf1f-a1f23ba3729a",
+      "mode": "warm",
+      "firstPresentMs": 1624.4951171875,
+      "readbackCompletedMs": 1628.675048828125,
+      "image": "evidence/scene-frames/startup-74c0774c-746b-4399-bf1f-a1f23ba3729a.jpg",
+      "cache": {
+        "mode": "warm",
+        "hits": 19,
+        "misses": 0,
+        "cacheBytes": 24665061,
+        "networkBodyBytes": 0,
+        "verifiedBytes": 24665061,
+        "repairedEntries": 0,
+        "limitBytes": 134217728,
+        "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428733,
+        "pixels": 428800
+      },
+      "imageSha256": "fd15766d4ba511765883509bf8f2b3e22983e961e4f52c19840ba9a0cbb19379",
+      "recognizableSceneVerified": true
+    }
+  ],
+  "groups": {
+    "cold": {
+      "count": 3,
+      "medianSceneReadbackCompletedMs": 1651.08984375,
+      "minMs": 1650.594970703125,
+      "maxMs": 1685.78515625
+    },
+    "warm": {
+      "count": 3,
+      "medianSceneReadbackCompletedMs": 1628.675048828125,
+      "minMs": 1618.334716796875,
+      "maxMs": 1650.080078125
+    }
+  },
+  "interpretation": "GPU readback completion upper bound on first scene availability; first-Present counters are lower bounds in same runs. Images require visual inspection.",
+  "limitations": "Includes initial readback; separate from timing-only trials and steady-state run. Cache scope is assets/WASM only.",
+  "visualInspection": "All six first-Present JPEGs inspected: recognizable textured pillar room with colored lights; scene region excludes FPS overlay."
+}
