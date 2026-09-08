@@ -51,3 +51,6 @@ pub fn sampler_bindings(bytes:&[u8])->Result<Vec<u32>,String>{
  if bytes.len()<20||bytes.len()>4*1024*1024||bytes.len()%4!=0{return Err("invalid sampler reflection SPIR-V length".into())}
  Ok(combined_samplers::split_with_bindings(bytes)?.1)
 }
+
+#[wasm_bindgen]
+pub fn vertex_position_wgsl(source:&str,width:u32,height:u32)->Result<String,String>{vertex_inputs::pixel_center(source,width,height)}

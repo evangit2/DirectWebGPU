@@ -1,6 +1,6 @@
 // Reusable bytecode translator. No application-specific shaders or geometry.
 import createMojo from './generated/mojoshader.js';
-import initNaga,{spirv_to_wgsl,sampler_bindings,alpha_test_wgsl,vertex_inputs_wgsl} from './generated/shader_translation.js';
+import initNaga,{spirv_to_wgsl,sampler_bindings,alpha_test_wgsl,vertex_inputs_wgsl,vertex_position_wgsl} from './generated/shader_translation.js';
 // Naga 30 emits f32::MAX as a shortest-roundtrip decimal above the finite
 // range accepted by browser WGSL parsers. Hexadecimal preserves the exact bits.
 export function canonicalFloatLimits(source){return source.replace(/\b340282350000000000000000000000000000000f\b/g,'0x1.fffffep+127f');}
@@ -12,7 +12,7 @@ export async function createShaderTranslator(){
   if(![0,1].includes(stage)||!(bytes instanceof Uint8Array)||bytes.length<8||bytes.length>1048576||bytes.length%4)throw Error('invalid shader bytecode range');
   const pointer=mojo._malloc(bytes.length);if(!pointer)throw Error('shader validation allocation failed');
   try{mojo.HEAPU8.set(bytes,pointer);if(!mojo._shader_validate(stage,pointer,bytes.length))throw Error(mojo.UTF8ToString(mojo._shader_error()));}finally{mojo._free(pointer)}
- },vertexInputs:(...args)=>canonicalFloatLimits(vertex_inputs_wgsl(...args)),alphaTest:(...args)=>canonicalFloatLimits(alpha_test_wgsl(...args)),translatePair(vertex,pixel){
+ },vertexPosition:(...args)=>canonicalFloatLimits(vertex_position_wgsl(...args)),vertexInputs:(...args)=>canonicalFloatLimits(vertex_inputs_wgsl(...args)),alphaTest:(...args)=>canonicalFloatLimits(alpha_test_wgsl(...args)),translatePair(vertex,pixel){
   for(const input of [vertex,pixel])if(!(input instanceof Uint8Array)||input.length<8||input.length>1048576||input.length%4)throw Error('invalid DX9 bytecode length');
   let vp=0,pp=0;
   try{
