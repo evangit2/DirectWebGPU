@@ -2,7 +2,7 @@ import {resourceMetrics} from './resource-metrics.js';
 import {DrawBatch} from './draw-batch.js';
 import {AssetCache} from './asset-cache.js';
 let memory, device, lastPanic, gpuPort, drawBatch, logCount=0;
-const send=(type,data={})=>{if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
+const send=(type,data={})=>{if(type==='log'&&String(data.message).startsWith('GUEST_MEMORY ')){postMessage({type:'guest-memory',sample:JSON.parse(String(data.message).slice(13))});return;}if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
 console.error=(...args)=>{const message=args.map(text).join(' ');if(message.includes('panicked at'))lastPanic=message.split('\n\nStack:')[0];send('log',{message});originalError(...args)};
@@ -29,7 +29,7 @@ self.send_to_host=(func,args,retAddr)=>{
  if(func==='console_write'){
   const [ptr,len]=args;
   if(!Number.isInteger(ptr)||!Number.isInteger(len)||ptr<0||len<0||ptr+len>memory.buffer.byteLength)throw Error('host console pointer out of bounds');
-  send('log',{message:new TextDecoder().decode(new Uint8Array(memory.buffer,ptr,Math.min(len,4096)).slice())});return;
+  send('log',{message:new TextDecoder().decode(new Uint8Array(memory.buffer,ptr,Math.min(len,8192)).slice())});return;
  }
  if(['create_window','graphics_call','poll_message','wait_message'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
@@ -77,6 +77,7 @@ self.onmessage=async({data})=>{
    for(const [name,value] of Object.entries({WindowedLeft:0,WindowedTop:0,WindowedRight:1280,WindowedBottom:720,Fullscreen:0}))exe.seed_registry_dword(0x80000002,'SOFTWARE\\Humus',name,value);
    send('launch-settings',{source:'virtual HKLM\\SOFTWARE\\Humus',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
   }
+  exe.configure_guest_memory_metrics(data.guestMemory===true);
   exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d9');
   send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});

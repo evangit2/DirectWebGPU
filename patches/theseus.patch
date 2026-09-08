@@ -2747,7 +2747,7 @@ index 0000000..629b941
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..588fc9b
+index 0000000..eebca6f
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
 @@ -0,0 +1,298 @@
@@ -2807,8 +2807,8 @@ index 0000000..588fc9b
 + let d=device(this);if count!=0||rects!=0{return D3DERR_INVALIDCALL}hresult(host::graphics_call(3,&[d.backend,flags,color,z_bits,stencil]))
 +}
 +#[win32_derive::dllexport]
-+pub fn Present(_ctx:&mut Context,this:u32,src:u32,dst:u32,window:u32,dirty:u32)->u32{
-+ let d=device(this);if d.scene||src!=0||dst!=0||window!=0||dirty!=0{return D3DERR_INVALIDCALL}hresult(host::graphics_call(4,&[d.backend]))
++pub fn Present(ctx:&mut Context,this:u32,src:u32,dst:u32,window:u32,dirty:u32)->u32{
++ let d=device(this);if d.scene||src!=0||dst!=0||window!=0||dirty!=0{return D3DERR_INVALIDCALL}crate::memory_metrics::present(ctx);hresult(host::graphics_call(4,&[d.backend]))
 +}
 +pub const VTABLE_ENTRIES:[&str;119]=["QueryInterface","AddRef","Release","TestCooperativeLevel","GetAvailableTextureMem","EvictManagedResources","GetDirect3D","GetDeviceCaps","GetDisplayMode","GetCreationParameters","SetCursorProperties","SetCursorPosition","ShowCursor","CreateAdditionalSwapChain","GetSwapChain","GetNumberOfSwapChains","Reset","Present","GetBackBuffer","GetRasterStatus","SetDialogBoxMode","SetGammaRamp","GetGammaRamp","CreateTexture","CreateVolumeTexture","CreateCubeTexture","CreateVertexBuffer","CreateIndexBuffer","CreateRenderTarget","CreateDepthStencilSurface","UpdateSurface","UpdateTexture","GetRenderTargetData","GetFrontBufferData","StretchRect","ColorFill","CreateOffscreenPlainSurface","SetRenderTarget","GetRenderTarget","SetDepthStencilSurface","GetDepthStencilSurface","BeginScene","EndScene","Clear","SetTransform","GetTransform","MultiplyTransform","SetViewport","GetViewport","SetMaterial","GetMaterial","SetLight","GetLight","LightEnable","GetLightEnable","SetClipPlane","GetClipPlane","SetRenderState","GetRenderState","CreateStateBlock","BeginStateBlock","EndStateBlock","SetClipStatus","GetClipStatus","GetTexture","SetTexture","GetTextureStageState","SetTextureStageState","GetSamplerState","SetSamplerState","ValidateDevice","SetPaletteEntries","GetPaletteEntries","SetCurrentTexturePalette","GetCurrentTexturePalette","SetScissorRect","GetScissorRect","SetSoftwareVertexProcessing","GetSoftwareVertexProcessing","SetNPatchMode","GetNPatchMode","DrawPrimitive","DrawIndexedPrimitive","DrawPrimitiveUP","DrawIndexedPrimitiveUP","ProcessVertices","CreateVertexDeclaration","SetVertexDeclaration","GetVertexDeclaration","SetFVF","GetFVF","CreateVertexShader","SetVertexShader","GetVertexShader","SetVertexShaderConstantF","GetVertexShaderConstantF","SetVertexShaderConstantI","GetVertexShaderConstantI","SetVertexShaderConstantB","GetVertexShaderConstantB","SetStreamSource","GetStreamSource","SetStreamSourceFreq","GetStreamSourceFreq","SetIndices","GetIndices","CreatePixelShader","SetPixelShader","GetPixelShader","SetPixelShaderConstantF","GetPixelShaderConstantF","SetPixelShaderConstantI","GetPixelShaderConstantI","SetPixelShaderConstantB","GetPixelShaderConstantB","DrawRectPatch","DrawTriPatch","DeletePatch","CreateQuery"];
 +pub fn TestCooperativeLevel_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"TestCooperativeLevel",1)}
@@ -4214,10 +4214,24 @@ index 0000000..6d3ac35
 + }
 +}
 diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
-index 22d8d8e..b0d1fa9 100644
+index 22d8d8e..5cdfabc 100644
 --- a/win32/winapi/src/heap.rs
 +++ b/win32/winapi/src/heap.rs
-@@ -34,6 +34,23 @@ impl Heap {
+@@ -23,6 +23,13 @@ impl Heap {
+         }
+     }
+ 
++    /// Occupancy includes each allocation's four-byte header; this is not RSS.
++    pub fn memory_stats(&self) -> (u32, u32, usize) {
++        let free = self.freelist.borrow();
++        let bytes: u32 = free.nodes.iter().map(|n| n.size).sum();
++        (self.size - bytes, free.nodes.iter().map(|n| n.size).max().unwrap_or(0), free.nodes.len())
++    }
++
+     fn range(&self) -> std::ops::Range<u32> {
+         self.addr..self.addr + self.size
+     }
+@@ -34,6 +41,23 @@ impl Heap {
              .unwrap_or_else(|| panic!("heap size {:x} oom {:x}", self.size, size))
      }
  
@@ -4241,7 +4255,7 @@ index 22d8d8e..b0d1fa9 100644
      #[allow(unused)]
      pub fn size(&self, mem: &mut Memory, addr: u32) -> u32 {
          mem.read::<u32>(addr - 4) - 4
-@@ -139,3 +156,23 @@ impl FreeNode {
+@@ -139,3 +163,43 @@ impl FreeNode {
          self.addr..self.addr + self.size
      }
  }
@@ -4263,6 +4277,26 @@ index 22d8d8e..b0d1fa9 100644
 +        let t = heap.realloc(&mut mem, q, 2, false).unwrap();
 +        assert_eq!(mem.read::<u16>(t), 0xbeef);
 +        assert_eq!(heap.realloc(&mut mem, t, u32::MAX, false), None);
++    }
++}
++
++#[cfg(test)]
++mod memory_stats_tests {
++    use super::*;
++    #[test]
++    fn occupancy_tracks_headers_free_and_failed_realloc() {
++        let mut mem = Memory::leak_new(0x4000);
++        let heap = Heap::new(0x1000, 0x1000);
++        assert_eq!(heap.memory_stats(), (0, 0x1000, 1));
++        let a = heap.alloc(&mut mem, 12);
++        let b = heap.alloc(&mut mem, 28);
++        assert_eq!(heap.memory_stats().0, 48);
++        heap.free(&mut mem, a);
++        assert_eq!(heap.memory_stats().0, 32);
++        assert!(heap.realloc(&mut mem, b, 0x2000, false).is_none());
++        assert_eq!(heap.memory_stats().0, 32);
++        heap.free(&mut mem, b);
++        assert_eq!(heap.memory_stats().0, 0);
 +    }
 +}
 diff --git a/win32/winapi/src/kernel32/heap.rs b/win32/winapi/src/kernel32/heap.rs
@@ -4475,10 +4509,10 @@ index 0000000..6b0b9c5
 +#[win32_derive::dllexport]
 +pub fn DeleteCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);let mut map=CRITICALS.lock().unwrap();assert_eq!(map.get(&p).expect("uninitialized critical section").1,0,"delete of owned critical section");map.remove(&p);ctx.memory.bytes[p as usize..p as usize+24].fill(0);}
 diff --git a/win32/winapi/src/lib.rs b/win32/winapi/src/lib.rs
-index da97218..1832ca4 100644
+index da97218..fbcbe89 100644
 --- a/win32/winapi/src/lib.rs
 +++ b/win32/winapi/src/lib.rs
-@@ -5,6 +5,7 @@
+@@ -5,12 +5,14 @@
  pub mod advapi32;
  pub mod bitmap_format;
  pub mod ddraw;
@@ -4486,6 +4520,45 @@ index da97218..1832ca4 100644
  pub mod dinput;
  mod dllexport;
  pub mod dsound;
+ pub mod gdi32;
+ mod handle;
+ mod heap;
++pub mod memory_metrics;
+ pub mod kernel32;
+ mod locked_state;
+ pub mod msacm32;
+diff --git a/win32/winapi/src/memory_metrics.rs b/win32/winapi/src/memory_metrics.rs
+new file mode 100644
+index 0000000..eecb139
+--- /dev/null
++++ b/win32/winapi/src/memory_metrics.rs
+@@ -0,0 +1,26 @@
++//! Opt-in, bounded allocation snapshots. Components overlap; never sum as RSS.
++use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
++static ENABLED: AtomicBool = AtomicBool::new(false);
++static PRESENTS: AtomicU32 = AtomicU32::new(0);
++pub fn configure(enabled: bool) {
++    PRESENTS.store(0, Ordering::Relaxed);
++    ENABLED.store(enabled, Ordering::Relaxed);
++}
++pub fn present(ctx: &runtime::Context) {
++    if !ENABLED.load(Ordering::Relaxed) { return; }
++    let present = PRESENTS.fetch_add(1, Ordering::Relaxed) + 1;
++    if present != 1 && (present % 1800 != 0 || present > 18000) { return; }
++    let state = crate::kernel32::lock();
++    let mappings = state.mappings.vec();
++    let mapped_bytes: u64 = mappings.iter().map(|m| m.size as u64).sum();
++    let highest_end = mappings.iter().map(|m| m.addr as u64 + m.size as u64).max().unwrap_or(0);
++    let heaps: Vec<_> = std::iter::once(&state.process_heap).chain(state.heaps.values()).collect();
++    let heap_capacity: u64 = heaps.iter().map(|h| h.size as u64).sum();
++    let heap_occupied: u64 = heaps.iter().map(|h| h.memory_stats().0 as u64).sum();
++    let mut rows: Vec<_> = heaps.iter().take(64).map(|h| {
++        let (occupied, largest_free, free_blocks) = h.memory_stats();
++        format!("[{}, {}, {}, {}, {}]", h.addr, h.size, occupied, largest_free, free_blocks)
++    }).collect();
++    rows.sort();
++    host::host().console_write(format!("GUEST_MEMORY {{\"present\":{},\"guestCapacityBytes\":{},\"mappingCount\":{},\"mappedBytes\":{},\"highestMappedEnd\":{},\"heapCount\":{},\"heapCapacityBytes\":{},\"heapOccupiedWithHeadersBytes\":{},\"heapRows\":[{}]}}", present, ctx.memory.bytes.len(), mappings.len(), mapped_bytes, highest_end, heaps.len(), heap_capacity, heap_occupied, rows.join(",")).as_bytes());
++}
 diff --git a/win32/winapi/src/shell32.rs b/win32/winapi/src/shell32.rs
 index c5eb4fc..b56cafb 100644
 --- a/win32/winapi/src/shell32.rs
