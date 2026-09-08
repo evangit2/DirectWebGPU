@@ -1,3 +1,4 @@
+import {SceneEquivalence} from './scene-equivalence.js';
 import {executeDrawBatch} from './draw-batch.js';
 import {PresentationMetrics} from './performance-metrics.js';
 import {captureFrame} from './frame-capture.js';
@@ -10,13 +11,14 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
+let sceneEquivalence=false;
 let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:1052672};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
+ canvas=data.canvas;port=data.port;sceneEquivalence=!!data.sceneEquivalence;diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
@@ -61,19 +63,22 @@ async function graphics(op,a,memory){
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
   backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device),shaders:null,presents:0,submissions:0};
+  if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend);
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
- if(op===2){backend.draws?.dispose();backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
+ if(op===2){backend.equivalence?.dispose();backend.draws?.dispose();backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
   const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
   const colorValue={r:((argb>>>16)&255)/255,g:((argb>>>8)&255)/255,b:(argb&255)/255,a:(argb>>>24)/255};
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();
   const pass=enc.beginRenderPass({colorAttachments:[{view:backend.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:colorValue}],depthStencilAttachment:{view:backend.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil&255}});pass.end();device.queue.submit([enc.finish()]);
+  backend.equivalence?.clear(flags,colorValue,z,stencil&255);
   const err=await device.popErrorScope();if(err)throw Error(err.message);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
  }
- if(op===4){ // GPU-to-GPU presentation, with no framebuffer readback.
+ if(op===4){ // Ordinary presentation is GPU-to-GPU; opt-in diagnostic samples separately.
+  if(backend.equivalence){const sample=await backend.equivalence.compare(backend.presents+1);if(sample)emit('scene-equivalence',{sample});}
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);
   const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,captureEnabled:captureFrames,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
  }
@@ -106,7 +111,7 @@ async function graphics(op,a,memory){
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  if(op===13&&a.length===3){
-  try{if(!backend.shaders)return INVALID;const packet=decodeDraw(memory,a[1],a[2]);if(cameraTest&&[0,29,59].includes(backend.presents)&&!cameraSamples.has(backend.presents)){cameraSamples.add(backend.presents);emit('camera-sample',{present:backend.presents+1,matrixWords:Array.from(packet.registers[0][0].slice(0,16))});}if(cameraTest&&backend.presents===0){backend.traceCount??=0;if(backend.traceCount++<128)emit('render-state-sample',{draw:backend.traceCount,vertex:packet.vertex,pixel:packet.pixel,state:packet.state.values});}backend.draws??=new DrawRenderer(device,backend);if(diagnosticDraws>0){diagnosticDraws--;emit("draw-diagnostic",{sample:await captureDraw(device,backend,packet)});}device.pushErrorScope('validation');try{await backend.draws.draw(packet)}finally{const error=await device.popErrorScope();if(error)throw Error(error.message)}emit('gpu-submission',{kind:'draw',count:++backend.submissions,sceneFrames:0});return 1;}catch(e){emit('draw-rejected',{message:String(e)});return INVALID;}
+  try{if(!backend.shaders)return INVALID;const packet=decodeDraw(memory,a[1],a[2]);if(cameraTest&&[0,29,59].includes(backend.presents)&&!cameraSamples.has(backend.presents)){cameraSamples.add(backend.presents);emit('camera-sample',{present:backend.presents+1,matrixWords:Array.from(packet.registers[0][0].slice(0,16))});}if(cameraTest&&backend.presents===0){backend.traceCount??=0;if(backend.traceCount++<128)emit('render-state-sample',{draw:backend.traceCount,vertex:packet.vertex,pixel:packet.pixel,state:packet.state.values});}backend.draws??=new DrawRenderer(device,backend);if(diagnosticDraws>0){diagnosticDraws--;emit("draw-diagnostic",{sample:await captureDraw(device,backend,packet)});}device.pushErrorScope('validation');try{await backend.draws.draw(packet);await backend.equivalence?.draw(packet)}finally{const error=await device.popErrorScope();if(error)throw Error(error.message)}emit('gpu-submission',{kind:'draw',count:++backend.submissions,sceneFrames:0});return 1;}catch(e){emit('draw-rejected',{message:String(e)});return INVALID;}
  }
  throw Error('unsupported graphics opcode '+op);
 }
