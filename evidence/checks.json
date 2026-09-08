@@ -15,7 +15,8 @@
     "actual scene alpha-stencil optimization equivalence": "passed: zero RGB differences across 839680 scene pixels on Presents 1/30/60, static and moving camera; negative control detects 268620 missing-light pixels; original canvas unchanged",
     "scene comparator unit checks": "passed: detects RGB changes and ignores overlay, alpha and row padding",
     "pixel-center correction": "passed: four Rust shader IR tests; independent GPU coverage fixed/programmed/nonunit-W/offset-viewport; broad graphics diagnostics; original controlled-camera and exact lighting-equivalence captures",
-    "sampled GPU timestamps": "passed: units, quantization zeros, bounds/reversed timestamps; original 60s run captured 76 samples without recorded GPU errors"
+    "sampled GPU timestamps": "passed: units, quantization zeros, bounds/reversed timestamps; original 60s run captured 76 samples without recorded GPU errors",
+    "realm resource and browser memory probe": "passed bounds/sums/query removal/API absence/timeout tests; original cold 60s run records all three realms and an honest memory API timeout"
   },
   "testLogSha256": {
     "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",

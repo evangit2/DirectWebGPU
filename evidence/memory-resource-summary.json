@@ -1,0 +1,65 @@
+{
+  "runId": "84dcc2b6-e5a5-48e1-bbfa-ee58fc7b38c2",
+  "revision": "253ae7b55c4be68977c5d6505a4ac84ba9e21e70",
+  "resolution": [
+    1280,
+    720
+  ],
+  "browserMemoryProbe": {
+    "status": "unavailable",
+    "elapsedMs": 30000.695000052452,
+    "reason": "Error: memory measurement timed out",
+    "presentsAtCompletion": 2268
+  },
+  "resourceTimingByRealm": {
+    "cpuWorker": {
+      "phase": "before EXE execution",
+      "resourceCount": 20,
+      "transferSize": 24708032,
+      "encodedBodySize": 24702032,
+      "decodedBodySize": 24702032,
+      "zeroSizeEntries": 0
+    },
+    "gpuWorker": {
+      "phase": "first Present submission",
+      "resourceCount": 2,
+      "transferSize": 2241977,
+      "encodedBodySize": 2241377,
+      "decodedBodySize": 2241377,
+      "zeroSizeEntries": 0
+    },
+    "page": {
+      "phase": "first Present observed; includes page setup before Start",
+      "resourceCount": 35,
+      "transferSize": 143302,
+      "encodedBodySize": 132802,
+      "decodedBodySize": 132802,
+      "zeroSizeEntries": 0
+    }
+  },
+  "knownAssetAndRuntimeBodies": {
+    "mode": "cold",
+    "hits": 0,
+    "misses": 19,
+    "cacheBytes": 0,
+    "networkBodyBytes": 24689227,
+    "verifiedBytes": 24689227,
+    "repairedEntries": 0,
+    "limitBytes": 134217728,
+    "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+  },
+  "wasmLinearMemoryBytes": 288096256,
+  "trackedGPUBytes": {
+    "geometryGPUBytes": 60784,
+    "textureGPUBytes": 4025064,
+    "colorLogicalBytes": 3686400,
+    "depthStencilLogicalMinimumBytes": 3686400
+  },
+  "evidence": "evidence/memory-resource-run.json",
+  "limitations": [
+    "Browser memory API was exposed but timed out after 30 seconds; no browser-wide estimate obtained.",
+    "Resource Timing records include page setup before Start and may omit entries. Navigation document is not included in these resource-only snapshots.",
+    "Repeated module URLs are retained as separate request records; totals are not deduplicated by URL.",
+    "Memory probe run is not used for performance comparisons. Separate memory counters can overlap and must not be summed as a total."
+  ]
+}

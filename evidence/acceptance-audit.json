@@ -48,8 +48,8 @@
       "objectiveSections": "6,9",
       "requirement": "Memory component coverage",
       "status": "partial",
-      "evidence": "evidence/stability-summary.json; web/asset-cache.js",
-      "finding": "WASM, tracked GPU resources and asset cache measured. JS/application allocation coverage missing; no total-memory claim."
+      "evidence": "evidence/memory-resource-summary.json; evidence/stability-summary.json",
+      "finding": "WASM/tracked GPU/cache measured separately. Browser-wide API exposed but timed out after 30s during original execution; total browser memory and guest allocation detail remain unmeasured."
     },
     {
       "objectiveSections": "7",
@@ -83,8 +83,8 @@
       "objectiveSections": "9",
       "requirement": "Available GPU/CPU timing and complete transfer accounting",
       "status": "partial",
-      "evidence": "evidence/gpu-timing-summary.json; evidence/gpu-timing-run.json",
-      "finding": "Actual render-pass GPU timestamps now measured; quantized and excludes clears/uploads/presentation. Host draw encoding measured as wall time, not CPU utilization. Complete transfer accounting remains incomplete."
+      "evidence": "evidence/gpu-timing-summary.json; evidence/memory-resource-summary.json",
+      "finding": "GPU/host draw timings measured. Resource snapshots now cover page, CPU and GPU workers including shader WASM; navigation document and exact wire accounting remain outside this scope."
     },
     {
       "objectiveSections": "10",

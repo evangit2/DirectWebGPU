@@ -28,5 +28,6 @@
   "Original launch on diagnostic revision": "evidence/pixel-center-original-before.json",
   "Pixel-center correction evidence": "evidence/pixel-center-coverage.json",
   "Corrected original scene evidence": "evidence/pixel-center-review.json",
-  "GPU timing evidence": "evidence/gpu-timing-summary.json"
+  "GPU timing evidence": "evidence/gpu-timing-summary.json",
+  "Memory and resource coverage": "evidence/memory-resource-summary.json"
 }
