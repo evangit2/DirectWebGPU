@@ -23,6 +23,8 @@ export async function createShaderTranslator(){
     const constants=Array.from({length:constantCount},(_,index)=>{const f=Array.from({length:6},(_,field)=>mojo._shader_constant_value(stage,index,field)>>>0);return {type:f[0],index:f[1],words:f.slice(2)}});
     return {spirvBytes:length,wgsl:spirv_to_wgsl(spv),uniformGroup:stage?3:1,uniforms,constants};
    });
+   const inputCount=mojo._shader_input_count();if(inputCount<0||inputCount>16)throw Error('invalid shader input count');
+   stages[0].inputs=Array.from({length:inputCount},(_,i)=>({usage:mojo._shader_input_value(i,0),index:mojo._shader_input_value(i,1),location:mojo._shader_input_value(i,2)}));
    return {vertex:stages[0],pixel:stages[1]};
   }finally{mojo._shader_reset();if(vp)mojo._free(vp);if(pp)mojo._free(pp);}
  }};

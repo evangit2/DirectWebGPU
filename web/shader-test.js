@@ -1,3 +1,4 @@
+import {vertexLayout} from './vertex-layout.js';
 import {testShaderConstants} from './constant-test.js';
 import {GeometryBuffers} from './gpu-buffers.js';
 import {testGeometryBuffers} from './buffer-test.js';
@@ -13,8 +14,8 @@ document.getElementById('run').onclick=async()=>{
   report.shaderBuild=await(await fetch('/generated/shader-build.json')).json();
   report.build=await(await fetch('/api/build')).json();
   const tr=await createShaderTranslator();
-  const [vs,ps]=await Promise.all(['vertex','pixel'].map(async name=>new Uint8Array(await(await fetch('/generated/'+name+'.bin')).arrayBuffer())));
-  const shaders=tr.translatePair(vs,ps);report.shaders=shaders;report.checks.push('VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga');
+  const [vs,ps]=await Promise.all(['vertexExplicit','pixel'].map(async name=>new Uint8Array(await(await fetch('/generated/'+name+'.bin')).arrayBuffer())));
+  const shaders=tr.translatePair(vs,ps);report.inputDeclaration={kind:'explicit VS1.1 POSITION v0 / COLOR v1',expectedInputLocations:[0,1],HumusFrames:0};report.shaders=shaders;report.checks.push('VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga');
   try{tr.translatePair(vs.slice(0,7),ps);throw Error('malformed bytecode accepted');}catch(e){if(!String(e).includes('invalid DX9 bytecode length'))throw e;report.checks.push('misaligned/truncated bytecode rejected');}
   const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('no GPU adapter');
   report.adapter={vendor:adapter.info.vendor,architecture:adapter.info.architecture,isFallbackAdapter:adapter.info.isFallbackAdapter};
@@ -22,7 +23,10 @@ document.getElementById('run').onclick=async()=>{
   device.pushErrorScope('validation');
   const modules=[shaders.vertex,shaders.pixel].map(s=>device.createShaderModule({code:s.wgsl}));
   for(const mod of modules){const info=await mod.getCompilationInfo();if(info.messages.some(m=>m.type==='error'))throw Error(JSON.stringify(info.messages));}
-  const pipeline=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:modules[0],entryPoint:'main',buffers:[{arrayStride:32,attributes:[{shaderLocation:0,offset:0,format:'float32x4'},{shaderLocation:1,offset:16,format:'float32x4'}]}]},fragment:{module:modules[1],entryPoint:'main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}});
+  // Declaration order intentionally differs from shader input order.
+  const declaration=new Uint8Array([0,0,16,0,3,0,10,0, 0,0,0,0,3,0,0,0, 255,0,0,0,17,0,0,0]);
+  const layout=vertexLayout(declaration,shaders.vertex.inputs,[{stride:32}]);report.vertexLayout=layout;
+  const pipeline=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:modules[0],entryPoint:'main',buffers:layout.map(({stream,...descriptor})=>descriptor)},fragment:{module:modules[1],entryPoint:'main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}});
   const vertices=new Float32Array([-0.8,-0.8,0.5,1,1,0,0,1, 0.8,-0.8,0.5,1,0,1,0,1, 0,0.8,0.5,1,0,0,1,1]);
   const geometry=new GeometryBuffers(device),guest=new SharedArrayBuffer(8192);
   new Float32Array(guest,4096,vertices.length).set(vertices);
@@ -43,7 +47,7 @@ document.getElementById('run').onclick=async()=>{
   const textureBytes=new Uint8Array(await(await fetch('/generated/texture.bin')).arrayBuffer());
   const textured=tr.translatePair(vs,textureBytes);report.textureShader=textured.pixel;
   const textureModule=device.createShaderModule({code:textured.pixel.wgsl});
-  const texturePipeline=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:modules[0],entryPoint:'main',buffers:[{arrayStride:32,attributes:[{shaderLocation:0,offset:0,format:'float32x4'},{shaderLocation:1,offset:16,format:'float32x4'}]}]},fragment:{module:textureModule,entryPoint:'main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}});
+  const texturePipeline=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:modules[0],entryPoint:'main',buffers:layout.map(({stream,...descriptor})=>descriptor)},fragment:{module:textureModule,entryPoint:'main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}});
   const tex=device.createTexture({size:[1,1],format:'rgba8unorm',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST});
   device.queue.writeTexture({texture:tex},new Uint8Array([17,121,233,255]),{bytesPerRow:4},[1,1]);
   const group=device.createBindGroup({layout:texturePipeline.getBindGroupLayout(2),entries:[{binding:0,resource:tex.createView()},{binding:1,resource:device.createSampler()}]});

@@ -7,6 +7,7 @@
 #include <stddef.h>
 static const MOJOSHADER_parseData *stages[2];
 static int lengths[2];
+static int vertex_inputs[16][3],vertex_input_count;
 static char error[2048];
 /* Track allocations as a per-pair arena as well as supporting individual frees.
  * This also reclaims MojoShader patch-table allocations after linking. */
@@ -27,7 +28,7 @@ static void pair_free(void *ptr,void *unused){
 void shader_reset(void) {
     for(int i=0;i<2;i++){MOJOSHADER_freeParseData(stages[i]);stages[i]=NULL;lengths[i]=0;}
     while(allocations)pair_free(allocations+1,NULL);
-    error[0]=0;
+    error[0]=0;vertex_input_count=0;
 }
 const char *shader_error(void){return error;}
 const void *shader_output(int stage){return stage>=0&&stage<2&&stages[stage]?stages[stage]->output:NULL;}
@@ -51,6 +52,8 @@ uint32_t shader_constant_value(int stage,int index,int field){
     else memcpy(&value,&c->value.i[field-2],4);
     return value;
 }
+int shader_input_count(void){return vertex_input_count;}
+int shader_input_value(int index,int field){return index>=0&&index<vertex_input_count&&field>=0&&field<3?vertex_inputs[index][field]:-1;}
 /* Pair linking is needed because DX9 semantic linkage is not SPIR-V linkage.
  * This initial boundary supports float vertex attributes. Integer declarations
  * must be implemented before they are accepted by the D3D frontend. */
@@ -72,13 +75,18 @@ int shader_pair(const unsigned char *vs, unsigned vlen,const unsigned char *ps,u
         uint32_t registers[16];unsigned count=0;
         for(int a=0;a<check->attribute_count;a++){
             MOJOSHADER_attribute attr=check->attributes[a];int reg=-1;
-            if(attr.index==0&&attr.usage>=MOJOSHADER_USAGE_POSITION&&attr.usage<=MOJOSHADER_USAGE_POINTSIZE)reg=attr.usage;
-            else if(attr.usage==MOJOSHADER_USAGE_COLOR&&attr.index<=1)reg=5+attr.index;
-            else if(attr.usage==MOJOSHADER_USAGE_TEXCOORD&&attr.index<=7)reg=7+attr.index;
-            else if(attr.usage==MOJOSHADER_USAGE_POSITION&&attr.index==1)reg=15;
+            /* Bytecode-profile names are actual D3D registers (v0..v15).
+             * Semantics cannot be inverted: explicit COLOR0 may name v1, v9,
+             * etc. Using the legacy semantic mapping invented extra inputs. */
+            if(attr.name&&attr.name[0]=='v'&&attr.name[1]>='0'&&attr.name[1]<='9'){
+                char *end=NULL;long parsed=strtol(attr.name+1,&end,10);
+                if(end&&*end==0&&parsed>=0&&parsed<=15)reg=(int)parsed;
+            }
             if(reg<0||reg>15||count>=16){snprintf(error,sizeof(error),"unsupported VS1.1 input declaration");MOJOSHADER_freeParseData(check);return 0;}
+            vertex_inputs[count][0]=attr.usage;vertex_inputs[count][1]=attr.index;vertex_inputs[count][2]=reg;
             registers[count++]=reg;
         }
+        vertex_input_count=(int)count;
         MOJOSHADER_freeParseData(check);
         declared_vs=malloc(vlen+count*12);
         if(!declared_vs){snprintf(error,sizeof(error),"allocation failed");return 0;}
