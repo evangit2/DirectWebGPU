@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..98ee3db
+index 0000000..f60569e
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,213 @@
+@@ -0,0 +1,233 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -509,6 +509,25 @@ index 0000000..98ee3db
 +        assert_eq!(ctx.memory.read::<u32>(0x1200),obj);IDirect3D9::Release(&mut ctx,obj);
 +        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,137,0),D3D_OK);
 +        assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,137,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),0);
++        let vb=buffers::fixture(&mut ctx,dev,6);let ib=buffers::fixture(&mut ctx,dev,7);
++        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,0,ib,0,16),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::SetIndices(&mut ctx,dev,vb),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,16,vb,0,16),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,0,vb,64,16),D3DERR_INVALIDCALL);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetStreamSource_stdcall),vec![dev,0,vb,4,16]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,1,vb,0,0),D3D_OK);
++        assert_eq!(IDirect3DDevice9::SetIndices(&mut ctx,dev,ib),D3D_OK);
++        assert_eq!(buffers::Release(&mut ctx,vb),0);assert_eq!(buffers::Release(&mut ctx,ib),0);
++        assert_ne!(ctx.memory.read::<u32>(vb),0); // bindings keep storage alive
++        assert_eq!(IDirect3DDevice9::GetStreamSource(&mut ctx,dev,0,0x1200,0x1204,0x1208),D3D_OK);
++        assert_eq!((0..3).map(|i|ctx.memory.read::<u32>(0x1200+i*4)).collect::<Vec<_>>(),vec![vb,4,16]);
++        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,0,0,0,0),D3D_OK);
++        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,1,0,0,0),D3D_OK);
++        assert_ne!(ctx.memory.read::<u32>(vb),0); // GetStreamSource returned a COM reference
++        assert_eq!(buffers::Release(&mut ctx,vb),0);assert_eq!(ctx.memory.read::<u32>(vb),0);
++        assert_eq!(IDirect3DDevice9::GetIndices(&mut ctx,dev,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),ib);
++        assert_eq!(buffers::Release(&mut ctx,ib),0);
 +        assert_eq!(IDirect3DDevice9::GetRenderTarget(&mut ctx,dev,0,0x1200),D3D_OK);
 +        let surface=ctx.memory.read::<u32>(0x1200);
 +        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),1); // Surface keeps device alive.
@@ -520,6 +539,7 @@ index 0000000..98ee3db
 +        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),1);
 +        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),0);
 +        assert_eq!(ctx.memory.read::<u32>(dev),0);
++        assert_eq!(ctx.memory.read::<u32>(ib),0); // no device/binding reference cycle
 +        ctx.memory.bytes[0x1400..0x1530].fill(0xa5);
 +        ctx.call32_x86(runtime::Cont(IDirect3D9::GetDeviceCaps_stdcall),vec![obj,0,1,0x1400]);
 +        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);
@@ -533,15 +553,16 @@ index 0000000..98ee3db
 +}
 diff --git a/win32/winapi/src/d3d9/buffers.rs b/win32/winapi/src/d3d9/buffers.rs
 new file mode 100644
-index 0000000..0fea6b1
+index 0000000..36abbb3
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/buffers.rs
-@@ -0,0 +1,372 @@
+@@ -0,0 +1,455 @@
 +//! Vertex/index buffer COM storage with persistent guest lock memory.
 +use super::*;
 +#[derive(Clone)]
 +struct Buffer {
 +    refs: u32,
++    bindings: u32,
 +    owner: u32,
 +    backend: u32,
 +    gpu: u32,
@@ -639,6 +660,7 @@ index 0000000..0fea6b1
 +        this,
 +        Buffer {
 +            refs: 1,
++            bindings: 0,
 +            owner,
 +            backend,
 +            gpu,
@@ -688,29 +710,108 @@ index 0000000..0fea6b1
 +    ctx.memory.write::<u32>(out, this);
 +    D3D_OK
 +}
++// Binding references keep storage alive without retaining the device. A
++// nonzero external COM refcount retains the device once, avoiding a cycle.
 +#[win32_derive::dllexport]
-+pub fn AddRef(_ctx: &mut Context, this: u32) -> u32 {
++pub fn AddRef(ctx: &mut Context, this: u32) -> u32 {
 +    let mut map = BUFFERS.lock().unwrap();
 +    let b = map.get_mut(&this).expect("invalid buffer AddRef");
++    let retain_owner = b.refs == 0;
++    let owner = b.owner;
 +    b.refs = b.refs.checked_add(1).expect("buffer ref overflow");
-+    b.refs
++    let refs = b.refs;
++    drop(map);
++    if retain_owner {
++        IDirect3DDevice9::AddRef(ctx, owner);
++    }
++    refs
++}
++fn destroy(ctx: &mut Context, this: u32, b: Buffer) {
++    assert_eq!(b.refs, 0);
++    assert_eq!(b.bindings, 0);
++    host::graphics_call(7, &[b.backend, b.gpu]);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, b.data);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
 +}
 +#[win32_derive::dllexport]
 +pub fn Release(ctx: &mut Context, this: u32) -> u32 {
 +    let mut map = BUFFERS.lock().unwrap();
 +    let b = map.get_mut(&this).expect("invalid buffer Release");
++    assert!(b.refs > 0, "buffer external reference underflow");
 +    b.refs -= 1;
 +    if b.refs != 0 {
 +        return b.refs;
 +    }
-+    let b = map.remove(&this).unwrap();
++    let owner = b.owner;
++    let removed = if b.bindings == 0 {
++        map.remove(&this)
++    } else {
++        None
++    };
 +    drop(map);
-+    host::graphics_call(7, &[b.backend, b.gpu]);
-+    ctx.memory.write::<u32>(this, 0);
-+    kernel32::lock().process_heap.free(&mut ctx.memory, b.data);
-+    kernel32::lock().process_heap.free(&mut ctx.memory, this);
-+    IDirect3DDevice9::Release(ctx, b.owner);
++    if let Some(b) = removed {
++        destroy(ctx, this, b)
++    }
++    IDirect3DDevice9::Release(ctx, owner);
 +    0
++}
++pub(super) fn binding_valid(this: u32, owner: u32, kind: u32, offset: u32) -> bool {
++    BUFFERS
++        .lock()
++        .unwrap()
++        .get(&this)
++        .is_some_and(|b| b.owner == owner && b.kind == kind && offset < b.size)
++}
++pub(super) fn retain_binding(this: u32) {
++    let mut map = BUFFERS.lock().unwrap();
++    let b = map.get_mut(&this).expect("invalid bound buffer");
++    b.bindings = b.bindings.checked_add(1).expect("buffer binding overflow");
++}
++pub(super) fn release_binding(ctx: &mut Context, this: u32) {
++    if this == 0 {
++        return;
++    }
++    let mut map = BUFFERS.lock().unwrap();
++    let b = map.get_mut(&this).expect("invalid bound buffer");
++    assert!(b.bindings > 0);
++    b.bindings -= 1;
++    let removed = if b.bindings == 0 && b.refs == 0 {
++        map.remove(&this)
++    } else {
++        None
++    };
++    drop(map);
++    if let Some(b) = removed {
++        destroy(ctx, this, b)
++    }
++}
++#[cfg(test)]
++pub(super) fn fixture(ctx: &mut Context, owner: u32, kind: u32) -> u32 {
++    // Native ownership test only: no GPU operation is claimed by this fixture.
++    let data = kernel32::lock().process_heap.alloc(&mut ctx.memory, 64);
++    let this = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    ctx.memory.write::<u32>(this, 0x1b00);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    BUFFERS.lock().unwrap().insert(
++        this,
++        Buffer {
++            refs: 1,
++            bindings: 0,
++            owner,
++            backend: 1,
++            gpu: 1,
++            data,
++            size: 64,
++            usage: 0,
++            pool: 1,
++            kind,
++            format: if kind == 6 { 100 } else { 101 },
++            fvf: 0,
++            locked: None,
++        },
++    );
++    this
 +}
 +#[win32_derive::dllexport]
 +pub fn GetDevice(ctx: &mut Context, this: u32, out: u32) -> u32 {
@@ -829,6 +930,7 @@ index 0000000..0fea6b1
 +    fn lock_ranges_and_flag_constraints() {
 +        let mut b = Buffer {
 +            refs: 1,
++            bindings: 0,
 +            owner: 0,
 +            backend: 0,
 +            gpu: 0,
@@ -872,6 +974,7 @@ index 0000000..0fea6b1
 +            this,
 +            Buffer {
 +                refs: 1,
++                bindings: 0,
 +                owner: 0,
 +                backend: 0,
 +                gpu: 0,
@@ -911,14 +1014,16 @@ index 0000000..0fea6b1
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..aada9dd
+index 0000000..b02bbe2
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,177 @@
+@@ -0,0 +1,202 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
++#[derive(Clone,Copy,Default)]
++struct Stream{buffer:u32,offset:u32,stride:u32}
 +#[derive(Clone)]
-+struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32}
 +static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
 +pub static mut VTABLE:u32=0;
 +const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
@@ -931,7 +1036,7 @@ index 0000000..aada9dd
 + let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
 + let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
 + let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
-+ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0}).is_none());p
 +}
 +#[win32_derive::dllexport]
 +pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{
@@ -945,6 +1050,8 @@ index 0000000..aada9dd
 +pub fn Release(ctx:&mut Context,this:u32)->u32{
 + let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid device Release");d.refs-=1;let refs=d.refs;
 + if refs!=0{return refs}let d=map.remove(&this).unwrap();drop(map);
++ for stream in d.streams{super::buffers::release_binding(ctx,stream.buffer)}
++ super::buffers::release_binding(ctx,d.indices);
 + IDirect3DSurface9::destroy_owned(ctx,d.color);IDirect3DSurface9::destroy_owned(ctx,d.depth);
 + host::graphics_call(2,&[d.backend]);IDirect3D9::Release(ctx,d.parent);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);0
 +}
@@ -1073,12 +1180,33 @@ index 0000000..aada9dd
 +pub fn GetVertexShaderConstantI_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShaderConstantI",4)}
 +pub fn SetVertexShaderConstantB_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexShaderConstantB",4)}
 +pub fn GetVertexShaderConstantB_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShaderConstantB",4)}
-+pub fn SetStreamSource_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetStreamSource",5)}
-+pub fn GetStreamSource_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetStreamSource",5)}
-+pub fn SetStreamSourceFreq_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetStreamSourceFreq",3)}
-+pub fn GetStreamSourceFreq_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetStreamSourceFreq",3)}
-+pub fn SetIndices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetIndices",2)}
-+pub fn GetIndices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetIndices",2)}
++#[win32_derive::dllexport]
++pub fn SetStreamSource(ctx:&mut Context,this:u32,stream:u32,buffer:u32,offset:u32,stride:u32)->u32{
++ device(this);
++ if stream>=16||stride>2048||(buffer!=0&&!super::buffers::binding_valid(buffer,this,6,offset)){return D3DERR_INVALIDCALL}
++ if buffer!=0{super::buffers::retain_binding(buffer)}
++ let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();std::mem::replace(&mut d.streams[stream as usize],Stream{buffer,offset,stride})};
++ super::buffers::release_binding(ctx,old.buffer);D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetStreamSource(ctx:&mut Context,this:u32,stream:u32,out:u32,offset:u32,stride:u32)->u32{
++ let d=device(this);if stream>=16||![out,offset,stride].iter().all(|p|valid(ctx,*p,4)){return D3DERR_INVALIDCALL}
++ let s=d.streams[stream as usize];if s.buffer!=0{super::buffers::AddRef(ctx,s.buffer);}
++ ctx.memory.write::<u32>(out,s.buffer);ctx.memory.write::<u32>(offset,s.offset);ctx.memory.write::<u32>(stride,s.stride);D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn SetStreamSourceFreq(_ctx:&mut Context,this:u32,stream:u32,frequency:u32)->u32{device(this);if stream>=16||frequency!=1{return D3DERR_INVALIDCALL}D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetStreamSourceFreq(ctx:&mut Context,this:u32,stream:u32,out:u32)->u32{device(this);if stream>=16||!valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,1);D3D_OK}
++#[win32_derive::dllexport]
++pub fn SetIndices(ctx:&mut Context,this:u32,buffer:u32)->u32{
++ device(this);if buffer!=0&&!super::buffers::binding_valid(buffer,this,7,0){return D3DERR_INVALIDCALL}
++ if buffer!=0{super::buffers::retain_binding(buffer)}
++ let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().indices,buffer)};
++ super::buffers::release_binding(ctx,old);D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetIndices(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if d.indices!=0{super::buffers::AddRef(ctx,d.indices);}ctx.memory.write::<u32>(out,d.indices);D3D_OK}
 +pub fn CreatePixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreatePixelShader",3)}
 +pub fn SetPixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPixelShader",2)}
 +pub fn GetPixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPixelShader",2)}

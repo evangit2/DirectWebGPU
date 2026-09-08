@@ -1,3 +1,4 @@
+import {GeometryBuffers} from './gpu-buffers.js';
 import {testGeometryBuffers} from './buffer-test.js';
 import {testDeviceBridge} from './device-test.js';
 import {testStencil} from './stencil-test.js';
@@ -22,11 +23,16 @@ document.getElementById('run').onclick=async()=>{
   for(const mod of modules){const info=await mod.getCompilationInfo();if(info.messages.some(m=>m.type==='error'))throw Error(JSON.stringify(info.messages));}
   const pipeline=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:modules[0],entryPoint:'main',buffers:[{arrayStride:32,attributes:[{shaderLocation:0,offset:0,format:'float32x4'},{shaderLocation:1,offset:16,format:'float32x4'}]}]},fragment:{module:modules[1],entryPoint:'main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}});
   const vertices=new Float32Array([-0.8,-0.8,0.5,1,1,0,0,1, 0.8,-0.8,0.5,1,0,1,0,1, 0,0.8,0.5,1,0,0,1,1]);
-  const vb=device.createBuffer({size:vertices.byteLength,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});device.queue.writeBuffer(vb,0,vertices);
+  const geometry=new GeometryBuffers(device),guest=new SharedArrayBuffer(8192);
+  new Float32Array(guest,4096,vertices.length).set(vertices);
+  const vertexId=await geometry.create(6,vertices.byteLength,100);await geometry.upload(vertexId,0,guest,4096,vertices.byteLength);
+  new Uint16Array(guest,4096,4).set([0,1,2,0]);
+  const indexId=await geometry.create(7,6,101);await geometry.upload(indexId,0,guest,4096,8);
+  const vb=geometry.get(vertexId).buffer,ib=geometry.get(indexId).buffer;
   const target=device.createTexture({size:[128,128],format:'rgba8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const read=device.createBuffer({size:128*512,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
   const encoder=device.createCommandEncoder();const pass=encoder.beginRenderPass({colorAttachments:[{view:target.createView(),loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
-  pass.setPipeline(pipeline);pass.setVertexBuffer(0,vb);pass.draw(3);pass.end();
+  pass.setPipeline(pipeline);pass.setVertexBuffer(0,vb);pass.setIndexBuffer(ib,'uint16');pass.drawIndexed(3);pass.end();
   encoder.copyTextureToBuffer({texture:target},{buffer:read,bytesPerRow:512},[128,128]);device.queue.submit([encoder.finish()]);await device.queue.onSubmittedWorkDone();
   await read.mapAsync(GPUMapMode.READ);const pixels=new Uint8ClampedArray(read.getMappedRange().slice(0));read.unmap();
   // A single test readback checks shader output; it is not the runtime presentation path.
@@ -49,9 +55,10 @@ document.getElementById('run').onclick=async()=>{
   report.checks.push('PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA');tex.destroy();
   report.alphaStencil=await testStencil(device,tr,shaders);
   const scoped=await device.popErrorScope();if(scoped||errors.length)throw Error(scoped?.message??errors.join('\n'));
-  report.checks.push('browser WGSL compilation and pipeline validation passed','GPU draw completed; sampled interpolated color matched');
+  report.indexedGeometry={result:'passed',indexCount:3,indexFormat:'uint16',source:'GeometryBuffers shared-memory uploads',HumusFrames:0};
+  report.checks.push('indexed draw consumed persistent vertex/index buffers','browser WGSL compilation and pipeline validation passed','GPU draw completed; sampled interpolated color matched');
   report.deviceBridge=await testDeviceBridge();
-  report.diagnosticDraws=2+report.alphaStencil.draws;report.result='passed';vb.destroy();target.destroy();read.destroy();
+  report.diagnosticDraws=2+report.alphaStencil.draws;report.result='passed';geometry.dispose();target.destroy();read.destroy();
  }catch(e){report.result='failed';report.error=String(e.stack??e);}
  finally{device?.destroy();status.textContent=JSON.stringify(report,null,2);const session=await(await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.token,report})});}
 };
