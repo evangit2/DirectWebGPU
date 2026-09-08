@@ -1,0 +1,23 @@
+{
+  "translatedTreeSha256": "a2d761cec5b18f0b45ca4a19aef47ac294cc54236c8ec2e2546e092e11221055",
+  "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
+  "builtAt": "2026-09-08T14:06:16.005488+00:00",
+  "revision": "uncommitted",
+  "workingTreeDirty": true,
+  "sourceSha256": "7f04f415c154d5210eb6cc67d7f24e0e4b0d740f987d48a2d415eba243dfefeb",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+  "translationEntryPoints": [
+    "409a00"
+  ],
+  "artifacts": {
+    "humus.js": {
+      "sha256": "cc5f324995cb88da1da7f0dd08cb1e130ae5a10056466282e9d2893e24648dad",
+      "bytes": 12071
+    },
+    "humus_bg.wasm": {
+      "sha256": "46d6c79d5f42202d5229c7942f068063c17043f8d0b567274bcbd6aa19ab8a67",
+      "bytes": 16211977
+    }
+  }
+}

@@ -1,0 +1,12 @@
+/vendor/
+/.venv/
+/.wine-reference/
+/assets/original/
+/web/generated/
+/evidence/sessions/
+/evidence/*.log
+__pycache__/
+.DS_Store
+/.native-reference/
+/.restore-check/
+/evidence/missing-addresses.txt

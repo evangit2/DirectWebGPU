@@ -1,0 +1,24 @@
+Evidence source: original archive from https://humus.name/index.php?ID=50&page=3D and scripts/inspect_pe.py, with machine-readable headers/imports/instructions in evidence/pe-inspection.json. Main.cpp is explanatory evidence, never build input.
+
+| Area | Executable/package evidence | Current support |
+|---|---|---|
+| PE/x86 | i386 PE32, entry 0x0040bdb2, base 0x00400000, 925696 bytes; no delay imports | Theseus AOT; preserved original SHA-256 in dependencies.json; LNK_INFO mapping fix |
+| Startup | Static MSVC CRT and x87 code; FS-based SEH, CPUID | Startup executes; callback 0x00409a00 discovered dynamically; Float80 and other unsupported instructions trap with addresses |
+| Win32 | 6 imported DLLs; kernel32/user32/advapi32/shell32/gdi32/d3d9 | Reused subset with known incomplete upstream stubs; no claim of full compatibility; explicit new missing-import traps |
+| Heap | Original model preparation repeatedly calls HeapReAlloc | Implemented copy/grow/shrink, zero-new bytes and allocation-failure preservation; regression test passes |
+| Virtual display | EnumDisplaySettingsA and CreateWindowExA | Single 1280×720 virtual display; EXE requests an 800×600 window; OffscreenCanvas receives those actual dimensions |
+| Callbacks | RegisterClassA receives original wndproc 0x00409a00 | Callback included in translation inputs, resolved via native/WASM indirect-call table |
+| Registry | RegOpenKeyExA, enumeration, query and writes | Empty isolated registry returns missing-key failure; writes/enumeration not implemented, trap if reached |
+| Timing | QueryPerformanceFrequency/Counter | Monotonic host milliseconds, reported frequency 1000; virtual 1 MHz RDTSC counter. No physical CPU-speed or high-resolution timing claim |
+| Exceptions | SetUnhandledExceptionFilter, RaiseException, RtlUnwind | Filter registration stores/replaces pointer; complete exception dispatch not implemented |
+| D3D9 | Only Direct3DCreate9 statically imported | Reached in browser and native diagnostic: SDKVersion=31, original return PC 0x00402be0. COM/device/rendering not implemented yet |
+| D3DX | Embedded D3DX9 compiler/assembler version strings 4.09.00.1221; no imported D3DX DLL | Evidence suggests statically linked compiler. Actual compiler execution and dynamic shader-validator lookup still unverified |
+| Shaders | .shd HLSL files loaded by name; VS 1.1/PS 2.0 required by package and source | Actual bytecode not captured yet; no hardcoded replacement shaders |
+| Assets | ../Models/PillarRoom/Map.hmdl; DDS bases/font, PNG normal-height maps/particle, .font | Original directory relationships preserved; browser mounts each integrity-checked file with /DynamicBranching cwd |
+| Geometry | Model upload and indexed draws; DrawPrimitiveUP triangle fans for lights | Required vertex/index buffers, declarations, FVF/fixed-function paths not implemented |
+| Correctness | Ambient/depth first; alpha <255 passes replace stencil with 1; lighting tests stencil==1; additive blending | All required. No alpha/stencil disabling or pretend frame accepted |
+| Input | PeekMessage/DispatchMessage, keyboard, cursor positioning; settings F1 | Startup subset only; controlled camera acceptance pending |
+| WebGPU | Actual adapter/device request with error/loss events | Apple/metal-3 non-fallback adapter observed; no Humus GPU submission |
+| Baseline | No local CheerpX artifacts or verified rendering found | Unavailable; historical Linux initialization is not a performance baseline |
+
+Before scene acceptance: implement D3D9 COM identity/refcounts and honest caps, actual shader bytecode translation, vertex/index/texture update semantics, depth/stencil/alpha/blend passes, input, GPU-resident resources and Present counters. Browser canvas stays blank when unsupported; no CPU framebuffer is passed off as accelerated rendering.

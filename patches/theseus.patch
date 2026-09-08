@@ -1,0 +1,556 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index e4b4a85..d7f2cc8 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -226,6 +226,15 @@ dependencies = [
+  "web-sys",
+ ]
+ 
++[[package]]
++name = "humus"
++version = "0.1.0"
++dependencies = [
++ "runtime",
++ "wasm-bindgen",
++ "winapi 0.1.0",
++]
++
+ [[package]]
+ name = "iced-x86"
+ version = "1.21.0"
+diff --git a/Cargo.toml b/Cargo.toml
+index e8ab03f..64c2b60 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -11,6 +11,7 @@ members = [
+   "out/dos/magixfly",
+   "out/hello6",
+   "out/mine",
++  "out/humus",
+   "out/mofo",
+   "out/mofo-unpack",
+   "out/sbaitso/read",
+diff --git a/exe/src/file.rs b/exe/src/file.rs
+index ac09bc9..c84c2f9 100644
+--- a/exe/src/file.rs
++++ b/exe/src/file.rs
+@@ -210,6 +210,9 @@ bitflags! {
+         const CODE = 0x20;
+         const INITIALIZED_DATA = 0x40;
+         const UNINITIALIZED_DATA = 0x80;
++        // Older linkers can retain this metadata bit on image sections.
++        // It does not change their initialized-data mapping semantics.
++        const LNK_INFO = 0x200;
+         const MEM_DISCARDABLE = 0x2000000;
+         const MEM_SHARED = 0x10000000;
+         const MEM_EXECUTE = 0x20000000;
+diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
+index e1edcc6..673ce94 100644
+--- a/runtime/src/memory.rs
++++ b/runtime/src/memory.rs
+@@ -39,13 +39,13 @@ impl<'a> Memory<'a> {
+ 
+     #[inline(never)]
+     pub fn null_ptr(&self) {
+-        log::error!("null page read/write");
++        panic!("guest null-page read/write");
+     }
+ 
+     #[inline]
+     fn check_access(&self, addr: u32) {
+         if addr < 0x1000 && self.null_page {
+-            self.null_ptr();
++            panic!("guest null-page access at {addr:#010x}");
+         }
+     }
+ 
+diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
+index a4c06e3..d8640d4 100644
+--- a/runtime/src/ops/misc.rs
++++ b/runtime/src/ops/misc.rs
+@@ -124,3 +124,41 @@ impl Context {
+         self.cpu.regs.set_al(value);
+     }
+ }
++
++/// User-mode virtual CPU identity. Do not advertise SIMD or OS services
++/// that this runtime cannot execute. Unknown leaves return zero.
++pub fn cpuid(regs: &mut crate::Regs) {
++    let leaf = regs.eax;
++    regs.eax = 0;
++    regs.ebx = 0;
++    regs.ecx = 0;
++    regs.edx = 0;
++    match leaf {
++        0 => {
++            regs.eax = 1;
++            regs.ebx = u32::from_le_bytes(*b"Thes");
++            regs.edx = u32::from_le_bytes(*b"eusW");
++            regs.ecx = u32::from_le_bytes(*b"asm!");
++        }
++        1 => { regs.eax = 0x500; regs.edx = 0x11; } // x87 and the virtual timestamp counter
++        0x8000_0000 => regs.eax = 0x8000_0000,
++        _ => {}
++    }
++}
++
++#[cfg(test)]
++mod virtual_cpu_tests {
++    #[test]
++    fn no_unimplemented_simd_advertised() {
++        let mut regs = crate::Regs::default();
++        regs.eax = 1;
++        regs.esi = 0x12345678;
++        super::cpuid(&mut regs);
++        assert_eq!(regs.edx & ((1 << 23) | (1 << 25) | (1 << 26)), 0);
++        assert_eq!(regs.ecx, 0);
++        assert_eq!(regs.esi, 0x12345678);
++        regs.eax = 7;
++        super::cpuid(&mut regs);
++        assert_eq!((regs.eax, regs.ebx, regs.ecx, regs.edx), (0,0,0,0));
++    }
++}
+diff --git a/runtime/src/ops/mod.rs b/runtime/src/ops/mod.rs
+index ff33cee..8ea0dea 100644
+--- a/runtime/src/ops/mod.rs
++++ b/runtime/src/ops/mod.rs
+@@ -9,6 +9,7 @@ mod string;
+ 
+ pub use flags::*;
+ pub use math::*;
++pub use misc::cpuid;
+ pub use mmx::*;
+ pub use shift::*;
+ pub use string::*;
+diff --git a/tc/src/codegen/misc.rs b/tc/src/codegen/misc.rs
+index 827dd83..984fd86 100644
+--- a/tc/src/codegen/misc.rs
++++ b/tc/src/codegen/misc.rs
+@@ -93,7 +93,9 @@ impl<'a> CodeGen<'a> {
+                     self.todo(format!("int {:#x}", instr.immediate8()));
+                 }
+             }
+-            Int3 | Cmpxchg | Pushfd | Cpuid | Xgetbv | Bt | Div => self.todo(instr_name(instr)),
++            Cpuid => self.line("runtime::cpuid(&mut ctx.cpu.regs);"),
++            Rdtsc if self.module.is_windows() => self.line("ctx.cpu.regs.set_edx_eax(winapi::kernel32::virtual_timestamp_counter());"),
++            Int3 | Cmpxchg | Pushfd | Xgetbv | Bt | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
+ 
+             // CBW/CWDE: sign extend to next larger ax
+             Cbw => self.line("ctx.cpu.regs.set_ax(ctx.cpu.regs.get_al() as i8 as i16 as u16);"),
+diff --git a/tc/src/codegen/mod.rs b/tc/src/codegen/mod.rs
+index 4d80652..7866ea5 100644
+--- a/tc/src/codegen/mod.rs
++++ b/tc/src/codegen/mod.rs
+@@ -95,7 +95,7 @@ impl<'a> CodeGen<'a> {
+         if instr.memory_index() != None {
+             if instr.memory_index_scale() != 1 {
+                 expr.push(format!(
+-                    "({}*{})",
++                    "{}.wrapping_mul({})",
+                     get_reg(instr.memory_index()),
+                     instr.memory_index_scale()
+                 ));
+@@ -305,6 +305,11 @@ impl<'a> CodeGen<'a> {
+     }
+ 
+     fn gen_instr(&mut self, instr: &Instr) -> anyhow::Result<()> {
++        // Keep unexecuted extended-precision CRT paths translatable, but stop
++        // precisely if reached. Never silently narrow x87 80-bit operands.
++        if instr.iced.memory_size() == iced_x86::MemorySize::Float80 {
++            anyhow::bail!("unsupported x87 Float80 at {}: {}", instr.ip, instr.iced);
++        }
+         // log::info!("gen: {:08x} {}", instr.iced.ip32(), instr.iced);
+         self.line(format!("// {} {}", instr.ip, instr.iced));
+         if self.codegen_control_flow(instr) {
+@@ -314,7 +319,7 @@ impl<'a> CodeGen<'a> {
+         } else if self.codegen_fpu(&instr.iced) {
+         } else if self.codegen_mmx(&instr.iced) {
+         } else {
+-            anyhow::bail!("{:?} not implemented", instr.iced.mnemonic());
++            anyhow::bail!("unsupported instruction at {}: {}", instr.ip, instr.iced);
+         }
+         Ok(())
+     }
+diff --git a/tc/src/gather/block.rs b/tc/src/gather/block.rs
+index 91f7295..759146b 100644
+--- a/tc/src/gather/block.rs
++++ b/tc/src/gather/block.rs
+@@ -223,7 +223,9 @@ impl<'a, 'b> BlockDecoder<'a, 'b> {
+                         self.traverse.queue.enqueue(ip);
+                     }
+                 }
+-                Ret | Retf | Iret => {}
++                // Unsupported interrupt returns still terminate the block;
++                // codegen emits an exact runtime trap if they are executed.
++                Ret | Retf | Iret | Iretd | Iretq => {}
+                 Into => {}        // terminates
+                 Int1 | Int3 => {} // breakpoint
+                 Int => {
+diff --git a/win32/winapi/src/advapi32.rs b/win32/winapi/src/advapi32.rs
+index c8b11ff..7f5a75e 100644
+--- a/win32/winapi/src/advapi32.rs
++++ b/win32/winapi/src/advapi32.rs
+@@ -53,7 +53,8 @@ pub fn RegOpenKeyExA(
+     _samDesired: u32, /* REG_SAM_FLAGS */
+     _phkResult: HKEY,
+ ) -> u32 /* WIN32_ERROR */ {
+-    stub!(0)
++    // The isolated registry starts empty. Do not claim success without a handle.
++    ERROR_FILE_NOT_FOUND
+ }
+ 
+ #[win32_derive::dllexport]
+@@ -94,3 +95,21 @@ pub fn RegSetValueExW(
+ ) -> u32 /* WIN32_ERROR */ {
+     stub!(0)
+ }
++
++// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
++pub fn RegCreateKeyExA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: advapi32!RegCreateKeyExA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn RegEnumValueA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: advapi32!RegEnumValueA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn RegOpenKeyA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: advapi32!RegOpenKeyA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn RegSetValueExA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: advapi32!RegSetValueExA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
+diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
+new file mode 100644
+index 0000000..b30a180
+--- /dev/null
++++ b/win32/winapi/src/d3d9.rs
+@@ -0,0 +1,6 @@
++// Honest graphics boundary: no device or rendering support is claimed yet.
++pub fn Direct3DCreate9_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let return_pc = ctx.memory.read::<u32>(ctx.cpu.regs.esp);
++    let sdk = ctx.memory.read::<u32>(ctx.cpu.regs.esp + 4);
++    panic!("unsupported API: d3d9!Direct3DCreate9(SDKVersion={sdk}); stack_return={return_pc:#010x}, prior_builtin_return={:#010x}; D3D9 COM/frontend/backend not implemented", ctx.cpu.regs.eip_context);
++}
+diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
+index 22d8d8e..b0d1fa9 100644
+--- a/win32/winapi/src/heap.rs
++++ b/win32/winapi/src/heap.rs
+@@ -34,6 +34,23 @@ impl Heap {
+             .unwrap_or_else(|| panic!("heap size {:x} oom {:x}", self.size, size))
+     }
+ 
++    /// Move an allocation without losing the old block on allocation failure.
++    pub fn realloc(&self, mem: &mut Memory, addr: u32, size: u32, zero_new: bool) -> Option<u32> {
++        if addr < self.addr + 4 || !self.range().contains(&(addr - 4)) { return None; }
++        let old_size = self.size(mem, addr);
++        let old_end = addr.checked_add(old_size)?;
++        if old_end > self.addr.checked_add(self.size)? { return None; }
++        size.checked_add(4)?;
++        let new_addr = self.freelist.borrow_mut().alloc(mem, size)?;
++        let copied = old_size.min(size) as usize;
++        mem.bytes.copy_within(addr as usize..addr as usize + copied, new_addr as usize);
++        if zero_new && size > old_size {
++            mem.bytes[new_addr as usize + copied..new_addr as usize + size as usize].fill(0);
++        }
++        self.free(mem, addr);
++        Some(new_addr)
++    }
++
+     #[allow(unused)]
+     pub fn size(&self, mem: &mut Memory, addr: u32) -> u32 {
+         mem.read::<u32>(addr - 4) - 4
+@@ -139,3 +156,23 @@ impl FreeNode {
+         self.addr..self.addr + self.size
+     }
+ }
++
++#[cfg(test)]
++mod realloc_tests {
++    use super::*;
++    #[test]
++    fn preserve_grow_shrink_and_failure() {
++        let mut mem = Memory::leak_new(0x4000);
++        let heap = Heap::new(0x1000, 0x1000);
++        let p = heap.alloc(&mut mem, 4);
++        mem.write::<u32>(p, 0xdeadbeef);
++        let q = heap.realloc(&mut mem, p, 12, true).unwrap();
++        assert_eq!(mem.read::<u32>(q), 0xdeadbeef);
++        assert_eq!(&mem.bytes[q as usize+4..q as usize+12], &[0;8]);
++        assert_eq!(heap.realloc(&mut mem, q, 0x2000, false), None);
++        assert_eq!(mem.read::<u32>(q), 0xdeadbeef);
++        let t = heap.realloc(&mut mem, q, 2, false).unwrap();
++        assert_eq!(mem.read::<u16>(t), 0xbeef);
++        assert_eq!(heap.realloc(&mut mem, t, u32::MAX, false), None);
++    }
++}
+diff --git a/win32/winapi/src/kernel32/heap.rs b/win32/winapi/src/kernel32/heap.rs
+index aca97ba..ab55901 100644
+--- a/win32/winapi/src/kernel32/heap.rs
++++ b/win32/winapi/src/kernel32/heap.rs
+@@ -83,33 +83,19 @@ pub fn HeapFree(
+ 
+ #[win32_derive::dllexport]
+ pub fn HeapReAlloc(
+-    _ctx: &mut Context,
+-    _hHeap: HANDLE,
+-    dwFlags: u32, /* HEAP_FLAGS */
+-    _lpMem: Ptr<()>,
+-    _dwBytes: u32,
++    ctx: &mut Context,
++    hHeap: HANDLE,
++    dwFlags: u32,
++    lpMem: Ptr<()>,
++    dwBytes: u32,
+ ) -> u32 {
+-    if dwFlags != 0 {
+-        log::warn!("HeapReAlloc flags: {:x}", dwFlags);
+-    }
+-    stub!(0)
+-    /*
+-    let memory = sys.memory();
+-    let heap = match memory.heaps.get(&hHeap) {
+-        None => {
+-            log::error!("HeapSize({hHeap:x}): no such heap");
+-            return 0;
+-        }
+-        Some(heap) => heap,
+-    };
+-    let mem = memory.mem();
+-    let old_size = heap.size(mem, lpMem);
+-    let new_addr = heap.alloc(mem, dwBytes);
+-    let copy_size = old_size.min(dwBytes);
+-    mem.copy(lpMem, new_addr, copy_size);
+-    heap.free(mem, lpMem);
+-    new_addr
+-    */
++    // No in-place growth is currently available. Failure preserves the old block.
++    if dwFlags & 0x10 != 0 { return 0; }
++    assert_eq!(dwFlags & !0x9, 0, "unsupported HeapReAlloc flags {dwFlags:#x}");
++    if lpMem.addr == 0 { return 0; }
++    let state = kernel32::lock();
++    let heap = state.heaps.get(&hHeap).expect("invalid HeapReAlloc heap");
++    heap.realloc(&mut ctx.memory, lpMem.addr, dwBytes, dwFlags & 8 != 0).unwrap_or(0)
+ }
+ 
+ win32flags! {
+diff --git a/win32/winapi/src/kernel32/mod.rs b/win32/winapi/src/kernel32/mod.rs
+index 92a0c4b..64a60de 100644
+--- a/win32/winapi/src/kernel32/mod.rs
++++ b/win32/winapi/src/kernel32/mod.rs
+@@ -1,3 +1,5 @@
++mod unsupported;
++pub use unsupported::*;
+ mod dll;
+ mod env;
+ mod event;
+diff --git a/win32/winapi/src/kernel32/unsupported.rs b/win32/winapi/src/kernel32/unsupported.rs
+new file mode 100644
+index 0000000..cf405b5
+--- /dev/null
++++ b/win32/winapi/src/kernel32/unsupported.rs
+@@ -0,0 +1,122 @@
++// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
++pub fn CreateFileMappingA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!CreateFileMappingA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn CreateFileW_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!CreateFileW; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn DeleteCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!DeleteCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn EnterCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!EnterCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn EnumSystemLocalesA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!EnumSystemLocalesA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn GetFileSize_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!GetFileSize; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn GetFullPathNameA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!GetFullPathNameA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn GetLocaleInfoA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!GetLocaleInfoA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn GetLocaleInfoW_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!GetLocaleInfoW; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn GetSystemInfo_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!GetSystemInfo; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn GetUserDefaultLCID_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!GetUserDefaultLCID; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn InitializeCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!InitializeCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn InterlockedCompareExchange_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!InterlockedCompareExchange; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn InterlockedExchange_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!InterlockedExchange; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn IsBadCodePtr_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!IsBadCodePtr; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn IsBadReadPtr_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!IsBadReadPtr; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn IsBadWritePtr_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!IsBadWritePtr; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn IsProcessorFeaturePresent_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!IsProcessorFeaturePresent; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn IsValidCodePage_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!IsValidCodePage; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn IsValidLocale_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!IsValidLocale; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn LeaveCriticalSection_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!LeaveCriticalSection; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn MapViewOfFile_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!MapViewOfFile; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn RaiseException_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!RaiseException; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn UnmapViewOfFile_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!UnmapViewOfFile; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn lstrcmpiA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: kernel32!lstrcmpiA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++
++// Registration is process-wide; exception dispatch remains an explicit unsupported path.
++static EXCEPTION_FILTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
++#[win32_derive::dllexport]
++pub fn SetUnhandledExceptionFilter(_ctx: &mut runtime::Context, filter: u32) -> u32 {
++    EXCEPTION_FILTER.swap(filter, std::sync::atomic::Ordering::SeqCst)
++}
++
++// The backend clock is monotonic milliseconds. Report its real resolution.
++#[win32_derive::dllexport]
++pub fn QueryPerformanceFrequency(ctx: &mut runtime::Context, out: crate::Ptr<u64>) -> bool {
++    out.write(&mut ctx.memory, 1000).is_some()
++}
++#[win32_derive::dllexport]
++pub fn QueryPerformanceCounter(ctx: &mut runtime::Context, out: crate::Ptr<u64>) -> bool {
++    out.write(&mut ctx.memory, host::host().time() as u64).is_some()
++}
++
++/// Virtual 1 MHz timestamp counter, quantized to host milliseconds.
++/// This is not the physical CPU cycle count.
++pub fn virtual_timestamp_counter() -> u64 { host::host().time() as u64 * 1000 }
+diff --git a/win32/winapi/src/lib.rs b/win32/winapi/src/lib.rs
+index da97218..1832ca4 100644
+--- a/win32/winapi/src/lib.rs
++++ b/win32/winapi/src/lib.rs
+@@ -5,6 +5,7 @@
+ pub mod advapi32;
+ pub mod bitmap_format;
+ pub mod ddraw;
++pub mod d3d9;
+ pub mod dinput;
+ mod dllexport;
+ pub mod dsound;
+diff --git a/win32/winapi/src/shell32.rs b/win32/winapi/src/shell32.rs
+index c5eb4fc..b56cafb 100644
+--- a/win32/winapi/src/shell32.rs
++++ b/win32/winapi/src/shell32.rs
+@@ -12,3 +12,9 @@ pub fn ShellAboutW(
+ ) -> i32 {
+     todo!()
+ }
++
++// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
++pub fn SHGetSpecialFolderPathA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: shell32!SHGetSpecialFolderPathA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
+diff --git a/win32/winapi/src/user32/mod.rs b/win32/winapi/src/user32/mod.rs
+index c0ace47..313e3f1 100644
+--- a/win32/winapi/src/user32/mod.rs
++++ b/win32/winapi/src/user32/mod.rs
+@@ -1,3 +1,5 @@
++mod unsupported;
++pub use unsupported::*;
+ mod dialog;
+ mod input;
+ mod message;
+diff --git a/win32/winapi/src/user32/unsupported.rs b/win32/winapi/src/user32/unsupported.rs
+new file mode 100644
+index 0000000..929f27a
+--- /dev/null
++++ b/win32/winapi/src/user32/unsupported.rs
+@@ -0,0 +1,38 @@
++// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
++pub fn ChangeDisplaySettingsA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: user32!ChangeDisplaySettingsA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn CloseClipboard_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: user32!CloseClipboard; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn EmptyClipboard_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: user32!EmptyClipboard; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn OpenClipboard_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: user32!OpenClipboard; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++pub fn SetClipboardData_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
++    let ret = ctx.cpu.regs.eip_context;
++    panic!("unsupported API: user32!SetClipboardData; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
++
++/// Enumerate the runtime's single virtual canvas display. Refresh 0 means default,
++/// not a measured physical refresh rate. Only the documented five fields change.
++#[win32_derive::dllexport]
++pub fn EnumDisplaySettingsA(ctx: &mut runtime::Context, name: crate::Ptr<u8>, index: u32, mode: crate::Ptr<u8>) -> bool {
++    if name.addr != 0 { panic!("named display enumeration is unsupported"); }
++    if index != 0 && index != 0xffff_ffff && index != 0xffff_fffe { return false; }
++    let addr = mode.addr as usize;
++    if addr < 0x1000 || addr.checked_add(124).is_none_or(|end| end > ctx.memory.bytes.len()) { return false; }
++    let size = ctx.memory.read::<u16>(mode.addr + 36);
++    if size != 0 && size < 124 { return false; }
++    // Older callers sometimes leave dmSize zero. Retain their buffer extent.
++    for (offset, value) in [(104,32u32),(108,1280),(112,720),(116,0),(120,0)] {
++        ctx.memory.write::<u32>(mode.addr + offset,value);
++    }
++    true
++}

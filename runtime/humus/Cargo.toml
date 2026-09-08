@@ -1,0 +1,11 @@
+[package]
+name = "humus"
+version = "0.1.0"
+edition = "2024"
+[lib]
+crate-type = ["cdylib"]
+[dependencies]
+runtime = { workspace = true }
+winapi = { workspace = true }
+[target.'cfg(target_family = "wasm")'.dependencies]
+wasm-bindgen = { workspace = true }

@@ -1,0 +1,14 @@
+"""Summarize a real uploaded browser run; never infer scene success from UI activity."""
+import pathlib,json,subprocess
+r=pathlib.Path(__file__).resolve().parents[1]
+runs=[]
+for p in (r/'evidence/sessions').rglob('*.json'):
+ d=json.loads(p.read_text())['report']
+ if d.get('direct3DCreate9Reached'):runs.append(d)
+if not runs:raise SystemExit('No actual browser Direct3D attempt found')
+d=max(runs,key=lambda d:d['startedAt'])
+(r/'evidence/browser-direct3d-attempt.json').write_text(json.dumps(d,indent=2)+'\n')
+result={'Humus':'failed','Runtime':'Theseus AOT x86 → Rust → WASM','Graphics backend':'WebGPU adapter/device probe only; D3D9 backend not implemented','Executable SHA-256':d['executableSha256'],'Runtime build':d['build']['runtimeBuild'],'Run ID':d['runId'],'Browser/device':d['browser'],'Original executable execution':{'verified':True,'milestone':'original scene model read/processed, window created, Direct3DCreate9(31) reached','window':d['window']},'Correct browser rendering':False,'Hardware acceleration evidence':'non-fallback Apple Metal adapter/device available; no Humus graphics submission','Screenshot and frame evidence':{'sceneFrames':0,'applicationPresents':0,'submittedFrames':0,'correctSceneScreenshots':[],'visualResult':'blank canvas; failed launch, not acceptance'},'Startup/FPS/memory':{'coldToCorrectFrame':'not measured','warmToCorrectFrame':'not measured','fps':'not measured','frameTimePercentiles':'not measured','bytesBeforeFirstFrame':'not measured','steadyState':'not measured','linearMemoryBytesAtFailure':d['performance']['wasmLinearMemoryBytes'],'guestMemoryBytesContainedInLinearMemory':268435456,'applicationAllocations':'not measured','JSHeap':'not measured','GPUAllocations':'not measured','totalMemory':'not measured; do not sum overlapping values','diagnosticAttemptToFailureMs':d['diagnosticAttemptMs'],'diagnosticTimingCaveat':'one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark'},'Exact remaining blocker':d['blocker'],'Reproduction command':'python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus','4-hour test':'not run; user-started only','CheerpX baseline':'unavailable in empty initial workspace; no comparison','Native Wine reference':'original EXE and d3d9 loaded; no scene image verified','checks':{'CPU feature reporting':'passed','heap grow/shrink/failure preservation':'passed','server routes/isolation/origin/token/size bounds':'passed','clean dependency restoration':'patched source equality passed'},'evidenceFile':'evidence/browser-direct3d-attempt.json'}
+(r/'MEASURED-RESULTS.json').write_text(json.dumps(result,indent=2)+'\n')
+(r/'evidence/runtime-build.json').write_text(json.dumps(d['build']['runtimeBuild'],indent=2)+'\n')
+print(json.dumps({k:result[k] for k in ['Humus','Run ID','Exact remaining blocker']},indent=2))
