@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..5552cca
+index 0000000..07b8902
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,278 @@
+@@ -0,0 +1,282 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -529,6 +529,10 @@ index 0000000..5552cca
 +        assert_eq!(IDirect3DVertexDeclaration9::GetDeclaration(&mut ctx,declaration,0x1d40,0x1d80),D3D_OK);assert_eq!(&ctx.memory.bytes[0x1d40..0x1d58],&elements);
 +        assert_eq!(IDirect3DDevice9::SetVertexDeclaration(&mut ctx,dev,declaration),D3D_OK);assert_eq!(IDirect3DVertexDeclaration9::Release(&mut ctx,declaration),0);
 +        assert_eq!(IDirect3DDevice9::GetVertexDeclaration(&mut ctx,dev,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),declaration);assert_eq!(IDirect3DVertexDeclaration9::Release(&mut ctx,declaration),0);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::GetSamplerState_stdcall),vec![dev,0,1,0x1200]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.memory.read::<u32>(0x1200),1);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetSamplerState_stdcall),vec![dev,0,1,3]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);
++        assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,0,1,4),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,0,1,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),3);
++        assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,1,1,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),1);assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,16,1,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,0,8,0x3f800000),D3DERR_INVALIDCALL);
 +        let shader=shader::fixture(&mut ctx,dev,0);
 +        assert_eq!(shader::GetFunction(&mut ctx,shader,0,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e00),20);
 +        ctx.memory.write::<u32>(0x1e00,4);ctx.memory.bytes[0x1e10..0x1e24].fill(0xa5);assert_eq!(shader::GetFunction(&mut ctx,shader,0x1e10,0x1e00),D3DERR_INVALIDCALL);assert!(ctx.memory.bytes[0x1e10..0x1e24].iter().all(|b|*b==0xa5));
@@ -1466,16 +1470,16 @@ index 0000000..88ffc7f
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..142d16f
+index 0000000..f5a0a4a
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,235 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
 +struct Stream{buffer:u32,offset:u32,stride:u32}
 +#[derive(Clone)]
-+struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32,declaration:u32,shaders:[u32;2],textures:[u32;16],constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32,declaration:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],constants:std::sync::Arc<Mutex<super::constants::Registers>>}
 +static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
 +pub static mut VTABLE:u32=0;
 +const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
@@ -1488,7 +1492,7 @@ index 0000000..142d16f
 + let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
 + let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
 + let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
-+ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0,declaration:0,shaders:[0;2],textures:[0;16],constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0,declaration:0,shaders:[0;2],textures:[0;16],samplers:[[0,1,1,1,0,1,1,0,0,0,1,0,0,0];16],constants:Default::default()}).is_none());p
 +}
 +#[win32_derive::dllexport]
 +pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{
@@ -1606,8 +1610,14 @@ index 0000000..142d16f
 +pub fn SetTexture(ctx:&mut Context,this:u32,stage:u32,pointer:u32)->u32{device(this);if stage>=16||(pointer!=0&&!super::IDirect3DTexture9::retain_binding(pointer,this)){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().textures[stage as usize],pointer)};super::IDirect3DTexture9::release_binding(ctx,old);D3D_OK}
 +pub fn GetTextureStageState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetTextureStageState",4)}
 +pub fn SetTextureStageState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetTextureStageState",4)}
-+pub fn GetSamplerState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSamplerState",4)}
-+pub fn SetSamplerState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetSamplerState",4)}
++#[win32_derive::dllexport]
++pub fn GetSamplerState(ctx:&mut Context,this:u32,stage:u32,kind:u32,out:u32)->u32{let d=device(this);if stage>=16||kind==0||kind>13||!valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,d.samplers[stage as usize][kind as usize]);D3D_OK}
++#[win32_derive::dllexport]
++pub fn SetSamplerState(_ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid sampler device");
++ let supported=match kind{1..=3=>(1..=3).contains(&value),4=>true,5|6=>(1..=2).contains(&value),7=>value<=2,8|11|12|13=>value==0,9=>value<=12,10=>value==1,_=>false};
++ if stage>=16||!supported{return D3DERR_INVALIDCALL}d.samplers[stage as usize][kind as usize]=value;D3D_OK
++}
 +pub fn ValidateDevice_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ValidateDevice",2)}
 +pub fn SetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPaletteEntries",3)}
 +pub fn GetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPaletteEntries",3)}
