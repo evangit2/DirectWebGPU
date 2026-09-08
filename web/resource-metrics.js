@@ -1,8 +1,11 @@
 // Report only entries the browser exposes in this realm; zero sizes can mean
 // unavailable timing data. Do not infer a complete wire-transfer total.
+function resourceRow(r){return {path:new URL(r.name).pathname,initiatorType:r.initiatorType,startTime:r.startTime,responseEnd:r.responseEnd,transferSize:r.transferSize,encodedBodySize:r.encodedBodySize,decodedBodySize:r.decodedBodySize};}
 export function resourceMetrics(perf,realm,phase){
- const entries=perf.getEntriesByType('resource'),rows=entries.slice(-256).map(r=>({path:new URL(r.name).pathname,initiatorType:r.initiatorType,startTime:r.startTime,responseEnd:r.responseEnd,transferSize:r.transferSize,encodedBodySize:r.encodedBodySize,decodedBodySize:r.decodedBodySize}));
- return {realm,phase,resourceCount:entries.length,retainedEntries:rows.length,transferSize:entries.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:entries.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:entries.reduce((n,r)=>n+r.decodedBodySize,0),zeroSizeEntries:entries.filter(r=>r.transferSize===0&&r.encodedBodySize===0).length,entries:rows,limitations:'Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Realm snapshots are separately scoped, not an exact total of all network bytes.'};
+ const entries=perf.getEntriesByType('resource'),rows=entries.slice(-256).map(resourceRow);
+ const snapshotTime=perf.now(),timeOrigin=perf.timeOrigin;
+ const navigation=realm==='page'?perf.getEntriesByType('navigation').slice(0,1).map(resourceRow):[];
+ return {realm,phase,timeOrigin,snapshotTime,snapshotEpoch:timeOrigin+snapshotTime,navigation,resourceCount:entries.length,retainedEntries:rows.length,transferSize:entries.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:entries.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:entries.reduce((n,r)=>n+r.decodedBodySize,0),zeroSizeEntries:entries.filter(r=>r.transferSize===0&&r.encodedBodySize===0).length,entries:rows,limitations:'Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes.'};
 }
 export async function memoryProbe(perf,timeoutMs=30000){
  const started=perf.now();if(typeof perf.measureUserAgentSpecificMemory!=='function')return {status:'unavailable',reason:'measureUserAgentSpecificMemory is not exposed'};
