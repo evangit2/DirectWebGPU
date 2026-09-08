@@ -456,5 +456,107 @@
       "workerRPC": "passed"
     },
     "originalRunId": "109a36a3-2058-4258-af8b-d2b0599861b9"
+  },
+  "viewport": {
+    "revision": "0c6930ee24ee964ebff19dee671ef337a4d64f7a",
+    "nativeTests": "7 D3D9 tests passed, including viewport stdcall, defaults, state preservation and pointer/NaN/rectangle rejection",
+    "nativeLogSha256": "b68379476fcd12143bf42b7abd9f41eee044ad2ddcf3a2f7cf8f7fa1d2f4ecc9",
+    "cleanRestore": "32 patched files byte-identical",
+    "build": "WASM runtime rebuilt",
+    "limitations": "Original executable still gated by unavailable shader capabilities; pixel-center conventions need validation",
+    "browser": {
+      "runId": "9cd83825-dec6-4abe-ac5b-3be445355a7e",
+      "result": "passed",
+      "drawPackets": {
+        "result": "passed",
+        "samples": [
+          {
+            "indexed": false,
+            "rgba": [
+              64,
+              128,
+              191,
+              255
+            ]
+          },
+          {
+            "indexed": true,
+            "rgba": [
+              64,
+              128,
+              191,
+              255
+            ]
+          },
+          {
+            "indexed": true,
+            "textured": true,
+            "rgba": [
+              17,
+              121,
+              233,
+              255
+            ]
+          },
+          {
+            "samplerSlot": 7,
+            "rgba": [
+              17,
+              121,
+              233,
+              255
+            ]
+          },
+          {
+            "viewport": [
+              4,
+              8,
+              16,
+              16
+            ],
+            "depthRangeRejected": [
+              [
+                0,
+                0,
+                0,
+                255
+              ],
+              [
+                0,
+                0,
+                0,
+                255
+              ]
+            ],
+            "insideOutsideBGRA": [
+              [
+                191,
+                128,
+                64,
+                255
+              ],
+              [
+                0,
+                0,
+                0,
+                255
+              ]
+            ]
+          }
+        ],
+        "draws": 6,
+        "checks": [
+          "viewport rectangle and depth range verified by GPU pixels",
+          "viewport changes reuse pipeline",
+          "reflected sampler slots 0 and 7 produce expected textured pixels",
+          "released texture draw rejected",
+          "decoded draw packets reach GPU rendering",
+          "indexed and nonindexed output matched",
+          "buffer overflow and truncated packets rejected"
+        ],
+        "HumusFrames": 0
+      }
+    },
+    "originalRunId": "c4969d9a-8bf0-42f7-a57b-b55eb2bf3e33"
   }
 }
