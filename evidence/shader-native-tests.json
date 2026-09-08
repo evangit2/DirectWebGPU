@@ -3,7 +3,9 @@
   "checks": [
     "pixel pair: validated SPIR-V to validated WGSL",
     "texture pair: validated SPIR-V to validated WGSL",
+    "vertexExplicit: exact input locations [0, 1]; no invented legacy semantic registers",
+    "vertexExplicitSparse: exact input locations [0, 9]; no invented legacy semantic registers",
     "native malformed bytecode rejected"
   ],
-  "fixtureSha256": "2a100497815b324abd95f29ae03bfe7fdd4bfb7412e81bdf75e8059131c66109"
+  "fixtureSha256": "8866a0238630d489236107c8edb5f67694efa87e094009c1c206a8cf8233856b"
 }

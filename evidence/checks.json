@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "67d16fc9b926a0527dc95105b1c7ee8d13a24e99",
+  "currentRuntimeRevision": "d88ba8eab67133fe1d2ae3d4dcec4f8981a86b90",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -88,5 +88,14 @@
     "originalEXE": "created device; same missing shader capability rejection and RegCreateKeyExA cleanup trap",
     "limitations": "FLOAT1..FLOAT4 only. Declaration-to-shader/GPU input mapping remains unimplemented.",
     "logSha256": "8248aaa87fee2908c2196cb977c6a6ecfac3d7b0ae43a71240cdd340efcade34"
+  },
+  "inputNormalizationMilestone": {
+    "revision": "d88ba8eab67133fe1d2ae3d4dcec4f8981a86b90",
+    "native": "passed: implicit inputs plus explicit [0,1] and sparse [0,9], no invented v5",
+    "layout": "passed: tests/shaders/vertex-layout.mjs; reordered semantics, sparse streams, missing semantics and stride bounds",
+    "GPU": "passed: declaration order COLOR/POSITION correctly maps to v1/v0; exact sampled RGBA [63,66,126,255]",
+    "originalEXE": "retested; same capability rejection and RegCreateKeyExA cleanup trap",
+    "limitations": "FLOAT4 layout conversion only; smaller float attribute expansion pending. No original-EXE shader/draw acceptance.",
+    "dirtyTreeAtTest": "Only evidence/shader-native-tests.json differed from the implementation commit; runtime/shader source was committed"
   }
 }
