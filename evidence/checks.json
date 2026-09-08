@@ -620,5 +620,15 @@
     "limitations": "Registry is per-instance, ASCII names, no cross-launch persistence; general registry enumeration/security and broader texture formats remain incomplete",
     "originalRunId": "ad15ba8d-6f70-4887-a48b-0875a111823f",
     "originalBlocker": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan"
+  },
+  "tangentAndTransforms": {
+    "tangentRevision": "765449f",
+    "transformRevision": "98db63e",
+    "nativeTests": "16 runtime tests and 7 D3D9 tests passed",
+    "cleanRestore": "37 patched files byte-identical",
+    "build": "WASM passed",
+    "limitations": "FPU remains f64 approximation; transforms are device state, fixed-function draws remain unsupported",
+    "originalRunId": "a3197b97-f12b-4c44-8d3f-73e570b6c3d1",
+    "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::SetFVF; args=[\n    0x4e7012,\n    0x142,\n]; stack_return=0x00407109"
   }
 }

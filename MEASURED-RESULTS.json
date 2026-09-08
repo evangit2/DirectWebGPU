@@ -4,12 +4,12 @@
   "Graphics backend": "WebGPU device/attachment backend; D3D9 draw and resource integration incomplete",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Runtime build": {
-    "translatedTreeSha256": "a533f7bb7e2377a7c94ca35087ded897959948a0353ebf532fabaad18d1f6d78",
+    "translatedTreeSha256": "4e48b571ff67be8f634998749b693fe11d220ef5c4485f2917814eabb44b32e9",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T18:31:53.743806+00:00",
-    "revision": "d39227f8752580116b412a9c8556b2de6445a0a9",
+    "builtAt": "2026-09-08T18:39:40.750084+00:00",
+    "revision": "98db63efd8675cadc2bec1255b4fec084262ddd2",
     "workingTreeDirty": true,
-    "sourceSha256": "45a6ec5162dca9f2dea94098d098654177f458562950620a00265842c60c97c6",
+    "sourceSha256": "48099d92c54d687b3392b0bfe1716a075344e6600fcf4bbe13b3a0ff9577dc56",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
@@ -22,12 +22,12 @@
         "bytes": 12071
       },
       "humus_bg.wasm": {
-        "sha256": "a009575d3d84cc2b7afaf834242327c7fa444a36e8d9d0d534d17130f9e67bc0",
-        "bytes": 18247389
+        "sha256": "55695b9423dd6844e767d5162c5295fa482524d3999d868c5802b839168d1073",
+        "bytes": 18279452
       }
     }
   },
-  "Run ID": "ad15ba8d-6f70-4887-a48b-0875a111823f",
+  "Run ID": "a3197b97-f12b-4c44-8d3f-73e570b6c3d1",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -109,11 +109,11 @@
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptToFailureMs": 45858.81500005722,
+    "diagnosticAttemptToFailureMs": 46356.625,
     "diagnosticTimingCaveat": "one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan",
-  "Terminal runtime diagnostic": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan",
+  "Exact remaining blocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::SetFVF; args=[\n    0x4e7012,\n    0x142,\n]; stack_return=0x00407109",
+  "Terminal runtime diagnostic": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::SetFVF; args=[\n    0x4e7012,\n    0x142,\n]; stack_return=0x00407109",
   "Original application rejection": null,
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
   "4-hour test": "not run; user-started only",
@@ -741,6 +741,16 @@
       "limitations": "Registry is per-instance, ASCII names, no cross-launch persistence; general registry enumeration/security and broader texture formats remain incomplete",
       "originalRunId": "ad15ba8d-6f70-4887-a48b-0875a111823f",
       "originalBlocker": "panicked at out/humus/src/generated/part_03.rs:527:5:\nunsupported instruction at 0040bd32: fptan"
+    },
+    "tangentAndTransforms": {
+      "tangentRevision": "765449f",
+      "transformRevision": "98db63e",
+      "nativeTests": "16 runtime tests and 7 D3D9 tests passed",
+      "cleanRestore": "37 patched files byte-identical",
+      "build": "WASM passed",
+      "limitations": "FPU remains f64 approximation; transforms are device state, fixed-function draws remain unsupported",
+      "originalRunId": "a3197b97-f12b-4c44-8d3f-73e570b6c3d1",
+      "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::SetFVF; args=[\n    0x4e7012,\n    0x142,\n]; stack_return=0x00407109"
     }
   },
   "evidenceFile": "evidence/browser-direct3d-attempt.json"
