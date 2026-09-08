@@ -90,6 +90,40 @@ index e1edcc6..673ce94 100644
          }
      }
  
+diff --git a/runtime/src/ops/bit.rs b/runtime/src/ops/bit.rs
+new file mode 100644
+index 0000000..d005c5b
+--- /dev/null
++++ b/runtime/src/ops/bit.rs
+@@ -0,0 +1,28 @@
++//! Unprefixed IA-32 BT/BTS/BTR/BTC. Locked forms remain explicit traps.
++use crate::{Flags,Memory};
++pub fn bit_word(value:u32,index:u32,width:u32,operation:u32,flags:&mut Flags)->u32{
++ assert!(width==16||width==32);let mask=1u32<<(index&(width-1));flags.set(Flags::CF,value&mask!=0);
++ let result=match operation{0=>value,1=>value|mask,2=>value&!mask,3=>value^mask,_=>panic!("invalid bit operation")};
++ if width==16{result&0xffff}else{result}
++}
++pub fn bit_address(base:u32,index:i32,width:u32)->u32{
++ let shift=match width{16=>4,32=>5,_=>panic!("invalid bit width")};base.wrapping_add((index>>shift).wrapping_mul((width/8)as i32)as u32)
++}
++pub fn bit_memory(memory:&mut Memory,flags:&mut Flags,base:u32,index:i32,width:u32,operation:u32){
++ let addr=bit_address(base,index,width);let old=if width==16{memory.read::<u16>(addr)as u32}else{memory.read::<u32>(addr)};
++ let value=bit_word(old,index as u32,width,operation,flags);
++ if operation!=0{if width==16{memory.write::<u16>(addr,value as u16)}else{memory.write::<u32>(addr,value)}}
++}
++#[cfg(test)]mod bit_tests{
++ use super::*;
++ #[test]fn memory_bitstrings_and_carry(){
++  let mut memory=Memory::leak_new(0x2000);let mut flags=Flags::ZF;
++  bit_memory(&mut memory,&mut flags,0x1020,-1,32,1);assert!(!flags.contains(Flags::CF));assert!(flags.contains(Flags::ZF));assert_eq!(memory.read::<u32>(0x101c),0x80000000);
++  bit_memory(&mut memory,&mut flags,0x1020,-1,32,2);assert!(flags.contains(Flags::CF));assert_eq!(memory.read::<u32>(0x101c),0);
++  bit_memory(&mut memory,&mut flags,0x1020,63,32,3);assert_eq!(memory.read::<u32>(0x1024),0x80000000);
++  bit_memory(&mut memory,&mut flags,0x1020,63,32,0);assert!(flags.contains(Flags::CF));assert_eq!(memory.read::<u32>(0x1024),0x80000000);
++  bit_memory(&mut memory,&mut flags,0x1040,-1,16,1);assert_eq!(memory.read::<u16>(0x103e),0x8000);
++  assert_eq!(bit_word(0,33,32,1,&mut flags),2);assert_eq!(bit_word(0,17,16,1,&mut flags),2);
++  assert_eq!(bit_address(0xffff_fffc,32,32),0);
++ }
++}
 diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
 index a4c06e3..d8640d4 100644
 --- a/runtime/src/ops/misc.rs
@@ -137,10 +171,10 @@ index a4c06e3..d8640d4 100644
 +    }
 +}
 diff --git a/runtime/src/ops/mod.rs b/runtime/src/ops/mod.rs
-index ff33cee..8ea0dea 100644
+index ff33cee..7a225e3 100644
 --- a/runtime/src/ops/mod.rs
 +++ b/runtime/src/ops/mod.rs
-@@ -9,6 +9,7 @@ mod string;
+@@ -9,6 +9,10 @@ mod string;
  
  pub use flags::*;
  pub use math::*;
@@ -148,18 +182,36 @@ index ff33cee..8ea0dea 100644
  pub use mmx::*;
  pub use shift::*;
  pub use string::*;
++
++mod bit;
++pub use bit::*;
 diff --git a/tc/src/codegen/misc.rs b/tc/src/codegen/misc.rs
-index 827dd83..984fd86 100644
+index 827dd83..8f02544 100644
 --- a/tc/src/codegen/misc.rs
 +++ b/tc/src/codegen/misc.rs
-@@ -93,7 +93,9 @@ impl<'a> CodeGen<'a> {
+@@ -93,7 +93,24 @@ impl<'a> CodeGen<'a> {
                      self.todo(format!("int {:#x}", instr.immediate8()));
                  }
              }
 -            Int3 | Cmpxchg | Pushfd | Cpuid | Xgetbv | Bt | Div => self.todo(instr_name(instr)),
++            Bt | Bts | Btr | Btc => {
++                if instr.has_lock_prefix() || !self.module.is_windows(){return false;}
++                let width=op_size(instr,0);if width!=16&&width!=32{return false;}
++                let operation=match instr.mnemonic(){Bt=>0,Bts=>1,Btr=>2,Btc=>3,_=>unreachable!()};
++                let source=self.get_op(instr,1);
++                if instr.op0_kind()==iced_x86::OpKind::Memory{
++                    if instr.memory_base().size()==2||instr.memory_index().size()==2{return false;}
++                    let index=if instr.op1_kind()==iced_x86::OpKind::Immediate8{format!("(({source}) as u32 & {}) as i32",width-1)}else{format!("({source}) as i{width} as i32")};
++                    self.line(format!("let bit_base={}; let bit_index={index};",self.gen_addr(instr)));
++                    self.line(format!("runtime::bit_memory(&mut ctx.memory,&mut ctx.cpu.flags,bit_base,bit_index,{width},{operation});"));
++                }else{
++                    self.line(format!("let bit_value=runtime::bit_word({} as u32,({source}) as u32,{width},{operation},&mut ctx.cpu.flags);",self.get_op(instr,0)));
++                    if operation!=0{self.line(self.set_op(instr,0,format!("bit_value as u{width}")));}
++                }
++            }
 +            Cpuid => self.line("runtime::cpuid(&mut ctx.cpu.regs);"),
 +            Rdtsc if self.module.is_windows() => self.line("ctx.cpu.regs.set_edx_eax(winapi::kernel32::virtual_timestamp_counter());"),
-+            Int3 | Cmpxchg | Pushfd | Xgetbv | Bt | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
++            Int3 | Cmpxchg | Pushfd | Xgetbv | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
  
              // CBW/CWDE: sign extend to next larger ax
              Cbw => self.line("ctx.cpu.regs.set_ax(ctx.cpu.regs.get_al() as i8 as i16 as u16);"),

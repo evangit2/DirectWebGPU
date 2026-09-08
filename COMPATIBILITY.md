@@ -3,7 +3,7 @@ Evidence source: original archive from https://humus.name/index.php?ID=50&page=3
 | Area | Executable/package evidence | Current support |
 |---|---|---|
 | PE/x86 | i386 PE32, entry 0x0040bdb2, base 0x00400000, 925696 bytes; no delay imports | Theseus AOT; preserved original SHA-256 in dependencies.json; LNK_INFO mapping fix |
-| Startup | Static MSVC CRT and x87 code; FS-based SEH, CPUID | Startup executes; callback 0x00409a00 discovered dynamically; Float80 and other unsupported instructions trap with addresses |
+| Startup | Static MSVC CRT and x87 code; FS-based SEH, CPUID | Startup executes; callback 0x00409a00 discovered dynamically; unprefixed BT/BTS/BTR/BTC cover register and signed memory-bit-string offsets; locked forms, Float80 and other unsupported instructions trap with addresses |
 | Win32 | 6 imported DLLs; kernel32/user32/advapi32/shell32/gdi32/d3d9 | Reused subset with known incomplete upstream stubs; no claim of full compatibility; explicit new missing-import traps |
 | Heap | Original model preparation repeatedly calls HeapReAlloc | Implemented copy/grow/shrink, zero-new bytes and allocation-failure preservation; regression test passes |
 | Virtual display | EnumDisplaySettingsA and CreateWindowExA | Single 1280×720 virtual display; EXE requests an 800×600 window; OffscreenCanvas receives those actual dimensions |
