@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
+  "currentRuntimeRevision": "67d16fc9b926a0527dc95105b1c7ee8d13a24e99",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -80,5 +80,13 @@
     "originalEXE": "device creation verified; no scene; same capability rejection and RegCreateKeyExA cleanup trap",
     "scope": "Register COM APIs and GPU uniform use tested separately; original EXE has not exercised shader registers yet.",
     "logSha256": "e45c119615bbf752a1bd24e95e23d2b2171c44ebf0c585788550f4165e526b7f"
+  },
+  "vertexDeclarationMilestone": {
+    "revision": "67d16fc9b926a0527dc95105b1c7ee8d13a24e99",
+    "COM": "passed: 5 D3D9 tests; owned copy, bounded parser, terminator retrieval, stdcall cleanup and binding lifetime",
+    "restoration": "passed: 30 patched files byte-identical",
+    "originalEXE": "created device; same missing shader capability rejection and RegCreateKeyExA cleanup trap",
+    "limitations": "FLOAT1..FLOAT4 only. Declaration-to-shader/GPU input mapping remains unimplemented.",
+    "logSha256": "8248aaa87fee2908c2196cb977c6a6ecfac3d7b0ae43a71240cdd340efcade34"
   }
 }

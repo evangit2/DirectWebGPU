@@ -1,0 +1,21 @@
+{
+  "kind": "diagnostic; not Humus shader",
+  "vertexDwords": [
+    4294836481,
+    31,
+    2147483648,
+    2416902144,
+    31,
+    2147483658,
+    2416902145,
+    1,
+    3222208512,
+    2430861312,
+    1,
+    3759079424,
+    2430861313,
+    65535
+  ],
+  "wgsl": "struct VertexOutput {\n    @builtin(position) member: vec4<f32>,\n    @location(0) member_1: vec4<f32>,\n}\n\nvar<private> vs_v0_1: vec4<f32>;\nvar<private> vs_v1_1: vec4<f32>;\nvar<private> vs_v5_1: vec4<f32>;\nvar<private> vs_oPos: vec4<f32> = vec4<f32>(0f, 0f, 0f, 1f);\nvar<private> vs_oT0_: vec4<f32>;\n\nfn main_1() {\n    let _e5 = vs_v0_1;\n    vs_oPos = _e5;\n    let _e6 = vs_v1_1;\n    vs_oT0_ = _e6;\n    return;\n}\n\n@vertex \nfn main(@location(0) vs_v0_: vec4<f32>, @location(1) vs_v1_: vec4<f32>, @location(5) vs_v5_: vec4<f32>) -> VertexOutput {\n    vs_v0_1 = vs_v0_;\n    vs_v1_1 = vs_v1_;\n    vs_v5_1 = vs_v5_;\n    main_1();\n    let _e8 = vs_oPos;\n    let _e9 = vs_oT0_;\n    return VertexOutput(_e8, _e9);\n}\n",
+  "finding": "Explicit POSITION v0 and COLOR v1 declarations cause VS1.1 normalization to introduce an additional v5 input. Fix normalization before relying on declaration-to-shader mapping."
+}
