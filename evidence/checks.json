@@ -164,5 +164,50 @@
     "originalEXE": "device creation verified; capability rejection before shader creation; cleanup RegCreateKeyExA trap",
     "scope": "Native COM fixtures and GPU worker validation are separate tests; original EXE shader creation has not yet been reached.",
     "logSha256": "b3ed2e93f7a91c860f4cf22a309746c27af0a9267900396c2bdbb8fcd34396c1"
+  },
+  "textureStorage": {
+    "revision": "8b1f4246382142e34328aaf30b2f1a70101360a0",
+    "browserDiagnosticRunId": "8f2c2f2e-5e35-4906-8fae-38c65e9ee242",
+    "result": "passed",
+    "checks": {
+      "result": "passed",
+      "compressed": [
+        {
+          "format": 827611204,
+          "levels": 4,
+          "smallestMip": [
+            1,
+            1
+          ]
+        },
+        {
+          "format": 861165636,
+          "levels": 4,
+          "smallestMip": [
+            1,
+            1
+          ]
+        },
+        {
+          "format": 894720068,
+          "levels": 4,
+          "smallestMip": [
+            1,
+            1
+          ]
+        }
+      ],
+      "checks": [
+        "GPU readback verifies pitched BGRA rows",
+        "XRGB samples opaque without modifying guest",
+        "compressed mip payloads including 2x2 and 1x1 copied exactly",
+        "invalid ranges and stale handles rejected",
+        "resource budget released"
+      ],
+      "HumusFrames": 0
+    },
+    "workerRPC": "passed allocation/upload/mip bounds/release/stale handles",
+    "serverRegression": "passed scripts/test_server.py",
+    "limitations": "Texture COM, sampler and application draw integration pending; zero Humus scene frames."
   }
 }
