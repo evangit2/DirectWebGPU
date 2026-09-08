@@ -710,7 +710,7 @@ index caf0159..dbb6365 100644
                  let (None, None, cont) = self.jmp_target(instr) else {
                      panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
-index 3746d0c..e99eb61 100644
+index 3746d0c..90a9d6c 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
 @@ -71,6 +71,30 @@ impl<'a> CodeGen<'a> {
@@ -756,7 +756,38 @@ index 3746d0c..e99eb61 100644
  
              Fst | Fstp => {
                  self.line(self.fpu_set_op(instr, 0, self.fpu_get_reg(0)));
-@@ -166,6 +195,10 @@ impl<'a> CodeGen<'a> {
+@@ -149,14 +178,23 @@ impl<'a> CodeGen<'a> {
+                 }
+             }
+ 
+-            Fimul => {
++            Fimul | Fiadd | Fisub | Fisubr | Fidiv | Fidivr => {
+                 let size = op_size(instr, 0);
+-                let expr = format!(
+-                    "{} * {} as i{size} as f64",
+-                    self.fpu_get_reg(0),
+-                    self.get_op(instr, 0)
+-                );
+-                self.line(self.fpu_set_reg(0, expr));
++                let left = self.fpu_get_reg(0);
++                let right = format!("({} as i{size} as f64)", self.get_op(instr, 0));
++                let (left, right) = if matches!(instr.mnemonic(), Fisubr | Fidivr) {
++                    (right, left)
++                } else {
++                    (left, right)
++                };
++                let op = match instr.mnemonic() {
++                    Fimul => "*",
++                    Fiadd => "+",
++                    Fisub | Fisubr => "-",
++                    Fidiv | Fidivr => "/",
++                    _ => unreachable!(),
++                };
++                self.line(self.fpu_set_reg(0, format!("{left} {op} {right}")));
+             }
+ 
+             Fprem => {
+@@ -166,6 +204,10 @@ impl<'a> CodeGen<'a> {
                  ));
              }
  
@@ -767,7 +798,7 @@ index 3746d0c..e99eb61 100644
              Fchs => {
                  self.line(self.fpu_set_reg(0, format!("-{}", self.fpu_get_reg(0))));
              }
-@@ -187,17 +220,23 @@ impl<'a> CodeGen<'a> {
+@@ -187,17 +229,23 @@ impl<'a> CodeGen<'a> {
                  self.line(self.fpu_set_op(instr, 1, "t".into()));
              }
  
@@ -795,7 +826,7 @@ index 3746d0c..e99eb61 100644
                      self.line("ctx.cpu.fpu.pop();");
                  }
              }
-@@ -207,14 +246,15 @@ impl<'a> CodeGen<'a> {
+@@ -207,14 +255,15 @@ impl<'a> CodeGen<'a> {
                  self.line(self.set_op(instr, 0, "ctx.cpu.fpu.status()".into()));
              }
  
@@ -815,7 +846,7 @@ index 3746d0c..e99eb61 100644
              }
  
              Fnstcw => {
-@@ -227,6 +267,29 @@ impl<'a> CodeGen<'a> {
+@@ -227,6 +276,29 @@ impl<'a> CodeGen<'a> {
                  self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
              }
  
