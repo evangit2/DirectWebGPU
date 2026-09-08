@@ -71,7 +71,7 @@ index 92da1ea..443e1fb 100644
 +    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
 +}
 diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
-index c6a4023..3296d7d 100644
+index c6a4023..824c005 100644
 --- a/runtime/src/fpu.rs
 +++ b/runtime/src/fpu.rs
 @@ -18,6 +18,8 @@ pub struct FPU {
@@ -92,7 +92,7 @@ index c6a4023..3296d7d 100644
              control: 0x037f,
          }
      }
-@@ -91,14 +95,33 @@ impl FPU {
+@@ -91,21 +95,112 @@ impl FPU {
          self.st[self.st_offset(ofs)] = val;
      }
  
@@ -131,7 +131,24 @@ index c6a4023..3296d7d 100644
          status |= (self.st_top as u16 & 0b111) << 11;
          status
      }
-@@ -109,3 +132,34 @@ impl FPU {
+ 
++    /// Approximate x87 FYL2X within the runtime's existing f64 model.
++    pub fn log2_multiply_pop(&mut self) {
++        let x = self.get(0);
++        let y = self.get(1);
++        assert!(
++            x.is_finite() && x > 0.0 && y.is_finite(),
++            "unsupported x87 FYL2X exceptional input x={x} y={y}"
++        );
++        let value = y * x.log2();
++        assert!(value.is_finite(), "unsupported x87 FYL2X overflow");
++        self.set(1, value);
++        self.pop();
++    }
++
+     pub fn round(&self, val: f64) -> f64 {
+         // TODO: rounding modes?
+         // This implements default rounding mode of round towards even.
          val.round_ties_even()
      }
  }
@@ -164,6 +181,33 @@ index c6a4023..3296d7d 100644
 +        f.pop();
 +        assert_eq!(f.st_top, 8);
 +        assert_eq!(f.status() & 0x4501, 0x100);
++    }
++}
++
++#[cfg(test)]
++mod logarithm_tests {
++    #[test]
++    fn logarithm_uses_st1_and_pops_once() {
++        let mut f = super::FPU::default();
++        f.push(17.0);
++        f.push(2.0);
++        f.push(8.0);
++        f.log2_multiply_pop();
++        assert_eq!(f.get(0), 6.0);
++        assert_eq!(f.get(1), 17.0);
++        assert_eq!(f.st_top, 6);
++        f.set(0, std::f64::consts::LN_2);
++        f.push(3.0);
++        f.log2_multiply_pop();
++        assert!((f.get(0) - 3.0f64.ln()).abs() < 1e-15);
++    }
++    #[test]
++    #[should_panic(expected = "unsupported x87 FYL2X exceptional input")]
++    fn negative_logarithm_fails_explicitly() {
++        let mut f = super::FPU::default();
++        f.push(1.0);
++        f.push(-1.0);
++        f.log2_multiply_pop();
 +    }
 +}
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
@@ -363,10 +407,22 @@ index caf0159..dbb6365 100644
                  let (None, None, cont) = self.jmp_target(instr) else {
                      panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
-index 3746d0c..94af523 100644
+index 3746d0c..c7e0fa8 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
-@@ -166,6 +166,10 @@ impl<'a> CodeGen<'a> {
+@@ -85,6 +85,11 @@ impl<'a> CodeGen<'a> {
+             }
+             Fldz => self.line("ctx.cpu.fpu.push(0.0);"),
+             Fld1 => self.line("ctx.cpu.fpu.push(1.0);"),
++            Fldln2 => self.line("ctx.cpu.fpu.push(std::f64::consts::LN_2);"),
++            Fldl2e => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG2_E);"),
++            Fldl2t => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG2_10);"),
++            Fldlg2 => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG10_2);"),
++            Fldpi => self.line("ctx.cpu.fpu.push(std::f64::consts::PI);"),
+ 
+             Fst | Fstp => {
+                 self.line(self.fpu_set_op(instr, 0, self.fpu_get_reg(0)));
+@@ -166,6 +171,10 @@ impl<'a> CodeGen<'a> {
                  ));
              }
  
@@ -377,7 +433,7 @@ index 3746d0c..94af523 100644
              Fchs => {
                  self.line(self.fpu_set_reg(0, format!("-{}", self.fpu_get_reg(0))));
              }
-@@ -187,17 +191,23 @@ impl<'a> CodeGen<'a> {
+@@ -187,17 +196,23 @@ impl<'a> CodeGen<'a> {
                  self.line(self.fpu_set_op(instr, 1, "t".into()));
              }
  
@@ -405,7 +461,7 @@ index 3746d0c..94af523 100644
                      self.line("ctx.cpu.fpu.pop();");
                  }
              }
-@@ -207,14 +217,15 @@ impl<'a> CodeGen<'a> {
+@@ -207,14 +222,15 @@ impl<'a> CodeGen<'a> {
                  self.line(self.set_op(instr, 0, "ctx.cpu.fpu.status()".into()));
              }
  
@@ -425,6 +481,15 @@ index 3746d0c..94af523 100644
              }
  
              Fnstcw => {
+@@ -227,6 +243,8 @@ impl<'a> CodeGen<'a> {
+                 self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
+             }
+ 
++            Fyl2x => self.line("ctx.cpu.fpu.log2_multiply_pop();"),
++
+             Fpatan => {
+                 self.line("let t = ctx.cpu.fpu.get(0);");
+                 self.line("ctx.cpu.fpu.pop();");
 diff --git a/tc/src/codegen/misc.rs b/tc/src/codegen/misc.rs
 index 827dd83..8f02544 100644
 --- a/tc/src/codegen/misc.rs
