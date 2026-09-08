@@ -1,0 +1,233 @@
+{
+  "identity": {
+    "revision": "d2d8875a13ff97c8237a9905a0d54b39f7796fbd",
+    "sourceSha256": "80f497d392f98fc6c1a8fb457035052933590453f56f1ada9afe1e57be3dca5d",
+    "artifacts": {
+      "humus.js": {
+        "sha256": "87ac3583c2cf9f7f349f68631ebb71fb53624356a5f56e6ff01203995636920e",
+        "bytes": 12952
+      },
+      "humus_bg.wasm": {
+        "sha256": "cdf909e2c54bd6f26782db3ccbb832972b04a42e840660a6806eb313fda16eca",
+        "bytes": 22653880
+      }
+    },
+    "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+    "browser": {
+      "secureContext": true,
+      "crossOriginIsolated": true,
+      "sharedArrayBuffer": true,
+      "webgpu": true,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "device": "",
+        "description": "",
+        "isFallbackAdapter": false
+      },
+      "features": [
+        "depth32float-stencil8",
+        "rg11b10ufloat-renderable",
+        "bgra8unorm-storage",
+        "texture-formats-tier1",
+        "texture-compression-bc",
+        "dual-source-blending",
+        "core-features-and-limits",
+        "float32-filterable",
+        "indirect-first-instance",
+        "texture-compression-astc-sliced-3d",
+        "float32-blendable",
+        "subgroup-size-control",
+        "texture-compression-astc",
+        "texture-compression-etc2",
+        "depth-clip-control",
+        "texture-compression-bc-sliced-3d",
+        "clip-distances",
+        "timestamp-query",
+        "shader-f16",
+        "texture-formats-tier2",
+        "primitive-index",
+        "texture-component-swizzle",
+        "subgroups"
+      ],
+      "timestampQuery": {
+        "requested": false,
+        "available": true
+      },
+      "deviceCreated": true,
+      "hardwareAcceleration": "GPU device available; no Humus scene verified"
+    },
+    "window": {
+      "title": "Title",
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "trials": [
+    {
+      "runId": "0cddfd53-213c-4b19-bdae-43e8470f83d1",
+      "source": "evidence/startup-128/0cddfd53-213c-4b19-bdae-43e8470f83d1.json",
+      "mode": "warm",
+      "captureEnabled": false,
+      "firstPresentMs": 1716.034912109375,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0
+    },
+    {
+      "runId": "135a2d43-6412-4b06-b938-fadb98e8e341",
+      "source": "evidence/startup-128/135a2d43-6412-4b06-b938-fadb98e8e341.json",
+      "mode": "cold",
+      "captureEnabled": false,
+      "firstPresentMs": 1848.190185546875,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24706466
+    },
+    {
+      "runId": "2beb205e-1668-401e-879f-5dd97afa93da",
+      "source": "evidence/startup-128/2beb205e-1668-401e-879f-5dd97afa93da.json",
+      "mode": "cold",
+      "captureEnabled": true,
+      "firstPresentMs": 1915.349853515625,
+      "sceneReadbackCompletedMs": 1917.1748046875,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24706466
+    },
+    {
+      "runId": "353fea66-8d67-4035-944e-03bbc5cfcb0f",
+      "source": "evidence/startup-128/353fea66-8d67-4035-944e-03bbc5cfcb0f.json",
+      "mode": "cold",
+      "captureEnabled": true,
+      "firstPresentMs": 1650.14501953125,
+      "sceneReadbackCompletedMs": 1651.6201171875,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24706466
+    },
+    {
+      "runId": "48535aa2-4c7a-4017-bf14-6bc371dd08cb",
+      "source": "evidence/startup-128/48535aa2-4c7a-4017-bf14-6bc371dd08cb.json",
+      "mode": "cold",
+      "captureEnabled": false,
+      "firstPresentMs": 1717.0400390625,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24706466
+    },
+    {
+      "runId": "579a0358-5523-4bc5-9908-92af24013db3",
+      "source": "evidence/startup-128/579a0358-5523-4bc5-9908-92af24013db3.json",
+      "mode": "warm",
+      "captureEnabled": true,
+      "firstPresentMs": 1595.650146484375,
+      "sceneReadbackCompletedMs": 1597.675048828125,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0
+    },
+    {
+      "runId": "5f7bf900-31ae-4c58-8f5a-ea67242c7f3a",
+      "source": "evidence/startup-128/5f7bf900-31ae-4c58-8f5a-ea67242c7f3a.json",
+      "mode": "cold",
+      "captureEnabled": true,
+      "firstPresentMs": 1667.26513671875,
+      "sceneReadbackCompletedMs": 1669.695068359375,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24706466
+    },
+    {
+      "runId": "63b08b58-f66c-4d53-85ae-f681f1edd90c",
+      "source": "evidence/startup-128/63b08b58-f66c-4d53-85ae-f681f1edd90c.json",
+      "mode": "warm",
+      "captureEnabled": true,
+      "firstPresentMs": 1569.534912109375,
+      "sceneReadbackCompletedMs": 1571.169921875,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0
+    },
+    {
+      "runId": "6feea3ed-0178-4fd1-86f2-5521b4e01128",
+      "source": "evidence/startup-128/6feea3ed-0178-4fd1-86f2-5521b4e01128.json",
+      "mode": "cold",
+      "captureEnabled": false,
+      "firstPresentMs": 1702.755126953125,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 0,
+      "assetCacheMisses": 19,
+      "assetNetworkBodyBytes": 24706466
+    },
+    {
+      "runId": "7aa6bfa0-0354-4d7f-adb0-5cbecf2fe51f",
+      "source": "evidence/startup-128/7aa6bfa0-0354-4d7f-adb0-5cbecf2fe51f.json",
+      "mode": "warm",
+      "captureEnabled": false,
+      "firstPresentMs": 1620.4951171875,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0
+    },
+    {
+      "runId": "812d2e50-0f9d-4c61-ab56-2c3d810a01e5",
+      "source": "evidence/startup-128/812d2e50-0f9d-4c61-ab56-2c3d810a01e5.json",
+      "mode": "warm",
+      "captureEnabled": false,
+      "firstPresentMs": 1602.635009765625,
+      "sceneReadbackCompletedMs": null,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0
+    },
+    {
+      "runId": "db17cd41-230f-4e97-b406-6ff3e4f72ddc",
+      "source": "evidence/startup-128/db17cd41-230f-4e97-b406-6ff3e4f72ddc.json",
+      "mode": "warm",
+      "captureEnabled": true,
+      "firstPresentMs": 1556.940185546875,
+      "sceneReadbackCompletedMs": 1561.05517578125,
+      "assetCacheHits": 19,
+      "assetCacheMisses": 0,
+      "assetNetworkBodyBytes": 0
+    }
+  ],
+  "groups": {
+    "cold-timing-only": {
+      "count": 3,
+      "medianMs": 1717.0400390625,
+      "minMs": 1702.755126953125,
+      "maxMs": 1848.190185546875
+    },
+    "warm-timing-only": {
+      "count": 3,
+      "medianMs": 1620.4951171875,
+      "minMs": 1602.635009765625,
+      "maxMs": 1716.034912109375
+    },
+    "cold-scene-readback": {
+      "count": 3,
+      "medianMs": 1669.695068359375,
+      "minMs": 1651.6201171875,
+      "maxMs": 1917.1748046875
+    },
+    "warm-scene-readback": {
+      "count": 3,
+      "medianMs": 1571.169921875,
+      "minMs": 1561.05517578125,
+      "maxMs": 1597.675048828125
+    }
+  },
+  "limitations": [
+    "Cold clears only app-owned asset/WASM CacheStorage; browser compiler and OS caches uncontrolled.",
+    "Timing-only is first Present submission; separately reviewed capture readback completion is an upper bound on first scene availability including capture overhead.",
+    "Asset bytes exclude page, JavaScript and shader-runtime fetches; per-realm ResourceTiming is retained in raw reports.",
+    "No display scan-out timing; visible Chromium 152 / Apple Metal 3 at 1280x720."
+  ]
+}

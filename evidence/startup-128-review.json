@@ -1,0 +1,60 @@
+{
+  "runtimeRevision": "d2d8875a13ff97c8237a9905a0d54b39f7796fbd",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "images": [
+    {
+      "runId": "2beb205e-1668-401e-879f-5dd97afa93da",
+      "path": "evidence/startup-128/2beb205e-1668-401e-879f-5dd97afa93da.jpg",
+      "sha256": "8dd10a0c784be2d7e67190307f10c3b77a30d2c8af6b607192e747e3ed0d6a3c",
+      "present": 1,
+      "cacheMode": "cold",
+      "readbackCompletedMs": 1917.1748046875
+    },
+    {
+      "runId": "353fea66-8d67-4035-944e-03bbc5cfcb0f",
+      "path": "evidence/startup-128/353fea66-8d67-4035-944e-03bbc5cfcb0f.jpg",
+      "sha256": "3c2064e999f3db97b574703aa7f06b6f0bfbf041ae20dc0047b7182f8c236144",
+      "present": 1,
+      "cacheMode": "cold",
+      "readbackCompletedMs": 1651.6201171875
+    },
+    {
+      "runId": "579a0358-5523-4bc5-9908-92af24013db3",
+      "path": "evidence/startup-128/579a0358-5523-4bc5-9908-92af24013db3.jpg",
+      "sha256": "a12a4dcd9f4d9614f4e4d04f022e0db5f72bb67590cf2af1b8e6337e4f11cd75",
+      "present": 1,
+      "cacheMode": "warm",
+      "readbackCompletedMs": 1597.675048828125
+    },
+    {
+      "runId": "5f7bf900-31ae-4c58-8f5a-ea67242c7f3a",
+      "path": "evidence/startup-128/5f7bf900-31ae-4c58-8f5a-ea67242c7f3a.jpg",
+      "sha256": "2fc25ef442fcb70f61719c4277e90eadf8d91d3c5e812fe848f4a8a5532f81b2",
+      "present": 1,
+      "cacheMode": "cold",
+      "readbackCompletedMs": 1669.695068359375
+    },
+    {
+      "runId": "63b08b58-f66c-4d53-85ae-f681f1edd90c",
+      "path": "evidence/startup-128/63b08b58-f66c-4d53-85ae-f681f1edd90c.jpg",
+      "sha256": "a12a4dcd9f4d9614f4e4d04f022e0db5f72bb67590cf2af1b8e6337e4f11cd75",
+      "present": 1,
+      "cacheMode": "warm",
+      "readbackCompletedMs": 1571.169921875
+    },
+    {
+      "runId": "db17cd41-230f-4e97-b406-6ff3e4f72ddc",
+      "path": "evidence/startup-128/db17cd41-230f-4e97-b406-6ff3e4f72ddc.jpg",
+      "sha256": "ada926bd752583a5999d8749a4d63da1eefc94e80489f0c21780a4bae41f1641",
+      "present": 1,
+      "cacheMode": "warm",
+      "readbackCompletedMs": 1561.05517578125
+    }
+  ],
+  "finding": "All six JPEGs individually inspected: original textured pillar room and colored lighting. Scene content excludes the FPS overlay.",
+  "limitations": [
+    "320x180 evidence images from 1280x720 rendering.",
+    "Readback completion is an availability upper bound including capture overhead, not scan-out.",
+    "Cold clears app-owned asset/WASM cache only; browser compiler and OS caches are uncontrolled."
+  ]
+}

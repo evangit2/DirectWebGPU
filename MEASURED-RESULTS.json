@@ -5,13 +5,13 @@
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Current rendering evidence": "evidence/current-render-summary.json",
   "Current performance evidence": "evidence/current-performance-summary.json",
-  "Cold/warm startup evidence": "evidence/startup-corrected-summary.json",
+  "Cold/warm startup evidence": "evidence/startup-128-summary.json",
   "Stability evidence": "evidence/memory-reduction.json",
   "Alpha/stencil optimization evidence": "evidence/scene-equivalence-summary.json",
   "Historical measurements": "evidence/historical-measured-results.json",
   "Acceptance audit": "evidence/acceptance-audit.json",
   "Exact remaining blocker": [
-    "Complete repeated startup series on the reduced-memory build and finish the requirement-by-requirement audit.",
+    "Finish requirement-by-requirement audit against current source, reproducibility checks and recorded evidence.",
     "Total browser memory remains unavailable; transfer measurements are browser-exposed entries rather than packet-level totals."
   ],
   "Measurement limitations": [
@@ -30,10 +30,11 @@
   "Corrected original scene evidence": "evidence/pixel-center-review.json",
   "GPU timing evidence": "evidence/gpu-timing-summary.json",
   "Memory and resource coverage": "evidence/memory-resource-summary.json",
-  "Startup visual review": "evidence/startup-corrected-review.json",
+  "Startup visual review": "evidence/startup-128-review.json",
   "Guest allocation measurements": "evidence/memory-128-summary.json",
   "Latest original launch": "evidence/startup-128/2beb205e-1668-401e-879f-5dd97afa93da.json",
   "Memory reduction": "evidence/memory-reduction.json",
   "Transfer measurements": "evidence/transfer-summary.json",
-  "Latest ordinary throughput": "77.1555 Present submissions/s, p50/p95/p99 12.775/14.875/20.130 ms; one 60-second visible 1280x720 run. Earlier run-to-run variability prevents a sustained display-FPS claim."
+  "Latest ordinary throughput": "77.1555 Present submissions/s, p50/p95/p99 12.775/14.875/20.130 ms; one 60-second visible 1280x720 run. Earlier run-to-run variability prevents a sustained display-FPS claim.",
+  "Startup environment exclusion": "evidence/startup-browser-change/review.json"
 }

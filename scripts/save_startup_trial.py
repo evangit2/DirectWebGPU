@@ -1,7 +1,13 @@
 """Retain the latest completed original startup trial in a named series."""
-import argparse,json,pathlib,base64
-p=argparse.ArgumentParser();p.add_argument('--directory',type=pathlib.Path,required=True);p.add_argument('--mode',choices=['cold','warm'],required=True);p.add_argument('--capture',action='store_true');a=p.parse_args()
-source=max(pathlib.Path('evidence/sessions').glob('*/*.json'),key=lambda p:p.stat().st_mtime);r=json.loads(source.read_text())['report']
+import argparse,json,pathlib,base64,time
+p=argparse.ArgumentParser();p.add_argument('--directory',type=pathlib.Path,required=True);p.add_argument('--mode',choices=['cold','warm'],required=True);p.add_argument('--capture',action='store_true');p.add_argument('--wait-seconds',type=float,default=0);a=p.parse_args()
+assert 0<=a.wait_seconds<=120
+deadline=time.monotonic()+a.wait_seconds
+while True:
+ source=max(pathlib.Path('evidence/sessions').glob('*/*.json'),key=lambda p:p.stat().st_mtime);r=json.loads(source.read_text())['report']
+ if not (a.directory/(r['runId']+'.json')).exists(): break
+ if time.monotonic()>=deadline: raise TimeoutError('no new terminal trial report')
+ time.sleep(0.2)
 assert r['status']=='startup trial completed after first Present'
 assert r['assetCacheMetrics']['mode']==a.mode
 assert bool(r.get('frameCaptures'))==a.capture

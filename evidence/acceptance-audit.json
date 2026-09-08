@@ -75,9 +75,9 @@
     {
       "objectiveSections": "9",
       "requirement": "Repeated startup and steady-state/stability",
-      "status": "partial",
-      "evidence": "evidence/startup-corrected-summary.json; evidence/startup-corrected-review.json; evidence/performance-corrected-summary.json; evidence/stability-summary.json; evidence/memory-reduction.json; evidence/performance-128.json",
-      "finding": "Reduced-memory build has a three-minute instrumented stability run and separate 60-second ordinary run at 77.16 Present submissions/s. Repeated startup series remains to be completed on this build."
+      "status": "verified within measured scope",
+      "evidence": "evidence/startup-128-summary.json; evidence/startup-128-review.json; evidence/performance-128.json; evidence/memory-reduction.json; evidence/startup-browser-change/review.json",
+      "finding": "Current reduced-memory build: 3 cold/3 warm timing-only trials, 3 cold/3 warm individually inspected first-scene captures, separate ordinary 60-second run and three-minute instrumented stability. One Chromium 151 trial retained separately from the matching Chromium 152 cohort. No display FPS, exact cold OS-cache or four-hour claim."
     },
     {
       "objectiveSections": "9",
@@ -94,5 +94,5 @@
       "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
     }
   ],
-  "nextAction": "Complete reduced-memory repeated startup series, then finish requirement-by-requirement audit with explicit measurement limitations."
+  "nextAction": "Perform full requirement-by-requirement completion audit; retain browser-memory, transfer and native-reference limitations."
 }

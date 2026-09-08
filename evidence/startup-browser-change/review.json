@@ -1,0 +1,9 @@
+{
+  "excludedRun": "d7bc8ab6-bbab-4554-bb6f-a0abc622c594",
+  "source": "evidence/startup-browser-change/d7bc8ab6-bbab-4554-bb6f-a0abc622c594.json",
+  "reason": "Reported Chromium 151 user agent and different WebGPU feature set; accepted cohort reports Chromium 152. Excluded on environment identity, not timing.",
+  "firstPresentMs": 2735.010009765625,
+  "nextRun": "579a0358-5523-4bc5-9908-92af24013db3",
+  "nextRunReportedBrowser": "Chromium 152",
+  "cause": "not determined; no browser replacement requested or performed"
+}
