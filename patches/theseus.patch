@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..4cca7a2
+index 0000000..5552cca
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,268 @@
+@@ -0,0 +1,278 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -541,6 +541,16 @@ index 0000000..4cca7a2
 +        assert_eq!(IDirect3DTexture9::LockRect(&mut ctx,tex,3,0x1e00,0,0),D3DERR_INVALIDCALL);assert_eq!(IDirect3DTexture9::UnlockRect(&mut ctx,tex,3),D3D_OK);assert_eq!(IDirect3DTexture9::UnlockRect(&mut ctx,tex,3),D3DERR_INVALIDCALL);
 +        assert_eq!(IDirect3DDevice9::SetTexture(&mut ctx,dev,16,tex),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::SetTexture(&mut ctx,dev,0,tex),D3D_OK);assert_eq!(IDirect3DTexture9::Release(&mut ctx,tex),0);
 +        assert_eq!(IDirect3DDevice9::GetTexture(&mut ctx,dev,0,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),tex);assert_eq!(IDirect3DTexture9::Release(&mut ctx,tex),0);
++        ctx.call32_x86(runtime::Cont(IDirect3DTexture9::GetSurfaceLevel_stdcall),vec![tex,3,0x1200]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);let mip_surface=ctx.memory.read::<u32>(0x1200);
++        assert_eq!(IDirect3DTexture9::GetSurfaceLevel(&mut ctx,tex,3,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),mip_surface);assert_eq!(IDirect3DSurface9::Release(&mut ctx,mip_surface),1);
++        assert_eq!(IDirect3DSurface9::GetDesc(&mut ctx,mip_surface,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e0c),1);assert_eq!(ctx.memory.read::<u32>(0x1e18),1);
++        ctx.memory.bytes[0x1100..0x1110].copy_from_slice(&IID_UNKNOWN);assert_eq!(IDirect3DSurface9::GetContainer(&mut ctx,mip_surface,0x1100,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),tex);IDirect3DTexture9::Release(&mut ctx,tex);
++        ctx.call32_x86(runtime::Cont(IDirect3DSurface9::LockRect_stdcall),vec![mip_surface,0x1e00,0,0x10]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.memory.read::<u32>(0x1e00),8);assert_eq!(IDirect3DTexture9::LockRect(&mut ctx,tex,3,0x1e00,0,0),D3DERR_INVALIDCALL);assert_eq!(IDirect3DSurface9::UnlockRect(&mut ctx,mip_surface),D3D_OK);
++        assert_eq!(IDirect3DSurface9::Release(&mut ctx,mip_surface),0);
++        let detached_tex=IDirect3DTexture9::fixture(&mut ctx,dev);assert_eq!(IDirect3DTexture9::GetSurfaceLevel(&mut ctx,detached_tex,0,0x1200),D3D_OK);let detached_surface=ctx.memory.read::<u32>(0x1200);assert_eq!(IDirect3DTexture9::Release(&mut ctx,detached_tex),1);
++        assert_eq!(IDirect3DSurface9::LockRect(&mut ctx,detached_surface,0x1e00,0,0x10),D3D_OK);let full_pointer=ctx.memory.read::<u32>(0x1e04);assert_eq!(IDirect3DSurface9::UnlockRect(&mut ctx,detached_surface),D3D_OK);
++        for(i,v)in [4,4,8,8].into_iter().enumerate(){ctx.memory.write::<u32>(0x1e20+i as u32*4,v)}assert_eq!(IDirect3DSurface9::LockRect(&mut ctx,detached_surface,0x1e00,0x1e20,0x10),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e00),16);assert_eq!(ctx.memory.read::<u32>(0x1e04),full_pointer+24);assert_eq!(IDirect3DSurface9::UnlockRect(&mut ctx,detached_surface),D3D_OK);
++        assert_eq!(IDirect3DSurface9::Release(&mut ctx,detached_surface),0);assert_eq!(ctx.memory.read::<u32>(detached_tex),0);assert_eq!(ctx.memory.read::<u32>(detached_surface),0);
 +        let vb=buffers::fixture(&mut ctx,dev,6);let ib=buffers::fixture(&mut ctx,dev,7);
 +        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,0,ib,0,16),D3DERR_INVALIDCALL);
 +        assert_eq!(IDirect3DDevice9::SetIndices(&mut ctx,dev,vb),D3DERR_INVALIDCALL);
@@ -572,7 +582,7 @@ index 0000000..4cca7a2
 +        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),0);
 +        assert_eq!(ctx.memory.read::<u32>(dev),0);
 +        assert_eq!(ctx.memory.read::<u32>(shader),0);
-+        assert_eq!(ctx.memory.read::<u32>(tex),0);
++        assert_eq!(ctx.memory.read::<u32>(tex),0);assert_eq!(ctx.memory.read::<u32>(mip_surface),0);
 +        assert_eq!(ctx.memory.read::<u32>(declaration),0);
 +        assert_eq!(ctx.memory.read::<u32>(ib),0); // no device/binding reference cycle
 +        ctx.memory.bytes[0x1400..0x1530].fill(0xa5);
@@ -1993,55 +2003,256 @@ index 0000000..fa932c8
 +}
 diff --git a/win32/winapi/src/d3d9/surface.rs b/win32/winapi/src/d3d9/surface.rs
 new file mode 100644
-index 0000000..9063ba4
+index 0000000..a7a9ee7
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/surface.rs
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,240 @@
 +//! COM views of device-owned GPU attachments. External refs retain the device.
 +use super::*;
 +#[derive(Clone)]
-+struct Surface{refs:u32,device:u32,desc:[u32;8]}
-+static SURFACES:LazyLock<Mutex<HashMap<u32,Surface>>>=LazyLock::new(||Mutex::new(HashMap::new()));
-+pub static mut VTABLE:u32=0;
-+const IID_SURFACE:[u8;16]=[0x3a,0xaf,0xfb,0x0c,0xf6,0x9f,0x9a,0x42,0x99,0xb3,0xa2,0x79,0x6a,0xf8,0xb8,0x9b];
-+const IID_RESOURCE:[u8;16]=[0x5d,0xc0,0xee,0x05,0x7d,0x8f,0x62,0x43,0xb9,0x99,0xd1,0xba,0xf3,0x57,0xc7,0x04];
-+pub const VTABLE_ENTRIES:[&str;17]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","GetContainer","GetDesc","LockRect","UnlockRect","GetDC","ReleaseDC"];
-+fn surface(this:u32)->Surface{SURFACES.lock().unwrap().get(&this).expect("invalid/released surface").clone()}
-+pub fn create_owned(ctx:&mut Context,owner:u32,width:u32,height:u32,format:u32,usage:u32)->u32{
-+ let vt=unsafe{VTABLE};assert!(valid(ctx,vt,17*4),"surface vtable missing");let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vt);
-+ assert!(SURFACES.lock().unwrap().insert(p,Surface{refs:0,device:owner,desc:[format,1,usage,0,0,0,width,height]}).is_none());p
++struct Surface {
++    refs: u32,
++    device: u32,
++    desc: [u32; 8],
++    texture: Option<(u32, u32)>,
 +}
-+pub fn destroy_owned(ctx:&mut Context,this:u32){let s=SURFACES.lock().unwrap().remove(&this).expect("invalid owned surface");assert_eq!(s.refs,0);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);}
++static SURFACES: LazyLock<Mutex<HashMap<u32, Surface>>> =
++    LazyLock::new(|| Mutex::new(HashMap::new()));
++pub static mut VTABLE: u32 = 0;
++const IID_SURFACE: [u8; 16] = [
++    0x3a, 0xaf, 0xfb, 0x0c, 0xf6, 0x9f, 0x9a, 0x42, 0x99, 0xb3, 0xa2, 0x79, 0x6a, 0xf8, 0xb8, 0x9b,
++];
++const IID_RESOURCE: [u8; 16] = [
++    0x5d, 0xc0, 0xee, 0x05, 0x7d, 0x8f, 0x62, 0x43, 0xb9, 0x99, 0xd1, 0xba, 0xf3, 0x57, 0xc7, 0x04,
++];
++pub const VTABLE_ENTRIES: [&str; 17] = [
++    "QueryInterface",
++    "AddRef",
++    "Release",
++    "GetDevice",
++    "SetPrivateData",
++    "GetPrivateData",
++    "FreePrivateData",
++    "SetPriority",
++    "GetPriority",
++    "PreLoad",
++    "GetType",
++    "GetContainer",
++    "GetDesc",
++    "LockRect",
++    "UnlockRect",
++    "GetDC",
++    "ReleaseDC",
++];
++fn surface(this: u32) -> Surface {
++    SURFACES
++        .lock()
++        .unwrap()
++        .get(&this)
++        .expect("invalid/released surface")
++        .clone()
++}
++pub fn create_owned(
++    ctx: &mut Context,
++    owner: u32,
++    width: u32,
++    height: u32,
++    format: u32,
++    usage: u32,
++) -> u32 {
++    let vt = unsafe { VTABLE };
++    assert!(valid(ctx, vt, 17 * 4), "surface vtable missing");
++    let p = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    ctx.memory.write::<u32>(p, vt);
++    assert!(
++        SURFACES
++            .lock()
++            .unwrap()
++            .insert(
++                p,
++                Surface {
++                    refs: 0,
++                    device: owner,
++                    desc: [format, 1, usage, 0, 0, 0, width, height],
++                    texture: None
++                }
++            )
++            .is_none()
++    );
++    p
++}
++pub fn destroy_owned(ctx: &mut Context, this: u32) {
++    let s = SURFACES
++        .lock()
++        .unwrap()
++        .remove(&this)
++        .expect("invalid owned surface");
++    assert_eq!(s.refs, 0);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
++}
++pub(super) fn create_texture(
++    ctx: &mut Context,
++    owner: u32,
++    texture: u32,
++    level: u32,
++    desc: [u32; 8],
++) -> u32 {
++    let vt = unsafe { VTABLE };
++    assert!(valid(ctx, vt, 17 * 4));
++    let p = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    if p == 0 {
++        return 0;
++    }
++    ctx.memory.write::<u32>(p, vt);
++    SURFACES.lock().unwrap().insert(
++        p,
++        Surface {
++            refs: 0,
++            device: owner,
++            desc,
++            texture: Some((texture, level)),
++        },
++    );
++    p
++}
 +#[win32_derive::dllexport]
-+pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{surface(this);if !valid(ctx,out,4){return E_POINTER}ctx.memory.write::<u32>(out,0);if !valid(ctx,iid,16){return E_POINTER}let id=&ctx.memory.bytes[iid as usize..iid as usize+16];if id!=IID_UNKNOWN&&id!=IID_SURFACE&&id!=IID_RESOURCE{return E_NOINTERFACE}AddRef(ctx,this);ctx.memory.write::<u32>(out,this);D3D_OK}
++pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++    surface(this);
++    if !valid(ctx, out, 4) {
++        return E_POINTER;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    if !valid(ctx, iid, 16) {
++        return E_POINTER;
++    }
++    let id = &ctx.memory.bytes[iid as usize..iid as usize + 16];
++    if id != IID_UNKNOWN && id != IID_SURFACE && id != IID_RESOURCE {
++        return E_NOINTERFACE;
++    }
++    AddRef(ctx, this);
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
 +#[win32_derive::dllexport]
-+pub fn AddRef(ctx:&mut Context,this:u32)->u32{let mut map=SURFACES.lock().unwrap();let s=map.get_mut(&this).expect("invalid surface AddRef");s.refs=s.refs.checked_add(1).expect("surface ref overflow");let n=s.refs;let owner=s.device;drop(map);IDirect3DDevice9::AddRef(ctx,owner);n}
++pub fn AddRef(ctx: &mut Context, this: u32) -> u32 {
++    let mut map = SURFACES.lock().unwrap();
++    let s = map.get_mut(&this).expect("invalid surface AddRef");
++    s.refs = s.refs.checked_add(1).expect("surface ref overflow");
++    let n = s.refs;
++    let owner = s.device;
++    let texture = s.texture;
++    drop(map);
++    if let Some((t, _)) = texture {
++        IDirect3DTexture9::AddRef(ctx, t);
++    } else {
++        IDirect3DDevice9::AddRef(ctx, owner);
++    }
++    n
++}
 +#[win32_derive::dllexport]
-+pub fn Release(ctx:&mut Context,this:u32)->u32{let mut map=SURFACES.lock().unwrap();let s=map.get_mut(&this).expect("invalid surface Release");assert!(s.refs>0);s.refs-=1;let n=s.refs;let owner=s.device;drop(map);IDirect3DDevice9::Release(ctx,owner);n}
++pub fn Release(ctx: &mut Context, this: u32) -> u32 {
++    let mut map = SURFACES.lock().unwrap();
++    let s = map.get_mut(&this).expect("invalid surface Release");
++    assert!(s.refs > 0);
++    s.refs -= 1;
++    let n = s.refs;
++    let owner = s.device;
++    let texture = s.texture;
++    drop(map);
++    if let Some((t, _)) = texture {
++        IDirect3DTexture9::Release(ctx, t);
++    } else {
++        IDirect3DDevice9::Release(ctx, owner);
++    }
++    n
++}
 +#[win32_derive::dllexport]
-+pub fn GetDevice(ctx:&mut Context,this:u32,out:u32)->u32{let s=surface(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DDevice9::AddRef(ctx,s.device);ctx.memory.write::<u32>(out,s.device);D3D_OK}
++pub fn GetDevice(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let s = surface(this);
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    IDirect3DDevice9::AddRef(ctx, s.device);
++    ctx.memory.write::<u32>(out, s.device);
++    D3D_OK
++}
 +#[win32_derive::dllexport]
-+pub fn GetType(_ctx:&mut Context,this:u32)->u32{surface(this);1}
++pub fn GetType(_ctx: &mut Context, this: u32) -> u32 {
++    surface(this);
++    1
++}
 +#[win32_derive::dllexport]
-+pub fn GetDesc(ctx:&mut Context,this:u32,out:u32)->u32{let s=surface(this);if !valid(ctx,out,32){return D3DERR_INVALIDCALL}for(i,v)in s.desc.into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v);}D3D_OK}
-+fn fail(ctx:&Context,name:&str)->!{panic!("unsupported API: d3d9!IDirect3DSurface9::{name}; stack_return={:#010x}",ctx.memory.read::<u32>(ctx.cpu.regs.esp))}
-+pub fn SetPrivateData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPrivateData")}
-+pub fn GetPrivateData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPrivateData")}
-+pub fn FreePrivateData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"FreePrivateData")}
-+pub fn SetPriority_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPriority")}
-+pub fn GetPriority_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPriority")}
-+pub fn PreLoad_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"PreLoad")}
-+pub fn GetContainer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetContainer")}
-+pub fn LockRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"LockRect")}
-+pub fn UnlockRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UnlockRect")}
-+pub fn GetDC_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetDC")}
-+pub fn ReleaseDC_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ReleaseDC")}
++pub fn GetDesc(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let s = surface(this);
++    if !valid(ctx, out, 32) {
++        return D3DERR_INVALIDCALL;
++    }
++    for (i, v) in s.desc.into_iter().enumerate() {
++        ctx.memory.write::<u32>(out + i as u32 * 4, v);
++    }
++    D3D_OK
++}
++fn fail(ctx: &Context, name: &str) -> ! {
++    panic!(
++        "unsupported API: d3d9!IDirect3DSurface9::{name}; stack_return={:#010x}",
++        ctx.memory.read::<u32>(ctx.cpu.regs.esp)
++    )
++}
++pub fn SetPrivateData_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "SetPrivateData")
++}
++pub fn GetPrivateData_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "GetPrivateData")
++}
++pub fn FreePrivateData_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "FreePrivateData")
++}
++pub fn SetPriority_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "SetPriority")
++}
++pub fn GetPriority_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "GetPriority")
++}
++pub fn PreLoad_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "PreLoad")
++}
++#[win32_derive::dllexport]
++pub fn GetContainer(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++    let s = surface(this);
++    if let Some((t, _)) = s.texture {
++        return IDirect3DTexture9::QueryInterface(ctx, t, iid, out);
++    }
++    fail(ctx, "GetContainer for attachment")
++}
++#[win32_derive::dllexport]
++pub fn LockRect(ctx: &mut Context, this: u32, out: u32, rect: u32, flags: u32) -> u32 {
++    let s = surface(this);
++    if let Some((t, level)) = s.texture {
++        return IDirect3DTexture9::LockRect(ctx, t, level, out, rect, flags);
++    }
++    D3DERR_INVALIDCALL
++}
++#[win32_derive::dllexport]
++pub fn UnlockRect(ctx: &mut Context, this: u32) -> u32 {
++    let s = surface(this);
++    if let Some((t, level)) = s.texture {
++        return IDirect3DTexture9::UnlockRect(ctx, t, level);
++    }
++    D3DERR_INVALIDCALL
++}
++pub fn GetDC_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "GetDC")
++}
++pub fn ReleaseDC_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "ReleaseDC")
++}
 diff --git a/win32/winapi/src/d3d9/texture.rs b/win32/winapi/src/d3d9/texture.rs
 new file mode 100644
-index 0000000..1083876
+index 0000000..2563daf
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/texture.rs
-@@ -0,0 +1,469 @@
+@@ -0,0 +1,548 @@
 +//! D3D9 sampled 2D texture COM objects with persistent mip lock storage.
 +use super::*;
 +pub static mut VTABLE: u32 = 0;
@@ -2066,6 +2277,7 @@ index 0000000..1083876
 +    pool: u32,
 +    format: u32,
 +    mips: Vec<Mip>,
++    surfaces: Vec<u32>,
 +}
 +static TEXTURES: LazyLock<Mutex<HashMap<u32, Texture>>> =
 +    LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -2194,6 +2406,7 @@ index 0000000..1083876
 +            usage,
 +            pool,
 +            format,
++            surfaces: vec![0; mips.len()],
 +            mips,
 +        },
 +    );
@@ -2250,6 +2463,11 @@ index 0000000..1083876
 +    refs
 +}
 +fn destroy(ctx: &mut Context, this: u32, s: Texture) {
++    for surface in s.surfaces {
++        if surface != 0 {
++            IDirect3DSurface9::destroy_owned(ctx, surface)
++        }
++    }
 +    host::graphics_call(12, &[s.backend, s.gpu]);
 +    kernel32::lock().process_heap.free(&mut ctx.memory, s.data);
 +    ctx.memory.write::<u32>(this, 0);
@@ -2353,6 +2571,26 @@ index 0000000..1083876
 +        && (t.pool != 0 || t.usage & 0x200 != 0)
 +        && (flags & 0x2000 == 0 || t.usage & 0x200 != 0)
 +}
++fn rectangle_offset(m: &Mip, format: u32, r: [u32; 4]) -> Option<u32> {
++    let [left, top, right, bottom] = r;
++    let (block, bytes) = match format {
++        21 | 22 => (1, 4),
++        0x31545844 => (4, 8),
++        _ => (4, 16),
++    };
++    if left >= right
++        || top >= bottom
++        || right > m.width
++        || bottom > m.height
++        || left % block != 0
++        || top % block != 0
++        || (right != m.width && right % block != 0)
++        || (bottom != m.height && bottom % block != 0)
++    {
++        return None;
++    }
++    Some(top / block * m.pitch + left / block * bytes)
++}
 +#[win32_derive::dllexport]
 +pub fn LockRect(ctx: &mut Context, this: u32, level: u32, out: u32, rect: u32, flags: u32) -> u32 {
 +    if !valid(ctx, out, 8) {
@@ -2360,13 +2598,25 @@ index 0000000..1083876
 +    }
 +    let mut map = TEXTURES.lock().unwrap();
 +    let t = map.get_mut(&this).expect("invalid texture LockRect");
-+    // Full mip locks only. NO_DIRTY_UPDATE and subrects require separate dirty tracking.
-+    if rect != 0
++    // Upload the full mip on unlock; untouched staging bytes preserve its other regions.
++    if (rect != 0 && flags & 0x2000 != 0)
 +        || (flags & 0x2000 != 0 && (level != 0 || t.mips.iter().any(|m| m.locked.is_some())))
 +        || !lockable(t, level, flags)
 +    {
 +        return D3DERR_INVALIDCALL;
 +    }
++    let offset = if rect == 0 {
++        0
++    } else {
++        if !valid(ctx, rect, 16) {
++            return D3DERR_INVALIDCALL;
++        }
++        let r = std::array::from_fn(|i| ctx.memory.read::<u32>(rect + i as u32 * 4));
++        let Some(offset) = rectangle_offset(&t.mips[level as usize], t.format, r) else {
++            return D3DERR_INVALIDCALL;
++        };
++        offset
++    };
 +    if flags & 0x2000 != 0 {
 +        for m in &t.mips {
 +            ctx.memory.bytes[(t.data + m.offset) as usize..(t.data + m.offset + m.size) as usize]
@@ -2376,7 +2626,7 @@ index 0000000..1083876
 +    let m = &mut t.mips[level as usize];
 +    m.locked = Some(flags & 0x10 != 0);
 +    ctx.memory.write::<u32>(out, m.pitch);
-+    ctx.memory.write::<u32>(out + 4, t.data + m.offset);
++    ctx.memory.write::<u32>(out + 4, t.data + m.offset + offset);
 +    D3D_OK
 +}
 +#[win32_derive::dllexport]
@@ -2437,8 +2687,33 @@ index 0000000..1083876
 +pub fn GenerateMipSubLevels_stdcall(ctx: &mut Context) -> runtime::Cont {
 +    fail(ctx, "GenerateMipSubLevels")
 +}
-+pub fn GetSurfaceLevel_stdcall(ctx: &mut Context) -> runtime::Cont {
-+    fail(ctx, "GetSurfaceLevel")
++#[win32_derive::dllexport]
++pub fn GetSurfaceLevel(ctx: &mut Context, this: u32, level: u32, out: u32) -> u32 {
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    let t = texture(this);
++    let Some(m) = t.mips.get(level as usize) else {
++        return D3DERR_INVALIDCALL;
++    };
++    let mut surface = t.surfaces[level as usize];
++    if surface == 0 {
++        surface = IDirect3DSurface9::create_texture(
++            ctx,
++            t.owner,
++            this,
++            level,
++            [t.format, 1, t.usage, t.pool, 0, 0, m.width, m.height],
++        );
++        if surface == 0 {
++            return 0x8007000e;
++        }
++        TEXTURES.lock().unwrap().get_mut(&this).unwrap().surfaces[level as usize] = surface;
++    }
++    IDirect3DSurface9::AddRef(ctx, surface);
++    ctx.memory.write::<u32>(out, surface);
++    D3D_OK
 +}
 +pub fn AddDirtyRect_stdcall(ctx: &mut Context) -> runtime::Cont {
 +    fail(ctx, "AddDirtyRect")
@@ -2463,6 +2738,7 @@ index 0000000..1083876
 +            usage: 0,
 +            pool: 1,
 +            format: 0x31545844,
++            surfaces: vec![0; mips.len()],
 +            mips,
 +        },
 +    );
@@ -2479,6 +2755,19 @@ index 0000000..1083876
 +        assert_eq!(mips[0].size, 131072);
 +        assert_eq!(mips[8].size, 8);
 +        assert_eq!(mips[9].size, 8);
++        assert_eq!(
++            rectangle_offset(&mips[0], 0x31545844, [4, 4, 8, 8]),
++            Some(1032)
++        );
++        assert!(rectangle_offset(&mips[0], 0x31545844, [1, 4, 8, 8]).is_none());
++        assert!(rectangle_offset(&mips[0], 0x31545844, [4, 4, 513, 8]).is_none());
++        assert_eq!(
++            rectangle_offset(&mips[9], 0x31545844, [0, 0, 1, 1]),
++            Some(0)
++        );
++        let rgba = layout(8, 8, 1, 21).unwrap();
++        assert_eq!(rectangle_offset(&rgba[0], 21, [1, 2, 7, 8]), Some(68));
++        assert!(rectangle_offset(&rgba[0], 21, [0xffffffff, 0, 1, 1]).is_none());
 +        assert_eq!(
 +            layout(8, 8, 0, 0x33545844).unwrap().last().unwrap().size,
 +            16
@@ -2497,6 +2786,7 @@ index 0000000..1083876
 +            pool: 1,
 +            format: 21,
 +            mips: layout(8, 8, 0, 21).unwrap(),
++            surfaces: vec![0; 4],
 +        };
 +        assert!(lockable(&t, 0, 0x810));
 +        assert!(!lockable(&t, 0, 0x2000));
