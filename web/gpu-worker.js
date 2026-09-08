@@ -1,3 +1,4 @@
+import {PresentationMetrics} from './performance-metrics.js';
 import {captureFrame} from './frame-capture.js';
 import {captureDraw} from './draw-diagnostic.js';
 import {deviceCaps,supportsFormat} from './d3d9-caps.js';
@@ -8,13 +9,13 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();
+let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();
+ canvas=data.canvas;port=data.port;diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
@@ -71,7 +72,7 @@ async function graphics(op,a,memory){
  }
  if(op===4){ // GPU-to-GPU presentation, with no framebuffer readback.
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);
-  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,captureEnabled:captureFrames,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
  }
  if(op>=5&&op<=7){
   try{

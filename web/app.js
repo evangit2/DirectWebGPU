@@ -17,16 +17,17 @@ async function start(long=false){
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
    if(!worker||report.runId!==activeRunId)return;
-   const {type,...rest}=data;if(['controlled-input','camera-sample','render-state-sample'].includes(type)){report.inputTest??=[];if(report.inputTest.length<140)report.inputTest.push({type,...rest});return;}if(type==='frame-capture'){report.frameCaptures??=[];if(report.frameCaptures.length<3)report.frameCaptures.push(rest.sample);return;}if(type==='draw-diagnostic'){report.drawDiagnostics??=[];if(report.drawDiagnostics.length<3)report.drawDiagnostics.push(rest.sample);return;}log(type,rest);
+   const {type,...rest}=data;if(type==='performance-sample'){report.presentationMetrics=rest.sample;return;}if(['controlled-input','camera-sample','render-state-sample'].includes(type)){report.inputTest??=[];if(report.inputTest.length<140)report.inputTest.push({type,...rest});return;}if(type==='frame-capture'){report.frameCaptures??=[];if(report.frameCaptures.length<3)report.frameCaptures.push(rest.sample);return;}if(type==='draw-diagnostic'){report.drawDiagnostics??=[];if(report.drawDiagnostics.length<3)report.drawDiagnostics.push(rest.sample);return;}if(type!=='gpu-submission'&&type!=='application-present')log(type,rest);
    if(type==='probe')report.browser=rest.result;
    if(type==='d3d9-device-created')report.d3d9Device=rest;
-   if(type==='application-present'){report.applicationPresents=rest.count;report.submittedFrames=rest.submittedFrames;}
+   if(type==='application-present'){report.applicationPresents=rest.count;report.submittedFrames=rest.submittedFrames;if(rest.count===1){report.firstPresentObservedMs=performance.now()-report.startTimeMs;$('status').textContent='Original executable presenting frames';if(new URL(location.href).searchParams.has('benchmark')){clearTimeout(timer);timer=setTimeout(()=>stop('60-second frame-delivery measurement completed'),60000);}}if(rest.count===1||rest.count%60===0)$('metrics').textContent=`Application Presents: ${rest.count} · Submitted frames: ${rest.submittedFrames} · Scene correctness: see sampled evidence`;}
    if(type==='gpu-submission')report.gpuSubmissions=rest.count;
    if(type==='identity')report.executableSha256=rest.sha256;
    if(type==='window-created'){report.window=rest;$('scene').style.aspectRatio=`${rest.width}/${rest.height}`}
    if(type==='d3d9-created'){report.direct3DCreate9Reached=true;report.direct3D9ObjectCreated=true;}
    if(type==='failed'&&rest.message.includes('d3d9!Direct3DCreate9'))report.direct3DCreate9Reached=true;
    if(type==='execution-start')report.originalExecutionAttempted=true;
+   if(type==='resource-metrics')report.resourceMetrics=rest;
    if(rest.wasmLinearMemoryBytes)report.performance.wasmLinearMemoryBytes=rest.wasmLinearMemoryBytes;
    if(type==='failed'){report.blocker=rest.message;stop('failed: '+(rest.message.split('\n').find(line=>line.startsWith('unsupported API:'))??rest.message.split('\n')[0]));}
    if(type==='returned')stop('executable returned without verified scene');
@@ -38,10 +39,10 @@ async function start(long=false){
   const offscreen=canvas.transferControlToOffscreen();
   const channel=new MessageChannel();gpuWorker=new Worker('/gpu-worker.js',{type:'module'});
   gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;
-  gpuWorker.postMessage({type:'init',canvas:offscreen,port:channel.port1,drawDiagnostics:new URL(location.href).searchParams.has('drawDiagnostics'),captureFrames:new URL(location.href).searchParams.has('captureFrames'),cameraTest:new URL(location.href).searchParams.has('cameraTest')},[offscreen,channel.port1]);
-  worker.postMessage({type:'start',build,gpuPort:channel.port2},[channel.port2]);
+  gpuWorker.postMessage({type:'init',canvas:offscreen,port:channel.port1,startEpoch:performance.timeOrigin+report.startTimeMs,drawDiagnostics:new URL(location.href).searchParams.has('drawDiagnostics'),captureFrames:new URL(location.href).searchParams.has('captureFrames'),cameraTest:new URL(location.href).searchParams.has('cameraTest')},[offscreen,channel.port1]);
+  worker.postMessage({type:'start',build,benchmark:new URL(location.href).searchParams.has('benchmark'),gpuPort:channel.port2},[channel.port2]);
   // Single attempts have a watchdog; long sessions are user-started and stoppable.
-  timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:60000);
+  timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:new URL(location.href).searchParams.has('benchmark')?120000:60000);
  }catch(e){log('failed',{message:e.message});stop('failed: '+e.message)}
 }
 $('start').onclick=()=>start();$('long').onclick=()=>start(true);$('stop').onclick=()=>stop();

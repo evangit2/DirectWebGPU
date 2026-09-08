@@ -1,0 +1,6 @@
+// Submission timing, not display scan-out or shader execution timing.
+export class PresentationMetrics{
+ constructor(startEpoch){this.startEpoch=startEpoch;this.first=null;this.previous=null;this.samples=[];this.totalIntervals=0;this.totalMs=0;this.completions=[];}
+ present(epoch){if(this.first===null)this.first=epoch;if(this.previous!==null&&this.previous-this.first>=5000){const dt=epoch-this.previous;if(dt>=0){this.totalIntervals++;this.totalMs+=dt;this.samples.push(dt);if(this.samples.length>8192)this.samples.shift();}}this.previous=epoch;}
+ snapshot(){const a=[...this.samples].sort((a,b)=>a-b),q=p=>a.length?a[Math.min(a.length-1,Math.ceil(a.length*p)-1)]:null;return{firstPresentMs:this.first===null?null:this.first-this.startEpoch,totalSteadyIntervals:this.totalIntervals,steadyDurationMs:this.totalMs,submissionFPS:this.totalMs?this.totalIntervals*1000/this.totalMs:null,frameTimeMs:{p50:q(.5),p95:q(.95),p99:q(.99),min:a[0]??null,max:a.at(-1)??null},retainedIntervals:a.length,warmupMs:5000,queueCompletionSamples:[...this.completions],limitations:'Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.'};}
+}
