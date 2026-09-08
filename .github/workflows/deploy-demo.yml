@@ -20,10 +20,7 @@ jobs:
 
       - name: Restart demo server
         run: |
-          cd /home/evan/DirectWebGPU
-          pkill -f "scripts/serve.py" || true
-          sleep 1
-          nohup python3 scripts/serve.py 8765 >/tmp/humus-serve.log 2>&1 &
+          systemctl --user restart humus-demo.service
           sleep 2
           curl -fsS -o /dev/null -w "local %{http_code}\n" http://127.0.0.1:8765/
 
