@@ -456,7 +456,7 @@ index 827dd83..8f02544 100644
              // CBW/CWDE: sign extend to next larger ax
              Cbw => self.line("ctx.cpu.regs.set_ax(ctx.cpu.regs.get_al() as i8 as i16 as u16);"),
 diff --git a/tc/src/codegen/mod.rs b/tc/src/codegen/mod.rs
-index 4d80652..435f822 100644
+index 4d80652..e54d9bb 100644
 --- a/tc/src/codegen/mod.rs
 +++ b/tc/src/codegen/mod.rs
 @@ -95,7 +95,7 @@ impl<'a> CodeGen<'a> {
@@ -468,7 +468,7 @@ index 4d80652..435f822 100644
                      get_reg(instr.memory_index()),
                      instr.memory_index_scale()
                  ));
-@@ -305,6 +305,16 @@ impl<'a> CodeGen<'a> {
+@@ -305,6 +305,19 @@ impl<'a> CodeGen<'a> {
      }
  
      fn gen_instr(&mut self, instr: &Instr) -> anyhow::Result<()> {
@@ -476,6 +476,9 @@ index 4d80652..435f822 100644
 +        // precisely if reached. Never silently narrow x87 80-bit operands.
 +        if instr.iced.memory_size() == iced_x86::MemorySize::Float80 {
 +            anyhow::bail!("unsupported x87 Float80 at {}: {}", instr.ip, instr.iced);
++        }
++        if self.module.bitness() == 32 && (instr.iced.memory_base().is_gpr16() || instr.iced.memory_index().is_gpr16()) {
++            anyhow::bail!("unsupported 16-bit addressing in 32-bit code at {}: {}", instr.ip, instr.iced);
 +        }
 +        // SSE/AVX share several mnemonics with MMX. Preserve an explicit
 +        // runtime diagnostic instead of treating vector operands as MMX.
@@ -485,7 +488,7 @@ index 4d80652..435f822 100644
          // log::info!("gen: {:08x} {}", instr.iced.ip32(), instr.iced);
          self.line(format!("// {} {}", instr.ip, instr.iced));
          if self.codegen_control_flow(instr) {
-@@ -314,7 +324,7 @@ impl<'a> CodeGen<'a> {
+@@ -314,7 +327,7 @@ impl<'a> CodeGen<'a> {
          } else if self.codegen_fpu(&instr.iced) {
          } else if self.codegen_mmx(&instr.iced) {
          } else {
