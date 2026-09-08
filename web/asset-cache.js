@@ -2,7 +2,7 @@ const PREFIX='humus-verified-assets-v1-';
 export class AssetCache{
  constructor(mode,entries,storage,fetcher,origin){
   if(!['off','cold','warm'].includes(mode))throw Error('invalid asset cache mode');
-  if(entries.length>256||entries.reduce((n,e)=>n+e.bytes,0)>128*1024*1024)throw Error('asset cache budget exceeded');
+  if(entries.some(e=>!Number.isSafeInteger(e.bytes)||e.bytes<0||!/^[a-f0-9]{64}$/.test(e.sha256))||entries.length>256||entries.reduce((n,e)=>n+e.bytes,0)>128*1024*1024)throw Error('asset cache budget exceeded');
   this.mode=mode;this.entries=new Map(entries.map(e=>[e.url,e]));this.storage=storage;this.fetcher=fetcher;this.origin=origin;this.stats={mode,hits:0,misses:0,cacheBytes:0,networkBodyBytes:0,verifiedBytes:0,repairedEntries:0,limitBytes:128*1024*1024,scope:'original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded'};
  }
  async open(buildHash){
@@ -11,6 +11,8 @@ export class AssetCache{
   const name=PREFIX+buildHash;
   for(const key of await this.storage.keys())if(key.startsWith(PREFIX)&&(this.mode==='cold'||key!==name))await this.storage.delete(key);
   this.cache=await this.storage.open(name);
+  const allowed=new Set([...this.entries].map(([url,e])=>{const key=new URL(url,this.origin);key.searchParams.set('sha256',e.sha256);return key.href;}));
+  for(const request of await this.cache.keys())if(!allowed.has(request.url))await this.cache.delete(request.url);
  }
  async valid(bytes,entry){if(bytes.byteLength!==entry.bytes)return false;const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')===entry.sha256;}
  async load(url){
