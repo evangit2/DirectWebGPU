@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {packShaderUniforms} from '../../web/shader-uniforms.js';
+const regs=[new Uint32Array(1024),new Uint32Array(64),new Uint32Array(16)];
+regs[0].set([0x80000000,0x7fc12345,3,4,5,6,7,8],16);regs[1].set([0xffffffff,2,3,4],60);regs[2][3]=1;
+const shader={uniforms:[{type:2,index:3,count:1},{type:0,index:4,count:2},{type:1,index:15,count:1}],constants:[{type:0,index:5,words:[11,12,13,14]}]};
+assert.deepEqual(Array.from(packShaderUniforms(shader,regs)),[0x80000000,0x7fc12345,3,4,11,12,13,14,0xffffffff,2,3,4,1,0,0,0]);
+assert.equal(regs[0][20],5,'shader-local definitions must not modify device registers');
+assert.throws(()=>packShaderUniforms({...shader,uniforms:[{type:0,index:255,count:2}]},regs),/exceeds register file/);
+assert.throws(()=>packShaderUniforms({...shader,uniforms:[{type:0,index:0,count:1,constant:true}]},regs),/constant uniform arrays unsupported/);
+assert.throws(()=>packShaderUniforms({...shader,uniforms:[{type:0,index:0,count:0xffffffff}]},regs),/reflection range/);
+console.log('PASS: sparse/array packing, shader-local overrides, float/int bit preservation, bool padding and range rejection');

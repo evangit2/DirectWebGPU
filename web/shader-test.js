@@ -1,3 +1,4 @@
+import {testShaderConstants} from './constant-test.js';
 import {GeometryBuffers} from './gpu-buffers.js';
 import {testGeometryBuffers} from './buffer-test.js';
 import {testDeviceBridge} from './device-test.js';
@@ -53,12 +54,13 @@ document.getElementById('run').onclick=async()=>{
   await read.mapAsync(GPUMapMode.READ);const sampled=new Uint8Array(read.getMappedRange().slice((64*128+64)*4,(64*128+64)*4+4));read.unmap();
   report.textureRGBA=Array.from(sampled);if(report.textureRGBA.join(',')!=='17,121,233,255')throw Error('texture sampling output mismatch: '+report.textureRGBA);
   report.checks.push('PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA');tex.destroy();
+  report.shaderConstants=await testShaderConstants(device,tr,ps,vb);
   report.alphaStencil=await testStencil(device,tr,shaders);
   const scoped=await device.popErrorScope();if(scoped||errors.length)throw Error(scoped?.message??errors.join('\n'));
   report.indexedGeometry={result:'passed',indexCount:3,indexFormat:'uint16',source:'GeometryBuffers shared-memory uploads',HumusFrames:0};
   report.checks.push('indexed draw consumed persistent vertex/index buffers','browser WGSL compilation and pipeline validation passed','GPU draw completed; sampled interpolated color matched');
   report.deviceBridge=await testDeviceBridge();
-  report.diagnosticDraws=2+report.alphaStencil.draws;report.result='passed';geometry.dispose();target.destroy();read.destroy();
+  report.diagnosticDraws=2+report.alphaStencil.draws+report.shaderConstants.draws;report.result='passed';geometry.dispose();target.destroy();read.destroy();
  }catch(e){report.result='failed';report.error=String(e.stack??e);}
  finally{device?.destroy();status.textContent=JSON.stringify(report,null,2);const session=await(await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.token,report})});}
 };

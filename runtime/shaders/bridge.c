@@ -32,6 +32,25 @@ void shader_reset(void) {
 const char *shader_error(void){return error;}
 const void *shader_output(int stage){return stage>=0&&stage<2&&stages[stage]?stages[stage]->output:NULL;}
 int shader_length(int stage){return stage>=0&&stage<2?lengths[stage]:0;}
+/* Reflection remains owned by the pair arena until shader_reset. */
+int shader_uniform_count(int stage){return stage>=0&&stage<2&&stages[stage]?stages[stage]->uniform_count:0;}
+int shader_uniform_value(int stage,int index,int field){
+    if(index<0||index>=shader_uniform_count(stage))return -1;
+    const MOJOSHADER_uniform *u=&stages[stage]->uniforms[index];
+    switch(field){case 0:return u->type;case 1:return u->index;case 2:return u->array_count;case 3:return u->constant;default:return -1;}
+}
+int shader_constant_count(int stage){return stage>=0&&stage<2&&stages[stage]?stages[stage]->constant_count:0;}
+uint32_t shader_constant_value(int stage,int index,int field){
+    if(index<0||index>=shader_constant_count(stage))return UINT32_MAX;
+    const MOJOSHADER_constant *c=&stages[stage]->constants[index];
+    if(field==0)return c->type;if(field==1)return c->index;
+    if(field<2||field>5)return UINT32_MAX;
+    uint32_t value=0;
+    if(c->type==MOJOSHADER_UNIFORM_BOOL){if(field==2)value=c->value.b!=0;}
+    else if(c->type==MOJOSHADER_UNIFORM_FLOAT)memcpy(&value,&c->value.f[field-2],4);
+    else memcpy(&value,&c->value.i[field-2],4);
+    return value;
+}
 /* Pair linking is needed because DX9 semantic linkage is not SPIR-V linkage.
  * This initial boundary supports float vertex attributes. Integer declarations
  * must be implemented before they are accepted by the D3D frontend. */

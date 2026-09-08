@@ -17,7 +17,11 @@ export async function createShaderTranslator(){
     const ptr=mojo._shader_output(stage),length=mojo._shader_length(stage);
     if(!ptr||length<20||ptr+length>mojo.HEAPU8.length)throw Error('invalid linked SPIR-V bounds');
     const spv=mojo.HEAPU8.slice(ptr,ptr+length);
-    return {spirvBytes:length,wgsl:spirv_to_wgsl(spv)};
+    const count=mojo._shader_uniform_count(stage),constantCount=mojo._shader_constant_count(stage);
+    if(count<0||count>4096||constantCount<0||constantCount>4096)throw Error('invalid shader reflection count');
+    const uniforms=Array.from({length:count},(_,index)=>{const f=Array.from({length:4},(_,field)=>mojo._shader_uniform_value(stage,index,field));return {type:f[0],index:f[1],count:Math.max(1,f[2]),constant:!!f[3]}});
+    const constants=Array.from({length:constantCount},(_,index)=>{const f=Array.from({length:6},(_,field)=>mojo._shader_constant_value(stage,index,field)>>>0);return {type:f[0],index:f[1],words:f.slice(2)}});
+    return {spirvBytes:length,wgsl:spirv_to_wgsl(spv),uniformGroup:stage?3:1,uniforms,constants};
    });
    return {vertex:stages[0],pixel:stages[1]};
   }finally{mojo._shader_reset();if(vp)mojo._free(vp);if(pp)mojo._free(pp);}
