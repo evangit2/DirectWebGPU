@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+  "currentRuntimeRevision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -69,5 +69,16 @@
     "originalEXE": "created device; rejected missing shader capabilities; terminal RegCreateKeyExA trap",
     "scope": "D3D9 bindings tested natively; GPU indexed draw is a separate diagnostic. Original EXE has not exercised these bindings yet.",
     "logSha256": "3e7e6d28120732a6d6814d59d6385826211cbe833a7d0858faa0f8124d81361b"
+  },
+  "shaderRegisterMilestone": {
+    "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
+    "COM": "passed: 4 D3D9 tests; constant stdcall adapters, stage isolation, bounds, bit preservation and booleans",
+    "packing": "passed: node tests/shaders/uniforms.mjs; sparse/array packing, shader-local overrides and std140 bool padding",
+    "GPU": "passed: VS1.1 c7 constant mapped to uniform buffer; exact RGBA [64,128,191,255]",
+    "nativeShaderRegression": "passed: scripts/test_shaders.py",
+    "restoration": "passed: 29 patched files byte-identical",
+    "originalEXE": "device creation verified; no scene; same capability rejection and RegCreateKeyExA cleanup trap",
+    "scope": "Register COM APIs and GPU uniform use tested separately; original EXE has not exercised shader registers yet.",
+    "logSha256": "e45c119615bbf752a1bd24e95e23d2b2171c44ebf0c585788550f4165e526b7f"
   }
 }

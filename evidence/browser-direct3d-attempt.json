@@ -9,593 +9,593 @@
     "gpuBytes": "not measured",
     "wasmLinearMemoryBytes": 287703040
   },
-  "runId": "09d7f583-c32d-45a6-b900-5a1c8004cafb",
+  "runId": "142f15dd-1b23-4562-a0b6-fecd3ec6133e",
   "status": "failed: unsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
   "events": [
     {
-      "timeMs": 20546,
+      "timeMs": 20364,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x451a3dc, dwBytes=91f0)"
     },
     {
-      "timeMs": 20960,
+      "timeMs": 20775,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x4508114, dwBytes=9220)"
     },
     {
-      "timeMs": 21054,
+      "timeMs": 20868,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x4511308, dwBytes=9260)"
     },
     {
-      "timeMs": 21151,
+      "timeMs": 20965,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x451a52c, dwBytes=9290)"
     },
     {
-      "timeMs": 24956,
+      "timeMs": 24874,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x4508114, dwBytes=92d0)"
     },
     {
-      "timeMs": 25039,
+      "timeMs": 24957,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x45113a8, dwBytes=9300)"
     },
     {
-      "timeMs": 25233,
+      "timeMs": 25141,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x451a67c, dwBytes=9340)"
     },
     {
-      "timeMs": 25383,
+      "timeMs": 25290,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x4508114, dwBytes=9370)"
     },
     {
-      "timeMs": 25543,
+      "timeMs": 25450,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x4511458, dwBytes=93b0)"
     },
     {
-      "timeMs": 25560,
+      "timeMs": 25466,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x451a7cc, dwBytes=93e0)"
     },
     {
-      "timeMs": 32664,
+      "timeMs": 32514,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x45072f0)"
     },
     {
-      "timeMs": 32666,
+      "timeMs": 32516,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=970)"
     },
     {
-      "timeMs": 32667,
+      "timeMs": 32517,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f90fc)"
     },
     {
-      "timeMs": 32669,
+      "timeMs": 32518,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fea6c)"
     },
     {
-      "timeMs": 32670,
+      "timeMs": 32519,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=80)"
     },
     {
-      "timeMs": 32670,
+      "timeMs": 32520,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x44f9924, dwBytes=100)"
     },
     {
-      "timeMs": 32671,
+      "timeMs": 32521,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=40)"
     },
     {
-      "timeMs": 32684,
+      "timeMs": 32534,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x44f99a8, dwBytes=200)"
     },
     {
-      "timeMs": 32735,
+      "timeMs": 32585,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x45080b0)"
     },
     {
-      "timeMs": 32737,
+      "timeMs": 32586,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=90)"
     },
     {
-      "timeMs": 32738,
+      "timeMs": 32587,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f90fc)"
     },
     {
-      "timeMs": 32739,
+      "timeMs": 32588,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9aac)"
     },
     {
-      "timeMs": 32740,
+      "timeMs": 32589,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32741,
+      "timeMs": 32590,
       "type": "log",
       "message": "win32/winapi/src/user32/unsupported.rs:25 004046ee EnumDisplaySettingsA(name=0x0, index=0, mode=0x13e1c)"
     },
     {
-      "timeMs": 32742,
+      "timeMs": 32591,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=280)"
     },
     {
-      "timeMs": 32743,
+      "timeMs": 32592,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=1280)"
     },
     {
-      "timeMs": 32744,
+      "timeMs": 32593,
       "type": "log",
       "message": "win32/winapi/src/user32/unsupported.rs:25 00404754 EnumDisplaySettingsA(name=0x0, index=1, mode=0x13e1c)"
     },
     {
-      "timeMs": 32745,
+      "timeMs": 32594,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32746,
+      "timeMs": 32595,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32747,
+      "timeMs": 32596,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32748,
+      "timeMs": 32597,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9c60)"
     },
     {
-      "timeMs": 32749,
+      "timeMs": 32598,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=80)"
     },
     {
-      "timeMs": 32750,
+      "timeMs": 32599,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32751,
+      "timeMs": 32601,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32752,
+      "timeMs": 32602,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32753,
+      "timeMs": 32603,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9d2c)"
     },
     {
-      "timeMs": 32755,
+      "timeMs": 32604,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32756,
+      "timeMs": 32605,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32757,
+      "timeMs": 32607,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32758,
+      "timeMs": 32608,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32760,
+      "timeMs": 32609,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32761,
+      "timeMs": 32610,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32762,
+      "timeMs": 32612,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=80)"
     },
     {
-      "timeMs": 32764,
+      "timeMs": 32613,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32765,
+      "timeMs": 32614,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32766,
+      "timeMs": 32615,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=80)"
     },
     {
-      "timeMs": 32767,
+      "timeMs": 32617,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32769,
+      "timeMs": 32618,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32770,
+      "timeMs": 32620,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32771,
+      "timeMs": 32621,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32773,
+      "timeMs": 32622,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32774,
+      "timeMs": 32624,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=80)"
     },
     {
-      "timeMs": 32775,
+      "timeMs": 32625,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32777,
+      "timeMs": 32626,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32778,
+      "timeMs": 32627,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32779,
+      "timeMs": 32629,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32781,
+      "timeMs": 32630,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32782,
+      "timeMs": 32631,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32783,
+      "timeMs": 32632,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32784,
+      "timeMs": 32634,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32786,
+      "timeMs": 32636,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32787,
+      "timeMs": 32637,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32789,
+      "timeMs": 32638,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32790,
+      "timeMs": 32639,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32793,
+      "timeMs": 32641,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32794,
+      "timeMs": 32642,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32795,
+      "timeMs": 32643,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32797,
+      "timeMs": 32645,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32798,
+      "timeMs": 32646,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32799,
+      "timeMs": 32647,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32801,
+      "timeMs": 32648,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32802,
+      "timeMs": 32650,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32803,
+      "timeMs": 32651,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32805,
+      "timeMs": 32653,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32806,
+      "timeMs": 32654,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32810,
+      "timeMs": 32655,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32812,
+      "timeMs": 32659,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32813,
+      "timeMs": 32660,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32814,
+      "timeMs": 32662,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32815,
+      "timeMs": 32663,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32817,
+      "timeMs": 32664,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32818,
+      "timeMs": 32665,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32819,
+      "timeMs": 32667,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32821,
+      "timeMs": 32668,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32822,
+      "timeMs": 32669,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32823,
+      "timeMs": 32670,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32824,
+      "timeMs": 32672,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32826,
+      "timeMs": 32673,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32827,
+      "timeMs": 32674,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32828,
+      "timeMs": 32675,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32829,
+      "timeMs": 32676,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32831,
+      "timeMs": 32678,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32832,
+      "timeMs": 32679,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32833,
+      "timeMs": 32680,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32834,
+      "timeMs": 32681,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32836,
+      "timeMs": 32683,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 32838,
+      "timeMs": 32684,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32839,
+      "timeMs": 32686,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32840,
+      "timeMs": 32687,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32842,
+      "timeMs": 32688,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32843,
+      "timeMs": 32690,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=20)"
     },
     {
-      "timeMs": 32844,
+      "timeMs": 32691,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 32845,
+      "timeMs": 32692,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:129 00409e71 CreateWindowExA(_dwExStyle=0, _lpClassName=0x4d28f0, lpWindowName=0x4d28cc, _dwStyle=6cf0000, X=0, Y=0, nWidth=0x320, nHeight=0x258, _hWndParent=(null), _hMenu=0, _hInstance=400000, _lpParam=0x0)"
     },
     {
-      "timeMs": 32847,
+      "timeMs": 32694,
       "type": "window-created",
       "title": "Title",
       "width": 800,
       "height": 600
     },
     {
-      "timeMs": 32848,
+      "timeMs": 32695,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:125 stub: using HANDLE(1)"
     },
     {
-      "timeMs": 32850,
+      "timeMs": 32697,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Err(81), wParam=0, lParam=4e700a)"
     },
     {
-      "timeMs": 32852,
+      "timeMs": 32698,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:216 00409b92 ShowWindow(hWnd=HANDLE(1), _nCmdShow=5)"
     },
     {
-      "timeMs": 32853,
+      "timeMs": 32699,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:167 WINDOW_CREATION_CALLBACKS hwnd=0x1"
     },
     {
-      "timeMs": 32855,
+      "timeMs": 32701,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:37 00402be0 Direct3DCreate9(SDKVersion=1f)"
+      "message": "win32/winapi/src/d3d9.rs:39 00402be0 Direct3DCreate9(SDKVersion=1f)"
     },
     {
-      "timeMs": 32856,
+      "timeMs": 32702,
       "type": "d3d9-created",
-      "message": "win32/winapi/src/d3d9.rs:47 D3D9_CREATE9 sdk=31 object=0x004e700a"
+      "message": "win32/winapi/src/d3d9.rs:49 D3D9_CREATE9 sdk=31 object=0x004e700a"
     },
     {
-      "timeMs": 32857,
+      "timeMs": 32704,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:47 D3D9_CREATE9 sdk=31 object=0x004e700a"
+      "message": "win32/winapi/src/d3d9.rs:49 D3D9_CREATE9 sdk=31 object=0x004e700a"
     },
     {
-      "timeMs": 32859,
+      "timeMs": 32705,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:133 00402c15 GetDeviceCaps(this=4e700a, index=0, device_type=1, out=44f8eb4)"
+      "message": "win32/winapi/src/d3d9.rs:135 00402c15 GetDeviceCaps(this=4e700a, index=0, device_type=1, out=44f8eb4)"
     },
     {
-      "timeMs": 32860,
+      "timeMs": 32706,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:138 D3D9_CAPS_UNAVAILABLE adapter=0 type=1"
+      "message": "win32/winapi/src/d3d9.rs:140 D3D9_CAPS_UNAVAILABLE adapter=0 type=1"
     },
     {
-      "timeMs": 32861,
+      "timeMs": 32708,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:501 00402c54 GetClientRect(_hWnd=HANDLE(1), lpRect=0x13edc)"
     },
     {
-      "timeMs": 32863,
+      "timeMs": 32709,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:141 00402cf0 CreateDevice(this=4e700a, index=0, kind=1, focus=1, behavior=40, presentation=44f8fec, out=44f8fe8)"
+      "message": "win32/winapi/src/d3d9.rs:143 00402cf0 CreateDevice(this=4e700a, index=0, kind=1, focus=1, behavior=40, presentation=44f8fec, out=44f8fe8)"
     },
     {
-      "timeMs": 32864,
+      "timeMs": 32710,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:146 D3D9_CREATE_DEVICE_PRESENT_PARAMETERS [\n    0x320,\n    0x258,\n    0x15,\n    0x1,\n    0x0,\n    0x0,\n    0x1,\n    0x0,\n    0x1,\n    0x1,\n    0x4b,\n    0x0,\n    0x0,\n    0x80000000,\n]"
+      "message": "win32/winapi/src/d3d9.rs:148 D3D9_CREATE_DEVICE_PRESENT_PARAMETERS [\n    0x320,\n    0x258,\n    0x15,\n    0x1,\n    0x0,\n    0x0,\n    0x1,\n    0x0,\n    0x1,\n    0x1,\n    0x4b,\n    0x0,\n    0x0,\n    0x80000000,\n]"
     },
     {
-      "timeMs": 32866,
+      "timeMs": 32712,
       "type": "d3d9-device-created",
       "backendId": 1,
       "width": 800,
@@ -606,667 +606,667 @@
       "sceneFrames": 0
     },
     {
-      "timeMs": 32867,
+      "timeMs": 32714,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:150 D3D9_DEVICE_CREATED object=0x4e7012 backend=1"
+      "message": "win32/winapi/src/d3d9.rs:152 D3D9_DEVICE_CREATED object=0x4e7012 backend=1"
     },
     {
-      "timeMs": 32869,
+      "timeMs": 32715,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:113 00402b9f SetRenderState(this=4e7012, kind=89, value=0)"
     },
     {
-      "timeMs": 32871,
+      "timeMs": 32717,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:113 00402bae SetRenderState(this=4e7012, kind=16, value=1)"
     },
     {
-      "timeMs": 32873,
+      "timeMs": 32719,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=370)"
     },
     {
-      "timeMs": 32874,
+      "timeMs": 32720,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:93 00403659 GetRenderTarget(this=4e7012, index=0, out=4500050)"
     },
     {
-      "timeMs": 32876,
+      "timeMs": 32722,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:97 0040366b GetDepthStencilSurface(this=4e7012, out=4500054)"
     },
     {
-      "timeMs": 32877,
+      "timeMs": 32724,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=70)"
     },
     {
-      "timeMs": 32879,
+      "timeMs": 32725,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:84 0040ab65 HeapReAlloc(hHeap=44e7000, dwFlags=0, lpMem=0x44fe6f4, dwBytes=d0)"
     },
     {
-      "timeMs": 32881,
+      "timeMs": 32727,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=40)"
     },
     {
-      "timeMs": 32882,
+      "timeMs": 32728,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=80)"
     },
     {
-      "timeMs": 32884,
+      "timeMs": 32730,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=50)"
     },
     {
-      "timeMs": 32886,
+      "timeMs": 32731,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe768)"
     },
     {
-      "timeMs": 32887,
+      "timeMs": 32733,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=90)"
     },
     {
-      "timeMs": 32889,
+      "timeMs": 32736,
       "type": "log",
       "message": "win32/winapi/src/user32/misc.rs:82 00409eb8 MessageBoxA(_hWnd=(null), lpText=0x44fe738, lpCaption=0x4d22a8, _uType=10)"
     },
     {
-      "timeMs": 32891,
+      "timeMs": 32738,
       "type": "log",
       "message": "win32/winapi/src/user32/misc.rs:99 MessageBox: Error / This demo requires pixel shader 2.0 and vertex shader 1.1.\nYour card/driver only supports pixel shader 0.0 and vertex shader 0.0\n"
     },
     {
-      "timeMs": 32892,
+      "timeMs": 32740,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:480 00401537 PostMessageA(hWnd=HANDLE(1), Msg=10, wParam=0, lParam=0)"
     },
     {
-      "timeMs": 32895,
+      "timeMs": 32742,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32897,
+      "timeMs": 32744,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32899,
+      "timeMs": 32746,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32901,
+      "timeMs": 32747,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(SHOWWINDOW), wParam=1, lParam=0)"
     },
     {
-      "timeMs": 32902,
+      "timeMs": 32749,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32904,
+      "timeMs": 32751,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32906,
+      "timeMs": 32752,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32907,
+      "timeMs": 32754,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(ACTIVATEAPP), wParam=1, lParam=0)"
     },
     {
-      "timeMs": 32909,
+      "timeMs": 32755,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32911,
+      "timeMs": 32757,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32912,
+      "timeMs": 32758,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32914,
+      "timeMs": 32760,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(ACTIVATE), wParam=1, lParam=0)"
     },
     {
-      "timeMs": 32915,
+      "timeMs": 32761,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32917,
+      "timeMs": 32763,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32919,
+      "timeMs": 32765,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32921,
+      "timeMs": 32766,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Ok(SETFOCUS), wParam=0, lParam=0)"
     },
     {
-      "timeMs": 32922,
+      "timeMs": 32768,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32924,
+      "timeMs": 32770,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32926,
+      "timeMs": 32772,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32927,
+      "timeMs": 32773,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:113 004045db SetRenderState(this=4e7012, kind=7, value=1)"
     },
     {
-      "timeMs": 32929,
+      "timeMs": 32775,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:113 004045ed SetRenderState(this=4e7012, kind=17, value=4)"
     },
     {
-      "timeMs": 32930,
+      "timeMs": 32776,
       "type": "log",
       "message": "win32/winapi/src/d3d9/surface.rs:20 00403682 Release(this=4e701a)"
     },
     {
-      "timeMs": 32932,
+      "timeMs": 32778,
       "type": "log",
       "message": "win32/winapi/src/d3d9/surface.rs:20 00403698 Release(this=4e7022)"
     },
     {
-      "timeMs": 32934,
+      "timeMs": 32780,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44ffcf0)"
     },
     {
-      "timeMs": 32935,
+      "timeMs": 32781,
       "type": "log",
       "message": "win32/winapi/src/d3d9/device.rs:29 00402d89 Release(this=4e7012)"
     },
     {
-      "timeMs": 32937,
+      "timeMs": 32783,
       "type": "log",
-      "message": "win32/winapi/src/d3d9.rs:75 00402d9d Release(this=4e700a)"
+      "message": "win32/winapi/src/d3d9.rs:77 00402d9d Release(this=4e700a)"
     },
     {
-      "timeMs": 32939,
+      "timeMs": 32785,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:197 00409b63 DestroyWindow(hWnd=HANDLE(1))"
     },
     {
-      "timeMs": 32940,
+      "timeMs": 32786,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:455 00409b81 PostQuitMessage(nExitCode=0)"
     },
     {
-      "timeMs": 32942,
+      "timeMs": 32788,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:259 00409bea DefWindowProcA(hWnd=HANDLE(1), msg=Err(82), wParam=0, lParam=0)"
     },
     {
-      "timeMs": 32944,
+      "timeMs": 32790,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:283 DefWindowProc: unhandled message type 82"
     },
     {
-      "timeMs": 32945,
+      "timeMs": 32791,
       "type": "log",
       "message": "win32/winapi/src/user32/window.rs:212 WINDOW_DESTRUCTION_CALLBACKS hwnd=0x1"
     },
     {
-      "timeMs": 32947,
+      "timeMs": 32793,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32948,
+      "timeMs": 32794,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:340 00409ee6 TranslateMessage(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32950,
+      "timeMs": 32796,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:321 00409ef0 DispatchMessageA(lpMsg=0x13f38)"
     },
     {
-      "timeMs": 32952,
+      "timeMs": 32798,
       "type": "log",
       "message": "win32/winapi/src/user32/message.rs:357 00409ed8 PeekMessageA(lpMsg=0x13f38, hWnd=(null), _wMsgFilterMin=0, _wMsgFilterMax=0, wRemoveMsg=1)"
     },
     {
-      "timeMs": 32954,
+      "timeMs": 32799,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa1b8)"
     },
     {
-      "timeMs": 32956,
+      "timeMs": 32801,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9140)"
     },
     {
-      "timeMs": 32957,
+      "timeMs": 32803,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa144)"
     },
     {
-      "timeMs": 32959,
+      "timeMs": 32805,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa100)"
     },
     {
-      "timeMs": 32961,
+      "timeMs": 32806,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x4508114)"
     },
     {
-      "timeMs": 32962,
+      "timeMs": 32808,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x4500a70)"
     },
     {
-      "timeMs": 32964,
+      "timeMs": 32809,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe9f8)"
     },
     {
-      "timeMs": 32965,
+      "timeMs": 32811,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe9b4)"
     },
     {
-      "timeMs": 32967,
+      "timeMs": 32812,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x4507b6c)"
     },
     {
-      "timeMs": 32969,
+      "timeMs": 32814,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9924)"
     },
     {
-      "timeMs": 32970,
+      "timeMs": 32815,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x4507af8)"
     },
     {
-      "timeMs": 32972,
+      "timeMs": 32817,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x4507ab4)"
     },
     {
-      "timeMs": 32974,
+      "timeMs": 32819,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe930)"
     },
     {
-      "timeMs": 32975,
+      "timeMs": 32820,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f90e8)"
     },
     {
-      "timeMs": 32977,
+      "timeMs": 32822,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9c84)"
     },
     {
-      "timeMs": 32978,
+      "timeMs": 32824,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9c3c)"
     },
     {
-      "timeMs": 32980,
+      "timeMs": 32825,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9d50)"
     },
     {
-      "timeMs": 32981,
+      "timeMs": 32827,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9c60)"
     },
     {
-      "timeMs": 32983,
+      "timeMs": 32828,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9d74)"
     },
     {
-      "timeMs": 32985,
+      "timeMs": 32830,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9d2c)"
     },
     {
-      "timeMs": 32987,
+      "timeMs": 32832,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe6a8)"
     },
     {
-      "timeMs": 32988,
+      "timeMs": 32833,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9eac)"
     },
     {
-      "timeMs": 32990,
+      "timeMs": 32835,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9120)"
     },
     {
-      "timeMs": 32992,
+      "timeMs": 32838,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9de0)"
     },
     {
-      "timeMs": 32993,
+      "timeMs": 32839,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9e04)"
     },
     {
-      "timeMs": 32995,
+      "timeMs": 32841,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9dbc)"
     },
     {
-      "timeMs": 32997,
+      "timeMs": 32842,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9e88)"
     },
     {
-      "timeMs": 32999,
+      "timeMs": 32844,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f9c)"
     },
     {
-      "timeMs": 33000,
+      "timeMs": 32845,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9fb0)"
     },
     {
-      "timeMs": 33002,
+      "timeMs": 32847,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f78)"
     },
     {
-      "timeMs": 33004,
+      "timeMs": 32848,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa07c)"
     },
     {
-      "timeMs": 33005,
+      "timeMs": 32850,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa058)"
     },
     {
-      "timeMs": 33007,
+      "timeMs": 32852,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa0c4)"
     },
     {
-      "timeMs": 33009,
+      "timeMs": 32853,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa0a0)"
     },
     {
-      "timeMs": 33010,
+      "timeMs": 32855,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe460)"
     },
     {
-      "timeMs": 33012,
+      "timeMs": 32856,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe43c)"
     },
     {
-      "timeMs": 33013,
+      "timeMs": 32858,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe4a8)"
     },
     {
-      "timeMs": 33015,
+      "timeMs": 32860,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe484)"
     },
     {
-      "timeMs": 33016,
+      "timeMs": 32861,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fa0e8)"
     },
     {
-      "timeMs": 33018,
+      "timeMs": 32863,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe4cc)"
     },
     {
-      "timeMs": 33020,
+      "timeMs": 32864,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe514)"
     },
     {
-      "timeMs": 33022,
+      "timeMs": 32866,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe4f0)"
     },
     {
-      "timeMs": 33023,
+      "timeMs": 32868,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe54c)"
     },
     {
-      "timeMs": 33025,
+      "timeMs": 32869,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe528)"
     },
     {
-      "timeMs": 33026,
+      "timeMs": 32871,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe594)"
     },
     {
-      "timeMs": 33028,
+      "timeMs": 32873,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe570)"
     },
     {
-      "timeMs": 33029,
+      "timeMs": 32874,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe5dc)"
     },
     {
-      "timeMs": 33031,
+      "timeMs": 32876,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe5b8)"
     },
     {
-      "timeMs": 33032,
+      "timeMs": 32877,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe614)"
     },
     {
-      "timeMs": 33034,
+      "timeMs": 32879,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe5f0)"
     },
     {
-      "timeMs": 33036,
+      "timeMs": 32880,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe64c)"
     },
     {
-      "timeMs": 33037,
+      "timeMs": 32882,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe628)"
     },
     {
-      "timeMs": 33039,
+      "timeMs": 32884,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9fd4)"
     },
     {
-      "timeMs": 33041,
+      "timeMs": 32886,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9f54)"
     },
     {
-      "timeMs": 33042,
+      "timeMs": 32887,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe660)"
     },
     {
-      "timeMs": 33044,
+      "timeMs": 32889,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9ed0)"
     },
     {
-      "timeMs": 33045,
+      "timeMs": 32891,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9d98)"
     },
     {
-      "timeMs": 33047,
+      "timeMs": 32892,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe684)"
     },
     {
-      "timeMs": 33048,
+      "timeMs": 32894,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe6e0)"
     },
     {
-      "timeMs": 33050,
+      "timeMs": 32896,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fe6bc)"
     },
     {
-      "timeMs": 33051,
+      "timeMs": 32897,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f9ca8)"
     },
     {
-      "timeMs": 33053,
+      "timeMs": 32899,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f90c4)"
     },
     {
-      "timeMs": 33055,
+      "timeMs": 32901,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44e7108)"
     },
     {
-      "timeMs": 33056,
+      "timeMs": 32902,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44fea6c)"
     },
     {
-      "timeMs": 33058,
+      "timeMs": 32904,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f99b8)"
     },
     {
-      "timeMs": 33059,
+      "timeMs": 32906,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f90fc)"
     },
     {
-      "timeMs": 33061,
+      "timeMs": 32907,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44f90a0)"
     },
     {
-      "timeMs": 33062,
+      "timeMs": 32909,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:68 0040a8e1 HeapFree(hHeap=44e7000, dwFlags=0, lpMem=0x44e79cc)"
     },
     {
-      "timeMs": 33064,
+      "timeMs": 32910,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33065,
+      "timeMs": 32912,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=180)"
     },
     {
-      "timeMs": 33067,
+      "timeMs": 32914,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33069,
+      "timeMs": 32915,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33070,
+      "timeMs": 32917,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33072,
+      "timeMs": 32919,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33074,
+      "timeMs": 32921,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33075,
+      "timeMs": 32922,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33077,
+      "timeMs": 32924,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33078,
+      "timeMs": 32926,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33080,
+      "timeMs": 32927,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33081,
+      "timeMs": 32929,
       "type": "log",
       "message": "win32/winapi/src/kernel32/heap.rs:19 0040bcbd HeapAlloc(hHeap=44e7000, dwFlags=, dwBytes=10)"
     },
     {
-      "timeMs": 33083,
+      "timeMs": 32930,
       "type": "log",
-      "message": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc\n\nStack:\n\nError\n    at __wbg_new_227d7c05414eb861 (http://127.0.0.1:8765/generated/humus.js:71:25)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::Error>::new::__wbg_new_227d7c05414eb861 externref shim (wasm://wasm/humus.wasm-03f0c62e:wasm-function[63611]:0xa26e52)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::Error>::new (wasm://wasm/humus.wasm-03f0c62e:wasm-function[52702]:0x9ae46a)\n    at humus.wasm.console_error_panic_hook[8f861984cca8149d]::hook_impl (wasm://wasm/humus.wasm-03f0c62e:wasm-function[14738]:0x5aa3da)\n    at humus.wasm.console_error_panic_hook[8f861984cca8149d]::hook (wasm://wasm/humus.wasm-03f0c62e:wasm-function[59685]:0xa0b55e)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::hook as core[2a9fb8971baa249d]::ops::function::Fn<(&std[76655ebda4cdcfc8]::panic::PanicHookInfo,)>>::call (wasm://wasm/humus.wasm-03f0c62e:wasm-function[58365]:0x9fdedd)\n    at humus.wasm.<alloc[711e24f4107952bc]::boxed::Box<dyn for<'a, 'b> core[2a9fb8971baa249d]::ops::function::Fn<(&'a std[76655ebda4cdcfc8]::panic::PanicHookInfo<'b>,), Output = ()> + core[2a9fb8971baa249d]::marker::Sync + core[2a9fb8971baa249d]::marker::Send> as core[2a9fb8971baa249d]::ops::function::Fn<(&std[76655ebda4cdcfc8]::panic::PanicHookInfo,)>>::call (wasm://wasm/humus.wasm-03f0c62e:wasm-function[52142]:0x9a4f0d)\n    at humus.wasm.std[76655ebda4cdcfc8]::panicking::panic_with_hook (wasm://wasm/humus.wasm-03f0c62e:wasm-function[368]:0xe3efc)\n    at humus.wasm.std[76655ebda4cdcfc8]::panicking::panic_handler::{closure#0} (wasm://wasm/humus.wasm-03f0c62e:wasm-function[8686]:0x45d843)\n    at humus.wasm.std[76655ebda4cdcfc8]::sys::backtrace::__rust_end_short_backtrace::<std[76655ebda4cdcfc8]::panicking::panic_handler::{closure#0}, !> (wasm://wasm/humus.wasm-03f0c62e:wasm-function[58453]:0x9fef27)\n\n"
+      "message": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc\n\nStack:\n\nError\n    at __wbg_new_227d7c05414eb861 (http://127.0.0.1:8765/generated/humus.js:71:25)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::Error>::new::__wbg_new_227d7c05414eb861 externref shim (wasm://wasm/humus.wasm-03f2c3be:wasm-function[63674]:0xa2c104)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::Error>::new (wasm://wasm/humus.wasm-03f2c3be:wasm-function[52746]:0x9b341c)\n    at humus.wasm.console_error_panic_hook[8f861984cca8149d]::hook_impl (wasm://wasm/humus.wasm-03f2c3be:wasm-function[14767]:0x5aed4d)\n    at humus.wasm.console_error_panic_hook[8f861984cca8149d]::hook (wasm://wasm/humus.wasm-03f2c3be:wasm-function[59751]:0xa10902)\n    at humus.wasm.<console_error_panic_hook[8f861984cca8149d]::hook as core[2a9fb8971baa249d]::ops::function::Fn<(&std[76655ebda4cdcfc8]::panic::PanicHookInfo,)>>::call (wasm://wasm/humus.wasm-03f2c3be:wasm-function[58420]:0xa030cc)\n    at humus.wasm.<alloc[711e24f4107952bc]::boxed::Box<dyn for<'a, 'b> core[2a9fb8971baa249d]::ops::function::Fn<(&'a std[76655ebda4cdcfc8]::panic::PanicHookInfo<'b>,), Output = ()> + core[2a9fb8971baa249d]::marker::Sync + core[2a9fb8971baa249d]::marker::Send> as core[2a9fb8971baa249d]::ops::function::Fn<(&std[76655ebda4cdcfc8]::panic::PanicHookInfo,)>>::call (wasm://wasm/humus.wasm-03f2c3be:wasm-function[52185]:0x9a9e7d)\n    at humus.wasm.std[76655ebda4cdcfc8]::panicking::panic_with_hook (wasm://wasm/humus.wasm-03f2c3be:wasm-function[369]:0xe4486)\n    at humus.wasm.std[76655ebda4cdcfc8]::panicking::panic_handler::{closure#0} (wasm://wasm/humus.wasm-03f2c3be:wasm-function[8713]:0x462008)\n    at humus.wasm.std[76655ebda4cdcfc8]::sys::backtrace::__rust_end_short_backtrace::<std[76655ebda4cdcfc8]::panicking::panic_handler::{closure#0}, !> (wasm://wasm/humus.wasm-03f2c3be:wasm-function[58508]:0xa04116)\n\n"
     },
     {
-      "timeMs": 33084,
+      "timeMs": 32932,
       "type": "failed",
       "message": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
       "wasmLinearMemoryBytes": 287703040
@@ -1274,7 +1274,7 @@
   ],
   "droppedEvents": 143,
   "build": {
-    "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+    "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
     "dirty": false,
     "dependencies": {
       "theseus": {
@@ -1401,10 +1401,10 @@
     "runtimeBuild": {
       "translatedTreeSha256": "101762715471d44cb66edfab2db1a5037fc08c0cd627c35b6b6cef971f36a1ac",
       "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-      "builtAt": "2026-09-08T15:49:49.505833+00:00",
-      "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+      "builtAt": "2026-09-08T15:58:35.819495+00:00",
+      "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
       "workingTreeDirty": false,
-      "sourceSha256": "7e0277240aeffefd0320fab107fbe1c0f00cf932514429767069db65fea34e56",
+      "sourceSha256": "69adca04abda5f31b80298d632683573ea8c30cb27e264c728823d0b719bb3d7",
       "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
       "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
       "translationEntryPoints": [
@@ -1416,14 +1416,14 @@
           "bytes": 12071
         },
         "humus_bg.wasm": {
-          "sha256": "104677267d49f2cd4a5a258fda055afb78f49909f288ef2aaeff66309af654db",
-          "bytes": 16527755
+          "sha256": "173b7af278cd0cc3cb70ef0ded82a850948ab4f8f7713692cf1314532e415251",
+          "bytes": 16560367
         }
       }
     }
   },
-  "startTimeMs": 637.8399999141693,
-  "startedAt": "2026-09-08T15:49:58.433Z",
+  "startTimeMs": 621.0350000858307,
+  "startedAt": "2026-09-08T15:58:52.720Z",
   "requestedDurationMs": null,
   "visibility": "visible",
   "browser": {
@@ -1486,6 +1486,6 @@
     "sceneFrames": 0
   },
   "blocker": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
-  "endedAt": "2026-09-08T15:50:30.881Z",
-  "diagnosticAttemptMs": 32448.519999980927
+  "endedAt": "2026-09-08T15:59:25.033Z",
+  "diagnosticAttemptMs": 32313.61999988556
 }

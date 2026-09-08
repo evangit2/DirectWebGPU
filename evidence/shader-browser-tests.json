@@ -1,7 +1,7 @@
 {
   "kind": "shader diagnostic, not Humus acceptance",
-  "runId": "1f17ae6b-5ce0-433e-b21e-497a4a102d10",
-  "startedAt": "2026-09-08T15:50:17.273Z",
+  "runId": "7fc2ae03-e3f6-4c24-9dfd-31916e9d4ee8",
+  "startedAt": "2026-09-08T15:59:15.356Z",
   "checks": [
     "VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga",
     "misaligned/truncated bytecode rejected",
@@ -12,8 +12,8 @@
   ],
   "sceneFrames": 0,
   "shaderBuild": {
-    "revision": "66eb417d90116aa9c25c63cf56c4d3b3ba6f9f2d",
-    "builtAt": "2026-09-08T14:55:58.864890+00:00",
+    "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
+    "builtAt": "2026-09-08T15:58:45.869748+00:00",
     "dependencies": {
       "theseus": {
         "url": "https://github.com/evmar/theseus.git",
@@ -45,12 +45,12 @@
     },
     "artifacts": {
       "mojoshader.js": {
-        "sha256": "36f98eea928febe3af2df04b66f7a0dd3a25c2d80a23bee44a8ac54d80c23b4b",
-        "bytes": 10330
+        "sha256": "dbe8366b9f6234625b3c48d408b580c38467b9c8fb9bcc435b051979393641a3",
+        "bytes": 10712
       },
       "mojoshader.wasm": {
-        "sha256": "30ffc3efdbb5beda15562c65eae6eb104eeeb70d7d8747aa5c2848c95c17100c",
-        "bytes": 111947
+        "sha256": "5e76a9392577e05c892475d609edcccc22b8738eae6fb140d8c3685e94824da8",
+        "bytes": 112442
       },
       "shader_translation.js": {
         "sha256": "33044ae461934c0a4cfc06b1a606a103134d77e34f9480031a306dd3113ba868",
@@ -71,11 +71,15 @@
       "texture.bin": {
         "sha256": "144144ce71cbdd119af5b15c2b3086ee24c37a9adb7ce60edbb0e0ab6944e9ed",
         "bytes": 60
+      },
+      "vertexConstant.bin": {
+        "sha256": "2b461d3be18c096b50643d07cd0e0c12338547e5d5944d132c5c84bf697a93f1",
+        "bytes": 32
       }
     }
   },
   "build": {
-    "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+    "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
     "dirty": false,
     "dependencies": {
       "theseus": {
@@ -202,10 +206,10 @@
     "runtimeBuild": {
       "translatedTreeSha256": "101762715471d44cb66edfab2db1a5037fc08c0cd627c35b6b6cef971f36a1ac",
       "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-      "builtAt": "2026-09-08T15:49:49.505833+00:00",
-      "revision": "130b9c3c070ca5047fc2a327a7e6fa0e006c3afd",
+      "builtAt": "2026-09-08T15:58:35.819495+00:00",
+      "revision": "3629cbf8bac23a33b2823787475c4b2a43b0e356",
       "workingTreeDirty": false,
-      "sourceSha256": "7e0277240aeffefd0320fab107fbe1c0f00cf932514429767069db65fea34e56",
+      "sourceSha256": "69adca04abda5f31b80298d632683573ea8c30cb27e264c728823d0b719bb3d7",
       "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
       "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
       "translationEntryPoints": [
@@ -217,8 +221,8 @@
           "bytes": 12071
         },
         "humus_bg.wasm": {
-          "sha256": "104677267d49f2cd4a5a258fda055afb78f49909f288ef2aaeff66309af654db",
-          "bytes": 16527755
+          "sha256": "173b7af278cd0cc3cb70ef0ded82a850948ab4f8f7713692cf1314532e415251",
+          "bytes": 16560367
         }
       }
     }
@@ -226,11 +230,17 @@
   "shaders": {
     "vertex": {
       "spirvBytes": 584,
-      "wgsl": "struct VertexOutput {\n    @builtin(position) member: vec4<f32>,\n    @location(0) member_1: vec4<f32>,\n}\n\nvar<private> vs_v0_1: vec4<f32>;\nvar<private> vs_v1_1: vec4<f32>;\nvar<private> vs_oPos: vec4<f32> = vec4<f32>(0f, 0f, 0f, 1f);\nvar<private> vs_oT0_: vec4<f32>;\n\nfn main_1() {\n    let _e4 = vs_v0_1;\n    vs_oPos = _e4;\n    let _e5 = vs_v1_1;\n    vs_oT0_ = _e5;\n    return;\n}\n\n@vertex \nfn main(@location(0) vs_v0_: vec4<f32>, @location(1) vs_v1_: vec4<f32>) -> VertexOutput {\n    vs_v0_1 = vs_v0_;\n    vs_v1_1 = vs_v1_;\n    main_1();\n    let _e6 = vs_oPos;\n    let _e7 = vs_oT0_;\n    return VertexOutput(_e6, _e7);\n}\n"
+      "wgsl": "struct VertexOutput {\n    @builtin(position) member: vec4<f32>,\n    @location(0) member_1: vec4<f32>,\n}\n\nvar<private> vs_v0_1: vec4<f32>;\nvar<private> vs_v1_1: vec4<f32>;\nvar<private> vs_oPos: vec4<f32> = vec4<f32>(0f, 0f, 0f, 1f);\nvar<private> vs_oT0_: vec4<f32>;\n\nfn main_1() {\n    let _e4 = vs_v0_1;\n    vs_oPos = _e4;\n    let _e5 = vs_v1_1;\n    vs_oT0_ = _e5;\n    return;\n}\n\n@vertex \nfn main(@location(0) vs_v0_: vec4<f32>, @location(1) vs_v1_: vec4<f32>) -> VertexOutput {\n    vs_v0_1 = vs_v0_;\n    vs_v1_1 = vs_v1_;\n    main_1();\n    let _e6 = vs_oPos;\n    let _e7 = vs_oT0_;\n    return VertexOutput(_e6, _e7);\n}\n",
+      "uniformGroup": 1,
+      "uniforms": [],
+      "constants": []
     },
     "pixel": {
       "spirvBytes": 500,
-      "wgsl": "var<private> ps_PointCoordOrTexCoord0_1: vec4<f32>;\nvar<private> ps_t0_: vec4<f32>;\nvar<private> ps_oC0_: vec4<f32>;\n\nfn main_1() {\n    let _e3 = ps_PointCoordOrTexCoord0_1;\n    ps_t0_ = _e3.xyzw;\n    let _e5 = ps_t0_;\n    ps_oC0_ = _e5;\n    return;\n}\n\n@fragment \nfn main(@location(0) ps_PointCoordOrTexCoord0_: vec4<f32>) -> @location(0) vec4<f32> {\n    ps_PointCoordOrTexCoord0_1 = ps_PointCoordOrTexCoord0_;\n    main_1();\n    let _e3 = ps_oC0_;\n    return _e3;\n}\n"
+      "wgsl": "var<private> ps_PointCoordOrTexCoord0_1: vec4<f32>;\nvar<private> ps_t0_: vec4<f32>;\nvar<private> ps_oC0_: vec4<f32>;\n\nfn main_1() {\n    let _e3 = ps_PointCoordOrTexCoord0_1;\n    ps_t0_ = _e3.xyzw;\n    let _e5 = ps_t0_;\n    ps_oC0_ = _e5;\n    return;\n}\n\n@fragment \nfn main(@location(0) ps_PointCoordOrTexCoord0_: vec4<f32>) -> @location(0) vec4<f32> {\n    ps_PointCoordOrTexCoord0_1 = ps_PointCoordOrTexCoord0_;\n    main_1();\n    let _e3 = ps_oC0_;\n    return _e3;\n}\n",
+      "uniformGroup": 3,
+      "uniforms": [],
+      "constants": []
     }
   },
   "adapter": {
@@ -284,7 +294,10 @@
   ],
   "textureShader": {
     "spirvBytes": 724,
-    "wgsl": "var<private> ps_r0_: vec4<f32>;\n@group(2) @binding(0) \nvar ps_s0_: texture_2d<f32>;\nvar<private> ps_PointCoordOrTexCoord0_1: vec4<f32>;\nvar<private> ps_t0_: vec4<f32>;\nvar<private> ps_oC0_: vec4<f32>;\n@group(2) @binding(1) \nvar global: sampler;\n\nfn main_1() {\n    let _e6 = ps_PointCoordOrTexCoord0_1;\n    ps_t0_ = _e6.xyzw;\n    let _e8 = ps_t0_;\n    let _e10 = textureSample(ps_s0_, global, _e8.xy);\n    ps_r0_ = _e10;\n    let _e11 = ps_r0_;\n    ps_oC0_ = _e11;\n    return;\n}\n\n@fragment \nfn main(@location(0) ps_PointCoordOrTexCoord0_: vec4<f32>) -> @location(0) vec4<f32> {\n    ps_PointCoordOrTexCoord0_1 = ps_PointCoordOrTexCoord0_;\n    main_1();\n    let _e3 = ps_oC0_;\n    return _e3;\n}\n"
+    "wgsl": "var<private> ps_r0_: vec4<f32>;\n@group(2) @binding(0) \nvar ps_s0_: texture_2d<f32>;\nvar<private> ps_PointCoordOrTexCoord0_1: vec4<f32>;\nvar<private> ps_t0_: vec4<f32>;\nvar<private> ps_oC0_: vec4<f32>;\n@group(2) @binding(1) \nvar global: sampler;\n\nfn main_1() {\n    let _e6 = ps_PointCoordOrTexCoord0_1;\n    ps_t0_ = _e6.xyzw;\n    let _e8 = ps_t0_;\n    let _e10 = textureSample(ps_s0_, global, _e8.xy);\n    ps_r0_ = _e10;\n    let _e11 = ps_r0_;\n    ps_oC0_ = _e11;\n    return;\n}\n\n@fragment \nfn main(@location(0) ps_PointCoordOrTexCoord0_: vec4<f32>) -> @location(0) vec4<f32> {\n    ps_PointCoordOrTexCoord0_1 = ps_PointCoordOrTexCoord0_;\n    main_1();\n    let _e3 = ps_oC0_;\n    return _e3;\n}\n",
+    "uniformGroup": 3,
+    "uniforms": [],
+    "constants": []
   },
   "textureRGBA": [
     17,
@@ -292,6 +305,26 @@
     233,
     255
   ],
+  "shaderConstants": {
+    "result": "passed",
+    "centerRGBA": [
+      64,
+      128,
+      191,
+      255
+    ],
+    "uniforms": [
+      {
+        "type": 0,
+        "index": 7,
+        "count": 1,
+        "constant": false
+      }
+    ],
+    "packedBytes": 16,
+    "draws": 1,
+    "HumusFrames": 0
+  },
   "alphaStencil": {
     "result": "passed",
     "draws": 3,
@@ -383,10 +416,10 @@
             "texture-compression-etc2",
             "depth-clip-control",
             "texture-compression-bc-sliced-3d",
-            "texture-formats-tier2",
-            "clip-distances",
-            "timestamp-query",
             "shader-f16",
+            "texture-formats-tier2",
+            "timestamp-query",
+            "clip-distances",
             "primitive-index",
             "texture-component-swizzle",
             "subgroups"
@@ -425,6 +458,6 @@
       }
     ]
   },
-  "diagnosticDraws": 5,
+  "diagnosticDraws": 6,
   "result": "passed"
 }
