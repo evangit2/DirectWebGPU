@@ -28,7 +28,7 @@ self.send_to_host=(func,args,retAddr)=>{
   if(!Number.isInteger(ptr)||!Number.isInteger(len)||ptr<0||len<0||ptr+len>memory.buffer.byteLength)throw Error('host console pointer out of bounds');
   send('log',{message:new TextDecoder().decode(new Uint8Array(memory.buffer,ptr,Math.min(len,4096)).slice())});return;
  }
- if(func==='create_window'||func==='graphics_call'){
+ if(['create_window','graphics_call','poll_message','wait_message'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
   gpuPort.postMessage({func,args:Array.from(args),buffer:memory.buffer,retAddr});return;
  }

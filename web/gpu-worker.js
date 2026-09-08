@@ -1,6 +1,7 @@
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let device,canvas,context,windowSize,backend,nextId=1,port,pending=0;
+let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
+const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
@@ -16,6 +17,10 @@ async function init(data){
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}
 async function dispatch({func,args,buffer,retAddr}){
  let result=INVALID;
+ if(func==='poll_message'||func==='wait_message'){
+  if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
+  inputReply(buffer,retAddr,inputQueue.shift()??[-1,0,0,0]);return;
+ }
  try{
   if(!Array.isArray(args)||args.length>64)throw Error('invalid GPU command args');
   if(func==='create_window'){
@@ -58,4 +63,15 @@ async function graphics(op,a){
  }
  throw Error('unsupported graphics opcode '+op);
 }
-self.onmessage=({data})=>{if(data.type==='init')init(data).catch(e=>{port?.postMessage({ready:false,error:String(e)});emit('gpu-error',{message:String(e)})})};
+function inputReply(buffer,address,message){
+ if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+16>buffer.byteLength)throw Error('invalid input reply pointer');
+ const words=new Int32Array(buffer);for(let i=1;i<4;i++)Atomics.store(words,address/4+i,message[i]);reply(buffer,address,message[0]);
+}
+function input(message){
+ if(!Array.isArray(message)||message.length!==4||message.some(v=>!Number.isInteger(v))||![2,3,4,5,6].includes(message[0]))throw Error('invalid input message');
+ if(waitingInput){const w=waitingInput;waitingInput=null;inputReply(w.buffer,w.retAddr,message);return}
+ if(message[0]===4&&inputQueue.at(-1)?.[0]===4)inputQueue[inputQueue.length-1]=message;
+ else if(inputQueue.length<256)inputQueue.push(message);
+ else emit('gpu-error',{message:'input queue capacity exceeded'});
+}
+self.onmessage=({data})=>{if(data.type==='input'){try{input(data.message)}catch(e){emit('gpu-error',{message:String(e)})}return}if(data.type==='init')init(data).catch(e=>{port?.postMessage({ready:false,error:String(e)});emit('gpu-error',{message:String(e)})})};
