@@ -584,6 +584,55 @@ index c904af8..2c16a9c 100644
 +        }
 +    }
 +}
+diff --git a/runtime/src/ops/flags.rs b/runtime/src/ops/flags.rs
+index ff6ddc5..03ec582 100644
+--- a/runtime/src/ops/flags.rs
++++ b/runtime/src/ops/flags.rs
+@@ -25,3 +25,44 @@ pub fn sahf(ctx: &mut Context) {
+     ctx.cpu.flags.set(Flags::PF, flags.contains(Flags::PF));
+     ctx.cpu.flags.set(Flags::CF, flags.contains(Flags::CF));
+ }
++
++// The Windows compatibility runtime executes guest code at virtual CPL3/IOPL0.
++pub fn pushfd(ctx: &mut Context) {
++    ctx.push32((ctx.cpu.flags.bits() & 0x00244dd5) | 0x202);
++}
++pub fn popfd(ctx: &mut Context) {
++    let bits = ctx.pop32();
++    assert_eq!(bits & 0x100, 0, "unsupported x86 single-step flag");
++    ctx.cpu.flags = Flags::from_bits_retain((bits & 0x00244dd5) | 0x202);
++}
++#[cfg(test)]
++mod flag_stack_tests {
++    use super::*;
++    #[test]
++    fn cpuid_flag_toggle_and_stack() {
++        let mut ctx = Context {
++            cpu: Default::default(),
++            thread_handle: 1,
++            thread_id: 1,
++            memory: crate::Memory::leak_new(0x3000),
++            blocks: &[],
++            cache: Default::default(),
++            recent: [Context::return_from_x86; 4],
++        };
++        ctx.cpu.regs.esp = 0x2000;
++        ctx.cpu.flags = Flags::CF | Flags::OF;
++        pushfd(&mut ctx);
++        assert_eq!(ctx.cpu.regs.esp, 0x1ffc);
++        let original = ctx.pop32();
++        assert_eq!(original, 0xa03);
++        ctx.push32(original ^ Flags::ID.bits());
++        popfd(&mut ctx);
++        pushfd(&mut ctx);
++        assert_eq!(ctx.pop32() ^ original, Flags::ID.bits());
++        ctx.push32(0x3000);
++        popfd(&mut ctx);
++        pushfd(&mut ctx);
++        assert_eq!(ctx.pop32(), 0x202);
++        assert_eq!(ctx.cpu.regs.esp, 0x2000);
++    }
++}
 diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
 index a4c06e3..d8640d4 100644
 --- a/runtime/src/ops/misc.rs
@@ -797,10 +846,10 @@ index 3746d0c..e99eb61 100644
                  self.line("let t = ctx.cpu.fpu.get(0);");
                  self.line("ctx.cpu.fpu.pop();");
 diff --git a/tc/src/codegen/misc.rs b/tc/src/codegen/misc.rs
-index 827dd83..8f02544 100644
+index 827dd83..2c2042a 100644
 --- a/tc/src/codegen/misc.rs
 +++ b/tc/src/codegen/misc.rs
-@@ -93,7 +93,24 @@ impl<'a> CodeGen<'a> {
+@@ -93,7 +93,26 @@ impl<'a> CodeGen<'a> {
                      self.todo(format!("int {:#x}", instr.immediate8()));
                  }
              }
@@ -822,7 +871,9 @@ index 827dd83..8f02544 100644
 +            }
 +            Cpuid => self.line("runtime::cpuid(&mut ctx.cpu.regs);"),
 +            Rdtsc if self.module.is_windows() => self.line("ctx.cpu.regs.set_edx_eax(winapi::kernel32::virtual_timestamp_counter());"),
-+            Int3 | Cmpxchg | Pushfd | Xgetbv | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
++            Pushfd => self.line("pushfd(ctx);"),
++            Popfd => self.line("popfd(ctx);"),
++            Int3 | Cmpxchg | Xgetbv | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
  
              // CBW/CWDE: sign extend to next larger ax
              Cbw => self.line("ctx.cpu.regs.set_ax(ctx.cpu.regs.get_al() as i8 as i16 as u16);"),
