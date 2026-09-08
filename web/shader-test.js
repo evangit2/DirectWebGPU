@@ -13,7 +13,7 @@ import {GeometryBuffers} from './gpu-buffers.js';
 import {testGeometryBuffers} from './buffer-test.js';
 import {testDeviceBridge} from './device-test.js';
 import {testStencil} from './stencil-test.js';
-import {createShaderTranslator} from './shaders.js';
+import {createShaderTranslator,canonicalFloatLimits} from './shaders.js';
 const status=document.getElementById('status');
 document.getElementById('run').onclick=async()=>{
  const report={kind:'shader diagnostic, not Humus acceptance',runId:crypto.randomUUID(),startedAt:new Date().toISOString(),checks:[],sceneFrames:0};
@@ -32,7 +32,7 @@ document.getElementById('run').onclick=async()=>{
   try{tr.translatePair(vs.slice(0,7),ps);throw Error('malformed bytecode accepted');}catch(e){if(!String(e).includes('invalid DX9 bytecode length'))throw e;report.checks.push('misaligned/truncated bytecode rejected');}
   const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('no GPU adapter');
   report.adapter={vendor:adapter.info.vendor,architecture:adapter.info.architecture,isFallbackAdapter:adapter.info.isFallbackAdapter};
-  device=await adapter.requestDevice({requiredFeatures:adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[]});report.drawPackets=await testDrawPackets(device,tr,vs,ps);report.samplers=await testSamplers(device);report.textures=await testTextures(device);report.geometryBuffers=await testGeometryBuffers(device);const errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+  device=await adapter.requestDevice({requiredFeatures:adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[]});const limitSource=canonicalFloatLimits('@compute @workgroup_size(1) fn main(){let x=340282350000000000000000000000000000000f; let y=-340282350000000000000000000000000000000f;}');const limitInfo=await device.createShaderModule({code:limitSource}).getCompilationInfo();if(limitInfo.messages.some(m=>m.type==='error'))throw Error('f32 limit shader failed: '+limitInfo.messages.map(m=>m.message).join(';'));report.floatLimit={result:'passed',source:limitSource};report.drawPackets=await testDrawPackets(device,tr,vs,ps);report.samplers=await testSamplers(device);report.textures=await testTextures(device);report.geometryBuffers=await testGeometryBuffers(device);const errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
   device.pushErrorScope('validation');
   const modules=[shaders.vertex,shaders.pixel].map(s=>device.createShaderModule({code:s.wgsl}));
   for(const mod of modules){const info=await mod.getCompilationInfo();if(info.messages.some(m=>m.type==='error'))throw Error(JSON.stringify(info.messages));}
