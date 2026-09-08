@@ -71,7 +71,7 @@ async function graphics(op,a,memory){
  }
  if(op===4){ // GPU-to-GPU presentation, with no framebuffer readback.
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);
-  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,17,87,0];input(message);emit('controlled-input',{present:backend.presents,message,key:'W',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+  const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
  }
  if(op>=5&&op<=7){
   try{
