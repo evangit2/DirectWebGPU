@@ -71,10 +71,10 @@ index 92da1ea..443e1fb 100644
 +    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
 +}
 diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
-index c6a4023..79d2e62 100644
+index c6a4023..f73c83e 100644
 --- a/runtime/src/fpu.rs
 +++ b/runtime/src/fpu.rs
-@@ -18,6 +18,11 @@ pub struct FPU {
+@@ -18,8 +18,13 @@ pub struct FPU {
      pub st_top: usize,
      /// The result of the last fcmp, used to generate status word.
      pub cmp: std::cmp::Ordering,
@@ -84,8 +84,11 @@ index c6a4023..79d2e62 100644
 +    pub instruction: (u32, u16, u16),
 +    pub operand: (u32, u16),
      /// Control word, as managed by fldcw/fnstcw. We only round-trip the value;
-     /// precision/rounding control bits are not honored.
+-    /// precision/rounding control bits are not honored.
++    /// precision control is not honored; integral rounding honors RC.
      pub control: u16,
+ }
+ 
 @@ -28,7 +33,12 @@ impl Default for FPU {
          Self {
              st: [0.; 8],
@@ -100,7 +103,7 @@ index c6a4023..79d2e62 100644
              control: 0x037f,
          }
      }
-@@ -91,21 +101,277 @@ impl FPU {
+@@ -91,21 +101,352 @@ impl FPU {
          self.st[self.st_offset(ofs)] = val;
      }
  
@@ -155,12 +158,47 @@ index c6a4023..79d2e62 100644
 +        self.pop();
 +    }
 +
++    pub fn exp2_minus_one(&mut self) {
++        let x = self.get(0);
++        assert!(
++            x.is_finite() && (-1.0..=1.0).contains(&x),
++            "unsupported x87 F2XM1 input {x}"
++        );
++        self.set(0, (x * std::f64::consts::LN_2).exp_m1());
++    }
++    pub fn scale(&mut self) {
++        let x = self.get(0);
++        let e = self.get(1).trunc();
++        assert!(
++            x.is_finite() && e.is_finite() && (-1022.0..=1023.0).contains(&e),
++            "unsupported x87 FSCALE input x={x} exponent={e}"
++        );
++        let value = x * 2.0f64.powi(e as i32);
++        assert!(
++            value.is_finite() && (value != 0.0 || x == 0.0),
++            "unsupported x87 FSCALE overflow/underflow"
++        );
++        self.set(0, value);
++    }
++    pub fn initialize(&mut self) {
++        *self = Self {
++            st: self.st,
++            ..Self::default()
++        };
++    }
      pub fn round(&self, val: f64) -> f64 {
-         // TODO: rounding modes?
-         // This implements default rounding mode of round towards even.
-         val.round_ties_even()
-     }
- }
+-        // TODO: rounding modes?
+-        // This implements default rounding mode of round towards even.
+-        val.round_ties_even()
++        match (self.control >> 10) & 3 {
++            0 => val.round_ties_even(),
++            1 => val.floor(),
++            2 => val.ceil(),
++            3 => val.trunc(),
++            _ => unreachable!(),
++        }
++    }
++}
 +
 +#[cfg(test)]
 +mod comparison_tests {
@@ -383,6 +421,49 @@ index c6a4023..79d2e62 100644
 +        assert_eq!(g.get(1), 3.0);
 +    }
 +}
++
++#[cfg(test)]
++mod rounding_tests {
++    #[test]
++    fn control_word_rounding_and_init() {
++        let mut f = super::FPU::default();
++        for (rc, positive, negative) in [
++            (0, 2.0, -2.0),
++            (1, 2.0, -3.0),
++            (2, 3.0, -2.0),
++            (3, 2.0, -2.0),
++        ] {
++            f.control = (f.control & !0xc00) | (rc << 10);
++            assert_eq!(f.round(2.5), positive);
++            assert_eq!(f.round(-2.5), negative);
++        }
++        f.push(42.0);
++        f.initialize();
++        assert_eq!(f.st_top, 8);
++        assert_eq!(f.status(), 0);
++        assert_eq!(f.control, 0x37f);
++        assert_eq!(f.st[7], 42.0);
++    }
++}
++
++#[cfg(test)]
++mod exponent_tests {
++    #[test]
++    fn fractional_exponent_and_truncated_scale() {
++        let mut f = super::FPU::default();
++        f.push(2.9);
++        f.push(0.5);
++        f.exp2_minus_one();
++        assert!((f.get(0) - (2.0f64.sqrt() - 1.0)).abs() < 1e-15);
++        f.set(0, 1.5);
++        f.scale();
++        assert_eq!(f.get(0), 6.0);
++        assert_eq!(f.get(1), 2.9);
++        f.set(1, -2.9);
++        f.scale();
++        assert_eq!(f.get(0), 1.5);
+     }
+ }
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
 index e1edcc6..673ce94 100644
 --- a/runtime/src/memory.rs
@@ -580,7 +661,7 @@ index caf0159..dbb6365 100644
                  let (None, None, cont) = self.jmp_target(instr) else {
                      panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
-index 3746d0c..88ca609 100644
+index 3746d0c..e99eb61 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
 @@ -71,6 +71,30 @@ impl<'a> CodeGen<'a> {
@@ -681,11 +762,11 @@ index 3746d0c..88ca609 100644
                  // leaving values on it.
 -                self.line("ctx.cpu.fpu.control = 0x037f;");
 -                self.line("ctx.cpu.fpu.st_top = 8;");
-+                self.line("ctx.cpu.fpu = Default::default();");
++                self.line("ctx.cpu.fpu.initialize();");
              }
  
              Fnstcw => {
-@@ -227,6 +267,24 @@ impl<'a> CodeGen<'a> {
+@@ -227,6 +267,29 @@ impl<'a> CodeGen<'a> {
                  self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
              }
  
@@ -698,13 +779,18 @@ index 3746d0c..88ca609 100644
 +                    self.line(format!(
 +                        "ctx.memory.write::<[u8;108]>({addr}, ctx.cpu.fpu.save_image32());"
 +                    ));
-+                    self.line("ctx.cpu.fpu = Default::default();");
++                    self.line("ctx.cpu.fpu.initialize();");
 +                } else {
 +                    self.line(format!(
 +                        "ctx.cpu.fpu.restore_image32(ctx.memory.read::<[u8;108]>({addr}));"
 +                    ));
 +                }
 +            }
++            F2xm1 => self.line("ctx.cpu.fpu.exp2_minus_one();"),
++            Fscale => self.line("ctx.cpu.fpu.scale();"),
++            Frndint => self.line(
++                "let rounded = ctx.cpu.fpu.round(ctx.cpu.fpu.get(0)); ctx.cpu.fpu.set(0,rounded);",
++            ),
 +            Fyl2x => self.line("ctx.cpu.fpu.log2_multiply_pop();"),
 +
              Fpatan => {
