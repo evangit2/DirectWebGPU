@@ -223,5 +223,15 @@
       "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6"
     },
     "originalRunId": "9b83a399-ff77-481a-b70b-6a31be416aa0"
+  },
+  "mipSurface": {
+    "revision": "5ed93ba2298efab7b71b386e371c0169db84c926",
+    "nativeTests": "7 D3D9 tests passed, including mip surface identity, stdcall, container lifetime, shared lock state and compressed rectangle offsets",
+    "nativeLogSha256": "c721f0aece67ed34fa8d03162c3e9f5f2a9e0376140bbfdb7973663c1ed1f24d",
+    "build": "WASM compiled successfully",
+    "cleanRestore": "32 patched files byte-identical",
+    "limitations": "No original application texture calls reached; full-mip uploads for rectangle writes; sampler and draw integration pending",
+    "originalRunId": "c09455bb-0cb7-4291-86e1-96afd505b345",
+    "originalResult": "failed"
   }
 }
