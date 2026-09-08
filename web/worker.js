@@ -33,9 +33,9 @@ self.send_to_host=(func,args,retAddr)=>{
  if(['create_window','graphics_call','poll_message','wait_message'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
   const values=Array.from(args);
-  if(func==='graphics_call'&&values[0]===13){
+  if(func==='graphics_call'&&[6,11,13].includes(values[0])){
    if(!Number.isInteger(retAddr)||retAddr<4||retAddr%4||retAddr+4>memory.buffer.byteLength)throw Error('invalid queued draw reply pointer');
-   drawBatch.enqueue(values,memory.buffer);Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;
+   if(drawBatch.enqueue(values,memory.buffer)){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;}
   }
   drawBatch.flush();
   gpuPort.postMessage({func,args:values,buffer:memory.buffer,retAddr});return;

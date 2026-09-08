@@ -10,7 +10,7 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,maxBatchCommands:0,stagingBytes:1052672};
+let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:1052672};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
@@ -28,7 +28,7 @@ async function init(data){
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}
 async function dispatch(data){
  const {func,args,buffer,retAddr}=data;
- if(func==='draw_batch'){await executeDrawBatch(data,graphics);bridgeMetrics.drawBatches++;bridgeMetrics.batchedDraws+=data.commands.length;bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
+ if(func==='draw_batch'){await executeDrawBatch(data,graphics);bridgeMetrics.drawBatches++;bridgeMetrics.batchedDraws+=data.commands.filter(a=>a[0]===13).length;for(const a of data.commands)if(a[0]!==13){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
