@@ -22,5 +22,15 @@
     "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
     "WASM build": "passed: scripts/build_wasm.sh",
     "original EXE browser launch": "reached IDirect3D9::GetDeviceCaps; no rendering"
+  },
+  "shaderMilestone": {
+    "revision": "d3548f77aca316a61fbb4b5c04ad4c551b4c8e47",
+    "nativeTests": "evidence/shader-native-tests.json",
+    "browserTests": "evidence/shader-browser-tests.json",
+    "dependencyBootstrap": "passed: pinned revisions verified; toolchain install/activation idempotent",
+    "shaderBuild": "passed: C\u2192WASM and Rust\u2192WASM",
+    "originalRuntimeBuild": "passed: scripts/build_wasm.sh",
+    "server": "passed: scripts/test_server.py",
+    "acceptance": "diagnostics only; not Humus rendering"
   }
 }

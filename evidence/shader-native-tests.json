@@ -1,0 +1,9 @@
+{
+  "kind": "shader diagnostic, not Humus acceptance",
+  "checks": [
+    "pixel pair: validated SPIR-V to validated WGSL",
+    "texture pair: validated SPIR-V to validated WGSL",
+    "native malformed bytecode rejected"
+  ],
+  "fixtureSha256": "6a6f26a9e1e09b143b7ed330a7944e6878ccf2a344714484bc9884ce027d5ce2"
+}
