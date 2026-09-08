@@ -4,12 +4,12 @@
   "Graphics backend": "WebGPU adapter/device probe only; D3D9 backend not implemented",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Runtime build": {
-    "translatedTreeSha256": "a2d761cec5b18f0b45ca4a19aef47ac294cc54236c8ec2e2546e092e11221055",
+    "translatedTreeSha256": "ba3e0b9823ffba9286dbb70d2d5c513edcbde32fbe1c6216fc8c9d00527bb405",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T14:10:37.947116+00:00",
-    "revision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-    "workingTreeDirty": false,
-    "sourceSha256": "3cc348c2d5265d35d09678709516263429b8bf690c73852d426f920cf19284f4",
+    "builtAt": "2026-09-08T14:27:18.219537+00:00",
+    "revision": "b2d0952d83898663fcebe321d60c72bc8a1c3cc0",
+    "workingTreeDirty": true,
+    "sourceSha256": "09c3a1bf1f316bfd5baf3117ab8275e36d4897781fa3ec40032559e7115dd7e9",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
@@ -21,12 +21,12 @@
         "bytes": 12071
       },
       "humus_bg.wasm": {
-        "sha256": "14b491ef5c9ead8985587edd0250c4eed08da931a8cfd5fe1a2b924535d689d7",
-        "bytes": 16212361
+        "sha256": "6a280c0b771336b8ea3026fe31376c216aea8317aa5acfd0b9640046ace0a712",
+        "bytes": 16274586
       }
     }
   },
-  "Run ID": "50b6f3b3-fb33-4a41-bfad-80379e3c9298",
+  "Run ID": "73d97158-c2fb-418c-9620-3464f94dfabe",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -70,7 +70,7 @@
   },
   "Original executable execution": {
     "verified": true,
-    "milestone": "original scene model read/processed, window created, Direct3DCreate9(31) reached",
+    "milestone": "original scene model read/processed, window created, IDirect3D9 object created; GetDeviceCaps reached",
     "window": {
       "title": "Title",
       "width": 800,
@@ -99,16 +99,15 @@
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptToFailureMs": 31631.91000008583,
+    "diagnosticAttemptToFailureMs": 32765.15999996662,
     "diagnosticTimingCaveat": "one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "panicked at win32/winapi/src/d3d9.rs:5:5:\nunsupported API: d3d9!Direct3DCreate9(SDKVersion=31); stack_return=0x00402be0, prior_builtin_return=0x00409e71; D3D9 COM/frontend/backend not implemented",
+  "Exact remaining blocker": "panicked at win32/winapi/src/d3d9.rs:27:5:\nunsupported API: d3d9!IDirect3D9::GetDeviceCaps; args=[\n    0x4e700a,\n    0x0,\n    0x1,\n    0x44f8eb4,\n]; stack_return=0x00402c15; graphics capability not implemented",
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
   "4-hour test": "not run; user-started only",
   "CheerpX baseline": "unavailable in empty initial workspace; no comparison",
   "Native Wine reference": "original EXE and d3d9 loaded; no scene image verified",
   "checks": {
-    "runtimeRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
     "results": {
       "CPU feature reporting": "passed: cargo test -p runtime virtual_cpu_tests",
       "heap grow/shrink/failure preservation": "passed: cargo test -p winapi realloc_tests",
@@ -120,9 +119,19 @@
     },
     "testLogSha256": {
       "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
-      "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b"
+      "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b",
+      "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2"
     },
-    "note": "Recorded checks from this session, not newly executed by record_results.py."
+    "note": "Recorded checks from this session, not newly executed by record_results.py.",
+    "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
+    "currentRuntimeRevision": "b2d0952d83898663fcebe321d60c72bc8a1c3cc0",
+    "currentRevisionChecks": {
+      "D3D9 COM identity/lifetime/invalid pointers/stdcall cleanup": "passed: cargo test -p winapi d3d9::tests",
+      "dependency restoration": "passed: all 20 patched files compared byte-for-byte",
+      "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
+      "WASM build": "passed: scripts/build_wasm.sh",
+      "original EXE browser launch": "reached IDirect3D9::GetDeviceCaps; no rendering"
+    }
   },
   "evidenceFile": "evidence/browser-direct3d-attempt.json"
 }

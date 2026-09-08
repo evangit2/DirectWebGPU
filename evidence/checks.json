@@ -1,5 +1,4 @@
 {
-  "runtimeRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
   "results": {
     "CPU feature reporting": "passed: cargo test -p runtime virtual_cpu_tests",
     "heap grow/shrink/failure preservation": "passed: cargo test -p winapi realloc_tests",
@@ -11,7 +10,17 @@
   },
   "testLogSha256": {
     "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
-    "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b"
+    "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b",
+    "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2"
   },
-  "note": "Recorded checks from this session, not newly executed by record_results.py."
+  "note": "Recorded checks from this session, not newly executed by record_results.py.",
+  "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
+  "currentRuntimeRevision": "b2d0952d83898663fcebe321d60c72bc8a1c3cc0",
+  "currentRevisionChecks": {
+    "D3D9 COM identity/lifetime/invalid pointers/stdcall cleanup": "passed: cargo test -p winapi d3d9::tests",
+    "dependency restoration": "passed: all 20 patched files compared byte-for-byte",
+    "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
+    "WASM build": "passed: scripts/build_wasm.sh",
+    "original EXE browser launch": "reached IDirect3D9::GetDeviceCaps; no rendering"
+  }
 }
