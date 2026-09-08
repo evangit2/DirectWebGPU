@@ -1,3 +1,11 @@
+# Current implementation decision
+
+Use pinned Theseus for local original-x86 execution, selected Win32/D3D9 compatibility, MojoShader/Naga for actual shader translation, and hardware WebGPU. The CPU worker communicates with a separate GPU worker through bounded copied draw/upload batches and synchronous boundary replies. The real EXE now renders; the historical first-API blockers below are resolved for the measured subset. See COMPATIBILITY.md and MEASURED-RESULTS.json for current limits and evidence.
+
+The master branch preserves the prior baseline. No working CheerpX rendering baseline or accepted native scene reference is available. Local-only operation remains required pending Theseus redistribution-license clarification. Reconsider the path only for a demonstrated essential execution/API/shader semantic blocker that cannot reasonably be implemented; current work concerns measurement, memory reduction and validation.
+
+## Historical decision record
+
 Selected: local Theseus AOT x86 → generated Rust → WASM, with Win32 compatibility and a future D3D9 → WebGPU frontend. No source port: only the preserved EXE is input to the translator. Theseus commit is pinned in dependencies.json. Reuse its iced-x86 decoder, PE loader, static call graph, indirect-call table, stdcall adapters, Win32 callbacks, filesystem and worker hosting concepts.
 
 Why: this empty repository contains no CheerpX disk, PIC Wine artifact, hosting configuration or recovery scripts. The reported Linux checkpoint is not a rendering baseline. No guest graphics transport has been demonstrated here, so CheerpX+Wine cannot currently be chosen as a working GPU path. Theseus has actual WASM support; its author describes the worker/callback mechanism at https://neugierig.org/software/blog/2026/05/theseus-wasm.html . Its existing pixel-upload host is not a GPU 3D backend and is not used as one.

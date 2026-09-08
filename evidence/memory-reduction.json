@@ -1,0 +1,91 @@
+{
+  "beforeRun": "ef19337e-14f4-469d-94fd-88aa53f7ce4b",
+  "afterRun": "9051d388-ac0a-4410-97f1-7692fd678005",
+  "beforeSource": "evidence/guest-memory-run.json",
+  "afterSource": "evidence/memory-128-run.json",
+  "beforeWasmBytes": 288096256,
+  "afterWasmBytes": 153878528,
+  "reductionBytes": 134217728,
+  "reductionPercent": 46.587807097361235,
+  "guestCapacityBefore": 268435456,
+  "guestCapacityAfter": 134217728,
+  "applicationPresents": 10542,
+  "durationAfterFirstPresentSeconds": 180,
+  "stabilitySamples": [
+    {
+      "elapsedMs": 1908.6749999523163,
+      "applicationPresents": 0,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": null
+    },
+    {
+      "elapsedMs": 32110.97000002861,
+      "applicationPresents": 1739,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.31100525950183
+    },
+    {
+      "elapsedMs": 62705.890000104904,
+      "applicationPresents": 3539,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.5978760979719
+    },
+    {
+      "elapsedMs": 93209.38499999046,
+      "applicationPresents": 5339,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.74362806968106
+    },
+    {
+      "elapsedMs": 123868.46000003815,
+      "applicationPresents": 7139,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.735134731452305
+    },
+    {
+      "elapsedMs": 154701.76999998093,
+      "applicationPresents": 8939,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.660829229590256
+    }
+  ],
+  "unchangedTrackedResources": true,
+  "unchangedGuestAllocationSamples": true,
+  "visualReview": "evidence/memory-128-review.json",
+  "validation": {
+    "nativeTests": 17,
+    "cleanRestoreFiles": 39,
+    "sceneComparisons": 3,
+    "sceneDifferentPixels": 0
+  },
+  "limitations": [
+    "Memory values are linear address-space backing, not total browser resident memory.",
+    "Both are diagnostic runs; camera, scene-equivalence and capture settings differ. No throughput/startup improvement is claimed.",
+    "Three minutes of sampled stability is not proof of leak freedom or a four-hour result.",
+    "Heap reservation semantics unchanged; compatibility heap occupancy includes allocation headers and excludes CRT suballocation detail."
+  ]
+}

@@ -1,22 +1,22 @@
 {
-  "runId": "8b37bf82-2cab-4f58-b2c7-d732cbd581d8",
-  "revision": "5a39d9e7d45f3585d887e77c7bf8911ddffe049c",
+  "runId": "9051d388-ac0a-4410-97f1-7692fd678005",
+  "revision": "296b46c6108e4c50f1ac54512a7ed0c811870cb1",
   "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "originalExecutionAttempted": true,
   "visualStatus": "reviewed",
-  "visualFinding": "Original textured pillar room with colored lighting after final vertex-position correction; separate unmasked lighting comparison still matches all scene RGB pixels at all three samples.",
+  "visualFinding": "Three individually inspected images show the original textured room and moving camera under the 128 MiB guest capacity. Sampled separate-target lighting remains byte-identical.",
   "reviewedImages": [
     {
-      "path": "evidence/scene-frames/pixel-corrected-1.jpg",
-      "sha256": "768a05fcdab1a597882e01974fb5bb378279ea637ebb3a46ea1e040bf8f2ef9b"
+      "path": "evidence/scene-frames/memory-128-1.jpg",
+      "sha256": "97373cc4fc75e59d7044a1f4a9b4d9e779bd3dd837e0404d591bdc8b83ee352e"
     },
     {
-      "path": "evidence/scene-frames/pixel-corrected-30.jpg",
-      "sha256": "0da72391599a53c55fd0feaea8ee32eb9a05f0ea6a7eb54e093d9cde54f5516e"
+      "path": "evidence/scene-frames/memory-128-30.jpg",
+      "sha256": "9334fc446890a0e901986915e30768feb99bd15a4701d8a5e4ff52b84e24de09"
     },
     {
-      "path": "evidence/scene-frames/pixel-corrected-60.jpg",
-      "sha256": "b6ec508518e79ff8936058610d66c2eb717436ab4dfd61b683ff5d4978a51bff"
+      "path": "evidence/scene-frames/memory-128-60.jpg",
+      "sha256": "519693ec7d5b3f9f03315945be8bff30fcf0cd81beac9bdb484d29cd9189f7a7"
     }
   ],
   "cameraChangedWhileHeld": true,
@@ -52,13 +52,17 @@
       "depth-clip-control",
       "texture-compression-bc-sliced-3d",
       "clip-distances",
+      "timestamp-query",
       "shader-f16",
       "texture-formats-tier2",
-      "timestamp-query",
       "primitive-index",
       "texture-component-swizzle",
       "subgroups"
     ],
+    "timestampQuery": {
+      "requested": false,
+      "available": true
+    },
     "deviceCreated": true,
     "hardwareAcceleration": "GPU device available; no Humus scene verified"
   },
@@ -71,193 +75,244 @@
     "validation": "passed",
     "sceneFrames": 0
   },
-  "applicationPresents": 2068,
-  "submittedFrames": 2068,
+  "applicationPresents": 10542,
+  "submittedFrames": 10542,
   "presentationMetrics": {
-    "firstPresentMs": 1796.3349609375,
-    "totalSteadyIntervals": 1695,
-    "steadyDurationMs": 22335.054931640625,
-    "submissionFPS": 75.88967231948928,
+    "firstPresentMs": 1908.43505859375,
+    "totalSteadyIntervals": 10229,
+    "steadyDurationMs": 174292.68994140625,
+    "submissionFPS": 58.68863463773947,
     "frameTimeMs": {
-      "p50": 12.9150390625,
-      "p95": 15.46484375,
-      "p99": 21.14501953125,
-      "min": 8.545166015625,
-      "max": 106.679931640625
+      "p50": 16.760009765625,
+      "p95": 20.469970703125,
+      "p99": 26.329833984375,
+      "min": 9.284912109375,
+      "max": 139.719970703125
     },
-    "retainedIntervals": 1695,
+    "retainedIntervals": 8192,
     "warmupMs": 5000,
     "queueCompletionSamples": [
       {
-        "present": 120,
-        "latencyMs": 3.484999895095825
+        "present": 8580,
+        "latencyMs": 6.295000076293945
       },
       {
-        "present": 180,
-        "latencyMs": 4.800000071525574
+        "present": 8640,
+        "latencyMs": 5.700000047683716
       },
       {
-        "present": 240,
-        "latencyMs": 0.2999999523162842
+        "present": 8700,
+        "latencyMs": 1.869999885559082
       },
       {
-        "present": 300,
-        "latencyMs": 0.28000009059906006
+        "present": 8760,
+        "latencyMs": 1.8650000095367432
       },
       {
-        "present": 360,
-        "latencyMs": 0.24000000953674316
+        "present": 8820,
+        "latencyMs": 2.444999933242798
       },
       {
-        "present": 420,
-        "latencyMs": 0.30500006675720215
+        "present": 8880,
+        "latencyMs": 1.994999885559082
       },
       {
-        "present": 480,
-        "latencyMs": 0.2749999761581421
+        "present": 8940,
+        "latencyMs": 7.109999895095825
       },
       {
-        "present": 540,
-        "latencyMs": 2.15500009059906
+        "present": 9000,
+        "latencyMs": 1.755000114440918
       },
       {
-        "present": 600,
-        "latencyMs": 0.5
+        "present": 9060,
+        "latencyMs": 6.620000123977661
       },
       {
-        "present": 660,
-        "latencyMs": 2.225000023841858
+        "present": 9120,
+        "latencyMs": 3.2249999046325684
       },
       {
-        "present": 720,
-        "latencyMs": 4.4700000286102295
+        "present": 9180,
+        "latencyMs": 1.9000000953674316
       },
       {
-        "present": 780,
-        "latencyMs": 0.40000009536743164
+        "present": 9240,
+        "latencyMs": 6.700000047683716
       },
       {
-        "present": 840,
-        "latencyMs": 2.784999966621399
+        "present": 9300,
+        "latencyMs": 6.859999895095825
       },
       {
-        "present": 900,
-        "latencyMs": 0.2849999666213989
+        "present": 9360,
+        "latencyMs": 1.8799998760223389
       },
       {
-        "present": 960,
-        "latencyMs": 0.26499998569488525
+        "present": 9420,
+        "latencyMs": 2.044999837875366
       },
       {
-        "present": 1020,
-        "latencyMs": 0.2549999952316284
+        "present": 9480,
+        "latencyMs": 5.045000076293945
       },
       {
-        "present": 1080,
-        "latencyMs": 0.28999996185302734
+        "present": 9540,
+        "latencyMs": 1.8849999904632568
       },
       {
-        "present": 1140,
-        "latencyMs": 2.7649999856948853
+        "present": 9600,
+        "latencyMs": 6.299999952316284
       },
       {
-        "present": 1200,
-        "latencyMs": 0.2749999761581421
+        "present": 9660,
+        "latencyMs": 7.119999885559082
       },
       {
-        "present": 1260,
-        "latencyMs": 0.38999998569488525
+        "present": 9720,
+        "latencyMs": 6.544999837875366
       },
       {
-        "present": 1320,
-        "latencyMs": 4.419999957084656
+        "present": 9780,
+        "latencyMs": 6.640000104904175
       },
       {
-        "present": 1380,
-        "latencyMs": 0.34499990940093994
+        "present": 9840,
+        "latencyMs": 7.075000047683716
       },
       {
-        "present": 1440,
-        "latencyMs": 0.3349999189376831
+        "present": 9900,
+        "latencyMs": 6.495000123977661
       },
       {
-        "present": 1500,
-        "latencyMs": 0.36500000953674316
+        "present": 9960,
+        "latencyMs": 9.31000018119812
       },
       {
-        "present": 1560,
-        "latencyMs": 0.3299999237060547
+        "present": 10020,
+        "latencyMs": 5.7200000286102295
       },
       {
-        "present": 1620,
-        "latencyMs": 4.475000023841858
+        "present": 10080,
+        "latencyMs": 1.945000171661377
       },
       {
-        "present": 1680,
-        "latencyMs": 1.6399999856948853
+        "present": 10140,
+        "latencyMs": 8.40999984741211
       },
       {
-        "present": 1740,
-        "latencyMs": 0.41999995708465576
+        "present": 10200,
+        "latencyMs": 3.759999990463257
       },
       {
-        "present": 1800,
-        "latencyMs": 0.440000057220459
+        "present": 10260,
+        "latencyMs": 7.240000009536743
       },
       {
-        "present": 1860,
-        "latencyMs": 3.1799999475479126
+        "present": 10320,
+        "latencyMs": 7.490000009536743
       },
       {
-        "present": 1920,
-        "latencyMs": 0.5149999856948853
+        "present": 10380,
+        "latencyMs": 1.7799999713897705
       },
       {
-        "present": 1980,
-        "latencyMs": 0.5850000381469727
+        "present": 10440,
+        "latencyMs": 7.079999923706055
       }
     ],
     "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
     "drawBridge": {
-      "drawBatches": 24524,
-      "batchedDraws": 81628,
-      "batchedUploads": 14389,
-      "uploadedBytes": 7172281,
+      "drawBatches": 126052,
+      "batchedDraws": 420036,
+      "batchedUploads": 73617,
+      "uploadedBytes": 19965529,
       "maxBatchCommands": 10,
       "stagingBytes": 1052672
     },
-    "wasmLinearMemoryBytes": 288096256,
+    "wasmLinearMemoryBytes": 153878528,
     "geometryGPUBytes": 60784,
     "textureGPUBytes": 4025064,
     "colorLogicalBytes": 3686400,
     "depthStencilLogicalMinimumBytes": 3686400,
     "pipelineCacheEntries": 5,
     "shaderObjects": 6,
+    "gpuTimingEnabled": false,
     "captureEnabled": true,
     "sceneEquivalenceEnabled": true,
     "cameraTestEnabled": true
   },
   "assetCacheMetrics": {
-    "mode": "warm",
-    "hits": 19,
-    "misses": 0,
-    "cacheBytes": 24689227,
-    "networkBodyBytes": 0,
-    "verifiedBytes": 24689227,
+    "mode": "cold",
+    "hits": 0,
+    "misses": 19,
+    "cacheBytes": 0,
+    "networkBodyBytes": 24706466,
+    "verifiedBytes": 24706466,
     "repairedEntries": 0,
     "limitBytes": 134217728,
     "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
   },
   "stabilitySamples": [
     {
-      "elapsedMs": 1796.585000038147,
+      "elapsedMs": 1908.6749999523163,
       "applicationPresents": 0,
-      "wasmLinearMemoryBytes": 288096256,
+      "wasmLinearMemoryBytes": 153878528,
       "geometryGPUBytes": 60784,
       "textureGPUBytes": 4025064,
       "pipelineCacheEntries": 5,
       "shaderObjects": 6,
       "submissionFPS": null
+    },
+    {
+      "elapsedMs": 32110.97000002861,
+      "applicationPresents": 1739,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.31100525950183
+    },
+    {
+      "elapsedMs": 62705.890000104904,
+      "applicationPresents": 3539,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.5978760979719
+    },
+    {
+      "elapsedMs": 93209.38499999046,
+      "applicationPresents": 5339,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.74362806968106
+    },
+    {
+      "elapsedMs": 123868.46000003815,
+      "applicationPresents": 7139,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.735134731452305
+    },
+    {
+      "elapsedMs": 154701.76999998093,
+      "applicationPresents": 8939,
+      "wasmLinearMemoryBytes": 153878528,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 58.660829229590256
     }
   ],
   "sceneEquivalence": [
@@ -268,7 +323,7 @@
       "negativeControl": null,
       "sceneY": 64,
       "pixels": 839680,
-      "nonblackPixels": 839338,
+      "nonblackPixels": 839324,
       "differentPixels": 0,
       "maxChannelError": 0,
       "meanAbsoluteChannelError": 0,
@@ -278,8 +333,8 @@
         "otherDraws": 10
       },
       "fullBufferSha256": {
-        "original": "cb0b76876fd82a9691a2b0f000f419f5a57dd65e84d359a583f196a0da366fca",
-        "unmaskedDiagnostic": "cb0b76876fd82a9691a2b0f000f419f5a57dd65e84d359a583f196a0da366fca"
+        "original": "a3e44c42bad87bfabf57703a012f559f25a29dbb5a15f2de69022517c43b491e",
+        "unmaskedDiagnostic": "a3e44c42bad87bfabf57703a012f559f25a29dbb5a15f2de69022517c43b491e"
       },
       "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
     },
@@ -290,7 +345,7 @@
       "negativeControl": null,
       "sceneY": 64,
       "pixels": 839680,
-      "nonblackPixels": 838836,
+      "nonblackPixels": 838532,
       "differentPixels": 0,
       "maxChannelError": 0,
       "meanAbsoluteChannelError": 0,
@@ -300,8 +355,8 @@
         "otherDraws": 300
       },
       "fullBufferSha256": {
-        "original": "f01d8fff4bc1c68348836a0cde7ddffe4024de346f511841af329c37fab7340d",
-        "unmaskedDiagnostic": "f01d8fff4bc1c68348836a0cde7ddffe4024de346f511841af329c37fab7340d"
+        "original": "25f4e67b7e853cf8d3fb4e20a1726185f2d752ecfbe663ebb45833ee83c2cb79",
+        "unmaskedDiagnostic": "25f4e67b7e853cf8d3fb4e20a1726185f2d752ecfbe663ebb45833ee83c2cb79"
       },
       "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
     },
@@ -312,7 +367,7 @@
       "negativeControl": null,
       "sceneY": 64,
       "pixels": 839680,
-      "nonblackPixels": 838382,
+      "nonblackPixels": 838354,
       "differentPixels": 0,
       "maxChannelError": 0,
       "meanAbsoluteChannelError": 0,
@@ -322,13 +377,13 @@
         "otherDraws": 600
       },
       "fullBufferSha256": {
-        "original": "469a15cd166e956e2519d678c49cad04e658ab8c5cb6f36d1a3e1ea95d273b29",
-        "unmaskedDiagnostic": "469a15cd166e956e2519d678c49cad04e658ab8c5cb6f36d1a3e1ea95d273b29"
+        "original": "df97545fb97bd89150771f9a3fd3da7b1a5b30c3e3039b74f4935ac42fe4afe9",
+        "unmaskedDiagnostic": "df97545fb97bd89150771f9a3fd3da7b1a5b30c3e3039b74f4935ac42fe4afe9"
       },
       "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
     }
   ],
-  "terminalStatus": "stopped",
+  "terminalStatus": "180-second frame-delivery measurement completed",
   "terminalDiagnostic": null,
   "recordedErrors": [],
   "limitations": "Presents are not verified scene frames or display FPS. Missing visual review is not a black-scene finding. Bounded logs cannot prove absence of all errors. No overall acceptance claim is inferred."

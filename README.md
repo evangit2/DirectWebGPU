@@ -27,7 +27,7 @@ Open http://127.0.0.1:8765/humus-runtime and click **Start Humus**. The server b
 ```sh
 python3 scripts/bootstrap.py
 scripts/translate.sh
-scripts/run_native.sh             # expected nonzero until graphics is implemented; 60-second cap
+scripts/run_native.sh             # native diagnostic lacks browser GPU; 60-second cap
 scripts/build_wasm.sh
 python3 scripts/test_server.py
 cargo test --manifest-path vendor/theseus/Cargo.toml -p runtime virtual_cpu_tests
@@ -39,26 +39,22 @@ cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d9::tests
 
 The browser verifies the EXE, asset, and WASM hashes, runs WASM in a terminable worker, and uses a transferred OffscreenCanvas for the guest window. Logs are bounded at producer and UI. Session diagnostics POST to a local same-origin receiver with random tokens, per-request/per-session limits and no command execution. Download diagnostics remains available when upload fails. The 4-hour button starts one bounded observation session, stops on runtime failure, and never overrides suspension. No 4-hour session has been run.
 
-## Current limitations
+## Compatibility and measurements
 
-Device creation, COM lifetimes, backbuffer surfaces, scene boundaries, clear, and GPU-to-GPU presentation are implemented. Shader capability reporting and draw/resource integration remain incomplete. No application Present, draw submission, scene frames, FPS, or correct-frame startup measurements exist. The Apple Metal non-fallback adapter probe establishes availability only. There is no working CheerpX rendering baseline in this workspace and no performance comparison is claimed.
+The original EXE drives the textured room, animated lights and camera input through D3D9 → hardware WebGPU. The original alpha/stencil lighting passes remain enabled. See [COMPATIBILITY.md](COMPATIBILITY.md) for the compact tested subset and [MEASURED-RESULTS.json](MEASURED-RESULTS.json) for revision-scoped evidence and outstanding measurements.
 
-The runtime still has inherited incomplete APIs and f64-based x87 approximations; failed launches are not proof of correctness. Null-page accesses now fail immediately. AOT static scanning includes possible data and missed indirect targets; unknown instructions/targets trap. CPU vendor/features describe a virtual processor; RDTSC is a virtual 1 MHz counter quantized to host milliseconds, not physical CPU speed. The current guest-memory allocation is inherited at 256 MiB and has not been optimized. Linear memory includes other WASM allocations and must not be summed with guest memory as independent totals.
+Normal presentation uses GPU-resident resources and GPU-to-GPU canvas presentation. The CPU worker owns translated execution; a separate GPU worker owns WebGPU. A bounded copied queue batches draws and uploads, flushing at resource/lifetime boundaries. Stop terminates both workers.
 
-Continue at `patches/theseus.patch` / `vendor/theseus/win32/winapi/src/d3d9.rs`. Implement actual D3D9 semantics and a reusable bytecode-to-WebGPU backend; preserve alpha-tested stencil writes and stencil-tested additive lighting. Full compatibility evidence and the selected path are in `COMPATIBILITY.md` and `DECISION.md`.
+Useful local test modes (click Start Humus after opening):
 
-## Shader translation diagnostic
+- `/humus-runtime?benchmark=1&resolution=1280x720&assetCache=warm`: 60-second ordinary run after first Present, no screenshots.
+- Add `benchmarkSeconds=180` for three minutes; accepted range is 60–600 seconds.
+- Add `startupTrial=1` for a first-Present startup trial; `assetCache=cold` clears only app-owned asset/WASM CacheStorage. Compiler and OS caches remain uncontrolled.
+- Add `captureFrames=1&cameraTest=1&sceneEquivalence=1` for separate visual/input/lighting evidence. This adds readbacks and diagnostic draws; do not treat it as ordinary performance.
+- Add `guestMemory=1` for bounded mapped-range and compatibility-heap snapshots; `gpuTiming=1` for sampled GPU draw-pass queries.
 
-A reusable shader module now translates D3D9 bytecode through unmodified MojoShader SPIR-V and Naga WGSL, compiled locally to WASM. The adapter adds explicit inputs for implicit VS 1.1 registers and splits combined texture/sampler resources for WebGPU. Translation allocations are bounded and reclaimed per shader pair. Integer vertex inputs, preshaders, full instruction coverage, and integration with the D3D9 device remain incomplete; the capability query returns a documented unavailable-device failure. Alpha testing is inserted into the actual translated color output through Naga IR. D3D9 depth/stencil/blend/color-write states map to WebGPU; ordered GPU tests verify that discarded fragments update neither stencil nor depth and that stencil equality limits additive lighting.
+Present submission rate is not display FPS. GPU queries measure selected draw passes, not complete GPU frames. Memory counters overlap and are not a browser-wide total. The current launcher requests 128 MiB guest backing after measuring a highest mapped end below 98 MiB; three-minute original camera/lighting validation passes, with 128 MiB less WASM backing. Earlier measured memory and timing reports retain their original revision scope.
 
-```sh
-python3 scripts/bootstrap_shaders.py
-python3 scripts/build_shaders.py
-python3 scripts/test_shaders.py
-```
+There is no accepted native scene reference or working CheerpX rendering baseline. Full compatibility and the provisional sustained 60 FPS target are not established. Unsupported instructions, indirect targets and essential unimplemented APIs can still fail with diagnostics; x87 uses f64 approximations.
 
-Open http://127.0.0.1:8765/shader-test.html and click **Run shader diagnostic**. The tests use authored diagnostic VS 1.1/PS 2.0 bytecode, including a texture lookup. They are separate from the original asset mount and do not count as Humus acceptance. A one-time GPU readback verifies output; this is not the application's presentation path. The browser uploads its report through the same bounded evidence receiver. `runtime/shaders/Cargo.lock` pins Naga dependencies; `dependencies.json` pins MojoShader and Emscripten. Third-party notices remain in their source checkouts.
-
-`CreateWindowExA` now dispatches synchronous `WM_NCCREATE` and `WM_CREATE` callbacks with a guest CREATESTRUCTA. The original Humus callback stores HWND 1 before its device request. This is a narrow creation path; complete Win32 window lifecycle and Unicode creation remain unimplemented.
-
-The UI starts two stoppable workers: the CPU worker executes translated x86; the GPU worker owns the OffscreenCanvas, validates WebGPU operations asynchronously, and wakes synchronous host calls through bounded shared-memory replies. Stop terminates both. Initial render-state setters cache validated values; draw-time state application and resource uploads remain unfinished. Diagnostic presentation is counted separately from original application Presents and scene frames.
+Shader diagnostics are built with `python3 scripts/bootstrap_shaders.py`, `python3 scripts/build_shaders.py`, and `python3 scripts/test_shaders.py`. The local `/shader-test.html` and `/pixel-center-test.html` pages exercise independent graphics cases; they do not substitute for launching the original EXE. Pinned dependencies and retained third-party notices are recorded in `dependencies.json`.

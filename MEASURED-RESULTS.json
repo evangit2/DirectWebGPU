@@ -6,14 +6,14 @@
   "Current rendering evidence": "evidence/current-render-summary.json",
   "Current performance evidence": "evidence/performance-corrected-summary.json",
   "Cold/warm startup evidence": "evidence/startup-corrected-summary.json",
-  "Stability evidence": "evidence/stability-summary.json",
+  "Stability evidence": "evidence/memory-reduction.json",
   "Alpha/stencil optimization evidence": "evidence/scene-equivalence-summary.json",
   "Historical measurements": "evidence/historical-measured-results.json",
   "Acceptance audit": "evidence/acceptance-audit.json",
   "Exact remaining blocker": [
     "Total browser memory and complete pre-first-frame transfer measurements remain incomplete. Guest mapped ranges and compatibility heap occupancy are now measured; CRT suballocations remain outside those heap counters.",
     "Identical current 60-second runs measured 56.55 and 77.17 Present submissions/s; cause of variability unmeasured, sustained 60 FPS target not established.",
-    "Longer stability evidence predates the pixel-center correction."
+    "Refresh cold/warm startup and ordinary throughput on the reduced-memory build; total browser memory and complete transfer accounting remain incomplete."
   ],
   "Measurement limitations": [
     "Present submission rate is not display FPS.",
@@ -32,7 +32,7 @@
   "GPU timing evidence": "evidence/gpu-timing-summary.json",
   "Memory and resource coverage": "evidence/memory-resource-summary.json",
   "Startup visual review": "evidence/startup-corrected-review.json",
-  "Guest allocation measurements": "evidence/guest-memory-summary.json",
-  "Latest original launch": "evidence/guest-memory-run.json",
-  "Next memory optimization": "Test lower guest capacity against original execution and stability; highest mapped end currently 102658048 bytes within fixed 268435456-byte capacity."
+  "Guest allocation measurements": "evidence/memory-128-summary.json",
+  "Latest original launch": "evidence/memory-128-run.json",
+  "Memory reduction": "evidence/memory-reduction.json"
 }

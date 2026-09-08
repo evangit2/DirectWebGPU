@@ -1,0 +1,206 @@
+{
+  "runId": "9051d388-ac0a-4410-97f1-7692fd678005",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "runtimeBuild": {
+    "wasmProfile": "release",
+    "translatedTreeSha256": "ed4bacff4ad1b28714e96472b5deb69618e920feee69510e4519859089f4a47e",
+    "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
+    "builtAt": "2026-09-08T21:10:29.769220+00:00",
+    "revision": "296b46c6108e4c50f1ac54512a7ed0c811870cb1",
+    "workingTreeDirty": false,
+    "sourceSha256": "733580beb2c4bb545460f7ce7edaadffb46cacf55d809f1f5600621f2da72917",
+    "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+    "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "translationEntryPoints": [
+      "409a00",
+      "004233f4"
+    ],
+    "artifacts": {
+      "humus.js": {
+        "sha256": "87ac3583c2cf9f7f349f68631ebb71fb53624356a5f56e6ff01203995636920e",
+        "bytes": 12952
+      },
+      "humus_bg.wasm": {
+        "sha256": "cdf909e2c54bd6f26782db3ccbb832972b04a42e840660a6806eb313fda16eca",
+        "bytes": 22653880
+      }
+    }
+  },
+  "source": "evidence/memory-128-run.json",
+  "status": "180-second frame-delivery measurement completed",
+  "applicationPresents": 10542,
+  "samples": [
+    {
+      "present": 1,
+      "guestCapacityBytes": 134217728,
+      "mappingCount": 25,
+      "mappedBytes": 101691392,
+      "highestMappedEnd": 102658048,
+      "heapCount": 2,
+      "heapCapacityBytes": 88080384,
+      "heapOccupiedWithHeadersBytes": 8253107,
+      "heapRows": [
+        [
+          5140480,
+          67108864,
+          4082039,
+          63026825,
+          1
+        ],
+        [
+          72249344,
+          20971520,
+          4171068,
+          16121480,
+          30
+        ]
+      ]
+    },
+    {
+      "present": 1800,
+      "guestCapacityBytes": 134217728,
+      "mappingCount": 25,
+      "mappedBytes": 101691392,
+      "highestMappedEnd": 102658048,
+      "heapCount": 2,
+      "heapCapacityBytes": 88080384,
+      "heapOccupiedWithHeadersBytes": 8253107,
+      "heapRows": [
+        [
+          5140480,
+          67108864,
+          4082039,
+          63026825,
+          1
+        ],
+        [
+          72249344,
+          20971520,
+          4171068,
+          16121480,
+          30
+        ]
+      ]
+    },
+    {
+      "present": 3600,
+      "guestCapacityBytes": 134217728,
+      "mappingCount": 25,
+      "mappedBytes": 101691392,
+      "highestMappedEnd": 102658048,
+      "heapCount": 2,
+      "heapCapacityBytes": 88080384,
+      "heapOccupiedWithHeadersBytes": 8253107,
+      "heapRows": [
+        [
+          5140480,
+          67108864,
+          4082039,
+          63026825,
+          1
+        ],
+        [
+          72249344,
+          20971520,
+          4171068,
+          16121480,
+          30
+        ]
+      ]
+    },
+    {
+      "present": 5400,
+      "guestCapacityBytes": 134217728,
+      "mappingCount": 25,
+      "mappedBytes": 101691392,
+      "highestMappedEnd": 102658048,
+      "heapCount": 2,
+      "heapCapacityBytes": 88080384,
+      "heapOccupiedWithHeadersBytes": 8253107,
+      "heapRows": [
+        [
+          5140480,
+          67108864,
+          4082039,
+          63026825,
+          1
+        ],
+        [
+          72249344,
+          20971520,
+          4171068,
+          16121480,
+          30
+        ]
+      ]
+    },
+    {
+      "present": 7200,
+      "guestCapacityBytes": 134217728,
+      "mappingCount": 25,
+      "mappedBytes": 101691392,
+      "highestMappedEnd": 102658048,
+      "heapCount": 2,
+      "heapCapacityBytes": 88080384,
+      "heapOccupiedWithHeadersBytes": 8253107,
+      "heapRows": [
+        [
+          5140480,
+          67108864,
+          4082039,
+          63026825,
+          1
+        ],
+        [
+          72249344,
+          20971520,
+          4171068,
+          16121480,
+          30
+        ]
+      ]
+    },
+    {
+      "present": 9000,
+      "guestCapacityBytes": 134217728,
+      "mappingCount": 25,
+      "mappedBytes": 101691392,
+      "highestMappedEnd": 102658048,
+      "heapCount": 2,
+      "heapCapacityBytes": 88080384,
+      "heapOccupiedWithHeadersBytes": 8253107,
+      "heapRows": [
+        [
+          5140480,
+          67108864,
+          4082039,
+          63026825,
+          1
+        ],
+        [
+          72249344,
+          20971520,
+          4171068,
+          16121480,
+          30
+        ]
+      ]
+    }
+  ],
+  "wasmLinearMemoryBytes": 153878528,
+  "heapRowColumns": [
+    "guestBaseAddress",
+    "reservedCapacityBytes",
+    "occupiedIncludingHeadersBytes",
+    "largestFreeBlockBytes",
+    "freeBlockCount"
+  ],
+  "limitations": [
+    "Guest address-space capacity is contained within WASM linear memory; mapped ranges and heap reservations are subsets of that capacity. Do not add these overlapping counters.",
+    "Heap occupancy measures compatibility heap allocations including 4-byte headers. Guest CRT allocators can suballocate inside VirtualAlloc ranges, which are only measured as mapped ranges.",
+    "Samples at first Present and each 1800th Present through 18000; transient allocation peaks between samples are not measured.",
+    "Up to 64 heap rows; aggregate counts cover all heaps.",
+    "These are allocator counters, not physical resident pages or total browser memory.",
+    "Capture and memory sampling make this a diagnostic run, not an ordinary throughput measurement."
+  ]
+}

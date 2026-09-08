@@ -1,0 +1,26 @@
+{
+  "runId": "9051d388-ac0a-4410-97f1-7692fd678005",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "visuallyInspectedFrames": [
+    1,
+    30,
+    60
+  ],
+  "finding": "Three individually inspected images show the original textured room and moving camera under the 128 MiB guest capacity. Sampled separate-target lighting remains byte-identical.",
+  "cameraChangedWhileHeld": true,
+  "cameraStableAfterRelease": true,
+  "images": [
+    {
+      "path": "evidence/scene-frames/memory-128-1.jpg",
+      "sha256": "97373cc4fc75e59d7044a1f4a9b4d9e779bd3dd837e0404d591bdc8b83ee352e"
+    },
+    {
+      "path": "evidence/scene-frames/memory-128-30.jpg",
+      "sha256": "9334fc446890a0e901986915e30768feb99bd15a4701d8a5e4ff52b84e24de09"
+    },
+    {
+      "path": "evidence/scene-frames/memory-128-60.jpg",
+      "sha256": "519693ec7d5b3f9f03315945be8bff30fcf0cd81beac9bdb484d29cd9189f7a7"
+    }
+  ]
+}
