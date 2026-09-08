@@ -54,21 +54,20 @@ self.onmessage=async({data})=>{
   const exeFile=build.files.find(f=>f.path===build.dependencies.executable.path);
   if(!exeFile)throw Error('original executable missing from asset manifest');
   const wasmEntry=build.runtimeBuild.artifacts['humus_bg.wasm'];
-  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:'/assets/'+f.path})),{...wasmEntry,url:'/generated/humus_bg.wasm'}],caches,fetch.bind(globalThis),location.origin);await cache.open(wasmEntry.sha256);
-  const bytes=await cache.load('/assets/'+exeFile.path);
+  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:'assets/'+f.path})),{...wasmEntry,url:'generated/humus_bg.wasm'}],caches,fetch.bind(globalThis),location.origin);await cache.open(wasmEntry.sha256);
+  const bytes=await cache.load('assets/'+exeFile.path);
   const actual=await hash(bytes);
   if(actual!==build.dependencies.executable.sha256)throw Error(`original executable hash mismatch: ${actual}`);
   send('identity',{sha256:actual});
   if(!build.wasm_available)throw Error('Humus WASM build missing; run scripts/build_wasm.sh');
-  const exe=await import('/generated/humus.js');
+  const exe=await import(new URL('./generated/humus.js',import.meta.url).href);
   // Initial memory is only 16 MiB; WASM allocations grow it as needed.
   memory=new WebAssembly.Memory({initial:256,maximum:8192,shared:true});
-  const wasmBytes=await cache.load('/generated/humus_bg.wasm');
+  const wasmBytes=await cache.load('generated/humus_bg.wasm');
   if(await hash(wasmBytes)!==build.runtimeBuild.artifacts['humus_bg.wasm'].sha256)throw Error('WASM artifact hash mismatch');
   if(build.runtimeBuild.executableSha256!==actual)throw Error('WASM was built for a different EXE');
   await exe.default({memory,module_or_path:wasmBytes});
-  for(const f of build.files){
-   const fileBytes=f.path===exeFile.path?bytes:await cache.load('/assets/'+f.path);
+  for(const f of build.files){const fileBytes=f.path===exeFile.path?bytes:await cache.load('assets/'+f.path);
    if(await hash(fileBytes)!==f.sha256)throw Error('asset integrity mismatch: '+f.path);
    exe.mount_file('/'+f.path,new Uint8Array(fileBytes));
   }

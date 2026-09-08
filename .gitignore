@@ -10,3 +10,5 @@ __pycache__/
 /evidence/missing-addresses.txt
 
 /runtime/shaders/target/
+deploy/public/
+deploy/.wrangler/
