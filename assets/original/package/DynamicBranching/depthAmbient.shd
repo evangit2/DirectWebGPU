@@ -1,0 +1,26 @@
+[Vertex shader]
+
+float4x4 mvp;
+
+struct VS_OUTPUT {
+	float4 Pos:      POSITION;
+	float2 texCoord: TEXCOORD0;
+};
+
+VS_OUTPUT main(float4 pos: POSITION, float2 texCoord: TEXCOORD0){
+	VS_OUTPUT Out;
+
+	Out.Pos = mul(mvp, pos);
+	Out.texCoord = texCoord;
+	return Out;
+}
+
+[Fragment shader]
+
+sampler Base;
+
+float4 main(float2 texCoord: TEXCOORD0) : COLOR {
+	float4 base = tex2D(Base, texCoord);
+
+	return 0.15 * base;
+}

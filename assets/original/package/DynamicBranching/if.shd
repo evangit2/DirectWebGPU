@@ -1,0 +1,26 @@
+[Vertex shader]
+
+float4x4 mvp;
+float3 lightPos;
+float invRad;
+
+struct VS_OUTPUT {
+	float4 Pos:  POSITION;
+	float3 lightVec: TEXCOORD0;
+};
+
+VS_OUTPUT main(float4 pos: POSITION){
+	VS_OUTPUT Out;
+
+	Out.Pos = mul(mvp, pos);
+	Out.lightVec = invRad * (lightPos - pos);
+
+	return Out;
+}
+
+
+[Fragment shader]
+
+float4 main(float3 lightVec: TEXCOORD0) : COLOR {
+	return dot(lightVec, lightVec);
+}

@@ -1,0 +1,75 @@
+{
+  "revision": "ba58fa1a58fc9ab26882da50e946d60500773b6e",
+  "builtAt": "2026-09-08T20:33:56.718135+00:00",
+  "dependencies": {
+    "theseus": {
+      "url": "https://github.com/evmar/theseus.git",
+      "revision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+      "license": "No license declaration found in checkout; local investigation only, no hosted redistribution."
+    },
+    "rust": "1.98.1",
+    "wasm_rust": "nightly-2026-09-07",
+    "wasm_bindgen_cli": "0.2.121",
+    "archive": {
+      "url": "https://humus.name/3D/DynamicBranching.zip",
+      "sha256": "8063039867fb69e4c58c6bad90f4aad80e43d0eb5c33818e1ba5a9c2be57077a"
+    },
+    "executable": {
+      "path": "DynamicBranching/DynamicBranching.exe",
+      "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+    },
+    "mojoshader": {
+      "url": "https://github.com/icculus/mojoshader.git",
+      "revision": "ad5dff84830c2863c841f4b1f4e3df78c705b383",
+      "license": "zlib; unmodified source consumed locally, LICENSE.txt retained"
+    },
+    "emsdk": {
+      "url": "https://github.com/emscripten-core/emsdk.git",
+      "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
+      "version": "4.0.7"
+    },
+    "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
+  },
+  "artifacts": {
+    "mojoshader.js": {
+      "sha256": "46cd28c62e9ba4c71c62953a6f40236112a940f1b0e776e9b3889138a0af238c",
+      "bytes": 10967
+    },
+    "mojoshader.wasm": {
+      "sha256": "5920161b7260a5a9b6c66b19406f537d94c4e1fdc77a1c913c9e91a704fdea02",
+      "bytes": 113759
+    },
+    "shader_translation.js": {
+      "sha256": "20cad63c4cf2f529362d0c65d8ec7200b6eb85b8a63f3f723693a44e9b8b79da",
+      "bytes": 11145
+    },
+    "shader_translation_bg.wasm": {
+      "sha256": "e736f7886245eee242b855761e318534e15cc94a4cd4995d78a104e5cb268af2",
+      "bytes": 2127618
+    },
+    "vertex.bin": {
+      "sha256": "83aae20d5f7916e0ffffe70bfa8aa57307bf957fadfebd7be8c2ff3dd25ceb37",
+      "bytes": 32
+    },
+    "pixel.bin": {
+      "sha256": "8a04b32e5ea7961b1903223b79600be21fe210803d075849faab9f3b3b5b83a9",
+      "bytes": 32
+    },
+    "texture.bin": {
+      "sha256": "144144ce71cbdd119af5b15c2b3086ee24c37a9adb7ce60edbb0e0ab6944e9ed",
+      "bytes": 60
+    },
+    "vertexConstant.bin": {
+      "sha256": "2b461d3be18c096b50643d07cd0e0c12338547e5d5944d132c5c84bf697a93f1",
+      "bytes": 32
+    },
+    "vertexExplicit.bin": {
+      "sha256": "0f0b3085b3097fc533bbd09c83175f1f4ad3742cf8d2ccd29460c836ef68acf6",
+      "bytes": 56
+    },
+    "vertexExplicitSparse.bin": {
+      "sha256": "933f99efba4279bd03114b883e2ebb2952dcdc3884353fa58df31dd74c5a895b",
+      "bytes": 56
+    }
+  }
+}
