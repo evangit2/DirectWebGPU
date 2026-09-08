@@ -1023,7 +1023,7 @@ index d13fb54..ee57444 100644
              ("dinput", winapi::dinput::VTABLES.as_slice()),
          ] {
 diff --git a/win32/winapi/src/advapi32.rs b/win32/winapi/src/advapi32.rs
-index c8b11ff..11c76db 100644
+index c8b11ff..7d21b8f 100644
 --- a/win32/winapi/src/advapi32.rs
 +++ b/win32/winapi/src/advapi32.rs
 @@ -6,11 +6,6 @@ pub type HKEY = u32;
@@ -1070,20 +1070,51 @@ index c8b11ff..11c76db 100644
  #[win32_derive::dllexport]
  pub fn RegQueryValueExW(
      _ctx: &mut Context,
-@@ -94,3 +64,349 @@ pub fn RegSetValueExW(
+@@ -94,3 +64,404 @@ pub fn RegSetValueExW(
  ) -> u32 /* WIN32_ERROR */ {
      stub!(0)
  }
 +
 +// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
 +
-+pub fn RegEnumValueA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!(
-+        "unsupported API: advapi32!RegEnumValueA; prior_builtin_return={ret:#010x} esp={:#010x}",
-+        ctx.cpu.regs.esp
-+    );
++#[win32_derive::dllexport]
++pub fn RegEnumValueA(ctx: &mut Context, hKey: u32, dwIndex: u32, lpValueName: u32, lpcchValueName: u32, lpReserved: u32, lpType: u32, lpData: u32, lpcbData: u32) -> u32 {
++    if lpReserved != 0 || !range(ctx,lpcchValueName,4) || (lpType != 0 && !range(ctx,lpType,4)) || (lpcbData != 0 && !range(ctx,lpcbData,4)) || (lpData != 0 && lpcbData == 0) { return 87; }
++    let r=REGISTRY.lock().unwrap();
++    let (path,rights)=match key(&r,hKey){Ok(v)=>v,Err(e)=>return e};
++    if rights & 1 == 0 { return 5; }
++    let Some(values)=r.keys.get(&path) else {return 6;};
++    let mut names:Vec<_>=values.keys().collect();names.sort();
++    let Some(n)=names.get(dwIndex as usize) else {return 259;};
++    let display=r.display_names.get(&(path.clone(),(*n).clone())).unwrap_or(n);
++    let (kind,data)=&values[*n];
++    let name_cap=ctx.memory.read::<u32>(lpcchValueName) as usize;
++    let data_cap=if lpcbData!=0 {ctx.memory.read::<u32>(lpcbData) as usize}else{0};
++    if name_cap>display.len() && !range(ctx,lpValueName,display.len()+1) {return 87;}
++    if lpData!=0 && data_cap>=data.len() && !range(ctx,lpData,data.len()) {return 87;}
++    if lpType!=0 {ctx.memory.write::<u32>(lpType,*kind);}
++    if lpcbData!=0 {ctx.memory.write::<u32>(lpcbData,data.len() as u32);}
++    if name_cap<=display.len() || (lpData!=0 && data_cap<data.len()) {return 234;}
++    ctx.memory.bytes[lpValueName as usize..lpValueName as usize+display.len()].copy_from_slice(display.as_bytes());
++    ctx.memory.write::<u8>(lpValueName+display.len() as u32,0);
++    ctx.memory.write::<u32>(lpcchValueName,display.len() as u32);
++    if lpData!=0 {ctx.memory.bytes[lpData as usize..lpData as usize+data.len()].copy_from_slice(data);}
++    0
 +}
++
++// Launcher-only virtual configuration; never accesses the machine's registry.
++pub fn seed_registry_dword(root:u32, subkey:&str, value_name:&str, value:u32)->Result<(),String> {
++    if !(0x80000000..=0x80000003).contains(&root) || subkey.is_empty() || subkey.len()>4096 || value_name.len()>4096 || !subkey.is_ascii() || !value_name.is_ascii() || subkey.contains('\0') || value_name.contains('\0') {return Err("invalid virtual registry seed".into());}
++    let mut r=REGISTRY.lock().unwrap();
++    if !r.handles.is_empty() {return Err("registry seed requires no open guest handles".into());}
++    let path=format!("{root:08x}\\{}",subkey.trim_matches('\\').to_ascii_lowercase());let name=value_name.to_ascii_lowercase();
++    let old=r.keys.get(&path).and_then(|v|v.get(&name)).map(|v|v.1.len());
++    if (!r.keys.contains_key(&path) && r.keys.len()>=4096) || (old.is_none() && r.keys.values().map(|v|v.len()).sum::<usize>()>=4096) || r.bytes-old.unwrap_or(0)+4>1048576 {return Err("virtual registry seed capacity exceeded".into());}
++    r.bytes=r.bytes-old.unwrap_or(0)+4;
++    r.display_names.entry((path.clone(),name.clone())).or_insert(value_name.into());
++    r.keys.entry(path).or_default().insert(name,(4,value.to_le_bytes().to_vec()));Ok(())
++}
++
 +pub fn RegOpenKeyA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!(
@@ -1099,6 +1130,7 @@ index c8b11ff..11c76db 100644
 +};
 +#[derive(Default)]
 +struct Registry {
++    display_names: HashMap<(String,String),String>,
 +    keys: HashMap<String, HashMap<String, (u32, Vec<u8>)>>,
 +    handles: HashMap<u32, (String, u32)>,
 +    next: u32,
@@ -1301,6 +1333,7 @@ index c8b11ff..11c76db 100644
 +    {
 +        return 8;
 +    }
++    r.display_names.entry((path.clone(),n.clone())).or_insert_with(|| String::from_utf8(ctx.memory.bytes[lpValueName as usize..lpValueName as usize+n.len()].to_vec()).unwrap());
 +    r.bytes = r.bytes - old + data.len();
 +    r.keys
 +        .get_mut(&path)
@@ -1418,6 +1451,28 @@ index c8b11ff..11c76db 100644
 +        assert_eq!(ctx.memory.read::<u32>(0x1600), 0x12345678);
 +        assert_eq!(RegSetValueExA(&mut ctx, h, 0x1200, 0, 4, 0x1400, 4), 5);
 +        assert_eq!(RegCloseKey(&mut ctx, h), 0);
++        seed_registry_dword(0x80000002,"Software\\EnumTest","WindowedRight",1280).unwrap();
++        let path=b"Software\\EnumTest\0";
++        ctx.memory.bytes[0x1100..0x1100+path.len()].copy_from_slice(path);
++        assert_eq!(RegOpenKeyExA(&mut ctx,0x80000002,0x1100,0,1,0x1300),0);
++        let h=ctx.memory.read::<u32>(0x1300);
++        assert!(seed_registry_dword(0x80000002,"x","y",1).is_err());
++        ctx.memory.write::<u32>(0x1500,2);
++        ctx.memory.write::<u32>(0x1508,2);
++        assert_eq!(RegEnumValueA(&mut ctx,h,0,0x1600,0x1500,0,0x1504,0x1700,0x1508),234);
++        assert_eq!(ctx.memory.read::<u32>(0x1508),4);
++        ctx.memory.write::<u32>(0x1500,32);
++        ctx.call32_x86(runtime::Cont(RegEnumValueA_stdcall),vec![h,0,0x1600,0x1500,0,0x1504,0,0]);
++        assert_eq!(ctx.cpu.regs.eax,0);
++        assert_eq!(ctx.cpu.regs.esp,0x4000);
++        assert_eq!(&ctx.memory.bytes[0x1600..0x160e],b"WindowedRight\0");
++        assert_eq!(ctx.memory.read::<u32>(0x1500),13);
++        ctx.memory.write::<u32>(0x1500,32);
++        assert_eq!(RegEnumValueA(&mut ctx,h,0,0x1600,0x1500,0,0,0x1700,0x1508),0);
++        assert_eq!(ctx.memory.read::<u32>(0x1700),1280);
++        assert_eq!(RegEnumValueA(&mut ctx,h,1,0x1600,0x1500,0,0,0,0),259);
++        assert_eq!(RegEnumValueA(&mut ctx,h,0,0x1600,0x5000,0,0,0,0),87);
++        assert_eq!(RegCloseKey(&mut ctx,h),0);
 +    }
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs

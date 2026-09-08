@@ -41,7 +41,7 @@ async function start(long=false){
   const channel=new MessageChannel();gpuWorker=new Worker('/gpu-worker.js',{type:'module'});
   gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;
   gpuWorker.postMessage({type:'init',canvas:offscreen,port:channel.port1,startEpoch:performance.timeOrigin+report.startTimeMs,drawDiagnostics:new URL(location.href).searchParams.has('drawDiagnostics'),captureFrames:new URL(location.href).searchParams.has('captureFrames'),cameraTest:new URL(location.href).searchParams.has('cameraTest')},[offscreen,channel.port1]);
-  worker.postMessage({type:'start',build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),gpuPort:channel.port2},[channel.port2]);
+  worker.postMessage({type:'start',resolution:new URL(location.href).searchParams.get('resolution'),build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),gpuPort:channel.port2},[channel.port2]);
   // Single attempts have a watchdog; long sessions are user-started and stoppable.
   timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:new URL(location.href).searchParams.has('benchmark')?120000:60000);
  }catch(e){log('failed',{message:e.message});stop('failed: '+e.message)}

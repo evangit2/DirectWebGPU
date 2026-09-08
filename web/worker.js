@@ -72,6 +72,10 @@ self.onmessage=async({data})=>{
    exe.mount_file('/'+f.path,new Uint8Array(fileBytes));
   }
   exe.set_current_dir('/DynamicBranching');
+  if(data.resolution==='1280x720'){
+   for(const [name,value] of Object.entries({WindowedLeft:0,WindowedTop:0,WindowedRight:1280,WindowedBottom:720,Fullscreen:0}))exe.seed_registry_dword(0x80000002,'SOFTWARE\\Humus',name,value);
+   send('launch-settings',{source:'virtual HKLM\\SOFTWARE\\Humus',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
+  }
   exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d9');
   send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});
