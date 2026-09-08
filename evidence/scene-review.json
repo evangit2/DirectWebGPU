@@ -1,0 +1,62 @@
+{
+  "runId": "913e32fa-7f01-471e-9544-41c9464bf61b",
+  "revision": "684bd621241c988d8db20e9dd4271ab1bac093c2",
+  "frames": [
+    {
+      "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-1.jpg",
+      "sha256": "9f160927fafe386949cf4ab38f97c17963a3c4a1048665d2f8ad5a8b2a155660",
+      "present": 1,
+      "sourceSceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428690,
+        "pixels": 428800
+      }
+    },
+    {
+      "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-30.jpg",
+      "sha256": "cc820ec92cdbcabe75948d3e330e2688f38708fe367fab99cd72e5a4a4e0940e",
+      "present": 30,
+      "sourceSceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428725,
+        "pixels": 428800
+      }
+    },
+    {
+      "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-60.jpg",
+      "sha256": "0e1321979bf3f77f14ceeb6737d515d9b1eb97175b698fac076dbfcca5dafb9f",
+      "present": 60,
+      "sourceSceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428725,
+        "pixels": 428800
+      }
+    }
+  ],
+  "visualResult": "Three inspected framebuffer captures show recognizable textured pillar room and changing colored lighting; FPS region excluded from change metrics.",
+  "correctness": "scene rendered; alpha/stencil reference agreement and controlled input not yet verified",
+  "remaining": "Verify controlled camera input and alpha/stencil scene correctness; measure cold/warm startup, steady-state delivery, memory and stability.",
+  "sceneRegionChanges": [
+    {
+      "meanAbsoluteRGBDifference": 9.757953660436137,
+      "pixelsChangingMoreThan12": 22246,
+      "pixels": 68480
+    },
+    {
+      "meanAbsoluteRGBDifference": 15.792138823987537,
+      "pixelsChangingMoreThan12": 34872,
+      "pixels": 68480
+    }
+  ],
+  "changeCause": "application-driven animated lighting; no controlled camera input in this run",
+  "captureLimitations": "320x240 JPEG sampled from 800x600 GPU framebuffer; readbacks affect timing; nonblack/change metrics do not prove alpha/stencil correctness"
+}

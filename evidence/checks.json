@@ -691,5 +691,18 @@
     "visualResult": "CUA screenshot: black scene region with original FPS overlay; acceptance fails",
     "termination": "bounded 60 second watchdog stopped both workers; no unsupported API trap",
     "limitations": "Unlit XYZ + normalized diffuse + optional TEX2; default texture stage only. Fixed-function lighting, mixed shader stages and other declarations remain unsupported. Correct scene rendering and input acceptance pending."
+  },
+  "initialWindowPlacement": {
+    "revision": "f4996f6",
+    "nativeTests": "16 Win32 tests passed",
+    "testLogSha256": "b25b0d4288e5552545adef44f4cccb42554479123f039e8ee9d94b45b6de724d",
+    "cleanRestore": "38 patched files byte-identical",
+    "WASMBuild": "passed",
+    "rootCause": "Missing initial WM_WINDOWPOSCHANGED left original width/height globals zero; aspect ratio 0/0 produced NaN projection Y",
+    "fix": "Deliver initial placement to original wndproc; DefWindowProc sends SIZE/MOVE unless suppressed by flags",
+    "finiteProjectionVerified": true,
+    "originalRunId": "913e32fa-7f01-471e-9544-41c9464bf61b",
+    "frameCaptures": 3,
+    "applicationPresents": 197
   }
 }
