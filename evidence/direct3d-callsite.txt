@@ -1,4 +1,6 @@
-Original unmodified EXE, D3D9 call sites (Capstone x86 32-bit)
+Unmodified original EXE, Capstone x86 32-bit disassembly.
+
+Direct3DCreate9 and GetDeviceCaps
 00402bd9 6a1f                   push 0x1f
 00402bdb e8b00c0100             call 0x413890
 00402be0 85c0                   test eax, eax
@@ -20,11 +22,26 @@ Original unmodified EXE, D3D9 call sites (Capstone x86 32-bit)
 00402c11 50                     push eax
 00402c12 ff5238                 call dword ptr [edx + 0x38]
 00402c15 8d9e20160100           lea ebx, [esi + 0x11620]
-00402c1b 6a38                   push 0x38
-00402c1d 6a00                   push 0
-00402c1f 53                     push ebx
-00402c20 e8ab730000             call 0x409fd0
-00402c25 83c40c                 add esp, 0xc
-00402c28 837dd000               cmp dword ptr [ebp - 0x30], 0
-00402c2c 760c                   jbe 0x402c3a
-00402c2e c7862816010015000000   mov dword ptr [esi + 0x11628], 0x15
+
+CreateDevice
+00402cd6 8b8618160100           mov eax, dword ptr [esi + 0x11618]
+00402cdc 57                     push edi
+00402cdd 53                     push ebx
+00402cde 6a40                   push 0x40
+00402ce0 ffb6e0140100           push dword ptr [esi + 0x114e0]
+00402ce6 8b08                   mov ecx, dword ptr [eax]
+00402ce8 6a01                   push 1
+00402cea 6a00                   push 0
+00402cec 50                     push eax
+00402ced ff5140                 call dword ptr [ecx + 0x40]
+00402cf0 85c0                   test eax, eax
+00402cf2 5b                     pop ebx
+
+WM_CREATE initializes application HWND
+00409b86 8b7508                 mov esi, dword ptr [ebp + 8]
+00409b89 6a05                   push 5
+00409b8b 56                     push esi
+00409b8c ff159ce14b00           call dword ptr [0x4be19c]
+00409b92 a1e0fe4d00             mov eax, dword ptr [0x4dfee0]
+00409b97 89b0e0140100           mov dword ptr [eax + 0x114e0], esi
+00409b9d e904010000             jmp 0x409ca6

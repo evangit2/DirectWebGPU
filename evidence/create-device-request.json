@@ -1,0 +1,24 @@
+{
+  "kind": "original EXE browser device request; creation unsupported",
+  "runId": "26e19608-8cda-42a4-8db5-c8f7196b09d4",
+  "revision": "66eb417d90116aa9c25c63cf56c4d3b3ba6f9f2d",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "presentationParameters": {
+    "BackBufferWidth": 800,
+    "BackBufferHeight": 600,
+    "BackBufferFormat": 21,
+    "BackBufferCount": 1,
+    "MultiSampleType": 0,
+    "MultiSampleQuality": 0,
+    "SwapEffect": 1,
+    "hDeviceWindow": 0,
+    "Windowed": 1,
+    "EnableAutoDepthStencil": 1,
+    "AutoDepthStencilFormat": 75,
+    "Flags": 0,
+    "FullScreen_RefreshRateInHz": 0,
+    "PresentationInterval": 2147483648
+  },
+  "rawFailure": "panicked at win32/winapi/src/d3d9.rs:27:5:\nunsupported API: d3d9!IDirect3D9::CreateDevice; args=[\n    0x4e700a,\n    0x0,\n    0x1,\n    0x1,\n    0x40,\n    0x44f8fec,\n    0x44f8fe8,\n]; stack_return=0x00402cf0; graphics capability not implemented",
+  "windowCreationCallbacksVerified": true
+}

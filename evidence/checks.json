@@ -32,5 +32,17 @@
     "originalRuntimeBuild": "passed: scripts/build_wasm.sh",
     "server": "passed: scripts/test_server.py",
     "acceptance": "diagnostics only; not Humus rendering"
+  },
+  "alphaStencilMilestone": {
+    "revision": "66eb417",
+    "IRTests": "passed: nested returns, all comparisons, MRT/depth output preservation",
+    "capabilityABI": "passed: HRESULT failure leaves caps output unchanged; stdcall cleanup preserved",
+    "windowCallbacks": "original WM_CREATE stores HWND 1; native CreateDevice receives it",
+    "restoration": "passed: 21 patched dependency files match clean restoration",
+    "server": "passed",
+    "logs": {
+      "alpha-unit-tests.log": "4c7d59ef7a90164b033708bff8cffed0608c01219897a48b2ea5f4f819d14931",
+      "alpha-d3d9-tests.log": "d4f4268236f2258507c435f86a66debe7ca3c24720a45a67af264953a3e984d7"
+    }
   }
 }

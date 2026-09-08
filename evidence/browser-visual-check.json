@@ -1,9 +1,9 @@
 {
-  "runId": "73d97158-c2fb-418c-9620-3464f94dfabe",
-  "runtimeRevision": "b2d0952d83898663fcebe321d60c72bc8a1c3cc0",
-  "method": "CUA tab screenshot inspected after terminal failure",
-  "observation": "blank black canvas, failed GetDeviceCaps status visible",
+  "runId": "26e19608-8cda-42a4-8db5-c8f7196b09d4",
+  "runtimeRevision": "66eb417d90116aa9c25c63cf56c4d3b3ba6f9f2d",
+  "method": "CUA screenshot inspected after terminal failure",
+  "observation": "blank canvas; CreateDevice failure visible",
   "sceneFrames": 0,
   "savedSceneScreenshot": null,
-  "note": "Tool screenshot is present in conversation; no separate screenshot artifact saved."
+  "note": "Screenshot shown in conversation; no standalone screenshot artifact saved."
 }
