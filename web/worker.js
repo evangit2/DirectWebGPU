@@ -1,3 +1,4 @@
+import {resourceMetrics} from './resource-metrics.js';
 import {DrawBatch} from './draw-batch.js';
 import {AssetCache} from './asset-cache.js';
 let memory, device, lastPanic, gpuPort, drawBatch, logCount=0;
@@ -79,6 +80,7 @@ self.onmessage=async({data})=>{
   exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d9');
   send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});
+  send('realm-resources',{sample:resourceMetrics(performance,'cpuWorker','before EXE execution')});
   send('execution-start',{wasmLinearMemoryBytes:memory.buffer.byteLength});
   const started=performance.now();
   exe.main();

@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';
+import {resourceMetrics,memoryProbe} from '../web/resource-metrics.js';
+const entries=Array.from({length:300},(_,i)=>({name:'https://example.test/a?secret='+i,transferSize:i?100:0,encodedBodySize:i?80:0,decodedBodySize:i?160:0}));let r=resourceMetrics({getEntriesByType:()=>entries},'test','sample');assert.equal(r.retainedEntries,256);assert.equal(r.transferSize,29900);assert.equal(r.zeroSizeEntries,1);assert.equal(r.entries[0].path,'/a');
+assert.equal((await memoryProbe({now:()=>0})).status,'unavailable');assert.equal((await memoryProbe({now:()=>0,measureUserAgentSpecificMemory:async()=>({bytes:10,breakdown:[]})})).bytes,10);assert.equal((await memoryProbe({now:()=>0,measureUserAgentSpecificMemory:()=>new Promise(()=>{})},1)).status,'unavailable');console.log('Realm bounds/sums/zero sizes, stripped queries, memory availability and timeout passed');
