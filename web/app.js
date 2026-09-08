@@ -17,7 +17,7 @@ async function start(long=false){
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
    if(!worker||report.runId!==activeRunId)return;
-   const {type,...rest}=data;if(type==='frame-capture'){report.frameCaptures??=[];if(report.frameCaptures.length<3)report.frameCaptures.push(rest.sample);return;}if(type==='draw-diagnostic'){report.drawDiagnostics??=[];if(report.drawDiagnostics.length<3)report.drawDiagnostics.push(rest.sample);return;}log(type,rest);
+   const {type,...rest}=data;if(['controlled-input','camera-sample','render-state-sample'].includes(type)){report.inputTest??=[];if(report.inputTest.length<140)report.inputTest.push({type,...rest});return;}if(type==='frame-capture'){report.frameCaptures??=[];if(report.frameCaptures.length<3)report.frameCaptures.push(rest.sample);return;}if(type==='draw-diagnostic'){report.drawDiagnostics??=[];if(report.drawDiagnostics.length<3)report.drawDiagnostics.push(rest.sample);return;}log(type,rest);
    if(type==='probe')report.browser=rest.result;
    if(type==='d3d9-device-created')report.d3d9Device=rest;
    if(type==='application-present'){report.applicationPresents=rest.count;report.submittedFrames=rest.submittedFrames;}
@@ -38,7 +38,7 @@ async function start(long=false){
   const offscreen=canvas.transferControlToOffscreen();
   const channel=new MessageChannel();gpuWorker=new Worker('/gpu-worker.js',{type:'module'});
   gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;
-  gpuWorker.postMessage({type:'init',canvas:offscreen,port:channel.port1,drawDiagnostics:new URL(location.href).searchParams.has('drawDiagnostics'),captureFrames:new URL(location.href).searchParams.has('captureFrames')},[offscreen,channel.port1]);
+  gpuWorker.postMessage({type:'init',canvas:offscreen,port:channel.port1,drawDiagnostics:new URL(location.href).searchParams.has('drawDiagnostics'),captureFrames:new URL(location.href).searchParams.has('captureFrames'),cameraTest:new URL(location.href).searchParams.has('cameraTest')},[offscreen,channel.port1]);
   worker.postMessage({type:'start',build,gpuPort:channel.port2},[channel.port2]);
   // Single attempts have a watchdog; long sessions are user-started and stoppable.
   timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:60000);
