@@ -70,6 +70,102 @@ index 92da1ea..443e1fb 100644
 +    for value in values{args.push(&JsValue::from(*value));}
 +    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
 +}
+diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
+index c6a4023..3296d7d 100644
+--- a/runtime/src/fpu.rs
++++ b/runtime/src/fpu.rs
+@@ -18,6 +18,8 @@ pub struct FPU {
+     pub st_top: usize,
+     /// The result of the last fcmp, used to generate status word.
+     pub cmp: std::cmp::Ordering,
++    unordered: bool,
++    invalid: bool,
+     /// Control word, as managed by fldcw/fnstcw. We only round-trip the value;
+     /// precision/rounding control bits are not honored.
+     pub control: u16,
+@@ -29,6 +31,8 @@ impl Default for FPU {
+             st: [0.; 8],
+             st_top: 8,
+             cmp: std::cmp::Ordering::Equal,
++            unordered: false,
++            invalid: false,
+             control: 0x037f,
+         }
+     }
+@@ -91,14 +95,33 @@ impl FPU {
+         self.st[self.st_offset(ofs)] = val;
+     }
+ 
++    pub fn compare(&mut self, a: f64, b: f64, unordered_instruction: bool) {
++        let signaling = |v: f64| v.is_nan() && v.to_bits() & (1u64 << 51) == 0;
++        if (a.is_nan() || b.is_nan()) && (!unordered_instruction || signaling(a) || signaling(b)) {
++            assert!(
++                self.control & 1 != 0,
++                "unsupported unmasked x87 invalid-operation exception"
++            );
++            self.invalid = true;
++        }
++        self.unordered = a.is_nan() || b.is_nan();
++        self.cmp = a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal);
++    }
++    pub fn clear_exceptions(&mut self) {
++        self.invalid = false;
++    }
+     pub fn status(&self) -> u16 {
+-        let status = match self.cmp {
+-            std::cmp::Ordering::Less => Status::C0,
+-            std::cmp::Ordering::Equal => Status::C3,
+-            std::cmp::Ordering::Greater => Status::empty(),
++        let status = if self.unordered {
++            Status::C0 | Status::C2 | Status::C3
++        } else {
++            match self.cmp {
++                std::cmp::Ordering::Less => Status::C0,
++                std::cmp::Ordering::Equal => Status::C3,
++                std::cmp::Ordering::Greater => Status::empty(),
++            }
+         };
+         // Our status register impl doesn't include st_top so include it here.
+-        let mut status = status.bits();
++        let mut status = status.bits() | u16::from(self.invalid);
+         status |= (self.st_top as u16 & 0b111) << 11;
+         status
+     }
+@@ -109,3 +132,34 @@ impl FPU {
+         val.round_ties_even()
+     }
+ }
++
++#[cfg(test)]
++mod comparison_tests {
++    #[test]
++    fn x87_ordered_unordered_zero_and_pop_flags() {
++        let mut f = super::FPU::default();
++        for (a, b, expected) in [
++            (1.0, 2.0, 0x100),
++            (2.0, 1.0, 0),
++            (-0.0, 0.0, 0x4000),
++            (f64::NAN, 1.0, 0x4500),
++        ] {
++            f.compare(a, b, true);
++            assert_eq!(f.status() & 0x4501, expected);
++        }
++        f.compare(f64::NAN, 1.0, false);
++        assert_eq!(f.status() & 1, 1);
++        f.clear_exceptions();
++        assert_eq!(f.status() & 1, 0);
++        f.compare(f64::from_bits(0x7ff0000000000001), 1.0, true);
++        assert_eq!(f.status() & 0x4501, 0x4501);
++        f.clear_exceptions();
++        f.push(2.0);
++        f.push(1.0);
++        f.compare(f.get(0), f.get(1), true);
++        f.pop();
++        f.pop();
++        assert_eq!(f.st_top, 8);
++        assert_eq!(f.status() & 0x4501, 0x100);
++    }
++}
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
 index e1edcc6..673ce94 100644
 --- a/runtime/src/memory.rs
@@ -185,6 +281,58 @@ index ff33cee..7a225e3 100644
 +
 +mod bit;
 +pub use bit::*;
+diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
+index 3746d0c..139e849 100644
+--- a/tc/src/codegen/fpu.rs
++++ b/tc/src/codegen/fpu.rs
+@@ -187,17 +187,23 @@ impl<'a> CodeGen<'a> {
+                 self.line(self.fpu_set_op(instr, 1, "t".into()));
+             }
+ 
+-            Fcom | Fcomp => {
++            Fcom | Fcomp | Fcompp | Fucom | Fucomp | Fucompp => {
+                 let (arg0, arg1) = match instr.op_count() {
++                    0 => (self.fpu_get_reg(0), self.fpu_get_reg(1)),
+                     1 => (self.fpu_get_reg(0), self.fpu_get_op(instr, 0)),
+                     2 => (self.fpu_get_op(instr, 0), self.fpu_get_op(instr, 1)),
+                     _ => unreachable!(),
+                 };
+                 self.line(format!(
+-                    "ctx.cpu.fpu.cmp = {}.total_cmp(&({}));",
+-                    arg0, arg1
++                    "ctx.cpu.fpu.compare({}, {}, {});",
++                    arg0,
++                    arg1,
++                    matches!(instr.mnemonic(), Fucom | Fucomp | Fucompp)
+                 ));
+-                if instr.mnemonic() == Fcomp {
++                if matches!(instr.mnemonic(), Fcomp | Fucomp | Fcompp | Fucompp) {
++                    self.line("ctx.cpu.fpu.pop();");
++                }
++                if matches!(instr.mnemonic(), Fcompp | Fucompp) {
+                     self.line("ctx.cpu.fpu.pop();");
+                 }
+             }
+@@ -207,14 +213,15 @@ impl<'a> CodeGen<'a> {
+                 self.line(self.set_op(instr, 0, "ctx.cpu.fpu.status()".into()));
+             }
+ 
+-            // We don't model FPU exceptions, so clearing them is a no-op.
+-            Fnclex => {}
++            // Clear the exception flags represented by the runtime.
++            Fnclex => {
++                self.line("ctx.cpu.fpu.clear_exceptions();");
++            }
+ 
+             Fninit => {
+                 // Also empties the stack, which is how a program recovers from
+                 // leaving values on it.
+-                self.line("ctx.cpu.fpu.control = 0x037f;");
+-                self.line("ctx.cpu.fpu.st_top = 8;");
++                self.line("ctx.cpu.fpu = Default::default();");
+             }
+ 
+             Fnstcw => {
 diff --git a/tc/src/codegen/misc.rs b/tc/src/codegen/misc.rs
 index 827dd83..8f02544 100644
 --- a/tc/src/codegen/misc.rs
