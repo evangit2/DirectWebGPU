@@ -7,35 +7,33 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, demo-deploy]
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Assemble static site
-        run: python3 deploy/build_public.py
-
-      - name: Verify asset integrity
+      - name: Pull latest into live checkout
         run: |
-          test -f deploy/public/index.html
-          test -f deploy/public/build-manifest.json
+          cd /home/evan/DirectWebGPU
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fd --exclude='web/generated' || true
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Deploy to Cloudflare Workers
-        env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Restart demo server
         run: |
-          if [ -z "$CF_TOKEN" ]; then
-            echo "::warning::CLOUDFLARE_API_TOKEN secret not set; validated build only"
-            exit 0
-          fi
-          CLOUDFLARE_API_TOKEN="$CF_TOKEN" npx wrangler deploy
-        working-directory: deploy
+          cd /home/evan/DirectWebGPU
+          pkill -f "scripts/serve.py" || true
+          sleep 1
+          nohup python3 scripts/serve.py 8765 >/tmp/humus-serve.log 2>&1 &
+          sleep 2
+          curl -fsS -o /dev/null -w "local %{http_code}\n" http://127.0.0.1:8765/
+
+      - name: Verify public site
+        run: |
+          sleep 2
+          B=https://atlas-node.tail5dadfe.ts.net
+          code=$(curl -fsS -o /dev/null -w "%{http_code}" "$B/") || code=failed
+          echo "index: $code"
+          [ "$code" = "200" ] || { echo "::error::public site check failed"; exit 1; }
+          curl -fsS -D - -o /dev/null "$B/" | tr -d '\r' | grep -qi "cross-origin-embedder-policy: require-corp" \
+            || { echo "::error::cross-origin isolation headers missing"; exit 1; }
+          echo "headers OK"
