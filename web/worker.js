@@ -1,3 +1,4 @@
+import {AssetCache} from './asset-cache.js';
 let memory, device, lastPanic, gpuPort, logCount=0;
 const send=(type,data={})=>{if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
@@ -44,7 +45,9 @@ self.onmessage=async({data})=>{
   const build=data.build;
   const exeFile=build.files.find(f=>f.path===build.dependencies.executable.path);
   if(!exeFile)throw Error('original executable missing from asset manifest');
-  const bytes=await (await fetch('/assets/'+exeFile.path)).arrayBuffer();
+  const wasmEntry=build.runtimeBuild.artifacts['humus_bg.wasm'];
+  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:'/assets/'+f.path})),{...wasmEntry,url:'/generated/humus_bg.wasm'}],caches,fetch,location.origin);await cache.open(wasmEntry.sha256);
+  const bytes=await cache.load('/assets/'+exeFile.path);
   const actual=await hash(bytes);
   if(actual!==build.dependencies.executable.sha256)throw Error(`original executable hash mismatch: ${actual}`);
   send('identity',{sha256:actual});
@@ -52,17 +55,18 @@ self.onmessage=async({data})=>{
   const exe=await import('/generated/humus.js');
   // Initial memory is only 16 MiB; WASM allocations grow it as needed.
   memory=new WebAssembly.Memory({initial:256,maximum:8192,shared:true});
-  const wasmBytes=await(await fetch('/generated/humus_bg.wasm')).arrayBuffer();
+  const wasmBytes=await cache.load('/generated/humus_bg.wasm');
   if(await hash(wasmBytes)!==build.runtimeBuild.artifacts['humus_bg.wasm'].sha256)throw Error('WASM artifact hash mismatch');
   if(build.runtimeBuild.executableSha256!==actual)throw Error('WASM was built for a different EXE');
   await exe.default({memory,module_or_path:wasmBytes});
   for(const f of build.files){
-   const fileBytes=f.path===exeFile.path?bytes:await(await fetch('/assets/'+f.path)).arrayBuffer();
+   const fileBytes=f.path===exeFile.path?bytes:await cache.load('/assets/'+f.path);
    if(await hash(fileBytes)!==f.sha256)throw Error('asset integrity mismatch: '+f.path);
    exe.mount_file('/'+f.path,new Uint8Array(fileBytes));
   }
   exe.set_current_dir('/DynamicBranching');
   exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d9');
+  send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});
   send('execution-start',{wasmLinearMemoryBytes:memory.buffer.byteLength});
   const started=performance.now();

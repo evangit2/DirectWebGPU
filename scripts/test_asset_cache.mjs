@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {AssetCache} from '../web/asset-cache.js';
+const bytes=new Uint8Array([1,2,3,4]),hash=Buffer.from(await crypto.subtle.digest('SHA-256',bytes)).toString('hex');
+const stores=new Map([['unrelated',new Map()]]);const storage={keys:async()=>[...stores.keys()],delete:async k=>stores.delete(k),open:async k=>{if(!stores.has(k))stores.set(k,new Map());const m=stores.get(k);return{match:async k=>m.get(k)?.clone(),put:async(k,v)=>m.set(k,v.clone()),delete:async k=>m.delete(k)}}};
+let calls=0;const fetcher=async()=>{calls++;return new Response(bytes)};const entry={url:'/asset.bin',bytes:4,sha256:hash};
+const create=async mode=>{const c=new AssetCache(mode,[entry],storage,fetcher,'https://example.test');await c.open(hash);return c};
+let c=await create('cold');assert.deepEqual(new Uint8Array(await c.load('/asset.bin')),bytes);assert.equal(c.stats.misses,1);
+c=await create('warm');await c.load('/asset.bin');assert.equal(c.stats.hits,1);assert.equal(calls,1);
+const bucket=stores.get('humus-verified-assets-v1-'+hash);bucket.set('https://example.test/asset.bin?sha256='+hash,new Response(new Uint8Array([9,9,9,9])));
+c=await create('warm');await c.load('/asset.bin');assert.equal(c.stats.repairedEntries,1);assert.equal(calls,2);
+c=await create('cold');await c.load('/asset.bin');assert.equal(c.stats.hits,0);assert.equal(calls,3);assert(stores.has('unrelated'));
+await assert.rejects(()=>c.load('/unknown.bin'));
+console.log('Cold reset, warm hits, corruption repair, manifest bounds and namespace isolation passed');
