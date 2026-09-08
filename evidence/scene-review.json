@@ -1,62 +1,155 @@
 {
-  "runId": "913e32fa-7f01-471e-9544-41c9464bf61b",
-  "revision": "684bd621241c988d8db20e9dd4271ab1bac093c2",
+  "runId": "75ca1907-369c-4b83-87ac-6ff1a26b2de9",
+  "revision": "6e64e4d010cb794e44d03dde506eadc39efe9045",
   "frames": [
     {
-      "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-1.jpg",
-      "sha256": "9f160927fafe386949cf4ab38f97c17963a3c4a1048665d2f8ad5a8b2a155660",
+      "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-1.jpg",
+      "sha256": "e9c472cdc31d3a8a6613440ed04f2dead671b5183bde482de75bcb8d3aa75749",
       "present": 1,
       "sourceSceneRegion": {
         "x": 0,
         "y": 64,
         "width": 800,
         "height": 536,
-        "nonblackPixels": 428690,
+        "nonblackPixels": 428712,
         "pixels": 428800
       }
     },
     {
-      "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-30.jpg",
-      "sha256": "cc820ec92cdbcabe75948d3e330e2688f38708fe367fab99cd72e5a4a4e0940e",
+      "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-30.jpg",
+      "sha256": "bb5f5459c4134cafa8e5832f06184f38c97ec2df2708127a0a19142be3ebee16",
       "present": 30,
       "sourceSceneRegion": {
         "x": 0,
         "y": 64,
         "width": 800,
         "height": 536,
-        "nonblackPixels": 428725,
+        "nonblackPixels": 428563,
         "pixels": 428800
       }
     },
     {
-      "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-60.jpg",
-      "sha256": "0e1321979bf3f77f14ceeb6737d515d9b1eb97175b698fac076dbfcca5dafb9f",
+      "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-60.jpg",
+      "sha256": "4f7983f96279a5f51746bf01a38a6ad375c37533d313d7388aded2cc63799236",
       "present": 60,
       "sourceSceneRegion": {
         "x": 0,
         "y": 64,
         "width": 800,
         "height": 536,
-        "nonblackPixels": 428725,
+        "nonblackPixels": 428213,
         "pixels": 428800
       }
     }
   ],
-  "visualResult": "Three inspected framebuffer captures show recognizable textured pillar room and changing colored lighting; FPS region excluded from change metrics.",
-  "correctness": "scene rendered; alpha/stencil reference agreement and controlled input not yet verified",
-  "remaining": "Verify controlled camera input and alpha/stencil scene correctness; measure cold/warm startup, steady-state delivery, memory and stability.",
+  "visualResult": "Three inspected captures show recognizable pillar room; Arrow Up moves camera from entrance toward wall; view stops moving after key release while lighting continues to animate.",
+  "correctness": "recognizable scene and controlled camera input verified; original alpha/stencil states match intended passes and diagnostic stencil GPU tests pass; full scene pixel/reference agreement remains unverified",
+  "remaining": "Complete scene alpha/stencil correctness validation and measure cold/warm startup, steady-state delivery, memory and stability.",
+  "camera": {
+    "key": "ArrowUp",
+    "bindingEvidence": "Original instruction 0x00404cbc initializes forward binding to VK_UP (0x26)",
+    "events": [
+      {
+        "type": "controlled-input",
+        "present": 1,
+        "message": [
+          5,
+          72,
+          38,
+          1
+        ],
+        "key": "ArrowUp",
+        "action": "down"
+      },
+      {
+        "type": "controlled-input",
+        "present": 30,
+        "message": [
+          6,
+          72,
+          38,
+          1
+        ],
+        "key": "ArrowUp",
+        "action": "up"
+      }
+    ],
+    "matrices": [
+      [
+        -4.692094535130309e-08,
+        0.0,
+        -1.0003334283828735,
+        -1.0,
+        0.0,
+        1.4312348365783691,
+        0.0,
+        0.0,
+        1.0734261274337769,
+        0.0,
+        -4.372596151824837e-08,
+        -4.371138828673793e-08,
+        -10.734176635742188,
+        286.2469787597656,
+        1798.599853515625,
+        1800.0
+      ],
+      [
+        -4.692094535130309e-08,
+        0.0,
+        -1.0003334283828735,
+        -1.0,
+        0.0,
+        1.4312348365783691,
+        0.0,
+        0.0,
+        1.0734261274337769,
+        0.0,
+        -4.372596151824837e-08,
+        -4.371138828673793e-08,
+        -10.734183311462402,
+        286.2469787597656,
+        26.489395141601562,
+        28.48023223876953
+      ],
+      [
+        -4.692094535130309e-08,
+        0.0,
+        -1.0003334283828735,
+        -1.0,
+        0.0,
+        1.4312348365783691,
+        0.0,
+        0.0,
+        1.0734261274337769,
+        0.0,
+        -4.372596151824837e-08,
+        -4.371138828673793e-08,
+        -10.734183311462402,
+        286.2469787597656,
+        26.489395141601562,
+        28.48023223876953
+      ]
+    ],
+    "changedWhileHeld": true,
+    "identicalAfterRelease": true
+  },
   "sceneRegionChanges": [
     {
-      "meanAbsoluteRGBDifference": 9.757953660436137,
-      "pixelsChangingMoreThan12": 22246,
+      "meanAbsoluteRGBDifference": 15.242245911214953,
+      "pixelsChangingMoreThan12": 37690,
       "pixels": 68480
     },
     {
-      "meanAbsoluteRGBDifference": 15.792138823987537,
-      "pixelsChangingMoreThan12": 34872,
+      "meanAbsoluteRGBDifference": 12.956571261682242,
+      "pixelsChangingMoreThan12": 39519,
       "pixels": 68480
     }
   ],
-  "changeCause": "application-driven animated lighting; no controlled camera input in this run",
-  "captureLimitations": "320x240 JPEG sampled from 800x600 GPU framebuffer; readbacks affect timing; nonblack/change metrics do not prove alpha/stencil correctness"
+  "stencilTrace": {
+    "alphaLess255ReplaceWrites": 15,
+    "stencilEqualLightingDraws": 15,
+    "totalDraws": 40,
+    "limitation": "State trace proves submitted state, not all resulting scene pixels"
+  },
+  "captureLimitations": "320x240 JPEG from 800x600 GPU framebuffer; readbacks affect timing; source y<64 excluded from region analysis"
 }

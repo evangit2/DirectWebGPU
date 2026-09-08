@@ -704,5 +704,22 @@
     "originalRunId": "913e32fa-7f01-471e-9544-41c9464bf61b",
     "frameCaptures": 3,
     "applicationPresents": 197
+  },
+  "controlledCamera": {
+    "revision": "6e64e4d",
+    "runId": "75ca1907-369c-4b83-87ac-6ff1a26b2de9",
+    "applicationPresents": 284,
+    "keyDownAfterPresent": 1,
+    "keyUpAfterPresent": 30,
+    "cameraMatrixChangedWhileHeld": true,
+    "cameraMatrixStableAtPresent60": true,
+    "capturesInspected": 3,
+    "stencilTrace": {
+      "alphaLess255ReplaceWrites": 15,
+      "stencilEqualLightingDraws": 15,
+      "totalDraws": 40,
+      "limitation": "State trace proves submitted state, not all resulting scene pixels"
+    },
+    "earlierWTest": "no movement; binary defaults use Arrow Up"
   }
 }

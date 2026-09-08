@@ -6,10 +6,10 @@
   "Runtime build": {
     "translatedTreeSha256": "4e48b571ff67be8f634998749b693fe11d220ef5c4485f2917814eabb44b32e9",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T19:16:57.252611+00:00",
-    "revision": "684bd621241c988d8db20e9dd4271ab1bac093c2",
+    "builtAt": "2026-09-08T19:24:52.761222+00:00",
+    "revision": "6e64e4d010cb794e44d03dde506eadc39efe9045",
     "workingTreeDirty": true,
-    "sourceSha256": "8ea1540560c2f5fe09f85feb96d2be994c61dfe6f3c5bb6ee61391abc34ab739",
+    "sourceSha256": "cbc252c878e86b634c46d9655cb5c7d43e75ccd85bfe3ea22eda2ac8a4f678fa",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
@@ -27,7 +27,7 @@
       }
     }
   },
-  "Run ID": "913e32fa-7f01-471e-9544-41c9464bf61b",
+  "Run ID": "75ca1907-369c-4b83-87ac-6ff1a26b2de9",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -87,7 +87,7 @@
       "height": 600
     }
   },
-  "Correct browser rendering": "scene rendered; alpha/stencil reference agreement and controlled input not yet verified",
+  "Correct browser rendering": "recognizable scene and controlled camera input verified; original alpha/stencil states match intended passes and diagnostic stencil GPU tests pass; full scene pixel/reference agreement remains unverified",
   "Hardware acceleration evidence": {
     "adapter": "non-fallback Apple Metal adapter/device",
     "retainedOriginalDrawSubmissions": 218,
@@ -95,50 +95,50 @@
   },
   "Screenshot and frame evidence": {
     "sceneFrames": 3,
-    "applicationPresents": 197,
-    "submittedFrames": 197,
+    "applicationPresents": 284,
+    "submittedFrames": 284,
     "correctSceneScreenshots": [
       {
-        "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-1.jpg",
-        "sha256": "9f160927fafe386949cf4ab38f97c17963a3c4a1048665d2f8ad5a8b2a155660",
+        "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-1.jpg",
+        "sha256": "e9c472cdc31d3a8a6613440ed04f2dead671b5183bde482de75bcb8d3aa75749",
         "present": 1,
         "sourceSceneRegion": {
           "x": 0,
           "y": 64,
           "width": 800,
           "height": 536,
-          "nonblackPixels": 428690,
+          "nonblackPixels": 428712,
           "pixels": 428800
         }
       },
       {
-        "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-30.jpg",
-        "sha256": "cc820ec92cdbcabe75948d3e330e2688f38708fe367fab99cd72e5a4a4e0940e",
+        "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-30.jpg",
+        "sha256": "bb5f5459c4134cafa8e5832f06184f38c97ec2df2708127a0a19142be3ebee16",
         "present": 30,
         "sourceSceneRegion": {
           "x": 0,
           "y": 64,
           "width": 800,
           "height": 536,
-          "nonblackPixels": 428725,
+          "nonblackPixels": 428563,
           "pixels": 428800
         }
       },
       {
-        "path": "evidence/scene-frames/913e32fa-7f01-471e-9544-41c9464bf61b-60.jpg",
-        "sha256": "0e1321979bf3f77f14ceeb6737d515d9b1eb97175b698fac076dbfcca5dafb9f",
+        "path": "evidence/scene-frames/75ca1907-369c-4b83-87ac-6ff1a26b2de9-60.jpg",
+        "sha256": "4f7983f96279a5f51746bf01a38a6ad375c37533d313d7388aded2cc63799236",
         "present": 60,
         "sourceSceneRegion": {
           "x": 0,
           "y": 64,
           "width": 800,
           "height": 536,
-          "nonblackPixels": 428725,
+          "nonblackPixels": 428213,
           "pixels": 428800
         }
       }
     ],
-    "visualResult": "Three inspected framebuffer captures show recognizable textured pillar room and changing colored lighting; FPS region excluded from change metrics."
+    "visualResult": "Three inspected captures show recognizable pillar room; Arrow Up moves camera from entrance toward wall; view stops moving after key release while lighting continues to animate."
   },
   "Startup/FPS/memory": {
     "coldToCorrectFrame": "not measured",
@@ -153,10 +153,10 @@
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptDurationMs": 62173.99000000954,
+    "diagnosticAttemptDurationMs": 63725.97499990463,
     "diagnosticTimingCaveat": "one debug/traced run; may include opt-in GPU readback captures; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "Verify controlled camera input and alpha/stencil scene correctness; measure cold/warm startup, steady-state delivery, memory and stability.",
+  "Exact remaining blocker": "Complete scene alpha/stencil correctness validation and measure cold/warm startup, steady-state delivery, memory and stability.",
   "Terminal runtime diagnostic": null,
   "Original application rejection": null,
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
@@ -869,6 +869,23 @@
       "originalRunId": "913e32fa-7f01-471e-9544-41c9464bf61b",
       "frameCaptures": 3,
       "applicationPresents": 197
+    },
+    "controlledCamera": {
+      "revision": "6e64e4d",
+      "runId": "75ca1907-369c-4b83-87ac-6ff1a26b2de9",
+      "applicationPresents": 284,
+      "keyDownAfterPresent": 1,
+      "keyUpAfterPresent": 30,
+      "cameraMatrixChangedWhileHeld": true,
+      "cameraMatrixStableAtPresent60": true,
+      "capturesInspected": 3,
+      "stencilTrace": {
+        "alphaLess255ReplaceWrites": 15,
+        "stencilEqualLightingDraws": 15,
+        "totalDraws": 40,
+        "limitation": "State trace proves submitted state, not all resulting scene pixels"
+      },
+      "earlierWTest": "no movement; binary defaults use Arrow Up"
     }
   },
   "evidenceFile": "evidence/browser-direct3d-attempt.json"
