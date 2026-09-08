@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "8502098b255ea3f71f87e26e3aff536f2f7d6256",
+  "currentRuntimeRevision": "58b3ae567b3767bdb75cb67ffabe91ca2da9cc06",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -51,5 +51,14 @@
       "alpha-unit-tests.log": "4c7d59ef7a90164b033708bff8cffed0608c01219897a48b2ea5f4f819d14931",
       "alpha-d3d9-tests.log": "d4f4268236f2258507c435f86a66debe7ca3c24720a45a67af264953a3e984d7"
     }
+  },
+  "bufferMilestone": {
+    "revision": "58b3ae567b3767bdb75cb67ffabe91ca2da9cc06",
+    "GPU": "passed: geometryBuffers and deviceBridge in evidence/shader-browser-tests.json",
+    "COM": "passed: 3 d3d9 unit tests, including descriptor, pointer, calling convention, lock flags and ranges",
+    "restoration": "passed: 28 patched files byte-identical",
+    "originalEXE": "device creation verified; rejects missing shader capabilities before buffer creation",
+    "limitations": "stream/index binding and application-driven geometry draw not yet implemented",
+    "logSha256": "38817901a0b0abc7c2dc7b5dcfd624ad27e690e4b823590caf2f62a9d80ff23a"
   }
 }
