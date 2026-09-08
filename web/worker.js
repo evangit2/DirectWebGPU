@@ -46,7 +46,7 @@ self.onmessage=async({data})=>{
   const exeFile=build.files.find(f=>f.path===build.dependencies.executable.path);
   if(!exeFile)throw Error('original executable missing from asset manifest');
   const wasmEntry=build.runtimeBuild.artifacts['humus_bg.wasm'];
-  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:'/assets/'+f.path})),{...wasmEntry,url:'/generated/humus_bg.wasm'}],caches,fetch,location.origin);await cache.open(wasmEntry.sha256);
+  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:'/assets/'+f.path})),{...wasmEntry,url:'/generated/humus_bg.wasm'}],caches,fetch.bind(globalThis),location.origin);await cache.open(wasmEntry.sha256);
   const bytes=await cache.load('/assets/'+exeFile.path);
   const actual=await hash(bytes);
   if(actual!==build.dependencies.executable.sha256)throw Error(`original executable hash mismatch: ${actual}`);
