@@ -1,4 +1,5 @@
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
+import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
@@ -28,12 +29,12 @@ async function dispatch({func,args,buffer,retAddr}){
    canvas.width=width;canvas.height=height;windowSize=[width,height];emit('window-created',{title,width,height});result=1;
   }else if(func==='graphics_call'){
    const [op,...values]=args;if(values.some(v=>!Number.isInteger(v)||v<0||v>0xffffffff))throw Error('invalid graphics argument');
-   result=await graphics(op,values);
+   result=await graphics(op,values,buffer);
   }else throw Error('unsupported GPU host operation '+func);
  }catch(e){emit('gpu-error',{message:String(e.stack??e)});}
  finally{reply(buffer,retAddr,result)}
 }
-async function graphics(op,a){
+async function graphics(op,a,memory){
  if(op===1){
   if(backend)throw Error('second D3D9 device unsupported');
   const [width,height,format,count,multi,quality,swap,hwnd,windowed,autoDepth,depthFormat,flags,refresh,interval]=a;
@@ -44,11 +45,11 @@ async function graphics(op,a){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),presents:0,submissions:0};
+  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),presents:0,submissions:0};
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
- if(op===2){backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
+ if(op===2){backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
   const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
@@ -60,6 +61,14 @@ async function graphics(op,a){
  if(op===4){ // GPU-to-GPU presentation, with no framebuffer readback.
   device.pushErrorScope('validation');const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);
   const err=await device.popErrorScope();if(err)throw Error(err.message);backend.presents++;backend.submissions++;emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+ }
+ if(op>=5&&op<=7){
+  try{
+   if(op===5&&a.length===4)return await backend.buffers.create(a[1],a[2],a[3]);
+   if(op===6&&a.length===5){await backend.buffers.upload(a[1],a[2],memory,a[3],a[4]);return 1;}
+   if(op===7&&a.length===2){backend.buffers.destroy(a[1]);return 1;}
+   return INVALID;
+  }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  throw Error('unsupported graphics opcode '+op);
 }

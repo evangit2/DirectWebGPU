@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..248f38f
+index 0000000..98ee3db
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,213 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -337,7 +337,11 @@ index 0000000..248f38f
 +pub mod IDirect3DDevice9;
 +#[path="d3d9/surface.rs"]
 +pub mod IDirect3DSurface9;
-+pub const VTABLES: [(&str, &[&str]);3] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES)];
++#[path="d3d9/buffers.rs"]
++mod buffers;
++pub mod IDirect3DVertexBuffer9 { pub use super::buffers::*; pub static mut VTABLE:u32=0; }
++pub mod IDirect3DIndexBuffer9 { pub use super::buffers::*; pub static mut VTABLE:u32=0; }
++pub const VTABLES: [(&str, &[&str]);5] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES)];
 +fn valid(ctx: &Context, p: u32, n: usize) -> bool {
 +    p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
 +}
@@ -527,12 +531,390 @@ index 0000000..248f38f
 +        assert!(!OBJECTS.lock().unwrap().contains_key(&obj));
 +    }
 +}
+diff --git a/win32/winapi/src/d3d9/buffers.rs b/win32/winapi/src/d3d9/buffers.rs
+new file mode 100644
+index 0000000..0fea6b1
+--- /dev/null
++++ b/win32/winapi/src/d3d9/buffers.rs
+@@ -0,0 +1,372 @@
++//! Vertex/index buffer COM storage with persistent guest lock memory.
++use super::*;
++#[derive(Clone)]
++struct Buffer {
++    refs: u32,
++    owner: u32,
++    backend: u32,
++    gpu: u32,
++    data: u32,
++    size: u32,
++    usage: u32,
++    pool: u32,
++    kind: u32,
++    format: u32,
++    fvf: u32,
++    locked: Option<(u32, u32, bool)>,
++}
++static BUFFERS: LazyLock<Mutex<HashMap<u32, Buffer>>> =
++    LazyLock::new(|| Mutex::new(HashMap::new()));
++pub const VTABLE_ENTRIES: [&str; 14] = [
++    "QueryInterface",
++    "AddRef",
++    "Release",
++    "GetDevice",
++    "SetPrivateData",
++    "GetPrivateData",
++    "FreePrivateData",
++    "SetPriority",
++    "GetPriority",
++    "PreLoad",
++    "GetType",
++    "Lock",
++    "Unlock",
++    "GetDesc",
++];
++fn buffer(this: u32) -> Buffer {
++    BUFFERS
++        .lock()
++        .unwrap()
++        .get(&this)
++        .expect("invalid/released geometry buffer")
++        .clone()
++}
++pub fn create(
++    ctx: &mut Context,
++    owner: u32,
++    backend: u32,
++    kind: u32,
++    size: u32,
++    usage: u32,
++    format: u32,
++    pool: u32,
++    fvf: u32,
++    out: u32,
++    shared: u32,
++) -> u32 {
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    if shared != 0
++        || size == 0
++        || size > 64 * 1024 * 1024
++        || pool > 1
++        || usage & !0x208 != 0
++        || (usage & 0x200 != 0 && pool == 1)
++        || (kind == 7
++            && (![101, 102].contains(&format) || size % if format == 101 { 2 } else { 4 } != 0))
++    {
++        return D3DERR_INVALIDCALL;
++    }
++    let gpu = host::graphics_call(5, &[backend, kind, size, format]);
++    if gpu >= 0x80000000 {
++        return gpu;
++    }
++    let padded = (size + 3) & !3;
++    let data = kernel32::lock().process_heap.alloc(&mut ctx.memory, padded);
++    if data == 0 {
++        host::graphics_call(7, &[backend, gpu]);
++        return 0x8007000e;
++    }
++    ctx.memory.bytes[data as usize..(data + padded) as usize].fill(0);
++    let this = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    if this == 0 {
++        kernel32::lock().process_heap.free(&mut ctx.memory, data);
++        host::graphics_call(7, &[backend, gpu]);
++        return 0x8007000e;
++    }
++    let vt = unsafe {
++        if kind == 6 {
++            IDirect3DVertexBuffer9::VTABLE
++        } else {
++            IDirect3DIndexBuffer9::VTABLE
++        }
++    };
++    assert!(valid(ctx, vt, 14 * 4), "buffer vtable missing");
++    ctx.memory.write::<u32>(this, vt);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    BUFFERS.lock().unwrap().insert(
++        this,
++        Buffer {
++            refs: 1,
++            owner,
++            backend,
++            gpu,
++            data,
++            size,
++            usage,
++            pool,
++            kind,
++            format,
++            fvf,
++            locked: None,
++        },
++    );
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++    let b = buffer(this);
++    if !valid(ctx, out, 4) {
++        return E_POINTER;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    if !valid(ctx, iid, 16) {
++        return E_POINTER;
++    }
++    let id = &ctx.memory.bytes[iid as usize..iid as usize + 16];
++    let own = if b.kind == 6 {
++        [
++            0xb5, 0xb1, 0x4b, 0xb6, 0x70, 0xfd, 0xf6, 0x4d, 0xbf, 0x91, 0x19, 0xd0, 0xa1, 0x24,
++            0x55, 0xe3,
++        ]
++    } else {
++        [
++            0x5e, 0xd6, 0x9d, 0x7c, 0xf7, 0xd3, 0x29, 0x45, 0xac, 0xee, 0x78, 0x58, 0x30, 0xac,
++            0xde, 0x35,
++        ]
++    };
++    let resource = [
++        0x5d, 0xc0, 0xee, 0x05, 0x7d, 0x8f, 0x62, 0x43, 0xb9, 0x99, 0xd1, 0xba, 0xf3, 0x57, 0xc7,
++        0x04,
++    ];
++    if id != IID_UNKNOWN && id != own && id != resource {
++        return E_NOINTERFACE;
++    }
++    AddRef(ctx, this);
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn AddRef(_ctx: &mut Context, this: u32) -> u32 {
++    let mut map = BUFFERS.lock().unwrap();
++    let b = map.get_mut(&this).expect("invalid buffer AddRef");
++    b.refs = b.refs.checked_add(1).expect("buffer ref overflow");
++    b.refs
++}
++#[win32_derive::dllexport]
++pub fn Release(ctx: &mut Context, this: u32) -> u32 {
++    let mut map = BUFFERS.lock().unwrap();
++    let b = map.get_mut(&this).expect("invalid buffer Release");
++    b.refs -= 1;
++    if b.refs != 0 {
++        return b.refs;
++    }
++    let b = map.remove(&this).unwrap();
++    drop(map);
++    host::graphics_call(7, &[b.backend, b.gpu]);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, b.data);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
++    IDirect3DDevice9::Release(ctx, b.owner);
++    0
++}
++#[win32_derive::dllexport]
++pub fn GetDevice(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let b = buffer(this);
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    IDirect3DDevice9::AddRef(ctx, b.owner);
++    ctx.memory.write::<u32>(out, b.owner);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetType(_ctx: &mut Context, this: u32) -> u32 {
++    buffer(this).kind
++}
++#[win32_derive::dllexport]
++pub fn GetDesc(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let b = buffer(this);
++    let values = [b.format, b.kind, b.usage, b.pool, b.size, b.fvf];
++    let n = if b.kind == 6 { 6 } else { 5 };
++    if !valid(ctx, out, n * 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    for i in 0..n {
++        ctx.memory.write::<u32>(out + i as u32 * 4, values[i]);
++    }
++    D3D_OK
++}
++fn lock_range(b: &Buffer, offset: u32, size: u32, flags: u32) -> Option<(u32, u32, bool)> {
++    if b.locked.is_some() || flags & !0x3010 != 0 || offset >= b.size {
++        return None;
++    }
++    let count = if size == 0 { b.size - offset } else { size };
++    if count > b.size - offset {
++        return None;
++    }
++    let readonly = flags & 0x10 != 0;
++    let discard = flags & 0x2000 != 0;
++    let nooverwrite = flags & 0x1000 != 0;
++    if (readonly && (b.usage & 8 != 0 || discard || nooverwrite))
++        || ((discard || nooverwrite) && b.usage & 0x200 == 0)
++        || (discard && nooverwrite)
++    {
++        return None;
++    }
++    Some((offset, count, readonly))
++}
++#[win32_derive::dllexport]
++pub fn Lock(ctx: &mut Context, this: u32, offset: u32, size: u32, out: u32, flags: u32) -> u32 {
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    let mut map = BUFFERS.lock().unwrap();
++    let b = map.get_mut(&this).expect("invalid buffer Lock");
++    let Some(range) = lock_range(b, offset, size, flags) else {
++        return D3DERR_INVALIDCALL;
++    };
++    // DISCARD invalidates all previous contents. Zeroing is one permitted value
++    // for undefined bytes; upload the full allocation when it is unlocked.
++    if flags & 0x2000 != 0 {
++        ctx.memory.bytes[b.data as usize..(b.data + ((b.size + 3) & !3)) as usize].fill(0);
++        b.locked = Some((0, b.size, false));
++    } else {
++        b.locked = Some(range)
++    }
++    ctx.memory.write::<u32>(out, b.data + offset);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn Unlock(ctx: &mut Context, this: u32) -> u32 {
++    let b = buffer(this);
++    let Some((offset, count, readonly)) = b.locked else {
++        return D3DERR_INVALIDCALL;
++    };
++    if !readonly {
++        let start = offset & !3;
++        let end = (offset + count + 3) & !3;
++        let pointer = ctx.memory.bytes[b.data as usize + start as usize..].as_ptr() as usize as u32;
++        let result = host::graphics_call(6, &[b.backend, b.gpu, start, pointer, end - start]);
++        if result != 1 {
++            return result;
++        }
++    }
++    BUFFERS.lock().unwrap().get_mut(&this).unwrap().locked = None;
++    D3D_OK
++}
++fn fail(ctx: &Context, name: &str) -> ! {
++    panic!(
++        "unsupported API: d3d9!geometry buffer::{name}; stack_return={:#010x}",
++        ctx.memory.read::<u32>(ctx.cpu.regs.esp)
++    )
++}
++pub fn SetPrivateData_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "SetPrivateData")
++}
++pub fn GetPrivateData_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "GetPrivateData")
++}
++pub fn FreePrivateData_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "FreePrivateData")
++}
++pub fn SetPriority_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "SetPriority")
++}
++pub fn GetPriority_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "GetPriority")
++}
++pub fn PreLoad_stdcall(ctx: &mut Context) -> runtime::Cont {
++    fail(ctx, "PreLoad")
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn lock_ranges_and_flag_constraints() {
++        let mut b = Buffer {
++            refs: 1,
++            owner: 0,
++            backend: 0,
++            gpu: 0,
++            data: 0,
++            size: 14,
++            usage: 0x208,
++            pool: 0,
++            kind: 7,
++            format: 101,
++            fvf: 0,
++            locked: None,
++        };
++        assert_eq!(lock_range(&b, 2, 0, 0), Some((2, 12, false)));
++        assert!(lock_range(&b, u32::MAX, 4, 0).is_none());
++        assert!(lock_range(&b, 12, 4, 0).is_none());
++        assert!(lock_range(&b, 0, 14, 0x10).is_none());
++        assert!(lock_range(&b, 0, 14, 0x3000).is_none());
++        assert!(lock_range(&b, 0, 14, 0x2000).is_some());
++        b.usage = 0;
++        assert!(lock_range(&b, 0, 14, 0x2000).is_none());
++        assert!(lock_range(&b, 0, 14, 0x10).is_some());
++        b.locked = Some((0, 4, false));
++        assert!(lock_range(&b, 4, 4, 0).is_none());
++    }
++    #[test]
++    fn com_description_lock_pointer_and_readonly_unlock() {
++        let mut ctx = runtime::Context {
++            cpu: Default::default(),
++            thread_handle: 1,
++            thread_id: 1,
++            memory: runtime::Memory::leak_new(0x10000),
++            blocks: &[(
++                runtime::RETURN_FROM_X86_ADDR32,
++                runtime::Context::return_from_x86,
++            )],
++            cache: Default::default(),
++            recent: [runtime::Context::return_from_x86; 4],
++        };
++        let this = 0x3000;
++        BUFFERS.lock().unwrap().insert(
++            this,
++            Buffer {
++                refs: 1,
++                owner: 0,
++                backend: 0,
++                gpu: 0,
++                data: 0x4000,
++                size: 14,
++                usage: 0,
++                pool: 1,
++                kind: 7,
++                format: 101,
++                fvf: 0,
++                locked: None,
++            },
++        );
++        assert_eq!(GetDesc(&mut ctx, this, 0x1100), D3D_OK);
++        assert_eq!(
++            (0..5)
++                .map(|i| ctx.memory.read::<u32>(0x1100 + i * 4))
++                .collect::<Vec<_>>(),
++            vec![101, 7, 0, 1, 14]
++        );
++        ctx.cpu.regs.esp = 0xf000;
++        ctx.call32_x86(runtime::Cont(Lock_stdcall), vec![this, 2, 0, 0x1200, 0x10]);
++        assert_eq!(ctx.cpu.regs.esp, 0xf000);
++        assert_eq!(ctx.cpu.regs.eax, 0);
++        assert_eq!(ctx.memory.read::<u32>(0x1200), 0x4002);
++        assert_eq!(Unlock(&mut ctx, this), D3D_OK);
++        assert_eq!(Unlock(&mut ctx, this), D3DERR_INVALIDCALL);
++        ctx.memory.bytes[0x1300..0x1310].copy_from_slice(&[
++            0x5e, 0xd6, 0x9d, 0x7c, 0xf7, 0xd3, 0x29, 0x45, 0xac, 0xee, 0x78, 0x58, 0x30, 0xac,
++            0xde, 0x35,
++        ]);
++        assert_eq!(QueryInterface(&mut ctx, this, 0x1300, 0x1200), D3D_OK);
++        assert_eq!(ctx.memory.read::<u32>(0x1200), this);
++        assert_eq!(buffer(this).refs, 2);
++        BUFFERS.lock().unwrap().remove(&this);
++    }
++}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..93e963c
+index 0000000..aada9dd
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,175 @@
+@@ -0,0 +1,177 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone)]
@@ -606,8 +988,10 @@ index 0000000..93e963c
 +pub fn CreateTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateTexture",9)}
 +pub fn CreateVolumeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVolumeTexture",10)}
 +pub fn CreateCubeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateCubeTexture",8)}
-+pub fn CreateVertexBuffer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVertexBuffer",7)}
-+pub fn CreateIndexBuffer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateIndexBuffer",7)}
++#[win32_derive::dllexport]
++pub fn CreateVertexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format_or_fvf:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::buffers::create(ctx,this,d.backend,6,size,usage,100,pool,format_or_fvf,out,shared)}
++#[win32_derive::dllexport]
++pub fn CreateIndexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format_or_fvf:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::buffers::create(ctx,this,d.backend,7,size,usage,format_or_fvf,pool,0,out,shared)}
 +pub fn CreateRenderTarget_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateRenderTarget",9)}
 +pub fn CreateDepthStencilSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateDepthStencilSurface",9)}
 +pub fn UpdateSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UpdateSurface",5)}
