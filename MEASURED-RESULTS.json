@@ -4,12 +4,12 @@
   "Graphics backend": "WebGPU device/attachment backend; D3D9 draw and resource integration incomplete",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Runtime build": {
-    "translatedTreeSha256": "84534b85a223fdfae9fddda04711eb9f977a2fcedee44da46e771c7d74b2d186",
+    "translatedTreeSha256": "fb125b2bc35606f434cc13e956326b6c53a5ca036368bdfea74b677e7bca403c",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T16:42:42.171379+00:00",
-    "revision": "8b1f4246382142e34328aaf30b2f1a70101360a0",
+    "builtAt": "2026-09-08T16:47:56.266461+00:00",
+    "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6",
     "workingTreeDirty": false,
-    "sourceSha256": "78b223994b6f9ef5a069092e3a474f039edb083cbf5f0b60d3377f081e430356",
+    "sourceSha256": "2d2d14907ca3e85f9e4f27d65ed875ca29f8235b5956bfd4bc0525879fb3982d",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
@@ -21,12 +21,12 @@
         "bytes": 12071
       },
       "humus_bg.wasm": {
-        "sha256": "42f4e6eed6abdd6942a3915d5f2c147ac9e2252fa8149c415f3b1a7cdcc7481b",
-        "bytes": 16692856
+        "sha256": "8bdaf763db67de4cc13919046372d2200cc3f3b118a82fb6eae726d911cda40d",
+        "bytes": 16771313
       }
     }
   },
-  "Run ID": "f7e93ffb-6a32-4a9c-b13f-56c6e1ef86c6",
+  "Run ID": "9b83a399-ff77-481a-b70b-6a31be416aa0",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -108,7 +108,7 @@
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptToFailureMs": 32039.81500005722,
+    "diagnosticAttemptToFailureMs": 32371.389999985695,
     "diagnosticTimingCaveat": "one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark"
   },
   "Exact remaining blocker": "IDirect3D9::GetDeviceCaps returns D3DERR_NOTAVAILABLE; original EXE rejects missing PS 2.0 / VS 1.1 support. Resource, shader and draw integration remains incomplete.",
@@ -284,6 +284,59 @@
       "originalEXE": "device creation verified; capability rejection before shader creation; cleanup RegCreateKeyExA trap",
       "scope": "Native COM fixtures and GPU worker validation are separate tests; original EXE shader creation has not yet been reached.",
       "logSha256": "b3ed2e93f7a91c860f4cf22a309746c27af0a9267900396c2bdbb8fcd34396c1"
+    },
+    "textureStorage": {
+      "revision": "8b1f4246382142e34328aaf30b2f1a70101360a0",
+      "browserDiagnosticRunId": "8f2c2f2e-5e35-4906-8fae-38c65e9ee242",
+      "result": "passed",
+      "checks": {
+        "result": "passed",
+        "compressed": [
+          {
+            "format": 827611204,
+            "levels": 4,
+            "smallestMip": [
+              1,
+              1
+            ]
+          },
+          {
+            "format": 861165636,
+            "levels": 4,
+            "smallestMip": [
+              1,
+              1
+            ]
+          },
+          {
+            "format": 894720068,
+            "levels": 4,
+            "smallestMip": [
+              1,
+              1
+            ]
+          }
+        ],
+        "checks": [
+          "GPU readback verifies pitched BGRA rows",
+          "XRGB samples opaque without modifying guest",
+          "compressed mip payloads including 2x2 and 1x1 copied exactly",
+          "invalid ranges and stale handles rejected",
+          "resource budget released"
+        ],
+        "HumusFrames": 0
+      },
+      "workerRPC": "passed allocation/upload/mip bounds/release/stale handles",
+      "serverRegression": "passed scripts/test_server.py",
+      "limitations": "Texture COM, sampler and application draw integration pending; zero Humus scene frames."
+    },
+    "textureCOM": {
+      "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6",
+      "nativeTests": "7 D3D9 tests passed; includes compressed mip layout and texture stdcall/lock/binding ownership checks",
+      "nativeLogSha256": "abf07937de60ce9a2e8f61d4a51a0bed46ccd1b8319d68b8c80ebaa305265356",
+      "build": "WASM compilation and generated 22-slot texture vtable completed",
+      "cleanRestore": "32 patched files byte-identical",
+      "limitations": "Original application texture calls not reached; GetSurfaceLevel, samplers and draw binding pending"
     }
   },
   "evidenceFile": "evidence/browser-direct3d-attempt.json"

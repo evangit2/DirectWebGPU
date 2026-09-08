@@ -209,5 +209,19 @@
     "workerRPC": "passed allocation/upload/mip bounds/release/stale handles",
     "serverRegression": "passed scripts/test_server.py",
     "limitations": "Texture COM, sampler and application draw integration pending; zero Humus scene frames."
+  },
+  "textureCOM": {
+    "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6",
+    "nativeTests": "7 D3D9 tests passed; includes compressed mip layout and texture stdcall/lock/binding ownership checks",
+    "nativeLogSha256": "abf07937de60ce9a2e8f61d4a51a0bed46ccd1b8319d68b8c80ebaa305265356",
+    "build": "WASM compilation and generated 22-slot texture vtable completed",
+    "cleanRestore": "32 patched files byte-identical",
+    "limitations": "Original application texture calls not reached; GetSurfaceLevel, samplers and draw binding pending",
+    "browserDiagnostic": {
+      "runId": "37844328-f065-4a6a-8399-bc691a5b7993",
+      "result": "passed",
+      "revision": "02c2f6eb6969ed8b520d46a17c96ba652b1c8dc6"
+    },
+    "originalRunId": "9b83a399-ff77-481a-b70b-6a31be416aa0"
   }
 }
