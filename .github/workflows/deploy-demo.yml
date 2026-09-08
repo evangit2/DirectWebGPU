@@ -15,34 +15,28 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
-      - name: Assemble static deployment
+      - name: Assemble static site
         run: python3 deploy/build_public.py
 
-      - name: Refresh Cloudflare OAuth token
-        env:
-          CF_REFRESH_TOKEN: ${{ secrets.CF_OAUTH_REFRESH_TOKEN }}
+      - name: Verify asset integrity
         run: |
-          ACCESS=$(python3 - <<'PY'
-          import os, urllib.request, urllib.parse, json
-          data = urllib.parse.urlencode({
-              'grant_type': 'refresh_token',
-              'refresh_token': os.environ['CF_REFRESH_TOKEN'],
-              'client_id': '54d11594-84e4-41aa-b438-e81b8fa78ee7',
-          }).encode()
-          req = urllib.request.Request('https://dash.cloudflare.com/oauth2/token', data=data, headers={
-              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'Accept': 'application/json',
-          })
-          print(json.loads(urllib.request.urlopen(req, timeout=30).read())['access_token'])
-          PY
-          )
-          echo "CLOUDFLARE_API_TOKEN=$ACCESS" >> "$GITHUB_ENV"
+          test -f deploy/public/index.html
+          test -f deploy/public/build-manifest.json
+          grep -q "4-hour" deploy/public/index.html && { echo "stray 4-hour button"; exit 1; } || true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: deploy
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy
+        working-directory: deploy
+
+      - name: Skipped deploy notice
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
+        run: echo "::warning::CLOUDFLARE_API_TOKEN secret not set — build validated only. Set it to enable deploys."
