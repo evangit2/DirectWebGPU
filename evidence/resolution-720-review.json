@@ -1,0 +1,69 @@
+{
+  "runId": "bff3c8ce-a206-454b-ac39-f031b527fa8f",
+  "revision": "107fc3d5406c80b286f29790975382803d8058da",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "sourceResolution": [
+    1280,
+    720
+  ],
+  "framesVisuallyInspected": [
+    1,
+    30,
+    60
+  ],
+  "finding": "Original textured room and colored lighting at all three Presents; frame 30 camera moved toward the pillar. Camera matrices equal at 30 and 60 after key release. Full alpha/stencil pixel/reference validation remains pending.",
+  "cameraChangedWhileHeld": true,
+  "cameraStableAfterRelease": true,
+  "readbacks": [
+    {
+      "present": 1,
+      "readbackCompletedMs": 1700.014892578125,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839319,
+        "pixels": 839680
+      }
+    },
+    {
+      "present": 30,
+      "readbackCompletedMs": 2107.429931640625,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839150,
+        "pixels": 839680
+      }
+    },
+    {
+      "present": 60,
+      "readbackCompletedMs": 2476.449951171875,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 838862,
+        "pixels": 839680
+      }
+    }
+  ],
+  "images": [
+    {
+      "path": "evidence/scene-frames/720-bff3c8ce-a206-454b-ac39-f031b527fa8f-1.jpg",
+      "sha256": "34ff9f58a61341a8e30c4e1a415249ac146d205e85f00279e5d3de7aebb5c740"
+    },
+    {
+      "path": "evidence/scene-frames/720-bff3c8ce-a206-454b-ac39-f031b527fa8f-30.jpg",
+      "sha256": "2d667112600a68b87784f5f0b46d869d10f6e034628f409aef220148a0eadb7b"
+    },
+    {
+      "path": "evidence/scene-frames/720-bff3c8ce-a206-454b-ac39-f031b527fa8f-60.jpg",
+      "sha256": "7ac7785f639095eac23f5b3a0db6c8f2f0297baacedafd2dcba03d3f125e7ce0"
+    }
+  ]
+}

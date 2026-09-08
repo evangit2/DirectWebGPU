@@ -7,7 +7,8 @@
     "browser Stop control": "passed: active WASM worker stopped and Start re-enabled",
     "diagnostics POST": "verified saved report with matching run ID and executable hash",
     "diagnostics download": "button invoked; saved-file destination not verified",
-    "bounded draw bridge": "passed: test_draw_batch.mjs including real cross-worker Atomics handoff; original camera and 60s measurement runs"
+    "bounded draw bridge": "passed: test_draw_batch.mjs including real cross-worker Atomics handoff; original camera and 60s measurement runs",
+    "virtual registry enumeration and 720p": "passed: all 16 winapi native tests, 38-file clean patch restore, original 1280x720 camera capture and 60s screenshot-free benchmark"
   },
   "testLogSha256": {
     "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
@@ -15,7 +16,8 @@
     "d3d9-tests.log": "a82a80c2433718462ab66d84607c8b6ce9c4607e5d70d794ba1f03ee23da85c2",
     "device-com-tests.log": "a521fa4f12a469c6a908282aee5b2293d0274aa71cbdf317771d6f2f136bf476",
     "bit-tests.log": "850c28e2e2c49bf126956e93dd08b0afd0b7bc6bae6eded388b8211690c5c65a",
-    "window-lifecycle-tests.log": "e7ad22a1623c42eeb601c7035c93e1787b529766e1e25c8936e7ffccbbc384d4"
+    "window-lifecycle-tests.log": "e7ad22a1623c42eeb601c7035c93e1787b529766e1e25c8936e7ffccbbc384d4",
+    "registry-resolution-winapi-tests.log": "3d9c605df10a12a5ce9deccdad9f2750b6b194e836bc47c5c86fa3eea74a4783"
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
