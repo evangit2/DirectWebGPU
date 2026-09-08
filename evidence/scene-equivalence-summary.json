@@ -1,0 +1,124 @@
+{
+  "revision": "7f2364c9e505d9cd790eddbcc51b49e3d5b35fe0",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "cameraRun": "f914691f-b76e-40ad-9161-fa351c007189",
+  "staticRun": "7aebdb29-9534-4526-9fd5-371a7f5c3d18",
+  "negativeControlRun": "47efae03-db01-403c-a91e-4076fcb8c0cc",
+  "sourceResolution": [
+    1280,
+    720
+  ],
+  "comparedFrames": [
+    {
+      "present": 1,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": null,
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 839333,
+      "differentPixels": 0,
+      "maxChannelError": 0,
+      "meanAbsoluteChannelError": 0,
+      "counts": {
+        "maskDraws": 15,
+        "lightingDraws": 15,
+        "otherDraws": 10
+      },
+      "fullBufferSha256": {
+        "original": "61b26482894225d95f93c8f18a738018a79dacf99ed6ee2eeb543fd47fee7535",
+        "unmaskedDiagnostic": "61b26482894225d95f93c8f18a738018a79dacf99ed6ee2eeb543fd47fee7535"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    },
+    {
+      "present": 30,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": null,
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 839143,
+      "differentPixels": 0,
+      "maxChannelError": 0,
+      "meanAbsoluteChannelError": 0,
+      "counts": {
+        "maskDraws": 450,
+        "lightingDraws": 450,
+        "otherDraws": 300
+      },
+      "fullBufferSha256": {
+        "original": "a9a1c9afec46f5d53ba75e3cfac4c9736fed08d299bcaf20b2f6bfd50dc1c4dd",
+        "unmaskedDiagnostic": "a9a1c9afec46f5d53ba75e3cfac4c9736fed08d299bcaf20b2f6bfd50dc1c4dd"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    },
+    {
+      "present": 60,
+      "width": 1280,
+      "height": 720,
+      "negativeControl": null,
+      "sceneY": 64,
+      "pixels": 839680,
+      "nonblackPixels": 838585,
+      "differentPixels": 0,
+      "maxChannelError": 0,
+      "meanAbsoluteChannelError": 0,
+      "counts": {
+        "maskDraws": 900,
+        "lightingDraws": 900,
+        "otherDraws": 600
+      },
+      "fullBufferSha256": {
+        "original": "8dc9d5e8d2bee69ae438e7d4042154b669e3229437731a6ae9f3850ab817048b",
+        "unmaskedDiagnostic": "8dc9d5e8d2bee69ae438e7d4042154b669e3229437731a6ae9f3850ab817048b"
+      },
+      "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+    }
+  ],
+  "negativeControl": {
+    "present": 1,
+    "width": 1280,
+    "height": 720,
+    "negativeControl": "omit lighting on diagnostic target only",
+    "sceneY": 64,
+    "pixels": 839680,
+    "nonblackPixels": 839325,
+    "differentPixels": 268620,
+    "maxChannelError": 219,
+    "meanAbsoluteChannelError": 6.047882129700203,
+    "counts": {
+      "maskDraws": 15,
+      "lightingDraws": 15,
+      "otherDraws": 10
+    },
+    "fullBufferSha256": {
+      "original": "0bcc0203fd771d865629bc978bf91d336fcaf8884e3b9308fa1e8a53aec1ba3d",
+      "unmaskedDiagnostic": "8b9bd6d67c29cab47e06dff72186c7c1a9d90efa13f40b5743aa1d0740ce93a5"
+    },
+    "meaning": "Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference."
+  },
+  "cameraChangedWhileHeld": true,
+  "cameraStableAfterRelease": true,
+  "visuallyInspectedFrames": [
+    1,
+    30,
+    60
+  ],
+  "images": [
+    {
+      "path": "evidence/scene-frames/equivalence-1.jpg",
+      "sha256": "ceb6753a0a07e1151c439484e38d7588292ac94abe1051d4e688c7bf4dfa8515"
+    },
+    {
+      "path": "evidence/scene-frames/equivalence-30.jpg",
+      "sha256": "8ddecf3a5bddd505959f33f6fe3d2a86d6cc407746dd68f43ca60f5320cd8266"
+    },
+    {
+      "path": "evidence/scene-frames/equivalence-60.jpg",
+      "sha256": "a203ff784a62e89e552a0d545a871c2263a728402ff0ef50a66cddbe86a46cd3"
+    }
+  ],
+  "finding": "Exact RGB scene agreement for static and moving camera samples. Separate-target negative control detects missing lighting. Original canvas always retains application alpha/stencil state.",
+  "limitations": "Optimization equivalence on sampled actual frames, not independent native D3D9 conformance. Shared shader/rasterization translation errors can affect both paths. Diagnostic extra rendering/readback is excluded from performance claims. Final requirement-by-requirement audit remains pending."
+}

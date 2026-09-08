@@ -11,7 +11,9 @@
     "virtual registry enumeration and 720p": "passed: all 16 winapi native tests, 38-file clean patch restore, original 1280x720 camera capture and 60s screenshot-free benchmark",
     "extended measurement duration bounds": "passed: extracted app function defaults 60s, accepts 180/600s, rejects 0/59/601/NaN/Infinity/1.5/-1",
     "three-minute original stability": "passed within sampled scope: 13503 Presents at 1280x720, no recorded GPU errors/device loss/visibility changes, unchanged resource counters",
-    "mixed resource and draw batching": "passed: copied upload data, mixed command ordering, alignment, 64-command/1MiB bounds, large-upload fallback, error abort and cross-worker Atomics; original captured camera run and 60s capture-free trial"
+    "mixed resource and draw batching": "passed: copied upload data, mixed command ordering, alignment, 64-command/1MiB bounds, large-upload fallback, error abort and cross-worker Atomics; original captured camera run and 60s capture-free trial",
+    "actual scene alpha-stencil optimization equivalence": "passed: zero RGB differences across 839680 scene pixels on Presents 1/30/60, static and moving camera; negative control detects 268620 missing-light pixels; original canvas unchanged",
+    "scene comparator unit checks": "passed: detects RGB changes and ignores overlay, alpha and row padding"
   },
   "testLogSha256": {
     "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
