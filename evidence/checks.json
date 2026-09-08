@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "848de786af9fce8bcc624aa036f073f0fc1b3193",
+  "currentRuntimeRevision": "3f0b2688ef2298df7b4c00139053959b158d43a3",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -143,5 +143,26 @@
     "scope": "FLOAT1..FLOAT4 flat input locations. Packed formats, shader objects, textures and application-driven draws remain incomplete.",
     "semanticReference": "https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3ddecltype",
     "logSha256": "92d21046d0fd58e3d3ea61d04d3039b39b49723e8f4f3c3f1e3b0bbeb06eb3e1"
+  },
+  "shaderObjectMilestone": {
+    "revision": "3f0b2688ef2298df7b4c00139053959b158d43a3",
+    "COM": "passed: 6 D3D9 tests; token boundaries, GetFunction size/copy, stdcall cleanup, stage-specific binding and lifetime",
+    "worker": "passed: shader creation, wrong-stage rejection, release and stale handles",
+    "GPU": {
+      "result": "passed",
+      "checks": [
+        "owned bytecode",
+        "stage validation",
+        "malformed instruction rejection",
+        "paired translation",
+        "released handles rejected"
+      ],
+      "HumusFrames": 0
+    },
+    "regressions": "native shader translation, uniform packing, vertex layouts and browser GPU diagnostics passed",
+    "restoration": "passed: 31 patched files byte-identical",
+    "originalEXE": "device creation verified; capability rejection before shader creation; cleanup RegCreateKeyExA trap",
+    "scope": "Native COM fixtures and GPU worker validation are separate tests; original EXE shader creation has not yet been reached.",
+    "logSha256": "b3ed2e93f7a91c860f4cf22a309746c27af0a9267900396c2bdbb8fcd34396c1"
   }
 }
