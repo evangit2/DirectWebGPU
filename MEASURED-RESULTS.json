@@ -1660,5 +1660,34 @@
     "visibilityChanges": [],
     "evidence": "evidence/stability-720-180s.json",
     "limitations": "Three minutes, static camera with animated lights, screenshot-free. No claim of display FPS, multi-hour stability or leak freedom. Samples cover WASM size and logical tracked GPU/cache resources only; browser JS and driver allocations remain unmeasured. Percentiles cover last 8192 intervals; aggregate submission rate covers all post-warmup intervals."
+  },
+  "Resource-upload batching milestone": {
+    "revision": "7100c4328cd0f2af8be2ab983fcb9658bf2a1520",
+    "cameraRun": "ed3dedb4-1560-466b-9109-7595d946d38a",
+    "performanceRun": "79aaadc8-3c92-44fc-a9bf-1b14c13dee25",
+    "performanceEvidence": "evidence/performance-upload-batch.json",
+    "visualEvidence": "evidence/upload-batch-review.json",
+    "resolution": [
+      1280,
+      720
+    ],
+    "firstPresentMs": 1618.150146484375,
+    "submissionFPS": 75.6757547678086,
+    "frameTimeMs": {
+      "p50": 12.89501953125,
+      "p95": 15.574951171875,
+      "p99": 20.3701171875,
+      "min": 8.699951171875,
+      "max": 72.304931640625
+    },
+    "drawBridge": {
+      "drawBatches": 54046,
+      "batchedDraws": 180030,
+      "batchedUploads": 31611,
+      "uploadedBytes": 10892233,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "limitations": "One capture-free 60-second trial; no speedup established. Submission intervals are not display FPS. Larger-than-1MiB uploads still use the synchronous bounded path. Full-scene alpha/stencil reference validation and completion audit remain pending."
   }
 }

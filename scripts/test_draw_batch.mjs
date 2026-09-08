@@ -25,3 +25,5 @@ const visited=[];await executeDrawBatch({buffer:mixed.buffer,commands:mixed.comm
 assert.equal(mixed.commands[3][2]%4,0);
 const large=new SharedArrayBuffer(BATCH_BYTES+8192);assert.equal(mixed.enqueue([6,9,2,0,4096,BATCH_BYTES+4],large),false);assert.equal(mixed.commands.length,4);
 console.log('Mixed upload/draw order, copied bytes, alignment and large-upload fallback passed');
+const failedOrder=[];await assert.rejects(()=>executeDrawBatch({buffer:mixed.buffer,commands:mixed.commands},async op=>{failedOrder.push(op);return op===11?0x8876086c:1;}),/rejected/);assert.deepEqual(failedOrder,[6,13,11]);assert.equal(new Int32Array(mixed.buffer)[0],2);
+console.log('Rejected texture update aborts subsequent draws and wakes the CPU');

@@ -1,0 +1,40 @@
+{
+  "runId": "ed3dedb4-1560-466b-9109-7595d946d38a",
+  "revision": "7100c4328cd0f2af8be2ab983fcb9658bf2a1520",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "sourceResolution": [
+    1280,
+    720
+  ],
+  "visuallyInspectedFrames": [
+    1,
+    30,
+    60
+  ],
+  "finding": "Textured pillar room and colored lighting; camera advances while ArrowUp is held and is stationary after release. Full alpha/stencil reference comparison remains pending.",
+  "cameraChangedWhileHeld": true,
+  "cameraStableAfterRelease": true,
+  "drawBridge": {
+    "drawBatches": 20897,
+    "batchedDraws": 69601,
+    "batchedUploads": 12262,
+    "uploadedBytes": 6712849,
+    "maxBatchCommands": 10,
+    "stagingBytes": 1052672
+  },
+  "images": [
+    {
+      "path": "evidence/scene-frames/uploads-1.jpg",
+      "sha256": "ca38c568aad5598392cb72c78b84992314493b06776b33fc06ec48863cdbd606"
+    },
+    {
+      "path": "evidence/scene-frames/uploads-30.jpg",
+      "sha256": "fd3d325c71a7e86b92438ca424e6daf0d069a2f06607abde0fff82d525b1f25c"
+    },
+    {
+      "path": "evidence/scene-frames/uploads-60.jpg",
+      "sha256": "4c686782c829b9f69938b9be5fc22b0ca6b13a72338e1a13b091e77f26a7f7aa"
+    }
+  ],
+  "queueContract": "Draws and buffer/texture uploads <=1MiB share copied ordered staging. Flush before synchronous resource creation/destruction, other host RPCs, capacity exhaustion, or larger upload. Rejected deferred operation wakes and fails CPU before its boundary RPC; later queued commands are aborted."
+}

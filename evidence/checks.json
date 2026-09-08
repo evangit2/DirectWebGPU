@@ -10,7 +10,8 @@
     "bounded draw bridge": "passed: test_draw_batch.mjs including real cross-worker Atomics handoff; original camera and 60s measurement runs",
     "virtual registry enumeration and 720p": "passed: all 16 winapi native tests, 38-file clean patch restore, original 1280x720 camera capture and 60s screenshot-free benchmark",
     "extended measurement duration bounds": "passed: extracted app function defaults 60s, accepts 180/600s, rejects 0/59/601/NaN/Infinity/1.5/-1",
-    "three-minute original stability": "passed within sampled scope: 13503 Presents at 1280x720, no recorded GPU errors/device loss/visibility changes, unchanged resource counters"
+    "three-minute original stability": "passed within sampled scope: 13503 Presents at 1280x720, no recorded GPU errors/device loss/visibility changes, unchanged resource counters",
+    "mixed resource and draw batching": "passed: copied upload data, mixed command ordering, alignment, 64-command/1MiB bounds, large-upload fallback, error abort and cross-worker Atomics; original captured camera run and 60s capture-free trial"
   },
   "testLogSha256": {
     "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
