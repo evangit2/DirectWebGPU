@@ -3331,10 +3331,10 @@ index 0000000..a7a9ee7
 +}
 diff --git a/win32/winapi/src/d3d9/texture.rs b/win32/winapi/src/d3d9/texture.rs
 new file mode 100644
-index 0000000..32ce807
+index 0000000..3d1b3d0
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/texture.rs
-@@ -0,0 +1,550 @@
+@@ -0,0 +1,552 @@
 +//! D3D9 sampled 2D texture COM objects with persistent mip lock storage.
 +use super::*;
 +pub static mut VTABLE: u32 = 0;
@@ -3401,6 +3401,7 @@ index 0000000..32ce807
 +    }
 +    let (block, bytes) = match format {
 +        21 | 22 => (1, 4),
++        50 => (1, 1),
 +        0x31545844 => (4, 8),
 +        0x33545844 | 0x35545844 => (4, 16),
 +        _ => return None,
@@ -3657,6 +3658,7 @@ index 0000000..32ce807
 +    let [left, top, right, bottom] = r;
 +    let (block, bytes) = match format {
 +        21 | 22 => (1, 4),
++        50 => (1, 1),
 +        0x31545844 => (4, 8),
 +        _ => (4, 16),
 +    };
