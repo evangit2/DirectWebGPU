@@ -1,0 +1,9 @@
+{
+  "runId": "45b395d6-f30f-480c-8cb0-8947585637a6",
+  "runtimeRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
+  "status": "stopped",
+  "elapsedMs": 29548.930000066757,
+  "startedWasm": true,
+  "controls": "Start enabled; Stop disabled after click, verified in browser accessibility state",
+  "fourHourSession": false
+}

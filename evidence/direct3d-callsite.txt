@@ -1,0 +1,9 @@
+Original EXE SHA-256: 7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5
+File path at runtime pointer 0x004d2640: ../Models/PillarRoom/Map.hmdl
+Disassembled ORIGINAL call and import thunk:
+0x00402bd9: push 0x1f
+0x00402bdb: call 0x413890
+0x00402be0: test eax, eax
+0x00402be2: mov dword ptr [esi + 0x11618], eax
+0x00402be8: jne 0x402c01
+0x00413890: jmp dword ptr [0x4be1e0]

@@ -1,0 +1,17 @@
+{
+  "runtimeRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
+  "results": {
+    "CPU feature reporting": "passed: cargo test -p runtime virtual_cpu_tests",
+    "heap grow/shrink/failure preservation": "passed: cargo test -p winapi realloc_tests",
+    "server routes/isolation/origin/token/size bounds": "passed: python3 scripts/test_server.py",
+    "clean dependency restoration": "passed: patched Rust sources compared byte-for-byte with a clean checkout",
+    "browser Stop control": "passed: active WASM worker stopped and Start re-enabled",
+    "diagnostics POST": "verified saved report with matching run ID and executable hash",
+    "diagnostics download": "button invoked; saved-file destination not verified"
+  },
+  "testLogSha256": {
+    "runtime-tests.log": "15515f77412b92d14e6ddf34bd3c5c7710fdacc4fea3711d675aacd89f28695f",
+    "heap-tests.log": "9af708bce138c5de3045b119c76bd1c5ee45210448252923657b49faa38da39b"
+  },
+  "note": "Recorded checks from this session, not newly executed by record_results.py."
+}

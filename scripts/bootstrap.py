@@ -18,6 +18,10 @@ if not package.exists():
    if not (package/f.filename).resolve().is_relative_to(package.resolve()):raise RuntimeError('unsafe ZIP path')
   z.extractall(package)
 verify(package/deps['executable']['path'],deps['executable']['sha256'])
+with zipfile.ZipFile(archive) as z:
+ for entry in z.infolist():
+  if not entry.is_dir() and (package/entry.filename).read_bytes()!=z.read(entry):
+   raise RuntimeError(f'Original asset changed: {entry.filename}; preserve it before restoring')
 vendor=ROOT/'vendor/theseus'
 if not vendor.exists():
  run('git','clone',deps['theseus']['url'],str(vendor));run('git','-C',str(vendor),'checkout','--detach',deps['theseus']['revision'])
