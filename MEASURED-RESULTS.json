@@ -1615,5 +1615,50 @@
       "depthStencilLogicalMinimumBytes": 3686400
     },
     "limitations": "Single 60-second warm app-asset-cache trial, five-second warmup. Submission timing is not display FPS. GPU allocation figures are logical estimates, not an exact total. Full scene alpha/stencil reference agreement and longer stability remain pending."
+  },
+  "Three-minute stability milestone": {
+    "runId": "0e9ee678-ef0b-4525-a69e-64589e7a7a4e",
+    "revision": "d86cb32d02d4a236e852d0ad05e031526d34e0ab",
+    "resolution": [
+      1280,
+      720
+    ],
+    "durationAfterFirstPresentMs": 180000,
+    "applicationPresents": 13503,
+    "submissionFPS": 75.10530193681878,
+    "frameTimeMs": {
+      "p50": 13.02001953125,
+      "p95": 15.60986328125,
+      "p99": 20.83984375,
+      "min": 8.735107421875,
+      "max": 76.93505859375
+    },
+    "retainedIntervals": 8192,
+    "sampledResourceRanges": {
+      "wasmLinearMemoryBytes": {
+        "min": 288096256,
+        "max": 288096256
+      },
+      "geometryGPUBytes": {
+        "min": 60784,
+        "max": 60784
+      },
+      "textureGPUBytes": {
+        "min": 4025064,
+        "max": 4025064
+      },
+      "pipelineCacheEntries": {
+        "min": 5,
+        "max": 5
+      },
+      "shaderObjects": {
+        "min": 6,
+        "max": 6
+      }
+    },
+    "recordedErrors": [],
+    "visibilityChanges": [],
+    "evidence": "evidence/stability-720-180s.json",
+    "limitations": "Three minutes, static camera with animated lights, screenshot-free. No claim of display FPS, multi-hour stability or leak freedom. Samples cover WASM size and logical tracked GPU/cache resources only; browser JS and driver allocations remain unmeasured. Percentiles cover last 8192 intervals; aggregate submission rate covers all post-warmup intervals."
   }
 }
