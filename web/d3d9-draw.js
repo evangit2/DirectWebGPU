@@ -19,6 +19,7 @@ export function decodeDraw(memory,pointer,length){
 export class DrawRenderer{
  constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniforms=[0,1].map(()=>device.createBuffer({size:4608,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));}
  async draw(packet){
+  const timingStart=performance.now();
   const d=this.device,b=this.backend,topology=({1:'point-list',2:'line-list',4:'triangle-list'})[packet.kind];
   const [x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=new Float32Array(new Uint32Array([minBits]).buffer)[0],maxDepth=new Float32Array(new Uint32Array([maxBits]).buffer)[0];
   if(!width||!height||x+width>b.color.width||y+height>b.color.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
@@ -35,9 +36,10 @@ export class DrawRenderer{
   }
   const groups=[],last=packed[1].length?3:textureEntries.length?2:packed[0].length?1:-1;
   for(let group=0;group<=last;group++){const stage=group===1?0:group===3?1:-1;let entries=group===2?textureEntries:[];if(stage>=0&&packed[stage].length){d.queue.writeBuffer(this.uniforms[stage],0,packed[stage]);entries=[{binding:0,resource:{buffer:this.uniforms[stage],size:packed[stage].byteLength}}]}groups.push(d.createBindGroup({layout:entry.pipeline.getBindGroupLayout(group),entries}));}
-  const encoder=d.createCommandEncoder(),pass=encoder.beginRenderPass({colorAttachments:[{view:b.color.createView(),loadOp:'load',storeOp:'store'}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:'load',depthStoreOp:'store',stencilLoadOp:'load',stencilStoreOp:'store'}});
+  const timestampWrites=b.timer?.begin((b.presents??0)+1);
+  const encoder=d.createCommandEncoder(),pass=encoder.beginRenderPass({...(timestampWrites?{timestampWrites}:{}),colorAttachments:[{view:b.color.createView(),loadOp:'load',storeOp:'store'}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:'load',depthStoreOp:'store',stencilLoadOp:'load',stencilStoreOp:'store'}});
   pass.setViewport(x,y,width,height,minDepth,maxDepth);pass.setPipeline(entry.pipeline);packet.state.applyDynamic(pass);bindings.forEach((s,i)=>pass.setVertexBuffer(i,s.buffer,s.offset,s.size));groups.forEach((g,i)=>pass.setBindGroup(i,g));
-  if(index){pass.setIndexBuffer(index.buffer,index.format===101?'uint16':'uint32');pass.drawIndexed(packet.count,1,packet.first,packet.base,0)}else pass.draw(packet.count,1,packet.first,0);pass.end();d.queue.submit([encoder.finish()]);
+  if(index){pass.setIndexBuffer(index.buffer,index.format===101?'uint16':'uint32');pass.drawIndexed(packet.count,1,packet.first,packet.base,0)}else pass.draw(packet.count,1,packet.first,0);pass.end();d.queue.submit([encoder.finish()]);if(timestampWrites)b.timer.cpuWallMs+=performance.now()-timingStart;
  }
  dispose(){this.cache.dispose();this.samplers.dispose();for(const u of this.uniforms)u.destroy();}
 }

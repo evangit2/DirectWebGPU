@@ -13,7 +13,7 @@ export class SceneEquivalence {
  async ensure(){if(this.reference)return;const d=this.device,b=this.original;
   const color=d.createTexture({size:[b.width,b.height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=d.createTexture({size:[b.width,b.height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
-  this.reference={...b,color,depth};this.renderer=new DrawRenderer(d,this.reference);this.clear(7,{r:0,g:0,b:0,a:0},1,0);
+  this.reference={...b,color,depth,timer:null};this.renderer=new DrawRenderer(d,this.reference);this.clear(7,{r:0,g:0,b:0,a:0},1,0);
  }
  clear(flags,color,z,stencil){if(!this.reference||this.done)return;const d=this.device,b=this.reference,e=d.createCommandEncoder();const p=e.beginRenderPass({colorAttachments:[{view:b.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:color}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil}});p.end();d.queue.submit([e.finish()]);}
  async draw(packet){if(this.done)return;await this.ensure();const s=packet.state;
