@@ -43,6 +43,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
    session['bytes']+=size;session['seq']+=1
    dest=ROOT/'evidence/sessions'/token;dest.mkdir(parents=True,exist_ok=True)
    body.pop('token',None);(dest/f'{session["seq"]:04}.json').write_text(json.dumps(body,indent=2)+'\n')
+   report=body.get('report')
+   if isinstance(report,dict) and (report.get('endedAt') or report.get('result') in ['passed','failed']):
+    # Final evidence retires this token; completed runs must not exhaust active slots.
+    SESSIONS.pop(token,None)
    self.reply(200,{'saved':True})
   except (ValueError,TypeError):self.reply(400,{'error':'bad request'})
  def log_message(self,fmt,*args): pass
