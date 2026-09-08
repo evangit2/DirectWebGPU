@@ -653,5 +653,43 @@
     "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:186:28:\nunsupported D3D9 DrawPrimitiveUP fixed-function pipeline: vertex_shader=0x0 pixel_shader=0x0 fvf=0x142 lighting=0 topology=6 primitives=2 stride=24 prepared_vertices=6 prepared_stride=36",
     "retainedOriginalGPUDrawSubmissions": 33,
     "limitations": "Original UP geometry is prepared but not submitted: fixed-function VS and PS are both missing. Programmable UP upload/draw integration has native conversion coverage, not a dedicated browser UP fixture. Temporary GPU buffer allocation per UP call; caching remains pending."
+  },
+  "fixedFunction": {
+    "revision": "fe8c757",
+    "nativeTests": "10 D3D9 tests passed",
+    "testLogSha256": "bd7a7eb5993330e0941ed4d525ae9170e08b6a76a613a7d239987a53276c7498",
+    "cleanRestore": "38 patched files byte-identical",
+    "WASMBuild": "passed",
+    "gpuRunId": "f849fd39-e795-428a-b0f1-198b12876d79",
+    "gpuResult": {
+      "result": "passed",
+      "outsideInsideBGRA": [
+        [
+          0,
+          0,
+          0,
+          255
+        ],
+        [
+          175,
+          61,
+          4,
+          255
+        ]
+      ],
+      "checks": [
+        "three transform matrices applied in order",
+        "texture RGB multiplied by diffuse",
+        "texture alpha independent of diffuse alpha",
+        "fixed-function alpha-test pipeline compiled"
+      ]
+    },
+    "originalRunId": "cdda1549-4d2c-4717-bc29-7a3020c6ce5d",
+    "applicationPresents": 288,
+    "submittedFrames": 288,
+    "sceneFrames": 0,
+    "visualResult": "CUA screenshot: black scene region with original FPS overlay; acceptance fails",
+    "termination": "bounded 60 second watchdog stopped both workers; no unsupported API trap",
+    "limitations": "Unlit XYZ + normalized diffuse + optional TEX2; default texture stage only. Fixed-function lighting, mixed shader stages and other declarations remain unsupported. Correct scene rendering and input acceptance pending."
   }
 }

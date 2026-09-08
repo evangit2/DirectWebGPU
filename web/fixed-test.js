@@ -12,7 +12,7 @@ export async function testFixed(device,renderer,buffers,textures,color,read,memo
  const packet=decodeDraw(memory,4096,payload.byteLength);
  const enc=device.createCommandEncoder(),pass=enc.beginRenderPass({colorAttachments:[{view:color.createView(),loadOp:'clear',storeOp:'store',clearValue:[0,0,0,1]}]});pass.end();device.queue.submit([enc.finish()]);
  await renderer.draw(packet);
- const copy=device.createCommandEncoder();copy.copyTextureToBuffer({texture:color},{buffer:read,bytesPerRow:256},[32,32]);device.queue.submit([copy.finish()]);await read.mapAsync(GPUMapMode.READ);const result=[16,26].map(x=>Array.from(new Uint8Array(read.getMappedRange(),16*256+x*4,4)));read.unmap();
+ const copy=device.createCommandEncoder();copy.copyTextureToBuffer({texture:color},{buffer:read,bytesPerRow:256},[32,32]);device.queue.submit([copy.finish()]);await read.mapAsync(GPUMapMode.READ);const mapped=read.getMappedRange();const result=[16,26].map(x=>Array.from(new Uint8Array(mapped,16*256+x*4,4)));read.unmap();
  if(result[0].join(',')!=='0,0,0,255'||result[1].some((v,i)=>Math.abs(v-[175,61,4,255][i])>1))throw Error('fixed-function matrix/texture/color mismatch '+JSON.stringify(result));
  // Alpha testing uses the same discard compiler as programmable draws.
  packet.state.set(15,1);packet.state.set(25,5);packet.state.set(24,255);await renderer.draw(packet);
