@@ -11,7 +11,7 @@ Evidence source: original archive from https://humus.name/index.php?ID=50&page=3
 | Registry | RegOpenKeyExA, enumeration, query and writes | Empty isolated registry returns missing-key failure; writes/enumeration not implemented, trap if reached |
 | Timing | QueryPerformanceFrequency/Counter | Monotonic host milliseconds, reported frequency 1000; virtual 1 MHz RDTSC counter. No physical CPU-speed or high-resolution timing claim |
 | Exceptions | SetUnhandledExceptionFilter, RaiseException, RtlUnwind | Filter registration stores/replaces pointer; complete exception dispatch not implemented |
-| D3D9 | Only Direct3DCreate9 statically imported | Reached in browser and native diagnostic: SDKVersion=31, original return PC 0x00402be0. COM/device/rendering not implemented yet |
+| D3D9 | Only Direct3DCreate9 statically imported | SDKVersion=31 creates a real COM object with 17 ABI slots, identity/refcounts and virtual display queries. GetDeviceCaps is the next explicit trap, return PC 0x00402c15; device/rendering unsupported |
 | D3DX | Embedded D3DX9 compiler/assembler version strings 4.09.00.1221; no imported D3DX DLL | Evidence suggests statically linked compiler. Actual compiler execution and dynamic shader-validator lookup still unverified |
 | Shaders | .shd HLSL files loaded by name; VS 1.1/PS 2.0 required by package and source | Actual bytecode not captured yet; no hardcoded replacement shaders |
 | Assets | ../Models/PillarRoom/Map.hmdl; DDS bases/font, PNG normal-height maps/particle, .font | Original directory relationships preserved; browser mounts each integrity-checked file with /DynamicBranching cwd |
@@ -21,4 +21,4 @@ Evidence source: original archive from https://humus.name/index.php?ID=50&page=3
 | WebGPU | Actual adapter/device request with error/loss events | Apple/metal-3 non-fallback adapter observed; no Humus GPU submission |
 | Baseline | No local CheerpX artifacts or verified rendering found | Unavailable; historical Linux initialization is not a performance baseline |
 
-Before scene acceptance: implement D3D9 COM identity/refcounts and honest caps, actual shader bytecode translation, vertex/index/texture update semantics, depth/stencil/alpha/blend passes, input, GPU-resident resources and Present counters. Browser canvas stays blank when unsupported; no CPU framebuffer is passed off as accelerated rendering.
+Before scene acceptance: implement honest D3D9 caps/device support, actual shader bytecode translation, vertex/index/texture update semantics, depth/stencil/alpha/blend passes, input, GPU-resident resources and Present counters. Browser canvas stays blank when unsupported; no CPU framebuffer is passed off as accelerated rendering.

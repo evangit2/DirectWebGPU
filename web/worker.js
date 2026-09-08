@@ -1,5 +1,5 @@
 let memory, device, lastPanic, scene, logCount=0;
-const send=(type,data={})=>{if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
+const send=(type,data={})=>{if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
 console.error=(...args)=>{const message=args.map(text).join(' ');if(message.includes('panicked at'))lastPanic=message.split('\n\nStack:')[0];send('log',{message});originalError(...args)};
@@ -66,7 +66,7 @@ self.onmessage=async({data})=>{
    exe.mount_file('/'+f.path,new Uint8Array(fileBytes));
   }
   exe.set_current_dir('/DynamicBranching');
-  exe.set_trace('kernel32,user32,advapi32');
+  exe.set_trace('kernel32,user32,advapi32,d3d9');
   send('execution-start',{wasmLinearMemoryBytes:memory.buffer.byteLength});
   const started=performance.now();
   exe.main();

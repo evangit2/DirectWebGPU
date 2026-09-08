@@ -1,6 +1,6 @@
 # Humus original-binary browser runtime
 
-**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. Both browser and native diagnostics reach `Direct3DCreate9(31)` after reading/processing the real scene model. D3D9 rendering is not implemented; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
+**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. The D3D9 frontend creates a COM object at `Direct3DCreate9(31)` and execution reaches `IDirect3D9::GetDeviceCaps` after reading/processing the real scene model. D3D9 rendering is not implemented; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
 
 This repository contains local runtime patches and a test harness, not a source port of the demo. The official archive and generated programs remain ignored. The input EXE SHA-256 is `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`.
 
@@ -31,6 +31,7 @@ scripts/build_wasm.sh
 python3 scripts/test_server.py
 cargo test --manifest-path vendor/theseus/Cargo.toml -p runtime virtual_cpu_tests
 cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi realloc_tests
+cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d9::tests
 ```
 
 `run_native.sh` runs the same translated original instructions in a native diagnostic environment and writes bounded `evidence/native-translated.*`. It is not browser acceptance. `scripts/native_reference.py` optionally runs the original under native Wine with a separate prefix/work directory and a 30-second cap; that reference is also not browser acceptance.
@@ -39,7 +40,7 @@ The browser verifies the EXE, asset, and WASM hashes, runs WASM in a terminable 
 
 ## Current limitations
 
-Missing D3D9 COM/device/resource/state/shader support is a hard failure, not a dummy device. No application Present, draw submission, scene frames, FPS, or correct-frame startup measurements exist. The Apple Metal non-fallback adapter probe establishes availability only. There is no working CheerpX rendering baseline in this workspace and no performance comparison is claimed.
+Missing D3D9 device/capability/resource/state/shader support is a hard failure, not a dummy device. No application Present, draw submission, scene frames, FPS, or correct-frame startup measurements exist. The Apple Metal non-fallback adapter probe establishes availability only. There is no working CheerpX rendering baseline in this workspace and no performance comparison is claimed.
 
 The runtime still has inherited incomplete APIs and f64-based x87 approximations; failed launches are not proof of correctness. Null-page accesses now fail immediately. AOT static scanning includes possible data and missed indirect targets; unknown instructions/targets trap. CPU vendor/features describe a virtual processor; RDTSC is a virtual 1 MHz counter quantized to host milliseconds, not physical CPU speed. The current guest-memory allocation is inherited at 256 MiB and has not been optimized. Linear memory includes other WASM allocations and must not be summed with guest memory as independent totals.
 

@@ -186,6 +186,18 @@ index 91f7295..759146b 100644
                  Into => {}        // terminates
                  Int1 | Int3 => {} // breakpoint
                  Int => {
+diff --git a/tc/src/lib.rs b/tc/src/lib.rs
+index d13fb54..ee57444 100644
+--- a/tc/src/lib.rs
++++ b/tc/src/lib.rs
+@@ -208,6 +208,7 @@ impl State {
+         let mut addr = 0; // only set up if vtables are needd
+         for (dll, vtables) in [
+             ("ddraw", winapi::ddraw::VTABLES.as_slice()),
++            ("d3d9", winapi::d3d9::VTABLES.as_slice()),
+             ("dsound", winapi::dsound::VTABLES.as_slice()),
+             ("dinput", winapi::dinput::VTABLES.as_slice()),
+         ] {
 diff --git a/win32/winapi/src/advapi32.rs b/win32/winapi/src/advapi32.rs
 index c8b11ff..7f5a75e 100644
 --- a/win32/winapi/src/advapi32.rs
@@ -224,15 +236,171 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..b30a180
+index 0000000..d78bf21
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,6 @@
-+// Honest graphics boundary: no device or rendering support is claimed yet.
-+pub fn Direct3DCreate9_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let return_pc = ctx.memory.read::<u32>(ctx.cpu.regs.esp);
-+    let sdk = ctx.memory.read::<u32>(ctx.cpu.regs.esp + 4);
-+    panic!("unsupported API: d3d9!Direct3DCreate9(SDKVersion={sdk}); stack_return={return_pc:#010x}, prior_builtin_return={:#010x}; D3D9 COM/frontend/backend not implemented", ctx.cpu.regs.eip_context);
+@@ -0,0 +1,162 @@
++//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
++//! claim that unimplemented shader/device features are available.
++use runtime::Context;
++use std::{collections::HashMap, sync::{LazyLock, Mutex}};
++use crate::kernel32;
++
++pub const D3D_OK: u32 = 0;
++pub const D3DERR_INVALIDCALL: u32 = 0x8876086c;
++pub const D3DERR_NOTAVAILABLE: u32 = 0x8876086a;
++const E_NOINTERFACE: u32 = 0x80004002;
++const E_POINTER: u32 = 0x80004003;
++const IID_UNKNOWN: [u8;16] = [0,0,0,0,0,0,0,0,0xc0,0,0,0,0,0,0,0x46];
++const IID_D3D9: [u8;16] = [0xca,0xcb,0xbd,0x81,0xd4,0x64,0x6d,0x42,0xae,0x8d,0xad,1,0x47,0xf4,0x27,0x5c];
++static OBJECTS: LazyLock<Mutex<HashMap<u32,u32>>> = LazyLock::new(||Mutex::new(HashMap::new()));
++
++pub const VTABLES: [(&str, &[&str]);1] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES)];
++fn valid(ctx: &Context, p: u32, n: usize) -> bool {
++    p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
++}
++fn object(this: u32) {
++    assert!(OBJECTS.lock().unwrap().contains_key(&this), "invalid or released IDirect3D9 pointer {this:#010x}");
++}
++fn adapter(this: u32, index: u32) -> bool { object(this); index == 0 }
++fn unsupported(ctx: &Context, method: &str, nargs: u32) -> ! {
++    let esp = ctx.cpu.regs.esp;
++    let args: Vec<_> = (0..nargs).map(|i| ctx.memory.read::<u32>(esp+4+i*4)).collect();
++    panic!("unsupported API: d3d9!IDirect3D9::{method}; args={args:#x?}; stack_return={:#010x}; graphics capability not implemented",ctx.memory.read::<u32>(esp));
++}
++#[win32_derive::dllexport]
++pub fn Direct3DCreate9(ctx: &mut Context, SDKVersion: u32) -> u32 {
++    // SDK 31 is the original DX9 SDK used by this binary; 32 is the later DX9 SDK.
++    if SDKVersion != 31 && SDKVersion != 32 { return 0; }
++    let vtable = unsafe { IDirect3D9::VTABLE };
++    assert!(valid(ctx,vtable,17*4), "D3D9 vtable was not linked into the guest image");
++    let state = kernel32::lock();
++    let addr = state.process_heap.alloc(&mut ctx.memory,4);
++    ctx.memory.write::<u32>(addr,vtable);
++    assert!(OBJECTS.lock().unwrap().insert(addr,1).is_none());
++    log::info!("D3D9_CREATE9 sdk={SDKVersion} object={addr:#010x}");
++    addr
++}
++
++pub mod IDirect3D9 {
++    use super::*;
++    pub static mut VTABLE: u32 = 0;
++    // ABI order from the IDirect3D9 declaration, including the three IUnknown slots.
++    pub const VTABLE_ENTRIES: [&str;17] = ["QueryInterface","AddRef","Release","RegisterSoftwareDevice","GetAdapterCount","GetAdapterIdentifier","GetAdapterModeCount","EnumAdapterModes","GetAdapterDisplayMode","CheckDeviceType","CheckDeviceFormat","CheckDeviceMultiSampleType","CheckDepthStencilMatch","CheckDeviceFormatConversion","GetDeviceCaps","GetAdapterMonitor","CreateDevice"];
++
++    #[win32_derive::dllexport]
++    pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++        object(this);
++        if !valid(ctx,out,4) { return E_POINTER; }
++        ctx.memory.write::<u32>(out,0);
++        if !valid(ctx,iid,16) { return E_POINTER; }
++        let id=&ctx.memory.bytes[iid as usize..iid as usize+16];
++        if id != IID_UNKNOWN && id != IID_D3D9 { return E_NOINTERFACE; }
++        AddRef(ctx,this);
++        ctx.memory.write::<u32>(out,this);
++        D3D_OK
++    }
++    #[win32_derive::dllexport]
++    pub fn AddRef(_ctx: &mut Context, this: u32) -> u32 {
++        let mut objects=OBJECTS.lock().unwrap();
++        let refs=objects.get_mut(&this).expect("invalid AddRef object");
++        *refs=refs.checked_add(1).expect("COM refcount overflow"); *refs
++    }
++    #[win32_derive::dllexport]
++    pub fn Release(ctx: &mut Context, this: u32) -> u32 {
++        let mut objects=OBJECTS.lock().unwrap();
++        let refs=objects.get_mut(&this).expect("invalid Release object");
++        *refs-=1; let left=*refs;
++        if left == 0 { objects.remove(&this); }
++        drop(objects);
++        if left == 0 {
++            ctx.memory.write::<u32>(this,0);
++            kernel32::lock().process_heap.free(&mut ctx.memory,this);
++        }
++        left
++    }
++    #[win32_derive::dllexport]
++    pub fn GetAdapterCount(_ctx: &mut Context, this: u32) -> u32 { object(this); 1 }
++    #[win32_derive::dllexport]
++    pub fn GetAdapterIdentifier(ctx: &mut Context, this: u32, index: u32, flags: u32, out: u32) -> u32 {
++        if !adapter(this,index) || flags & !2 != 0 || !valid(ctx,out,1100) { return D3DERR_INVALIDCALL; }
++        let dst=&mut ctx.memory.bytes[out as usize..out as usize+1100]; dst.fill(0);
++        let driver=b"humus-d3d9"; dst[..driver.len()].copy_from_slice(driver);
++        let description=b"Theseus virtual canvas adapter (graphics subset under development)";
++        dst[512..512+description.len()].copy_from_slice(description);
++        let name=b"\\\\.\\DISPLAY1"; dst[1024..1024+name.len()].copy_from_slice(name);
++        // Vendor/device IDs and WHQL level are deliberately zero: not a hardware ID.
++        dst[1080..1096].copy_from_slice(&IID_D3D9);
++        D3D_OK
++    }
++    #[win32_derive::dllexport]
++    pub fn GetAdapterModeCount(_ctx: &mut Context, this: u32, index: u32, format: u32) -> u32 {
++        if adapter(this,index) && format == 22 {1} else {0} // X8R8G8B8
++    }
++    fn write_mode(ctx: &mut Context, out: u32) -> u32 {
++        if !valid(ctx,out,16) { return D3DERR_INVALIDCALL; }
++        // The same virtual display exposed by EnumDisplaySettingsA. Refresh 0=default.
++        for (i,value) in [1280u32,720,0,22].into_iter().enumerate() {ctx.memory.write::<u32>(out+i as u32*4,value);}
++        D3D_OK
++    }
++    #[win32_derive::dllexport]
++    pub fn EnumAdapterModes(ctx: &mut Context, this: u32, index: u32, format: u32, mode: u32, out: u32) -> u32 {
++        if !adapter(this,index) || mode != 0 {return D3DERR_INVALIDCALL;}
++        if format != 22 {return D3DERR_NOTAVAILABLE;}
++        write_mode(ctx,out)
++    }
++    #[win32_derive::dllexport]
++    pub fn GetAdapterDisplayMode(ctx: &mut Context, this: u32, index: u32, out: u32) -> u32 {
++        if !adapter(this,index) {return D3DERR_INVALIDCALL;}
++        write_mode(ctx,out)
++    }
++    #[win32_derive::dllexport]
++    pub fn GetAdapterMonitor(_ctx: &mut Context, this: u32, index: u32) -> u32 { if adapter(this,index) {1} else {0} }
++
++    // Unsupported slots retain their ABI positions and stop at the exact operation.
++    pub fn RegisterSoftwareDevice_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"RegisterSoftwareDevice",2)}
++    pub fn CheckDeviceType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceType",6)}
++    pub fn CheckDeviceFormat_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceFormat",7)}
++    pub fn CheckDeviceMultiSampleType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceMultiSampleType",7)}
++    pub fn CheckDepthStencilMatch_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDepthStencilMatch",6)}
++    pub fn CheckDeviceFormatConversion_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceFormatConversion",5)}
++    pub fn GetDeviceCaps_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"GetDeviceCaps",4)}
++    pub fn CreateDevice_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CreateDevice",7)}
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn com_identity_lifetime_modes_and_stdcall_stack() {
++        crate::trace::init("");
++        kernel32::init_state(0x400000,0..0);
++        kernel32::lock().process_heap=crate::heap::Heap::new(0x2000,0x4000);
++        let mut ctx=runtime::Context {cpu:Default::default(), thread_handle:1, thread_id:1, memory:runtime::Memory::leak_new(0x10000), blocks:&[(runtime::RETURN_FROM_X86_ADDR32, runtime::Context::return_from_x86)],cache:Default::default(),recent:[runtime::Context::return_from_x86;4]};
++        unsafe {IDirect3D9::VTABLE=0x1000;}
++        ctx.cpu.regs.esp=0xf000;
++        let original_sp=ctx.cpu.regs.esp;
++        ctx.call32_x86(runtime::Cont(Direct3DCreate9_stdcall),vec![31]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);
++        let obj=ctx.cpu.regs.eax;assert_ne!(obj,0);
++        assert_eq!(ctx.memory.read::<u32>(obj),0x1000);
++        ctx.memory.bytes[0x1100..0x1110].copy_from_slice(&IID_UNKNOWN);
++        // Invoke the actual generated stdcall adapter and verify cleanup/return value.
++        ctx.call32_x86(runtime::Cont(IDirect3D9::QueryInterface_stdcall),vec![obj,0x1100,0x1200]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(ctx.memory.read::<u32>(0x1200),obj);
++        ctx.memory.bytes[0x1100..0x1110].fill(0xff);
++        assert_eq!(IDirect3D9::QueryInterface(&mut ctx,obj,0x1100,0x1200),E_NOINTERFACE);
++        assert_eq!(ctx.memory.read::<u32>(0x1200),0);
++        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,0,0xfffffff8),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,1,0x1300),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,0,0x1300),D3D_OK);
++        assert_eq!(ctx.memory.read::<u32>(0x1300),1280);
++        assert_eq!(IDirect3D9::Release(&mut ctx,obj),1);
++        assert_eq!(IDirect3D9::Release(&mut ctx,obj),0);
++        assert_eq!(ctx.memory.read::<u32>(obj),0);
++        assert!(!OBJECTS.lock().unwrap().contains_key(&obj));
++    }
 +}
 diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
 index 22d8d8e..b0d1fa9 100644

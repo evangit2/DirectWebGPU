@@ -18,6 +18,7 @@ async function start(long=false){
    if(type==='probe')report.browser=rest.result;
    if(type==='identity')report.executableSha256=rest.sha256;
    if(type==='window-created'){report.window=rest;$('scene').style.aspectRatio=`${rest.width}/${rest.height}`}
+   if(type==='d3d9-created'){report.direct3DCreate9Reached=true;report.direct3D9ObjectCreated=true;}
    if(type==='failed'&&rest.message.includes('d3d9!Direct3DCreate9'))report.direct3DCreate9Reached=true;
    if(type==='execution-start')report.originalExecutionAttempted=true;
    if(rest.wasmLinearMemoryBytes)report.performance.wasmLinearMemoryBytes=rest.wasmLinearMemoryBytes;
