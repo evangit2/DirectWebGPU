@@ -4509,7 +4509,7 @@ index 0000000..6b0b9c5
 +#[win32_derive::dllexport]
 +pub fn DeleteCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);let mut map=CRITICALS.lock().unwrap();assert_eq!(map.get(&p).expect("uninitialized critical section").1,0,"delete of owned critical section");map.remove(&p);ctx.memory.bytes[p as usize..p as usize+24].fill(0);}
 diff --git a/win32/winapi/src/lib.rs b/win32/winapi/src/lib.rs
-index da97218..fbcbe89 100644
+index da97218..0fe20c3 100644
 --- a/win32/winapi/src/lib.rs
 +++ b/win32/winapi/src/lib.rs
 @@ -5,12 +5,14 @@
@@ -4527,6 +4527,25 @@ index da97218..fbcbe89 100644
  pub mod kernel32;
  mod locked_state;
  pub mod msacm32;
+@@ -54,12 +56,15 @@ use runtime::{CPU, Context, EXEData, Mappings, Memory, Regs};
+ pub(crate) use stub;
+ 
+ pub fn load(exe: &EXEData) -> Context {
++    load_with_capacity(exe, 256 << 20)
++}
++
++/// Fixed guest address-space backing; callers choose a measured capacity.
++pub fn load_with_capacity(exe: &EXEData, memory_size: usize) -> Context {
++    assert!((16 << 20..=256 << 20).contains(&memory_size) && memory_size % 65536 == 0, "invalid guest memory capacity");
+     host::init();
+     crate::trace::init(&host::trace_spec());
+ 
+-    // Room for the program's image, its heaps and the flat pool games of this
+-    // era carve out for themselves.
+-    let memory_size = 256 << 20;
+     let mut memory = Memory::leak_new(memory_size);
+ 
+     kernel32::init_state(exe.image_base, exe.resources.clone());
 diff --git a/win32/winapi/src/memory_metrics.rs b/win32/winapi/src/memory_metrics.rs
 new file mode 100644
 index 0000000..eecb139

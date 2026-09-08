@@ -5,7 +5,9 @@ mod generated;
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen)]
 pub fn main() {
-    winapi::run(&generated::EXEDATA);
+    // Measured highest mapping is below 98 MiB; retain 30 MiB of headroom.
+    let mut ctx = winapi::load_with_capacity(&generated::EXEDATA, 128 << 20);
+    winapi::start(&mut ctx, &generated::EXEDATA);
 }
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen)]
