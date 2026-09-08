@@ -18,7 +18,7 @@
   },
   "note": "Recorded checks from this session, not newly executed by record_results.py.",
   "previousChecksRevision": "da614d927ff41c61da8290ca00fc8240d4dcb608",
-  "currentRuntimeRevision": "d88ba8eab67133fe1d2ae3d4dcec4f8981a86b90",
+  "currentRuntimeRevision": "848de786af9fce8bcc624aa036f073f0fc1b3193",
   "currentRevisionChecks": {
     "D3D9 device and surface COM lifetimes": "passed: evidence/device-com-tests.log",
     "CPU bit-string operations": "passed: evidence/bit-tests.log",
@@ -97,5 +97,51 @@
     "originalEXE": "retested; same capability rejection and RegCreateKeyExA cleanup trap",
     "limitations": "FLOAT4 layout conversion only; smaller float attribute expansion pending. No original-EXE shader/draw acceptance.",
     "dirtyTreeAtTest": "Only evidence/shader-native-tests.json differed from the implementation commit; runtime/shader source was committed"
+  },
+  "compactVertexMilestone": {
+    "revision": "848de786af9fce8bcc624aa036f073f0fc1b3193",
+    "IR": "passed: 3 shader IR tests, including compact input wrappers and alpha-test regressions",
+    "layout": "passed: tests/shaders/vertex-layout.mjs",
+    "GPU": {
+      "result": "passed",
+      "cases": [
+        {
+          "colorComponents": 1,
+          "positionComponents": 3,
+          "centerRGBA": [
+            64,
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "colorComponents": 2,
+          "positionComponents": 3,
+          "centerRGBA": [
+            64,
+            128,
+            0,
+            255
+          ]
+        },
+        {
+          "colorComponents": 3,
+          "positionComponents": 3,
+          "centerRGBA": [
+            64,
+            128,
+            191,
+            255
+          ]
+        }
+      ],
+      "draws": 3,
+      "HumusFrames": 0
+    },
+    "originalEXE": "device creation and same shader-capability rejection; terminal RegCreateKeyExA trap",
+    "scope": "FLOAT1..FLOAT4 flat input locations. Packed formats, shader objects, textures and application-driven draws remain incomplete.",
+    "semanticReference": "https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3ddecltype",
+    "logSha256": "92d21046d0fd58e3d3ea61d04d3039b39b49723e8f4f3c3f1e3b0bbeb06eb3e1"
   }
 }
