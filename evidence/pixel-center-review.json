@@ -1,0 +1,27 @@
+{
+  "runId": "8b37bf82-2cab-4f58-b2c7-d732cbd581d8",
+  "revision": "5a39d9e7d45f3585d887e77c7bf8911ddffe049c",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "visuallyInspectedFrames": [
+    1,
+    30,
+    60
+  ],
+  "finding": "Original textured pillar room with colored lighting after final vertex-position correction; separate unmasked lighting comparison still matches all scene RGB pixels at all three samples.",
+  "cameraChangedWhileHeld": true,
+  "cameraStableAfterRelease": true,
+  "images": [
+    {
+      "path": "evidence/scene-frames/pixel-corrected-1.jpg",
+      "sha256": "768a05fcdab1a597882e01974fb5bb378279ea637ebb3a46ea1e040bf8f2ef9b"
+    },
+    {
+      "path": "evidence/scene-frames/pixel-corrected-30.jpg",
+      "sha256": "0da72391599a53c55fd0feaea8ee32eb9a05f0ea6a7eb54e093d9cde54f5516e"
+    },
+    {
+      "path": "evidence/scene-frames/pixel-corrected-60.jpg",
+      "sha256": "b6ec508518e79ff8936058610d66c2eb717436ab4dfd61b683ff5d4978a51bff"
+    }
+  ]
+}

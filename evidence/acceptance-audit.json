@@ -33,9 +33,9 @@
     {
       "objectiveSections": "5",
       "requirement": "Coordinate conventions, culling and pixel-center reference coverage",
-      "status": "failed: confirmed coverage mismatch",
-      "evidence": "evidence/pixel-center-before.json; web/pixel-center-test.js",
-      "finding": "Hardware GPU covered (0,0) instead of independently expected D3D9 integer-center pixel (1,1). No correction is applied by MojoShader/Naga or fixed-function generation."
+      "status": "verified within tested vertex/viewport subset",
+      "evidence": "evidence/pixel-center-coverage.json; evidence/pixel-center-graphics-regression.json; evidence/pixel-center-review.json",
+      "finding": "Naga final-output correction adds W/viewportWidth to clip X and subtracts W/viewportHeight from clip Y. Independent GPU integer-center coverage passes fixed, programmable non-unit W, and offset viewport cases; original camera and lighting-equivalence captures pass."
     },
     {
       "objectiveSections": "6",
@@ -94,5 +94,5 @@
       "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
     }
   ],
-  "nextAction": "Implement viewport-scaled clip-space half-pixel correction for both programmable and fixed vertex outputs; validate coverage oracle, then repeat original scene/camera/equivalence tests."
+  "nextAction": "Complete available GPU timing and broader transfer/memory accounting; refresh startup and steady-state measurements after correctness correction."
 }
