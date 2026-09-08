@@ -597,5 +597,15 @@
     "originalRunId": "d8a5bb8e-b8d5-4401-83f4-967fcd91b429",
     "result": "Original executes past FLDLN2/FYL2X; now FNSAVE at 0x004b9da2",
     "limitations": "f64 approximation; FYL2X exceptional inputs fail explicitly, full x87 precision/exception behavior incomplete"
+  },
+  "x87StateAndFlags": {
+    "revision": "fd8a4ca",
+    "nativeTests": "15 runtime tests passed",
+    "testLogSha256": "41f2b2c96845782af3c22d4a44182ccfee80c441b60df8a3267043ba6252cbc8",
+    "cleanRestore": "37 patched files byte-identical",
+    "WASMBuild": "passed",
+    "originalRunId": "aa232064-f425-4180-9892-a0fc71a74bec",
+    "originalBlocker": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
+    "limitations": "FPU arithmetic remains f64; nonrepresentable 80-bit restore values, noncontiguous stacks, unmasked exceptions and exponent ranges outside implemented subset fail explicitly"
   }
 }
