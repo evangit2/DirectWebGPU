@@ -6,7 +6,8 @@ function log(type,data={}){report.events.push({timeMs:Math.round(performance.now
 async function upload(){if(!token)return;try{const r=await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:boundedPayload()});if(!r.ok)throw Error('evidence upload '+r.status)}catch(e){log('upload-error',{message:e.message})}}
 function stop(status='stopped'){clearTimeout(timer);worker?.terminate();worker=null;gpuWorker?.terminate();gpuWorker=null;report.status=status;report.endedAt=new Date().toISOString();report.diagnosticAttemptMs=performance.now()-report.startTimeMs;$('status').textContent=status;$('start').disabled=false;$('long').disabled=false;$('stop').disabled=true;void upload()}
 async function start(long=false){
- if(worker)return;
+ if(worker||!build||$('start').disabled)return;
+ $('start').disabled=true;$('long').disabled=true;
  try{
   probeWorker?.terminate();probeWorker=null;
   report={applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'},runId:crypto.randomUUID(),status:'starting',events:[],droppedEvents:0,build,startTimeMs:performance.now(),startedAt:new Date().toISOString(),requestedDurationMs:long?14400000:null,visibility:document.visibilityState};
@@ -47,7 +48,9 @@ $('start').onclick=()=>start();$('long').onclick=()=>start(true);$('stop').oncli
 $('download').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));a.download=`humus-${report.runId??'probe'}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 document.addEventListener('visibilitychange',()=>log('visibility',{message:document.visibilityState}));
 try{
- build=await(await fetch('/api/build')).json();report.build=build;
+ const response=await fetch('/api/build');if(!response.ok)throw Error('build manifest '+response.status);
+ build=await response.json();if(!Array.isArray(build.files)||!build.dependencies?.executable)throw Error('invalid build manifest');report.build=build;
+ $('start').disabled=false;$('long').disabled=false;
  $('revision').textContent=`Revision ${build.runtimeBuild?.revision??build.revision}${build.dirty?' (working tree modified)':''} · EXE ${build.dependencies.executable.sha256}`;
  probeWorker=new Worker('/worker.js',{type:'module'});
  probeWorker.onmessage=({data})=>{log(data.type,data);if(data.type==='probe'){report.browser=data.result;$('status').textContent=data.result.deviceCreated?'GPU device available. Ready for executable launch.':'GPU unavailable. CPU execution tests remain available.'}};
