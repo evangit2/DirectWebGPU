@@ -1,3 +1,5 @@
+import {ShaderObjects} from './shader-objects.js';
+import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
@@ -45,11 +47,11 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),presents:0,submissions:0};
+  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),shaders:null,presents:0,submissions:0};
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
- if(op===2){backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
+ if(op===2){backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
   const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
@@ -69,6 +71,18 @@ async function graphics(op,a,memory){
    if(op===7&&a.length===2){backend.buffers.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ if(op===8||op===9){
+  try{
+   if(op===8&&a.length===4){
+    const [,stage,pointer,length]=a;
+    if(!(memory instanceof SharedArrayBuffer)||pointer<4096||length<8||length>1048576||length%4||pointer+length>memory.byteLength)return INVALID;
+    backend.shaders??=new ShaderObjects(await createShaderTranslator());
+    return backend.shaders.create(stage,new Uint8Array(memory,pointer,length));
+   }
+   if(op===9&&a.length===2){if(!backend.shaders)return INVALID;backend.shaders.destroy(a[1]);return 1;}
+   return INVALID;
+  }catch(e){emit('shader-rejected',{message:String(e)});return INVALID;}
  }
  throw Error('unsupported graphics opcode '+op);
 }

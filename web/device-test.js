@@ -6,8 +6,9 @@ export async function testDeviceBridge(){
  try{
   const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('GPU worker init timeout')),10000);channel.port2.onmessage=({data})=>{clearTimeout(timer);data.ready?resolve(data):reject(Error(data.error))};channel.port2.start()});
   worker.postMessage({type:'init',canvas,port:channel.port1},[canvas,channel.port1]);await ready;
-  async function rpc(func,args,details=false){
+  async function rpc(func,args,details=false,payload){
    const buffer=new SharedArrayBuffer(8192),words=new Int32Array(buffer);
+   if(payload)new Uint8Array(buffer,4096,payload.length).set(payload);
    channel.port2.postMessage({func,args,buffer,retAddr:4});
    const wait=Atomics.waitAsync(words,1,0,10000);await wait.value;
    const result=Atomics.load(words,1)>>>0;if(!result)throw Error('GPU RPC timed out');if(error)throw Error(error);return details?Array.from(words.slice(1,5)):result;
@@ -28,8 +29,12 @@ export async function testDeviceBridge(){
   assert(await rpc('graphics_call',[6,id,vb,12,4096,8])===0x8876086c,'out-of-bounds upload accepted');
   assert(await rpc('graphics_call',[7,id,vb])===1,'buffer release failed');
   assert(await rpc('graphics_call',[7,id,vb])===0x8876086c,'stale buffer accepted');
+  const shaderBytes=new Uint8Array(await(await fetch('/generated/vertexExplicit.bin')).arrayBuffer());
+  const shader=await rpc('graphics_call',[8,id,0,4096,shaderBytes.length],false,shaderBytes);assert(shader>0&&shader<0x80000000,'shader creation RPC failed');
+  assert(await rpc('graphics_call',[8,id,1,4096,shaderBytes.length],false,shaderBytes)===0x8876086c,'wrong-stage shader RPC accepted');
+  assert(await rpc('graphics_call',[9,id,shader])===1,'shader release RPC failed');assert(await rpc('graphics_call',[9,id,shader])===0x8876086c,'stale shader RPC accepted');
   assert(await rpc('graphics_call',[2,id])===1,'release failed');
   assert(await rpc('graphics_call',[3,id,7,0,0x3f800000,0])===0x8876086c,'released device accepted');
-  return{result:'passed',checks:['buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
+  return{result:'passed',checks:['shader RPC validation and lifetime passed','buffer RPC allocation/upload/bounds/lifetime passed','empty input polling and queued key delivery passed','unsupported device configuration rejected','asynchronous GPU validation wakes blocked-style RPC','color/depth/stencil attachments allocated and cleared','GPU-to-GPU presentation validated','released handle rejected'],diagnosticPresents:1,HumusFrames:0,events};
  }finally{channel.port2.close();worker.terminate()}
 }

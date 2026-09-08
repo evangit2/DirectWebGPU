@@ -5,7 +5,11 @@ let initialized;
 export async function createShaderTranslator(){
  initialized??=Promise.all([createMojo(),initNaga()]);
  const [mojo]=await initialized;
- return {vertexInputs:vertex_inputs_wgsl,alphaTest:alpha_test_wgsl,translatePair(vertex,pixel){
+ return {validate(stage,bytes){
+  if(![0,1].includes(stage)||!(bytes instanceof Uint8Array)||bytes.length<8||bytes.length>1048576||bytes.length%4)throw Error('invalid shader bytecode range');
+  const pointer=mojo._malloc(bytes.length);if(!pointer)throw Error('shader validation allocation failed');
+  try{mojo.HEAPU8.set(bytes,pointer);if(!mojo._shader_validate(stage,pointer,bytes.length))throw Error(mojo.UTF8ToString(mojo._shader_error()));}finally{mojo._free(pointer)}
+ },vertexInputs:vertex_inputs_wgsl,alphaTest:alpha_test_wgsl,translatePair(vertex,pixel){
   for(const input of [vertex,pixel])if(!(input instanceof Uint8Array)||input.length<8||input.length>1048576||input.length%4)throw Error('invalid DX9 bytecode length');
   let vp=0,pp=0;
   try{

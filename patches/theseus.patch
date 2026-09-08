@@ -314,10 +314,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..c1dc8f2
+index 0000000..38cb17c
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,248 @@
+@@ -0,0 +1,259 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -345,7 +345,11 @@ index 0000000..c1dc8f2
 +pub mod IDirect3DIndexBuffer9 { pub use super::buffers::*; pub static mut VTABLE:u32=0; }
 +#[path="d3d9/declaration.rs"]
 +pub mod IDirect3DVertexDeclaration9;
-+pub const VTABLES: [(&str, &[&str]);6] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES)];
++#[path="d3d9/shader.rs"]
++mod shader;
++pub mod IDirect3DVertexShader9{pub use super::shader::*;pub static mut VTABLE:u32=0;}
++pub mod IDirect3DPixelShader9{pub use super::shader::*;pub static mut VTABLE:u32=0;}
++pub const VTABLES: [(&str, &[&str]);8] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES)];
 +fn valid(ctx: &Context, p: u32, n: usize) -> bool {
 +    p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
 +}
@@ -523,6 +527,12 @@ index 0000000..c1dc8f2
 +        assert_eq!(IDirect3DVertexDeclaration9::GetDeclaration(&mut ctx,declaration,0x1d40,0x1d80),D3D_OK);assert_eq!(&ctx.memory.bytes[0x1d40..0x1d58],&elements);
 +        assert_eq!(IDirect3DDevice9::SetVertexDeclaration(&mut ctx,dev,declaration),D3D_OK);assert_eq!(IDirect3DVertexDeclaration9::Release(&mut ctx,declaration),0);
 +        assert_eq!(IDirect3DDevice9::GetVertexDeclaration(&mut ctx,dev,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),declaration);assert_eq!(IDirect3DVertexDeclaration9::Release(&mut ctx,declaration),0);
++        let shader=shader::fixture(&mut ctx,dev,0);
++        assert_eq!(shader::GetFunction(&mut ctx,shader,0,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e00),20);
++        ctx.memory.write::<u32>(0x1e00,4);ctx.memory.bytes[0x1e10..0x1e24].fill(0xa5);assert_eq!(shader::GetFunction(&mut ctx,shader,0x1e10,0x1e00),D3DERR_INVALIDCALL);assert!(ctx.memory.bytes[0x1e10..0x1e24].iter().all(|b|*b==0xa5));
++        ctx.call32_x86(runtime::Cont(shader::GetFunction_stdcall),vec![shader,0x1e10,0x1e00]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.memory.read::<u32>(0x1e10),0xfffe0101);assert_eq!(ctx.memory.read::<u32>(0x1e20),0xffff);
++        assert_eq!(IDirect3DDevice9::SetPixelShader(&mut ctx,dev,shader),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::SetVertexShader(&mut ctx,dev,shader),D3D_OK);assert_eq!(shader::Release(&mut ctx,shader),0);
++        assert_eq!(IDirect3DDevice9::GetVertexShader(&mut ctx,dev,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),shader);assert_eq!(shader::Release(&mut ctx,shader),0);
 +        let vb=buffers::fixture(&mut ctx,dev,6);let ib=buffers::fixture(&mut ctx,dev,7);
 +        assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,0,ib,0,16),D3DERR_INVALIDCALL);
 +        assert_eq!(IDirect3DDevice9::SetIndices(&mut ctx,dev,vb),D3DERR_INVALIDCALL);
@@ -553,6 +563,7 @@ index 0000000..c1dc8f2
 +        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),1);
 +        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),0);
 +        assert_eq!(ctx.memory.read::<u32>(dev),0);
++        assert_eq!(ctx.memory.read::<u32>(shader),0);
 +        assert_eq!(ctx.memory.read::<u32>(declaration),0);
 +        assert_eq!(ctx.memory.read::<u32>(ib),0); // no device/binding reference cycle
 +        ctx.memory.bytes[0x1400..0x1530].fill(0xa5);
@@ -1436,16 +1447,16 @@ index 0000000..88ffc7f
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..97c2d40
+index 0000000..b116913
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,225 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
 +struct Stream{buffer:u32,offset:u32,stride:u32}
 +#[derive(Clone)]
-+struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32,declaration:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,streams:[Stream;16],indices:u32,declaration:u32,shaders:[u32;2],constants:std::sync::Arc<Mutex<super::constants::Registers>>}
 +static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
 +pub static mut VTABLE:u32=0;
 +const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
@@ -1458,7 +1469,7 @@ index 0000000..97c2d40
 + let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
 + let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
 + let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
-+ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0,declaration:0,constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),streams:[Stream::default();16],indices:0,declaration:0,shaders:[0;2],constants:Default::default()}).is_none());p
 +}
 +#[win32_derive::dllexport]
 +pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{
@@ -1475,6 +1486,7 @@ index 0000000..97c2d40
 + for stream in d.streams{super::buffers::release_binding(ctx,stream.buffer)}
 + super::buffers::release_binding(ctx,d.indices);
 + IDirect3DVertexDeclaration9::release_binding(ctx,d.declaration);
++ for shader in d.shaders{super::shader::release_binding(ctx,shader)}
 + IDirect3DSurface9::destroy_owned(ctx,d.color);IDirect3DSurface9::destroy_owned(ctx,d.depth);
 + host::graphics_call(2,&[d.backend]);IDirect3D9::Release(ctx,d.parent);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);0
 +}
@@ -1597,9 +1609,12 @@ index 0000000..97c2d40
 +pub fn GetVertexDeclaration(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if d.declaration!=0{IDirect3DVertexDeclaration9::AddRef(ctx,d.declaration);}ctx.memory.write::<u32>(out,d.declaration);D3D_OK}
 +pub fn SetFVF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetFVF",2)}
 +pub fn GetFVF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetFVF",2)}
-+pub fn CreateVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVertexShader",3)}
-+pub fn SetVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexShader",2)}
-+pub fn GetVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShader",2)}
++#[win32_derive::dllexport]
++pub fn CreateVertexShader(ctx:&mut Context,this:u32,pointer:u32,out:u32)->u32{let d=device(this);super::shader::create(ctx,this,d.backend,0,pointer,out)}
++#[win32_derive::dllexport]
++pub fn SetVertexShader(ctx:&mut Context,this:u32,pointer:u32)->u32{device(this);if pointer!=0&&!super::shader::retain_binding(pointer,this,0){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().shaders[0],pointer)};super::shader::release_binding(ctx,old);D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetVertexShader(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,4){return D3DERR_INVALIDCALL}let shader=d.shaders[0];if shader!=0{super::shader::AddRef(ctx,shader);}ctx.memory.write::<u32>(pointer,shader);D3D_OK}
 +#[win32_derive::dllexport]
 +pub fn SetVertexShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Float,start,pointer,count,true);result}
 +#[win32_derive::dllexport]
@@ -1639,9 +1654,12 @@ index 0000000..97c2d40
 +}
 +#[win32_derive::dllexport]
 +pub fn GetIndices(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if d.indices!=0{super::buffers::AddRef(ctx,d.indices);}ctx.memory.write::<u32>(out,d.indices);D3D_OK}
-+pub fn CreatePixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreatePixelShader",3)}
-+pub fn SetPixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPixelShader",2)}
-+pub fn GetPixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPixelShader",2)}
++#[win32_derive::dllexport]
++pub fn CreatePixelShader(ctx:&mut Context,this:u32,pointer:u32,out:u32)->u32{let d=device(this);super::shader::create(ctx,this,d.backend,1,pointer,out)}
++#[win32_derive::dllexport]
++pub fn SetPixelShader(ctx:&mut Context,this:u32,pointer:u32)->u32{device(this);if pointer!=0&&!super::shader::retain_binding(pointer,this,1){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().shaders[1],pointer)};super::shader::release_binding(ctx,old);D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetPixelShader(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,4){return D3DERR_INVALIDCALL}let shader=d.shaders[1];if shader!=0{super::shader::AddRef(ctx,shader);}ctx.memory.write::<u32>(pointer,shader);D3D_OK}
 +#[win32_derive::dllexport]
 +pub fn SetPixelShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Float,start,pointer,count,true);result}
 +#[win32_derive::dllexport]
@@ -1658,6 +1676,308 @@ index 0000000..97c2d40
 +pub fn DrawTriPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawTriPatch",4)}
 +pub fn DeletePatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DeletePatch",2)}
 +pub fn CreateQuery_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateQuery",3)}
+diff --git a/win32/winapi/src/d3d9/shader.rs b/win32/winapi/src/d3d9/shader.rs
+new file mode 100644
+index 0000000..fa932c8
+--- /dev/null
++++ b/win32/winapi/src/d3d9/shader.rs
+@@ -0,0 +1,296 @@
++//! Shader COM objects retain original bytecode; GPU translation occurs on draw.
++use super::*;
++#[derive(Clone)]
++struct Shader {
++    refs: u32,
++    bindings: u32,
++    owner: u32,
++    backend: u32,
++    gpu: u32,
++    stage: u32,
++    bytes: std::sync::Arc<[u8]>,
++}
++static SHADERS: LazyLock<Mutex<HashMap<u32, Shader>>> =
++    LazyLock::new(|| Mutex::new(HashMap::new()));
++pub const VTABLE_ENTRIES: [&str; 5] = [
++    "QueryInterface",
++    "AddRef",
++    "Release",
++    "GetDevice",
++    "GetFunction",
++];
++fn shader(this: u32) -> Shader {
++    SHADERS
++        .lock()
++        .unwrap()
++        .get(&this)
++        .expect("invalid shader handle")
++        .clone()
++}
++// Skip full instructions and comments: END-like DWORDs inside DEF or comments
++// are data, not terminators. Full opcode validation is delegated to MojoShader.
++fn bytecode(ctx: &Context, pointer: u32, stage: u32) -> Option<Vec<u8>> {
++    if !valid(ctx, pointer, 8) {
++        return None;
++    }
++    let version = ctx.memory.read::<u32>(pointer);
++    if version != if stage == 0 { 0xfffe0101 } else { 0xffff0200 } {
++        return None;
++    }
++    let mut offset = 4u32;
++    while offset < 1048576 {
++        let address = pointer.checked_add(offset)?;
++        if !valid(ctx, address, 4) {
++            return None;
++        }
++        let token = ctx.memory.read::<u32>(address);
++        let opcode = token & 0xffff;
++        if token == 0xffff {
++            return Some(ctx.memory.bytes[pointer as usize..address as usize + 4].to_vec());
++        }
++        let operands = if opcode == 0xfffe {
++            (token >> 16) & 0x7fff
++        } else if stage == 1 {
++            (token >> 24) & 15
++        } else {
++            match opcode {
++                0 => 0,
++                1 | 6 | 7 | 14 | 15 | 16 | 19 | 78 | 79 => 2,
++                2 | 3 | 5 | 8 | 9 | 10 | 11 | 12 | 13 | 17 | 20..=24 => 3,
++                4 | 18 => 4,
++                31 => 2,
++                81 => 5,
++                _ => return None,
++            }
++        };
++        offset = offset.checked_add((operands + 1) * 4)?;
++    }
++    None
++}
++pub(super) fn create(
++    ctx: &mut Context,
++    owner: u32,
++    backend: u32,
++    stage: u32,
++    pointer: u32,
++    out: u32,
++) -> u32 {
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    let Some(bytes) = bytecode(ctx, pointer, stage) else {
++        return D3DERR_INVALIDCALL;
++    };
++    let host_pointer = ctx.memory.bytes[pointer as usize..].as_ptr() as usize as u32;
++    let gpu = host::graphics_call(8, &[backend, stage, host_pointer, bytes.len() as u32]);
++    if gpu >= 0x80000000 {
++        return gpu;
++    }
++    let this = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    if this == 0 {
++        host::graphics_call(9, &[backend, gpu]);
++        return 0x8007000e;
++    }
++    let vt = unsafe {
++        if stage == 0 {
++            IDirect3DVertexShader9::VTABLE
++        } else {
++            IDirect3DPixelShader9::VTABLE
++        }
++    };
++    assert!(valid(ctx, vt, 20));
++    ctx.memory.write::<u32>(this, vt);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    SHADERS.lock().unwrap().insert(
++        this,
++        Shader {
++            refs: 1,
++            bindings: 0,
++            owner,
++            backend,
++            gpu,
++            stage,
++            bytes: bytes.into(),
++        },
++    );
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++    let s = shader(this);
++    if !valid(ctx, out, 4) {
++        return E_POINTER;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    if !valid(ctx, iid, 16) {
++        return E_POINTER;
++    }
++    let own = if s.stage == 0 {
++        [
++            0x7e, 0x55, 0xc5, 0xef, 0x65, 0x62, 0x13, 0x46, 0x8a, 0x94, 0x43, 0x85, 0x78, 0x89,
++            0xeb, 0x36,
++        ]
++    } else {
++        [
++            0xdc, 0xdb, 0x3b, 0x6d, 0x02, 0x5b, 0x15, 0x44, 0xb8, 0x52, 0xce, 0x5e, 0x8b, 0xcc,
++            0xb2, 0x89,
++        ]
++    };
++    let id = &ctx.memory.bytes[iid as usize..iid as usize + 16];
++    if id != own && id != IID_UNKNOWN {
++        return E_NOINTERFACE;
++    }
++    AddRef(ctx, this);
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn AddRef(ctx: &mut Context, this: u32) -> u32 {
++    let mut map = SHADERS.lock().unwrap();
++    let s = map.get_mut(&this).expect("invalid shader AddRef");
++    let retain = s.refs == 0;
++    let owner = s.owner;
++    s.refs = s.refs.checked_add(1).expect("shader ref overflow");
++    let refs = s.refs;
++    drop(map);
++    if retain {
++        IDirect3DDevice9::AddRef(ctx, owner);
++    }
++    refs
++}
++fn destroy(ctx: &mut Context, this: u32, s: Shader) {
++    host::graphics_call(9, &[s.backend, s.gpu]);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
++}
++#[win32_derive::dllexport]
++pub fn Release(ctx: &mut Context, this: u32) -> u32 {
++    let mut map = SHADERS.lock().unwrap();
++    let s = map.get_mut(&this).expect("invalid shader Release");
++    assert!(s.refs > 0);
++    s.refs -= 1;
++    if s.refs != 0 {
++        return s.refs;
++    }
++    let owner = s.owner;
++    let removed = if s.bindings == 0 {
++        map.remove(&this)
++    } else {
++        None
++    };
++    drop(map);
++    if let Some(s) = removed {
++        destroy(ctx, this, s)
++    }
++    IDirect3DDevice9::Release(ctx, owner);
++    0
++}
++pub(super) fn retain_binding(this: u32, owner: u32, stage: u32) -> bool {
++    let mut map = SHADERS.lock().unwrap();
++    let Some(s) = map.get_mut(&this) else {
++        return false;
++    };
++    if s.owner != owner || s.stage != stage {
++        return false;
++    }
++    s.bindings = s.bindings.checked_add(1).expect("shader binding overflow");
++    true
++}
++pub(super) fn release_binding(ctx: &mut Context, this: u32) {
++    if this == 0 {
++        return;
++    }
++    let mut map = SHADERS.lock().unwrap();
++    let s = map.get_mut(&this).expect("invalid shader binding");
++    assert!(s.bindings > 0);
++    s.bindings -= 1;
++    let removed = if s.refs == 0 && s.bindings == 0 {
++        map.remove(&this)
++    } else {
++        None
++    };
++    drop(map);
++    if let Some(s) = removed {
++        destroy(ctx, this, s)
++    }
++}
++#[win32_derive::dllexport]
++pub fn GetDevice(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let s = shader(this);
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    IDirect3DDevice9::AddRef(ctx, s.owner);
++    ctx.memory.write::<u32>(out, s.owner);
++    D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetFunction(ctx: &mut Context, this: u32, out: u32, size: u32) -> u32 {
++    let s = shader(this);
++    if !valid(ctx, size, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    let capacity = ctx.memory.read::<u32>(size);
++    ctx.memory.write::<u32>(size, s.bytes.len() as u32);
++    if out == 0 {
++        return D3D_OK;
++    }
++    if capacity < s.bytes.len() as u32 || !valid(ctx, out, s.bytes.len()) {
++        return D3DERR_INVALIDCALL;
++    }
++    ctx.memory.bytes[out as usize..out as usize + s.bytes.len()].copy_from_slice(&s.bytes);
++    D3D_OK
++}
++#[cfg(test)]
++pub(super) fn fixture(ctx: &mut Context, owner: u32, stage: u32) -> u32 {
++    // Native COM ownership fixture; no GPU creation is claimed.
++    let this = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    ctx.memory.write::<u32>(this, 0x1b00);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    let bytes: Vec<u8> = [0xfffe0101u32, 1, 0xc00f0000, 0x90e40000, 0xffff]
++        .into_iter()
++        .flat_map(u32::to_le_bytes)
++        .collect();
++    SHADERS.lock().unwrap().insert(
++        this,
++        Shader {
++            refs: 1,
++            bindings: 0,
++            owner,
++            backend: 1,
++            gpu: 1,
++            stage,
++            bytes: bytes.into(),
++        },
++    );
++    this
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn bytecode_skips_end_values_in_comments_and_def() {
++        let mut ctx = Context {
++            cpu: Default::default(),
++            thread_handle: 1,
++            thread_id: 1,
++            memory: runtime::Memory::leak_new(0x3000),
++            blocks: &[],
++            cache: Default::default(),
++            recent: [Context::return_from_x86; 4],
++        };
++        let words = [
++            0xfffe0101, 0x0001fffe, 0xffff, 81, 0xa00f0000, 0xffff, 0, 0, 0, 0xffff,
++        ];
++        for (i, v) in words.into_iter().enumerate() {
++            ctx.memory.write::<u32>(0x1000 + i as u32 * 4, v)
++        }
++        assert_eq!(bytecode(&ctx, 0x1000, 0).unwrap().len(), 40);
++        assert!(bytecode(&ctx, 0x1000, 1).is_none());
++        assert!(bytecode(&ctx, u32::MAX - 2, 0).is_none());
++        ctx.memory.write::<u32>(0x1004, 12345);
++        assert!(bytecode(&ctx, 0x1000, 0).is_none());
++    }
++}
 diff --git a/win32/winapi/src/d3d9/surface.rs b/win32/winapi/src/d3d9/surface.rs
 new file mode 100644
 index 0000000..9063ba4

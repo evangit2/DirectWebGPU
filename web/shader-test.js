@@ -1,3 +1,4 @@
+import {ShaderObjects} from './shader-objects.js';
 import {testCompactInputs} from './compact-input-test.js';
 import {vertexLayout} from './vertex-layout.js';
 import {testShaderConstants} from './constant-test.js';
@@ -16,7 +17,11 @@ document.getElementById('run').onclick=async()=>{
   report.build=await(await fetch('/api/build')).json();
   const tr=await createShaderTranslator();
   const [vs,ps]=await Promise.all(['vertexExplicit','pixel'].map(async name=>new Uint8Array(await(await fetch('/generated/'+name+'.bin')).arrayBuffer())));
-  const shaders=tr.translatePair(vs,ps);report.inputDeclaration={kind:'explicit VS1.1 POSITION v0 / COLOR v1',expectedInputLocations:[0,1],HumusFrames:0};report.shaders=shaders;report.checks.push('VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga');
+  const objects=new ShaderObjects(tr),vertexObject=objects.create(0,vs),pixelObject=objects.create(1,ps);
+  const copy=vs.slice(),copyObject=objects.create(0,copy);copy.fill(0);if(objects.get(copyObject,0).bytecode[0]!==vs[0])throw Error('shader object did not own bytecode');objects.destroy(copyObject);
+  let rejected=false;try{objects.create(1,vs)}catch{rejected=true}if(!rejected)throw Error('wrong-stage shader accepted');
+  const malformed=new Uint8Array(new Uint32Array([0xfffe0101,0x1234,0xffff]).buffer);rejected=false;try{objects.create(0,malformed)}catch{rejected=true}if(!rejected)throw Error('malformed shader accepted');
+  const shaders=objects.pair(vertexObject,pixelObject);objects.destroy(vertexObject);objects.destroy(pixelObject);rejected=false;try{objects.get(vertexObject,0)}catch{rejected=true}if(!rejected||objects.bytes!==0)throw Error('shader lifetime leak');report.shaderObjects={result:'passed',checks:['owned bytecode','stage validation','malformed instruction rejection','paired translation','released handles rejected'],HumusFrames:0};report.inputDeclaration={kind:'explicit VS1.1 POSITION v0 / COLOR v1',expectedInputLocations:[0,1],HumusFrames:0};report.shaders=shaders;report.checks.push('VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga');
   try{tr.translatePair(vs.slice(0,7),ps);throw Error('malformed bytecode accepted');}catch(e){if(!String(e).includes('invalid DX9 bytecode length'))throw e;report.checks.push('misaligned/truncated bytecode rejected');}
   const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('no GPU adapter');
   report.adapter={vendor:adapter.info.vendor,architecture:adapter.info.architecture,isFallbackAdapter:adapter.info.isFallbackAdapter};

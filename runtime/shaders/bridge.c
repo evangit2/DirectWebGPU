@@ -54,6 +54,14 @@ uint32_t shader_constant_value(int stage,int index,int field){
 }
 int shader_input_count(void){return vertex_input_count;}
 int shader_input_value(int index,int field){return index>=0&&index<vertex_input_count&&field>=0&&field<3?vertex_inputs[index][field]:-1;}
+int shader_validate(int stage,const unsigned char *bytes,unsigned length){
+    shader_reset();
+    if(stage<0||stage>1||!bytes||length<8||length>1048576||(length&3)){snprintf(error,sizeof(error),"invalid shader validation arguments");return 0;}
+    const MOJOSHADER_parseData *p=MOJOSHADER_parse("bytecode","main",bytes,length,NULL,0,NULL,0,pair_alloc,pair_free,NULL);
+    int ok=p&&!p->error_count&&p->shader_type==(stage?MOJOSHADER_TYPE_PIXEL:MOJOSHADER_TYPE_VERTEX);
+    if(!ok)snprintf(error,sizeof(error),"shader validation: %s",p&&p->error_count?p->errors[0].error:"wrong shader stage or allocation failure");
+    MOJOSHADER_freeParseData(p);while(allocations)pair_free(allocations+1,NULL);return ok;
+}
 /* Pair linking is needed because DX9 semantic linkage is not SPIR-V linkage.
  * This initial boundary supports float vertex attributes. Integer declarations
  * must be implemented before they are accepted by the D3D frontend. */
