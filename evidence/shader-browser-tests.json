@@ -1,7 +1,7 @@
 {
   "kind": "shader diagnostic, not Humus acceptance",
-  "runId": "dc1ff7e0-fd30-4cd1-aa3d-e638233a7b98",
-  "startedAt": "2026-09-08T18:28:55.637Z",
+  "runId": "054f1c21-6fe0-452e-b949-302c46c0cdba",
+  "startedAt": "2026-09-08T18:49:33.249Z",
   "checks": [
     "VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga",
     "misaligned/truncated bytecode rejected",
@@ -87,7 +87,7 @@
     }
   },
   "build": {
-    "revision": "8d37e91db2ce0ae429b689d059dcfbd74eea6eb2",
+    "revision": "d5b697096ab79e113a941139f5224eaa0dda278e",
     "dirty": true,
     "dependencies": {
       "theseus": {
@@ -212,12 +212,12 @@
     ],
     "wasm_available": true,
     "runtimeBuild": {
-      "translatedTreeSha256": "f9e11b6bb08f1836bd0003ebb87b08a30e251f88ef5a5ef3da4a778c1ea21f70",
+      "translatedTreeSha256": "4e48b571ff67be8f634998749b693fe11d220ef5c4485f2917814eabb44b32e9",
       "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-      "builtAt": "2026-09-08T18:28:49.528227+00:00",
-      "revision": "8d37e91db2ce0ae429b689d059dcfbd74eea6eb2",
+      "builtAt": "2026-09-08T18:48:45.401733+00:00",
+      "revision": "d5b697096ab79e113a941139f5224eaa0dda278e",
       "workingTreeDirty": true,
-      "sourceSha256": "dc1265871ff38096d672f2582f6a763047f61daa5d2c2e78a5f81858e834e0c6",
+      "sourceSha256": "4dc80e0de3c6082a046bcca125698f79a2643fb24a524447f32585d96bcdd2bc",
       "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
       "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
       "translationEntryPoints": [
@@ -230,8 +230,8 @@
           "bytes": 12071
         },
         "humus_bg.wasm": {
-          "sha256": "08d7b933d0a4ad96dedd6ea89b98c5e481ddaa221356a88bc8af510afcf32db1",
-          "bytes": 18247183
+          "sha256": "e02e1a3c7af64f12241f2254d38dd197cc8bfa3d18ccbe04741647ef9ef149e4",
+          "bytes": 18284573
         }
       }
     }
@@ -289,6 +289,10 @@
     "vendor": "apple",
     "architecture": "metal-3",
     "isFallbackAdapter": false
+  },
+  "floatLimit": {
+    "result": "passed",
+    "source": "@compute @workgroup_size(1) fn main(){let x=0x1.fffffep+127f; let y=-0x1.fffffep+127f;}"
   },
   "drawPackets": {
     "result": "passed",

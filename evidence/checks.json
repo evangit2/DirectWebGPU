@@ -630,5 +630,17 @@
     "limitations": "FPU remains f64 approximation; transforms are device state, fixed-function draws remain unsupported",
     "originalRunId": "a3197b97-f12b-4c44-8d3f-73e570b6c3d1",
     "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::SetFVF; args=[\n    0x4e7012,\n    0x142,\n]; stack_return=0x00407109"
+  },
+  "fvfAndFloatLimits": {
+    "FVFRevision": "a6a9e38",
+    "floatLiteralRevision": "d5b6970",
+    "nativeTests": "8 D3D9 tests passed; FVF declaration layout, invalid formats, getter, bindings and stdcall verified",
+    "cleanRestore": "37 files byte-identical",
+    "WASMBuild": "passed",
+    "originalRunId": "2ff5cf82-f247-4488-a331-698430d185b8",
+    "retainedOriginalGPUDrawSubmissions": 33,
+    "retainedDrawRejections": 0,
+    "originalBlocker": "panicked at win32/winapi/src/d3d9/device.rs:13:2:\nunsupported API: d3d9!IDirect3DDevice9::DrawPrimitiveUP; args=[\n    0x4e7012,\n    0x6,\n    0x2,\n    0x13da4,\n    0x18,\n]; stack_return=0x00407121",
+    "limitations": "DrawPrimitiveUP triangle fan remains unsupported; packed D3DCOLOR and fixed-function drawing integration pending; no original Present or scene evidence"
   }
 }
