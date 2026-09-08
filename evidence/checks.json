@@ -391,5 +391,70 @@
       "workerRPC": "passed"
     },
     "originalRunId": "ded2ccbc-81e8-4d1b-bd25-732ee48c8d6e"
+  },
+  "texturedDraw": {
+    "revision": "3a62518556fc093ab74beaff6d9255d2fe0cef6e",
+    "nativeTests": "7 D3D9 tests and 3 shader IR tests passed; scripts/test_shaders.py passed",
+    "nativeLogSha256": "55a4d7d7b141842b7e8ac7e5b3cea37a73744a5edd30bbea11cf5168536cc2eb",
+    "cleanRestore": "32 patched files byte-identical",
+    "build": "WASM runtime and shader translation rebuilt",
+    "limitations": "Original executable still gated by unavailable shader caps; viewport and broader draw/state support pending",
+    "browser": {
+      "runId": "d9f7ab18-deae-4e20-bd83-faebc0b682d5",
+      "result": "passed",
+      "drawPackets": {
+        "result": "passed",
+        "samples": [
+          {
+            "indexed": false,
+            "rgba": [
+              64,
+              128,
+              191,
+              255
+            ]
+          },
+          {
+            "indexed": true,
+            "rgba": [
+              64,
+              128,
+              191,
+              255
+            ]
+          },
+          {
+            "indexed": true,
+            "textured": true,
+            "rgba": [
+              17,
+              121,
+              233,
+              255
+            ]
+          },
+          {
+            "samplerSlot": 7,
+            "rgba": [
+              17,
+              121,
+              233,
+              255
+            ]
+          }
+        ],
+        "draws": 4,
+        "checks": [
+          "reflected sampler slots 0 and 7 produce expected textured pixels",
+          "released texture draw rejected",
+          "decoded draw packets reach GPU rendering",
+          "indexed and nonindexed output matched",
+          "buffer overflow and truncated packets rejected"
+        ],
+        "HumusFrames": 0
+      },
+      "workerRPC": "passed"
+    },
+    "originalRunId": "109a36a3-2058-4258-af8b-d2b0599861b9"
   }
 }
