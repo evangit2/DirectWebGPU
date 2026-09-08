@@ -13,7 +13,7 @@ Evidence source: original archive from https://humus.name/index.php?ID=50&page=3
 | Exceptions | SetUnhandledExceptionFilter, RaiseException, RtlUnwind | Filter registration stores/replaces pointer; complete exception dispatch not implemented |
 | D3D9 | Only Direct3DCreate9 statically imported | SDKVersion=31 creates a real COM object with 17 ABI slots, identity/refcounts and virtual display queries. GetDeviceCaps is the next explicit trap, return PC 0x00402c15; device/rendering unsupported |
 | D3DX | Embedded D3DX9 compiler/assembler version strings 4.09.00.1221; no imported D3DX DLL | Evidence suggests statically linked compiler. Actual compiler execution and dynamic shader-validator lookup still unverified |
-| Shaders | .shd HLSL files loaded by name; VS 1.1/PS 2.0 required by package and source | Actual bytecode not captured yet; no hardcoded replacement shaders |
+| Shaders | .shd HLSL files loaded by name; VS 1.1/PS 2.0 required by package and source | Actual Humus bytecode not captured yet. Reusable WASM MojoShader→SPIR-V→Naga→WGSL path handles diagnostic VS1.1/PS2.0 mov and texld; no full-profile claim or hardcoded replacement shaders |
 | Assets | ../Models/PillarRoom/Map.hmdl; DDS bases/font, PNG normal-height maps/particle, .font | Original directory relationships preserved; browser mounts each integrity-checked file with /DynamicBranching cwd |
 | Geometry | Model upload and indexed draws; DrawPrimitiveUP triangle fans for lights | Required vertex/index buffers, declarations, FVF/fixed-function paths not implemented |
 | Correctness | Ambient/depth first; alpha <255 passes replace stencil with 1; lighting tests stencil==1; additive blending | All required. No alpha/stencil disabling or pretend frame accepted |

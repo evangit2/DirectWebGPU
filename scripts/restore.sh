@@ -8,3 +8,6 @@ python3 -m venv .venv
 .venv/bin/python scripts/inspect_pe.py
 scripts/translate.sh
 scripts/build_wasm.sh
+
+python3 scripts/bootstrap_shaders.py
+python3 scripts/build_shaders.py

@@ -6,7 +6,7 @@ rev=subprocess.run(['git','rev-parse','--verify','HEAD'],cwd=r,capture_output=Tr
 h=hashlib.sha256()
 paths=[]
 for base in ['runtime','scripts','web','patches']:
- paths.extend(p for p in (r/base).rglob('*') if p.is_file() and 'generated' not in p.parts and '__pycache__' not in p.parts)
+ paths.extend(p for p in (r/base).rglob('*') if p.is_file() and 'generated' not in p.parts and '__pycache__' not in p.parts and 'target' not in p.parts)
 for p in sorted(paths):h.update(str(p.relative_to(r)).encode()+b'\0'+p.read_bytes())
 translated=hashlib.sha256()
 for p in sorted((r/'vendor/theseus/out/humus').rglob('*')):

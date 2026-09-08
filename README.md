@@ -45,3 +45,15 @@ Missing D3D9 device/capability/resource/state/shader support is a hard failure, 
 The runtime still has inherited incomplete APIs and f64-based x87 approximations; failed launches are not proof of correctness. Null-page accesses now fail immediately. AOT static scanning includes possible data and missed indirect targets; unknown instructions/targets trap. CPU vendor/features describe a virtual processor; RDTSC is a virtual 1 MHz counter quantized to host milliseconds, not physical CPU speed. The current guest-memory allocation is inherited at 256 MiB and has not been optimized. Linear memory includes other WASM allocations and must not be summed with guest memory as independent totals.
 
 Continue at `patches/theseus.patch` / `vendor/theseus/win32/winapi/src/d3d9.rs`. Implement actual D3D9 semantics and a reusable bytecode-to-WebGPU backend; preserve alpha-tested stencil writes and stencil-tested additive lighting. Full compatibility evidence and the selected path are in `COMPATIBILITY.md` and `DECISION.md`.
+
+## Shader translation diagnostic
+
+A reusable shader module now translates D3D9 bytecode through unmodified MojoShader SPIR-V and Naga WGSL, compiled locally to WASM. The adapter adds explicit inputs for implicit VS 1.1 registers and splits combined texture/sampler resources for WebGPU. Translation allocations are bounded and reclaimed per shader pair. Integer vertex inputs, preshaders, full instruction coverage, alpha testing, and integration with the D3D9 device remain incomplete; capability reporting still traps rather than promising them.
+
+```sh
+python3 scripts/bootstrap_shaders.py
+python3 scripts/build_shaders.py
+python3 scripts/test_shaders.py
+```
+
+Open http://127.0.0.1:8765/shader-test.html and click **Run shader diagnostic**. The tests use authored diagnostic VS 1.1/PS 2.0 bytecode, including a texture lookup. They are separate from the original asset mount and do not count as Humus acceptance. A one-time GPU readback verifies output; this is not the application's presentation path. The browser uploads its report through the same bounded evidence receiver. `runtime/shaders/Cargo.lock` pins Naga dependencies; `dependencies.json` pins MojoShader and Emscripten. Third-party notices remain in their source checkouts.

@@ -1,8 +1,29 @@
 {
-  "theseus": {"url":"https://github.com/evmar/theseus.git", "revision":"f8c1a2351b8b605812076d2dc34e84d20d95de4b", "license":"No license declaration found in checkout; local investigation only, no hosted redistribution."},
-  "rust":"1.98.1",
-  "wasm_rust":"nightly-2026-09-07",
-  "wasm_bindgen_cli":"0.2.121",
-  "archive":{"url":"https://humus.name/3D/DynamicBranching.zip", "sha256":"8063039867fb69e4c58c6bad90f4aad80e43d0eb5c33818e1ba5a9c2be57077a"},
-  "executable":{"path":"DynamicBranching/DynamicBranching.exe", "sha256":"7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"}
+  "theseus": {
+    "url": "https://github.com/evmar/theseus.git",
+    "revision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "license": "No license declaration found in checkout; local investigation only, no hosted redistribution."
+  },
+  "rust": "1.98.1",
+  "wasm_rust": "nightly-2026-09-07",
+  "wasm_bindgen_cli": "0.2.121",
+  "archive": {
+    "url": "https://humus.name/3D/DynamicBranching.zip",
+    "sha256": "8063039867fb69e4c58c6bad90f4aad80e43d0eb5c33818e1ba5a9c2be57077a"
+  },
+  "executable": {
+    "path": "DynamicBranching/DynamicBranching.exe",
+    "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+  },
+  "mojoshader": {
+    "url": "https://github.com/icculus/mojoshader.git",
+    "revision": "ad5dff84830c2863c841f4b1f4e3df78c705b383",
+    "license": "zlib; unmodified source consumed locally, LICENSE.txt retained"
+  },
+  "emsdk": {
+    "url": "https://github.com/emscripten-core/emsdk.git",
+    "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
+    "version": "4.0.7"
+  },
+  "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
 }
