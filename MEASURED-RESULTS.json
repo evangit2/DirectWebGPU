@@ -4,16 +4,17 @@
   "Graphics backend": "WebGPU device/attachment backend; D3D9 draw and resource integration incomplete",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Runtime build": {
-    "translatedTreeSha256": "fb125b2bc35606f434cc13e956326b6c53a5ca036368bdfea74b677e7bca403c",
+    "translatedTreeSha256": "22204a8f3bfed473e3c034e80763378dac8d202f429320b7b17f3b1b40ebc500",
     "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-    "builtAt": "2026-09-08T17:19:23.946467+00:00",
-    "revision": "0c6930ee24ee964ebff19dee671ef337a4d64f7a",
-    "workingTreeDirty": false,
-    "sourceSha256": "9121894e88494c0bd55bd80bd50c0db81dfb79945fc1fd3d3e95e14f4917a19f",
+    "builtAt": "2026-09-08T18:03:08.257416+00:00",
+    "revision": "0b3f3239eb7648bde3fcac9ef83cc57373fcc759",
+    "workingTreeDirty": true,
+    "sourceSha256": "4b926323f639d60f4c7cbce6f66676accf158d2d24e66b6946e064376228e69a",
     "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
     "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
     "translationEntryPoints": [
-      "409a00"
+      "409a00",
+      "004233f4"
     ],
     "artifacts": {
       "humus.js": {
@@ -21,12 +22,12 @@
         "bytes": 12071
       },
       "humus_bg.wasm": {
-        "sha256": "074fd65b061f78645afdf11fb32e3da2ef8cd0e0bebd06e9eeda2aafbbe5a500",
-        "bytes": 16886083
+        "sha256": "a55d67f6d8ba70ca3b832aa2f1a1edd6fd13fe8dda3d29ac108ceffa2e001775",
+        "bytes": 17357348
       }
     }
   },
-  "Run ID": "c4969d9a-8bf0-42f7-a57b-b55eb2bf3e33",
+  "Run ID": "35e53c33-2546-4efd-9f76-2667908383ef",
   "Browser/device": {
     "secureContext": true,
     "crossOriginIsolated": true,
@@ -57,10 +58,10 @@
       "texture-compression-etc2",
       "depth-clip-control",
       "texture-compression-bc-sliced-3d",
-      "timestamp-query",
-      "shader-f16",
-      "clip-distances",
       "texture-formats-tier2",
+      "shader-f16",
+      "timestamp-query",
+      "clip-distances",
       "primitive-index",
       "texture-component-swizzle",
       "subgroups"
@@ -87,7 +88,7 @@
     }
   },
   "Correct browser rendering": false,
-  "Hardware acceleration evidence": "non-fallback Apple Metal adapter/device available; no Humus graphics submission",
+  "Hardware acceleration evidence": "non-fallback Apple Metal adapter/device available; original texture uploads observed, no verified Humus scene draw",
   "Screenshot and frame evidence": {
     "sceneFrames": 0,
     "applicationPresents": 0,
@@ -102,18 +103,18 @@
     "frameTimePercentiles": "not measured",
     "bytesBeforeFirstFrame": "not measured",
     "steadyState": "not measured",
-    "linearMemoryBytesAtFailure": 287703040,
+    "linearMemoryBytesAtFailure": 288096256,
     "guestMemoryBytesContainedInLinearMemory": 268435456,
     "applicationAllocations": "not measured",
     "JSHeap": "not measured",
     "GPUAllocations": "not measured",
     "totalMemory": "not measured; do not sum overlapping values",
-    "diagnosticAttemptToFailureMs": 33144.25499999523,
+    "diagnosticAttemptToFailureMs": 32447.15499997139,
     "diagnosticTimingCaveat": "one debug/traced run, includes loading and model preparation; not time to first scene or a benchmark"
   },
-  "Exact remaining blocker": "IDirect3D9::GetDeviceCaps returns D3DERR_NOTAVAILABLE; original EXE rejects missing PS 2.0 / VS 1.1 support. Resource, shader and draw integration remains incomplete.",
-  "Terminal runtime diagnostic": "panicked at win32/winapi/src/advapi32.rs:102:5:\nunsupported API: advapi32!RegCreateKeyExA; prior_builtin_return=0x0040272f esp=0x00013ebc",
-  "Original application rejection": "win32/winapi/src/user32/misc.rs:99 MessageBox: Error / This demo requires pixel shader 2.0 and vertex shader 1.1.\nYour card/driver only supports pixel shader 0.0 and vertex shader 0.0\n",
+  "Exact remaining blocker": "panicked at out/humus/src/generated/part_08.rs:19021:5:\nunsupported instruction at 004221b0: fldln2",
+  "Terminal runtime diagnostic": "panicked at out/humus/src/generated/part_08.rs:19021:5:\nunsupported instruction at 004221b0: fldln2",
+  "Original application rejection": null,
   "Reproduction command": "python3 scripts/serve.py 8765; open http://127.0.0.1:8765/humus-runtime and click Start Humus",
   "4-hour test": "not run; user-started only",
   "CheerpX baseline": "unavailable in empty initial workspace; no comparison",
@@ -583,7 +584,130 @@
       "nativeLogSha256": "b68379476fcd12143bf42b7abd9f41eee044ad2ddcf3a2f7cf8f7fa1d2f4ecc9",
       "cleanRestore": "32 patched files byte-identical",
       "build": "WASM runtime rebuilt",
-      "limitations": "Original executable still gated by unavailable shader capabilities; pixel-center conventions need validation"
+      "limitations": "Original executable still gated by unavailable shader capabilities; pixel-center conventions need validation",
+      "browser": {
+        "runId": "9cd83825-dec6-4abe-ac5b-3be445355a7e",
+        "result": "passed",
+        "drawPackets": {
+          "result": "passed",
+          "samples": [
+            {
+              "indexed": false,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "rgba": [
+                64,
+                128,
+                191,
+                255
+              ]
+            },
+            {
+              "indexed": true,
+              "textured": true,
+              "rgba": [
+                17,
+                121,
+                233,
+                255
+              ]
+            },
+            {
+              "samplerSlot": 7,
+              "rgba": [
+                17,
+                121,
+                233,
+                255
+              ]
+            },
+            {
+              "viewport": [
+                4,
+                8,
+                16,
+                16
+              ],
+              "depthRangeRejected": [
+                [
+                  0,
+                  0,
+                  0,
+                  255
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  255
+                ]
+              ],
+              "insideOutsideBGRA": [
+                [
+                  191,
+                  128,
+                  64,
+                  255
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  255
+                ]
+              ]
+            }
+          ],
+          "draws": 6,
+          "checks": [
+            "viewport rectangle and depth range verified by GPU pixels",
+            "viewport changes reuse pipeline",
+            "reflected sampler slots 0 and 7 produce expected textured pixels",
+            "released texture draw rejected",
+            "decoded draw packets reach GPU rendering",
+            "indexed and nonindexed output matched",
+            "buffer overflow and truncated packets rejected"
+          ],
+          "HumusFrames": 0
+        }
+      },
+      "originalRunId": "c4969d9a-8bf0-42f7-a57b-b55eb2bf3e33"
+    },
+    "capabilitiesAndInitialization": {
+      "revision": "73f6e627f514c360477a4b024494a346bd18847f",
+      "nativeTests": "7 D3D9 tests and virtual-system-info/atomic/critical-section test passed",
+      "systemInfoLogSha256": "b13c4a9dccbff637315a1850d5909d65faa30272d7334bd450df193185d2e850",
+      "cleanRestore": "32 patched files byte-identical",
+      "build": "WASM runtime rebuilt",
+      "originalProgress": "Passed original shader-version gate; implemented three subsequently observed initialization blockers",
+      "limitations": "Full D3D9 conformance, cross-thread scheduling and scene acceptance unverified",
+      "gpuRunId": "91786d84-15db-4392-a07c-fecf12d32c1c"
+    },
+    "x87AndParity": {
+      "revision": "75acee278aa1f548d15c7752f92c94ce509282bf",
+      "nativeTests": "9 runtime tests passed, including signed zero, quiet/signaling NaN, FCOM versus FUCOM, double pop, and parity branches over 512 inputs",
+      "cleanRestore": "36 files byte-identical",
+      "limitations": "Runtime retains f64 rather than full 80-bit x87 precision; unmasked invalid exception fails explicitly",
+      "fabsRevision": "83b34bd",
+      "indirectTarget": "Observed 0x004233f4 added to evidence/entry-points.txt at 06de284"
+    },
+    "callbackDiscovery": {
+      "revision": "0b3f3239eb7648bde3fcac9ef83cc57373fcc759",
+      "translation": "56,431 blocks, 95.2% static code coverage; immediate callback pointer scan enabled",
+      "runtimeTests": "9 passed",
+      "runtimeTestLogSha256": "d543b73cdeff49e0d3b6b76cb51150afaf5d4b64ef51487425c3b75a0201f4a9",
+      "WASMBuild": "passed",
+      "cleanRestore": "36 patched files byte-identical",
+      "unsupportedDiagnostics": "Explicit runtime failures for SSE/AVX register operands and 16-bit addressing in 32-bit code; neither silently approximated",
+      "originalRunId": "35e53c33-2546-4efd-9f76-2667908383ef",
+      "originalResult": "panicked at out/humus/src/generated/part_08.rs:19021:5:\nunsupported instruction at 004221b0: fldln2"
     }
   },
   "evidenceFile": "evidence/browser-direct3d-attempt.json"

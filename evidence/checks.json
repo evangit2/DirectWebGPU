@@ -558,5 +558,34 @@
       }
     },
     "originalRunId": "c4969d9a-8bf0-42f7-a57b-b55eb2bf3e33"
+  },
+  "capabilitiesAndInitialization": {
+    "revision": "73f6e627f514c360477a4b024494a346bd18847f",
+    "nativeTests": "7 D3D9 tests and virtual-system-info/atomic/critical-section test passed",
+    "systemInfoLogSha256": "b13c4a9dccbff637315a1850d5909d65faa30272d7334bd450df193185d2e850",
+    "cleanRestore": "32 patched files byte-identical",
+    "build": "WASM runtime rebuilt",
+    "originalProgress": "Passed original shader-version gate; implemented three subsequently observed initialization blockers",
+    "limitations": "Full D3D9 conformance, cross-thread scheduling and scene acceptance unverified",
+    "gpuRunId": "91786d84-15db-4392-a07c-fecf12d32c1c"
+  },
+  "x87AndParity": {
+    "revision": "75acee278aa1f548d15c7752f92c94ce509282bf",
+    "nativeTests": "9 runtime tests passed, including signed zero, quiet/signaling NaN, FCOM versus FUCOM, double pop, and parity branches over 512 inputs",
+    "cleanRestore": "36 files byte-identical",
+    "limitations": "Runtime retains f64 rather than full 80-bit x87 precision; unmasked invalid exception fails explicitly",
+    "fabsRevision": "83b34bd",
+    "indirectTarget": "Observed 0x004233f4 added to evidence/entry-points.txt at 06de284"
+  },
+  "callbackDiscovery": {
+    "revision": "0b3f3239eb7648bde3fcac9ef83cc57373fcc759",
+    "translation": "56,431 blocks, 95.2% static code coverage; immediate callback pointer scan enabled",
+    "runtimeTests": "9 passed",
+    "runtimeTestLogSha256": "d543b73cdeff49e0d3b6b76cb51150afaf5d4b64ef51487425c3b75a0201f4a9",
+    "WASMBuild": "passed",
+    "cleanRestore": "36 patched files byte-identical",
+    "unsupportedDiagnostics": "Explicit runtime failures for SSE/AVX register operands and 16-bit addressing in 32-bit code; neither silently approximated",
+    "originalRunId": "35e53c33-2546-4efd-9f76-2667908383ef",
+    "originalResult": "panicked at out/humus/src/generated/part_08.rs:19021:5:\nunsupported instruction at 004221b0: fldln2"
   }
 }
