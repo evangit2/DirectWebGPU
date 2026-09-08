@@ -4,15 +4,16 @@
   "Graphics backend": "D3D9 compatibility frontend to hardware WebGPU",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "Current rendering evidence": "evidence/current-render-summary.json",
-  "Current performance evidence": "evidence/current-performance-summary.json",
-  "Cold/warm startup evidence": "evidence/startup-metrics.json",
+  "Current performance evidence": "evidence/performance-corrected-summary.json",
+  "Cold/warm startup evidence": "evidence/startup-corrected-summary.json",
   "Stability evidence": "evidence/stability-summary.json",
   "Alpha/stencil optimization evidence": "evidence/scene-equivalence-summary.json",
   "Historical measurements": "evidence/historical-measured-results.json",
   "Acceptance audit": "evidence/acceptance-audit.json",
   "Exact remaining blocker": [
     "JS/application allocation and complete pre-first-frame transfer measurements are incomplete; current counters cover narrower scopes.",
-    "Cold/warm startup series predates current rendering and queue changes; repeat after correctness fixes."
+    "Identical current 60-second runs measured 56.55 and 77.17 Present submissions/s; cause of variability unmeasured, sustained 60 FPS target not established.",
+    "Longer stability evidence predates the pixel-center correction."
   ],
   "Measurement limitations": [
     "Present submission rate is not display FPS.",
@@ -29,5 +30,6 @@
   "Pixel-center correction evidence": "evidence/pixel-center-coverage.json",
   "Corrected original scene evidence": "evidence/pixel-center-review.json",
   "GPU timing evidence": "evidence/gpu-timing-summary.json",
-  "Memory and resource coverage": "evidence/memory-resource-summary.json"
+  "Memory and resource coverage": "evidence/memory-resource-summary.json",
+  "Startup visual review": "evidence/startup-corrected-review.json"
 }

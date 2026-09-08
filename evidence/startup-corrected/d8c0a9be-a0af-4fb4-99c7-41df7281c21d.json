@@ -1,0 +1,1137 @@
+{
+  "applicationPresents": 6,
+  "submittedFrames": 6,
+  "sceneFrames": 0,
+  "performance": {
+    "firstSceneMs": "not measured",
+    "fps": "not measured",
+    "jsHeapBytes": "not measured",
+    "gpuBytes": "not measured",
+    "wasmLinearMemoryBytes": 19202048
+  },
+  "runId": "d8c0a9be-a0af-4fb4-99c7-41df7281c21d",
+  "status": "startup trial completed after first Present",
+  "events": [
+    {
+      "timeMs": 571,
+      "type": "probe",
+      "result": {
+        "secureContext": true,
+        "crossOriginIsolated": true,
+        "sharedArrayBuffer": true,
+        "webgpu": true,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+        "adapter": {
+          "vendor": "apple",
+          "architecture": "metal-3",
+          "device": "",
+          "description": "",
+          "isFallbackAdapter": false
+        },
+        "features": [
+          "depth32float-stencil8",
+          "rg11b10ufloat-renderable",
+          "bgra8unorm-storage",
+          "texture-formats-tier1",
+          "texture-compression-bc",
+          "dual-source-blending",
+          "core-features-and-limits",
+          "float32-filterable",
+          "indirect-first-instance",
+          "texture-compression-astc-sliced-3d",
+          "float32-blendable",
+          "subgroup-size-control",
+          "texture-compression-astc",
+          "texture-compression-etc2",
+          "depth-clip-control",
+          "texture-compression-bc-sliced-3d",
+          "clip-distances",
+          "timestamp-query",
+          "shader-f16",
+          "texture-formats-tier2",
+          "primitive-index",
+          "texture-component-swizzle",
+          "subgroups"
+        ],
+        "timestampQuery": {
+          "requested": false,
+          "available": true
+        },
+        "deviceCreated": true,
+        "hardwareAcceleration": "GPU device available; no Humus scene verified"
+      }
+    },
+    {
+      "timeMs": 581,
+      "type": "identity",
+      "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+    },
+    {
+      "timeMs": 766,
+      "type": "launch-settings",
+      "source": "virtual HKLM\\SOFTWARE\\Humus",
+      "resolution": "1280x720",
+      "mechanism": "original EXE enumerates saved window bounds"
+    },
+    {
+      "timeMs": 767,
+      "type": "asset-cache-metrics",
+      "mode": "cold",
+      "hits": 0,
+      "misses": 19,
+      "cacheBytes": 0,
+      "networkBodyBytes": 24689227,
+      "verifiedBytes": 24689227,
+      "repairedEntries": 0,
+      "limitBytes": 134217728,
+      "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    {
+      "timeMs": 767,
+      "type": "resource-metrics",
+      "resourceCount": 20,
+      "transferSize": 24708032,
+      "encodedBodySize": 24702032,
+      "decodedBodySize": 24702032,
+      "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+      "cachePolicy": "loopback server Cache-Control: no-store"
+    },
+    {
+      "timeMs": 767,
+      "type": "execution-start",
+      "wasmLinearMemoryBytes": 19202048
+    },
+    {
+      "timeMs": 848,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/env.rs:32 stub: using 0"
+    },
+    {
+      "timeMs": 848,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/env.rs:48 stub: using true"
+    },
+    {
+      "timeMs": 849,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:107 stub: using 0"
+    },
+    {
+      "timeMs": 849,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(KERNEL32): not loaded"
+    },
+    {
+      "timeMs": 851,
+      "type": "log",
+      "message": "win32/winapi/src/user32/resource.rs:13 stub: using 0"
+    },
+    {
+      "timeMs": 851,
+      "type": "log",
+      "message": "win32/winapi/src/user32/resource.rs:8 stub: using 0"
+    },
+    {
+      "timeMs": 852,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:414 stub: using 1"
+    },
+    {
+      "timeMs": 852,
+      "type": "log",
+      "message": "win32/winapi/src/advapi32.rs:215 VIRTUAL_REGISTRY_OPEN path=80000002\\software\\humus handle=0x10000 created=false"
+    },
+    {
+      "timeMs": 1698,
+      "type": "window-created",
+      "title": "Title",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "timeMs": 1699,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:125 stub: using HANDLE(1)"
+    },
+    {
+      "timeMs": 1700,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:546 stub: using true"
+    },
+    {
+      "timeMs": 1700,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:175 WINDOW_CREATION_CALLBACKS hwnd=0x1"
+    },
+    {
+      "timeMs": 1700,
+      "type": "d3d9-created",
+      "message": "win32/winapi/src/d3d9.rs:57 D3D9_CREATE9 sdk=31 object=0x004e700a"
+    },
+    {
+      "timeMs": 1701,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:57 D3D9_CREATE9 sdk=31 object=0x004e700a"
+    },
+    {
+      "timeMs": 1701,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1701,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:160 D3D9_CREATE_DEVICE_PRESENT_PARAMETERS [\n    0x500,\n    0x2d0,\n    0x15,\n    0x1,\n    0x0,\n    0x0,\n    0x1,\n    0x0,\n    0x1,\n    0x1,\n    0x4b,\n    0x0,\n    0x0,\n    0x80000000,\n]"
+    },
+    {
+      "timeMs": 1703,
+      "type": "d3d9-device-created",
+      "backendId": 1,
+      "width": 1280,
+      "height": 720,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed",
+      "sceneFrames": 0
+    },
+    {
+      "timeMs": 1703,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:164 D3D9_DEVICE_CREATED object=0x4e7012 backend=1"
+    },
+    {
+      "timeMs": 1712,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1777,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1778,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1803,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1841,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1841,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1847,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1853,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1854,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1855,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1860,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1860,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1861,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1867,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1867,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1868,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1871,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1871,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    }
+  ],
+  "droppedEvents": 0,
+  "build": {
+    "revision": "2c6aa1ce416014b21ca851ba27219f9e84e30dbb",
+    "dirty": true,
+    "dependencies": {
+      "theseus": {
+        "url": "https://github.com/evmar/theseus.git",
+        "revision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+        "license": "No license declaration found in checkout; local investigation only, no hosted redistribution."
+      },
+      "rust": "1.98.1",
+      "wasm_rust": "nightly-2026-09-07",
+      "wasm_bindgen_cli": "0.2.121",
+      "archive": {
+        "url": "https://humus.name/3D/DynamicBranching.zip",
+        "sha256": "8063039867fb69e4c58c6bad90f4aad80e43d0eb5c33818e1ba5a9c2be57077a"
+      },
+      "executable": {
+        "path": "DynamicBranching/DynamicBranching.exe",
+        "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+      },
+      "mojoshader": {
+        "url": "https://github.com/icculus/mojoshader.git",
+        "revision": "ad5dff84830c2863c841f4b1f4e3df78c705b383",
+        "license": "zlib; unmodified source consumed locally, LICENSE.txt retained"
+      },
+      "emsdk": {
+        "url": "https://github.com/emscripten-core/emsdk.git",
+        "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
+        "version": "4.0.7"
+      },
+      "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
+    },
+    "files": [
+      {
+        "path": "DynamicBranching/DynamicBranching.dsp",
+        "bytes": 7163,
+        "sha256": "3c086ee7a6b8e32c2c0719e2510fb05d431a8dc96955bf2da574c625d52a2677"
+      },
+      {
+        "path": "DynamicBranching/DynamicBranching.dsw",
+        "bytes": 555,
+        "sha256": "1a9c43ec3187ada28cd6cd25101b6b9b7fd44b31f7e6c5fdcc7a9d5c396c786d"
+      },
+      {
+        "path": "DynamicBranching/DynamicBranching.exe",
+        "bytes": 925696,
+        "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+      },
+      {
+        "path": "DynamicBranching/Main.cpp",
+        "bytes": 8514,
+        "sha256": "88d32ac76ce4227fa8924572a3641877129819b5abe3d40667fc379431e680ef"
+      },
+      {
+        "path": "DynamicBranching/depthAmbient.shd",
+        "bytes": 435,
+        "sha256": "b5f89e989b1fb9e367b71fa57500340be28771654941b5bbf82b484f0a087e2e"
+      },
+      {
+        "path": "DynamicBranching/if.shd",
+        "bytes": 411,
+        "sha256": "481045950c8b579040a85208e755abb2251650d68ac0808708b7c9275dd44d1d"
+      },
+      {
+        "path": "DynamicBranching/lighting.shd",
+        "bytes": 1585,
+        "sha256": "865b3f054522da77a1cbd884044ec99ed3d8afdf53340825039c3c8200d8e6e8"
+      },
+      {
+        "path": "Models/PillarRoom/Map.hmdl",
+        "bytes": 57028,
+        "sha256": "bd881f835d4e52b93351194c992f59cbd7187ef8850c4c2f7d9ad72225c492d5"
+      },
+      {
+        "path": "Textures/Fonts/Future.dds",
+        "bytes": 349680,
+        "sha256": "9b7f4ea36194f5ab48e38b33dc8039a8aab0ce905d541aa6dee1ed5f30de2022"
+      },
+      {
+        "path": "Textures/Fonts/Future.font",
+        "bytes": 5124,
+        "sha256": "878c2b3e5fa5961d0f3eacb564901e0e91dc185c834e48e01e4803f8cda1a2e3"
+      },
+      {
+        "path": "Textures/Particle.png",
+        "bytes": 613,
+        "sha256": "3987c11a7d2798dc189cd9309910ddfeecfb0551decfd1238c7a59b2d186e24d"
+      },
+      {
+        "path": "Textures/brick01.dds",
+        "bytes": 174904,
+        "sha256": "0c94736d677faa0d962f9e7f6c7688076652faee93130167813e59cb125a27e4"
+      },
+      {
+        "path": "Textures/brick01Bump.png",
+        "bytes": 74397,
+        "sha256": "3e8ea48fdb25da97f55d3f4c939b8c0a8572e2ad6bbb6f1105d6fd340889c823"
+      },
+      {
+        "path": "Textures/laying_rock7.dds",
+        "bytes": 174904,
+        "sha256": "e8ea9d650264bba9b6267470db2cd0c603b08ca1112e719c4974358806188235"
+      },
+      {
+        "path": "Textures/laying_rock7Bump.png",
+        "bytes": 87309,
+        "sha256": "ecaa27e2311541d0882bd5c1b53a5e4818dc808a29a6081a53a540b318aeebf5"
+      },
+      {
+        "path": "Textures/parqfloor2.dds",
+        "bytes": 174904,
+        "sha256": "b120f827ed239af7919a6ae298463eb70adea325acf330bc69a181698adfb292"
+      },
+      {
+        "path": "Textures/parqfloor2Bump.png",
+        "bytes": 8263,
+        "sha256": "7a4762e961cfc7ccff1cbe6d4793374319257237d7463f49090c30e812102795"
+      },
+      {
+        "path": "readme.txt",
+        "bytes": 1101,
+        "sha256": "56dd528b14422b1bb9e1cfe27197aeb2330647f2181118bd864f8d436438204d"
+      }
+    ],
+    "wasm_available": true,
+    "runtimeBuild": {
+      "wasmProfile": "release",
+      "translatedTreeSha256": "fe5f97fbd71d843f80a8be7ea411d085d0a3250e4f227743650375326aa69b39",
+      "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
+      "builtAt": "2026-09-08T20:43:16.821034+00:00",
+      "revision": "253ae7b55c4be68977c5d6505a4ac84ba9e21e70",
+      "workingTreeDirty": false,
+      "sourceSha256": "5434460f74bc824c48bde8638a421124318e4d76796f9198f4a14e2e6f64666c",
+      "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+      "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+      "translationEntryPoints": [
+        "409a00",
+        "004233f4"
+      ],
+      "artifacts": {
+        "humus.js": {
+          "sha256": "6f0b11681802df270a64e54f02bee3679851fd7bad38f1f4fea417819c2616f0",
+          "bytes": 12805
+        },
+        "humus_bg.wasm": {
+          "sha256": "8f6a12b4062857a68601869f596ac94e7b4c9597313d114e216a2c1e34cb7c3b",
+          "bytes": 22636641
+        }
+      }
+    }
+  },
+  "startTimeMs": 509.63500010967255,
+  "startedAt": "2026-09-08T20:47:49.612Z",
+  "requestedDurationMs": 60000,
+  "visibility": "visible",
+  "browser": {
+    "secureContext": true,
+    "crossOriginIsolated": true,
+    "sharedArrayBuffer": true,
+    "webgpu": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "features": [
+      "depth32float-stencil8",
+      "rg11b10ufloat-renderable",
+      "bgra8unorm-storage",
+      "texture-formats-tier1",
+      "texture-compression-bc",
+      "dual-source-blending",
+      "core-features-and-limits",
+      "float32-filterable",
+      "indirect-first-instance",
+      "texture-compression-astc-sliced-3d",
+      "float32-blendable",
+      "subgroup-size-control",
+      "texture-compression-astc",
+      "texture-compression-etc2",
+      "depth-clip-control",
+      "texture-compression-bc-sliced-3d",
+      "clip-distances",
+      "timestamp-query",
+      "shader-f16",
+      "texture-formats-tier2",
+      "primitive-index",
+      "texture-component-swizzle",
+      "subgroups"
+    ],
+    "timestampQuery": {
+      "requested": false,
+      "available": true
+    },
+    "deviceCreated": true,
+    "hardwareAcceleration": "GPU device available; no Humus scene verified"
+  },
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "assetCacheMetrics": {
+    "mode": "cold",
+    "hits": 0,
+    "misses": 19,
+    "cacheBytes": 0,
+    "networkBodyBytes": 24689227,
+    "verifiedBytes": 24689227,
+    "repairedEntries": 0,
+    "limitBytes": 134217728,
+    "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+  },
+  "resourceMetrics": {
+    "resourceCount": 20,
+    "transferSize": 24708032,
+    "encodedBodySize": 24702032,
+    "decodedBodySize": 24702032,
+    "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+    "cachePolicy": "loopback server Cache-Control: no-store"
+  },
+  "realmResources": {
+    "cpuWorker": {
+      "realm": "cpuWorker",
+      "phase": "before EXE execution",
+      "resourceCount": 20,
+      "retainedEntries": 20,
+      "transferSize": 24708032,
+      "encodedBodySize": 24702032,
+      "decodedBodySize": 24702032,
+      "zeroSizeEntries": 0,
+      "entries": [
+        {
+          "path": "/assets/DynamicBranching/DynamicBranching.exe",
+          "initiatorType": "fetch",
+          "startTime": 45.47000002861023,
+          "responseEnd": 47.40499997138977,
+          "transferSize": 925996,
+          "encodedBodySize": 925696,
+          "decodedBodySize": 925696
+        },
+        {
+          "path": "/generated/humus.js",
+          "initiatorType": "script",
+          "startTime": 52.3199999332428,
+          "responseEnd": 54.30999994277954,
+          "transferSize": 13105,
+          "encodedBodySize": 12805,
+          "decodedBodySize": 12805
+        },
+        {
+          "path": "/generated/humus_bg.wasm",
+          "initiatorType": "fetch",
+          "startTime": 55.549999952316284,
+          "responseEnd": 78.62999999523163,
+          "transferSize": 22636941,
+          "encodedBodySize": 22636641,
+          "decodedBodySize": 22636641
+        },
+        {
+          "path": "/assets/DynamicBranching/DynamicBranching.dsp",
+          "initiatorType": "fetch",
+          "startTime": 181.41499996185303,
+          "responseEnd": 182.97000002861023,
+          "transferSize": 7463,
+          "encodedBodySize": 7163,
+          "decodedBodySize": 7163
+        },
+        {
+          "path": "/assets/DynamicBranching/DynamicBranching.dsw",
+          "initiatorType": "fetch",
+          "startTime": 185,
+          "responseEnd": 186.21000003814697,
+          "transferSize": 855,
+          "encodedBodySize": 555,
+          "decodedBodySize": 555
+        },
+        {
+          "path": "/assets/DynamicBranching/Main.cpp",
+          "initiatorType": "fetch",
+          "startTime": 188.38499999046326,
+          "responseEnd": 190.17499995231628,
+          "transferSize": 8814,
+          "encodedBodySize": 8514,
+          "decodedBodySize": 8514
+        },
+        {
+          "path": "/assets/DynamicBranching/depthAmbient.shd",
+          "initiatorType": "fetch",
+          "startTime": 191.42499995231628,
+          "responseEnd": 192.93999993801117,
+          "transferSize": 735,
+          "encodedBodySize": 435,
+          "decodedBodySize": 435
+        },
+        {
+          "path": "/assets/DynamicBranching/if.shd",
+          "initiatorType": "fetch",
+          "startTime": 194.95499992370605,
+          "responseEnd": 196.64999997615814,
+          "transferSize": 711,
+          "encodedBodySize": 411,
+          "decodedBodySize": 411
+        },
+        {
+          "path": "/assets/DynamicBranching/lighting.shd",
+          "initiatorType": "fetch",
+          "startTime": 197.7699999809265,
+          "responseEnd": 199.15499997138977,
+          "transferSize": 1885,
+          "encodedBodySize": 1585,
+          "decodedBodySize": 1585
+        },
+        {
+          "path": "/assets/Models/PillarRoom/Map.hmdl",
+          "initiatorType": "fetch",
+          "startTime": 200.1050000190735,
+          "responseEnd": 201.63499999046326,
+          "transferSize": 57328,
+          "encodedBodySize": 57028,
+          "decodedBodySize": 57028
+        },
+        {
+          "path": "/assets/Textures/Fonts/Future.dds",
+          "initiatorType": "fetch",
+          "startTime": 203.13499999046326,
+          "responseEnd": 204.72500002384186,
+          "transferSize": 349980,
+          "encodedBodySize": 349680,
+          "decodedBodySize": 349680
+        },
+        {
+          "path": "/assets/Textures/Fonts/Future.font",
+          "initiatorType": "fetch",
+          "startTime": 206.90499997138977,
+          "responseEnd": 208.5900000333786,
+          "transferSize": 5424,
+          "encodedBodySize": 5124,
+          "decodedBodySize": 5124
+        },
+        {
+          "path": "/assets/Textures/Particle.png",
+          "initiatorType": "fetch",
+          "startTime": 210.41499996185303,
+          "responseEnd": 212.0900000333786,
+          "transferSize": 913,
+          "encodedBodySize": 613,
+          "decodedBodySize": 613
+        },
+        {
+          "path": "/assets/Textures/brick01.dds",
+          "initiatorType": "fetch",
+          "startTime": 213.22000002861023,
+          "responseEnd": 214.68999993801117,
+          "transferSize": 175204,
+          "encodedBodySize": 174904,
+          "decodedBodySize": 174904
+        },
+        {
+          "path": "/assets/Textures/brick01Bump.png",
+          "initiatorType": "fetch",
+          "startTime": 216.9299999475479,
+          "responseEnd": 218.6449999809265,
+          "transferSize": 74697,
+          "encodedBodySize": 74397,
+          "decodedBodySize": 74397
+        },
+        {
+          "path": "/assets/Textures/laying_rock7.dds",
+          "initiatorType": "fetch",
+          "startTime": 220.38499999046326,
+          "responseEnd": 221.86000001430511,
+          "transferSize": 175204,
+          "encodedBodySize": 174904,
+          "decodedBodySize": 174904
+        },
+        {
+          "path": "/assets/Textures/laying_rock7Bump.png",
+          "initiatorType": "fetch",
+          "startTime": 223.76499998569489,
+          "responseEnd": 225.0549999475479,
+          "transferSize": 87609,
+          "encodedBodySize": 87309,
+          "decodedBodySize": 87309
+        },
+        {
+          "path": "/assets/Textures/parqfloor2.dds",
+          "initiatorType": "fetch",
+          "startTime": 227.62999999523163,
+          "responseEnd": 229.04499995708466,
+          "transferSize": 175204,
+          "encodedBodySize": 174904,
+          "decodedBodySize": 174904
+        },
+        {
+          "path": "/assets/Textures/parqfloor2Bump.png",
+          "initiatorType": "fetch",
+          "startTime": 230.74500000476837,
+          "responseEnd": 232.1050000190735,
+          "transferSize": 8563,
+          "encodedBodySize": 8263,
+          "decodedBodySize": 8263
+        },
+        {
+          "path": "/assets/readme.txt",
+          "initiatorType": "fetch",
+          "startTime": 233.38499999046326,
+          "responseEnd": 234.90499997138977,
+          "transferSize": 1401,
+          "encodedBodySize": 1101,
+          "decodedBodySize": 1101
+        }
+      ],
+      "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Realm snapshots are separately scoped, not an exact total of all network bytes."
+    },
+    "gpuWorker": {
+      "realm": "gpuWorker",
+      "phase": "first Present submission",
+      "resourceCount": 2,
+      "retainedEntries": 2,
+      "transferSize": 2241977,
+      "encodedBodySize": 2241377,
+      "decodedBodySize": 2241377,
+      "zeroSizeEntries": 0,
+      "entries": [
+        {
+          "path": "/generated/mojoshader.wasm",
+          "initiatorType": "fetch",
+          "startTime": 1262.5950000286102,
+          "responseEnd": 1265.8150000572205,
+          "transferSize": 114059,
+          "encodedBodySize": 113759,
+          "decodedBodySize": 113759
+        },
+        {
+          "path": "/generated/shader_translation_bg.wasm",
+          "initiatorType": "fetch",
+          "startTime": 1262.945000052452,
+          "responseEnd": 1270.3500000238419,
+          "transferSize": 2127918,
+          "encodedBodySize": 2127618,
+          "decodedBodySize": 2127618
+        }
+      ],
+      "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Realm snapshots are separately scoped, not an exact total of all network bytes."
+    },
+    "page": {
+      "realm": "page",
+      "phase": "first Present observed; includes page setup before Start",
+      "resourceCount": 35,
+      "retainedEntries": 35,
+      "transferSize": 143301,
+      "encodedBodySize": 132801,
+      "decodedBodySize": 132801,
+      "zeroSizeEntries": 0,
+      "entries": [
+        {
+          "path": "/style.css",
+          "initiatorType": "link",
+          "startTime": 23.570000052452087,
+          "responseEnd": 33.32000005245209,
+          "transferSize": 1140,
+          "encodedBodySize": 840,
+          "decodedBodySize": 840
+        },
+        {
+          "path": "/app.js",
+          "initiatorType": "script",
+          "startTime": 23.700000047683716,
+          "responseEnd": 33.480000019073486,
+          "transferSize": 12223,
+          "encodedBodySize": 11923,
+          "decodedBodySize": 11923
+        },
+        {
+          "path": "/resource-metrics.js",
+          "initiatorType": "script",
+          "startTime": 39.675000071525574,
+          "responseEnd": 43.22000002861023,
+          "transferSize": 2266,
+          "encodedBodySize": 1966,
+          "decodedBodySize": 1966
+        },
+        {
+          "path": "/api/build",
+          "initiatorType": "fetch",
+          "startTime": 44.36500000953674,
+          "responseEnd": 92.86500000953674,
+          "transferSize": 4732,
+          "encodedBodySize": 4432,
+          "decodedBodySize": 4432
+        },
+        {
+          "path": "/worker.js",
+          "initiatorType": "other",
+          "startTime": 98.4300000667572,
+          "responseEnd": 96.11500000953674,
+          "transferSize": 7187,
+          "encodedBodySize": 6887,
+          "decodedBodySize": 6887
+        },
+        {
+          "path": "/resource-metrics.js",
+          "initiatorType": "script",
+          "startTime": 99.09500002861023,
+          "responseEnd": 103.9650000333786,
+          "transferSize": 2266,
+          "encodedBodySize": 1966,
+          "decodedBodySize": 1966
+        },
+        {
+          "path": "/draw-batch.js",
+          "initiatorType": "script",
+          "startTime": 99.24500000476837,
+          "responseEnd": 104.42000007629395,
+          "transferSize": 3329,
+          "encodedBodySize": 3029,
+          "decodedBodySize": 3029
+        },
+        {
+          "path": "/asset-cache.js",
+          "initiatorType": "script",
+          "startTime": 99.32000005245209,
+          "responseEnd": 105.56500005722046,
+          "transferSize": 2916,
+          "encodedBodySize": 2616,
+          "decodedBodySize": 2616
+        },
+        {
+          "path": "/api/session",
+          "initiatorType": "fetch",
+          "startTime": 509.8050000667572,
+          "responseEnd": 511.8600000143051,
+          "transferSize": 361,
+          "encodedBodySize": 61,
+          "decodedBodySize": 61
+        },
+        {
+          "path": "/worker.js",
+          "initiatorType": "other",
+          "startTime": 531.9700000286102,
+          "responseEnd": 528.4400000572205,
+          "transferSize": 7187,
+          "encodedBodySize": 6887,
+          "decodedBodySize": 6887
+        },
+        {
+          "path": "/gpu-worker.js",
+          "initiatorType": "other",
+          "startTime": 532.4750000238419,
+          "responseEnd": 528.3700000047684,
+          "transferSize": 14670,
+          "encodedBodySize": 14370,
+          "decodedBodySize": 14370
+        },
+        {
+          "path": "/resource-metrics.js",
+          "initiatorType": "script",
+          "startTime": 532.9650000333786,
+          "responseEnd": 538.7400000095367,
+          "transferSize": 2266,
+          "encodedBodySize": 1966,
+          "decodedBodySize": 1966
+        },
+        {
+          "path": "/draw-batch.js",
+          "initiatorType": "script",
+          "startTime": 533.085000038147,
+          "responseEnd": 540.545000076294,
+          "transferSize": 3329,
+          "encodedBodySize": 3029,
+          "decodedBodySize": 3029
+        },
+        {
+          "path": "/asset-cache.js",
+          "initiatorType": "script",
+          "startTime": 533.2750000953674,
+          "responseEnd": 542.9800000190735,
+          "transferSize": 2916,
+          "encodedBodySize": 2616,
+          "decodedBodySize": 2616
+        },
+        {
+          "path": "/resource-metrics.js",
+          "initiatorType": "script",
+          "startTime": 533.3900001049042,
+          "responseEnd": 556.4900000095367,
+          "transferSize": 2266,
+          "encodedBodySize": 1966,
+          "decodedBodySize": 1966
+        },
+        {
+          "path": "/gpu-timing.js",
+          "initiatorType": "script",
+          "startTime": 533.5200001001358,
+          "responseEnd": 545.5200001001358,
+          "transferSize": 2418,
+          "encodedBodySize": 2118,
+          "decodedBodySize": 2118
+        },
+        {
+          "path": "/scene-equivalence.js",
+          "initiatorType": "script",
+          "startTime": 533.5900000333786,
+          "responseEnd": 542.6400001049042,
+          "transferSize": 4657,
+          "encodedBodySize": 4357,
+          "decodedBodySize": 4357
+        },
+        {
+          "path": "/draw-batch.js",
+          "initiatorType": "script",
+          "startTime": 533.6450001001358,
+          "responseEnd": 559.0500000715256,
+          "transferSize": 3329,
+          "encodedBodySize": 3029,
+          "decodedBodySize": 3029
+        },
+        {
+          "path": "/performance-metrics.js",
+          "initiatorType": "script",
+          "startTime": 533.7550001144409,
+          "responseEnd": 543.8600000143051,
+          "transferSize": 1550,
+          "encodedBodySize": 1250,
+          "decodedBodySize": 1250
+        },
+        {
+          "path": "/frame-capture.js",
+          "initiatorType": "script",
+          "startTime": 534.2200000286102,
+          "responseEnd": 549.8850001096725,
+          "transferSize": 2299,
+          "encodedBodySize": 1999,
+          "decodedBodySize": 1999
+        },
+        {
+          "path": "/draw-diagnostic.js",
+          "initiatorType": "script",
+          "startTime": 534.3100000619888,
+          "responseEnd": 547.2650001049042,
+          "transferSize": 1346,
+          "encodedBodySize": 1046,
+          "decodedBodySize": 1046
+        },
+        {
+          "path": "/d3d9-caps.js",
+          "initiatorType": "script",
+          "startTime": 534.4450000524521,
+          "responseEnd": 550.7450000047684,
+          "transferSize": 2074,
+          "encodedBodySize": 1774,
+          "decodedBodySize": 1774
+        },
+        {
+          "path": "/d3d9-draw.js",
+          "initiatorType": "script",
+          "startTime": 534.5400000810623,
+          "responseEnd": 551.0350000858307,
+          "transferSize": 6101,
+          "encodedBodySize": 5801,
+          "decodedBodySize": 5801
+        },
+        {
+          "path": "/gpu-textures.js",
+          "initiatorType": "script",
+          "startTime": 534.6050000190735,
+          "responseEnd": 552.9300000667572,
+          "transferSize": 3808,
+          "encodedBodySize": 3508,
+          "decodedBodySize": 3508
+        },
+        {
+          "path": "/shader-objects.js",
+          "initiatorType": "script",
+          "startTime": 534.710000038147,
+          "responseEnd": 555.4800000190735,
+          "transferSize": 2461,
+          "encodedBodySize": 2161,
+          "decodedBodySize": 2161
+        },
+        {
+          "path": "/shaders.js",
+          "initiatorType": "script",
+          "startTime": 534.8200000524521,
+          "responseEnd": 552.6850000619888,
+          "transferSize": 3993,
+          "encodedBodySize": 3693,
+          "decodedBodySize": 3693
+        },
+        {
+          "path": "/gpu-buffers.js",
+          "initiatorType": "script",
+          "startTime": 534.9350000619888,
+          "responseEnd": 559.1600000858307,
+          "transferSize": 2434,
+          "encodedBodySize": 2134,
+          "decodedBodySize": 2134
+        },
+        {
+          "path": "/d3d9-state.js",
+          "initiatorType": "script",
+          "startTime": 535.0650000572205,
+          "responseEnd": 558.4250000715256,
+          "transferSize": 3555,
+          "encodedBodySize": 3255,
+          "decodedBodySize": 3255
+        },
+        {
+          "path": "/d3d9-samplers.js",
+          "initiatorType": "script",
+          "startTime": 552.9800000190735,
+          "responseEnd": 561.1400001049042,
+          "transferSize": 1834,
+          "encodedBodySize": 1534,
+          "decodedBodySize": 1534
+        },
+        {
+          "path": "/d3d9-pipelines.js",
+          "initiatorType": "script",
+          "startTime": 553.125,
+          "responseEnd": 559.6800000667572,
+          "transferSize": 3236,
+          "encodedBodySize": 2936,
+          "decodedBodySize": 2936
+        },
+        {
+          "path": "/shader-uniforms.js",
+          "initiatorType": "script",
+          "startTime": 553.3100000619888,
+          "responseEnd": 561.9850000143051,
+          "transferSize": 1581,
+          "encodedBodySize": 1281,
+          "decodedBodySize": 1281
+        },
+        {
+          "path": "/generated/mojoshader.js",
+          "initiatorType": "script",
+          "startTime": 554.8000000715256,
+          "responseEnd": 562.6350001096725,
+          "transferSize": 11267,
+          "encodedBodySize": 10967,
+          "decodedBodySize": 10967
+        },
+        {
+          "path": "/generated/shader_translation.js",
+          "initiatorType": "script",
+          "startTime": 554.9500000476837,
+          "responseEnd": 563.625,
+          "transferSize": 11445,
+          "encodedBodySize": 11145,
+          "decodedBodySize": 11145
+        },
+        {
+          "path": "/fixed-function.js",
+          "initiatorType": "script",
+          "startTime": 559.9950000047684,
+          "responseEnd": 563.3650000095367,
+          "transferSize": 2310,
+          "encodedBodySize": 2010,
+          "decodedBodySize": 2010
+        },
+        {
+          "path": "/vertex-layout.js",
+          "initiatorType": "script",
+          "startTime": 560.0600000619888,
+          "responseEnd": 563.7600001096725,
+          "transferSize": 2549,
+          "encodedBodySize": 2249,
+          "decodedBodySize": 2249
+        }
+      ],
+      "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Realm snapshots are separately scoped, not an exact total of all network bytes."
+    }
+  },
+  "originalExecutionAttempted": true,
+  "window": {
+    "title": "Title",
+    "width": 1280,
+    "height": 720
+  },
+  "direct3DCreate9Reached": true,
+  "direct3D9ObjectCreated": true,
+  "d3d9Device": {
+    "backendId": 1,
+    "width": 1280,
+    "height": 720,
+    "colorFormat": "bgra8unorm",
+    "depthFormat": "depth24plus-stencil8",
+    "validation": "passed",
+    "sceneFrames": 0
+  },
+  "gpuSubmissions": 321,
+  "presentationMetrics": {
+    "firstPresentMs": 1738.710205078125,
+    "totalSteadyIntervals": 0,
+    "steadyDurationMs": 0,
+    "submissionFPS": null,
+    "frameTimeMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null
+    },
+    "retainedIntervals": 0,
+    "warmupMs": 5000,
+    "queueCompletionSamples": [],
+    "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+    "drawBridge": {
+      "drawBatches": 28,
+      "batchedDraws": 40,
+      "batchedUploads": 88,
+      "uploadedBytes": 4083265,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "wasmLinearMemoryBytes": 288096256,
+    "geometryGPUBytes": 60784,
+    "textureGPUBytes": 4025064,
+    "colorLogicalBytes": 3686400,
+    "depthStencilLogicalMinimumBytes": 3686400,
+    "pipelineCacheEntries": 5,
+    "shaderObjects": 6,
+    "gpuTimingEnabled": false,
+    "captureEnabled": false,
+    "sceneEquivalenceEnabled": false,
+    "cameraTestEnabled": false
+  },
+  "stabilitySamples": [
+    {
+      "elapsedMs": 1739,
+      "applicationPresents": 0,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": null
+    }
+  ],
+  "firstPresentObservedMs": 1739.0299999713898,
+  "endedAt": "2026-09-08T20:47:51.451Z",
+  "diagnosticAttemptMs": 1839.3399999141693
+}

@@ -1,0 +1,108 @@
+{
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "runtimeRevision": "253ae7b55c4be68977c5d6505a4ac84ba9e21e70",
+  "images": [
+    {
+      "runId": "15a5d7a1-6f58-4b9e-8209-87c09e266582",
+      "path": "evidence/startup-corrected/15a5d7a1-6f58-4b9e-8209-87c09e266582.jpg",
+      "sha256": "0c8ecb1657d738a5739e4d4441dff272303b83dab2c3193a39c871cf9525d752",
+      "present": 1,
+      "mode": "cold",
+      "readbackCompletedMs": 1671.705078125,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839326,
+        "pixels": 839680
+      }
+    },
+    {
+      "runId": "26424de2-6757-4cb0-98d5-d3351e8c693e",
+      "path": "evidence/startup-corrected/26424de2-6757-4cb0-98d5-d3351e8c693e.jpg",
+      "sha256": "a51c2a70f744d2bf3bc70df4eee831ab13fe81d470c287c1d9be620748b33bdb",
+      "present": 1,
+      "mode": "cold",
+      "readbackCompletedMs": 1779.215087890625,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839303,
+        "pixels": 839680
+      }
+    },
+    {
+      "runId": "8a8be77d-c290-4844-bcf6-edf3d9bd648c",
+      "path": "evidence/startup-corrected/8a8be77d-c290-4844-bcf6-edf3d9bd648c.jpg",
+      "sha256": "036d1cef2d73b597f81fc26180606dd5dd857a7870d011fb5de7bbd23f9ede18",
+      "present": 1,
+      "mode": "cold",
+      "readbackCompletedMs": 1722.539794921875,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839331,
+        "pixels": 839680
+      }
+    },
+    {
+      "runId": "a7be8ddd-f445-4516-a73b-6bbf23d42644",
+      "path": "evidence/startup-corrected/a7be8ddd-f445-4516-a73b-6bbf23d42644.jpg",
+      "sha256": "5ce5fc7c221e0561483534cebc81dfd378da96169e9f0fcbee0fefe89a5c490e",
+      "present": 1,
+      "mode": "warm",
+      "readbackCompletedMs": 1604.51513671875,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839326,
+        "pixels": 839680
+      }
+    },
+    {
+      "runId": "da3fe6e2-e407-48e6-b23c-c22f6d2d37bd",
+      "path": "evidence/startup-corrected/da3fe6e2-e407-48e6-b23c-c22f6d2d37bd.jpg",
+      "sha256": "614fa17007b5329d9abe0a4c1218f65c87025ff47080ff3f68523e9b6fc64993",
+      "present": 1,
+      "mode": "warm",
+      "readbackCompletedMs": 1599.8701171875,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839334,
+        "pixels": 839680
+      }
+    },
+    {
+      "runId": "f1074c41-cb9a-4bef-84ee-c28dba4481ae",
+      "path": "evidence/startup-corrected/f1074c41-cb9a-4bef-84ee-c28dba4481ae.jpg",
+      "sha256": "9142e5f3ad1eca826f5fcc87569508a0a7259f0c1b5569be32f0db625a12f760",
+      "present": 1,
+      "mode": "warm",
+      "readbackCompletedMs": 1604.255126953125,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839326,
+        "pixels": 839680
+      }
+    }
+  ],
+  "finding": "All six JPEGs individually inspected: recognizable textured brick pillar room, floor and colored lighting. Scene region nonblank, excluding the FPS overlay.",
+  "limitations": [
+    "320x180 evidence thumbnails from 1280x720 render targets.",
+    "Startup review does not independently prove shader or rasterization conformance; see pixel-center and lighting-equivalence diagnostics.",
+    "Readback completion is an availability upper bound, not display presentation time."
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "runs": [
+    {
+      "source": "evidence/performance-corrected.json",
+      "runId": "47c17627-70bf-4c08-9d07-94c0f24ec1dd",
+      "runtimeRevision": "253ae7b55c4be68977c5d6505a4ac84ba9e21e70",
+      "sourceSha256": "5434460f74bc824c48bde8638a421124318e4d76796f9198f4a14e2e6f64666c",
+      "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+      "visibility": "visible",
+      "window": {
+        "title": "Title",
+        "width": 1280,
+        "height": 720
+      },
+      "applicationPresents": 3414,
+      "submissionFPS": 56.552678661338305,
+      "frameTimeMs": {
+        "p50": 17.455078125,
+        "p95": 23.300048828125,
+        "p99": 32.9150390625,
+        "min": 9.849853515625,
+        "max": 134.4599609375
+      },
+      "wasmLinearMemoryBytes": 288096256,
+      "recordedErrors": []
+    },
+    {
+      "source": "evidence/performance-corrected-repeat.json",
+      "runId": "65434a16-e4b5-4764-8e20-4644627c6b33",
+      "runtimeRevision": "253ae7b55c4be68977c5d6505a4ac84ba9e21e70",
+      "sourceSha256": "5434460f74bc824c48bde8638a421124318e4d76796f9198f4a14e2e6f64666c",
+      "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+      "visibility": "visible",
+      "window": {
+        "title": "Title",
+        "width": 1280,
+        "height": 720
+      },
+      "applicationPresents": 4616,
+      "submissionFPS": 77.17295218422048,
+      "frameTimeMs": {
+        "p50": 12.829833984375,
+        "p95": 14.98486328125,
+        "p99": 19.969970703125,
+        "min": 8.39013671875,
+        "max": 83.579833984375
+      },
+      "wasmLinearMemoryBytes": 288096256,
+      "recordedErrors": []
+    }
+  ],
+  "finding": "Identical current renderer/settings produced 56.55 and 77.17 Present submissions/s; cause of run-to-run variability not measured. Neither result discarded.",
+  "limitations": [
+    "60 seconds after first Present; initial 5-second warmup excluded from interval statistics.",
+    "No screenshots, framebuffer readbacks, GPU timestamp queries, memory probe, or controlled input during runs.",
+    "Browser automation read status text only. Host contention and thermal state unmeasured.",
+    "Submissions are not display FPS; stable 60 FPS target not established.",
+    "Tracked WASM/GPU resource counters remained unchanged in available samples; one-minute scope does not establish leak freedom."
+  ]
+}

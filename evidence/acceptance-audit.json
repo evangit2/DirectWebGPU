@@ -76,8 +76,8 @@
       "objectiveSections": "9",
       "requirement": "Repeated startup and steady-state/stability",
       "status": "partial",
-      "evidence": "evidence/startup-metrics.json; evidence/performance-upload-batch.json; evidence/stability-summary.json",
-      "finding": "Repeated startup predates current revision; need repeat after remaining correctness work. Submission timing, not display delivery."
+      "evidence": "evidence/startup-corrected-summary.json; evidence/startup-corrected-review.json; evidence/performance-corrected-summary.json; evidence/stability-summary.json",
+      "finding": "Corrected 1280x720 renderer: three cold and three warm timing-only trials plus six separately inspected scene captures. Two current 60-second runs measured 56.55 and 77.17 Present submissions/s; cause of variability unmeasured. Longer stability trial predates pixel correction. Submission timing is not display delivery."
     },
     {
       "objectiveSections": "9",
@@ -94,5 +94,5 @@
       "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
     }
   ],
-  "nextAction": "Complete available GPU timing and broader transfer/memory accounting; refresh startup and steady-state measurements after correctness correction."
+  "nextAction": "Investigate current throughput variability, refresh longer stability, and complete available memory/transfer accounting."
 }

@@ -1,6 +1,6 @@
 {
-  "runId": "79aaadc8-3c92-44fc-a9bf-1b14c13dee25",
-  "revision": "7100c4328cd0f2af8be2ab983fcb9658bf2a1520",
+  "runId": "47c17627-70bf-4c08-9d07-94c0f24ec1dd",
+  "revision": "2c6aa1ce416014b21ca851ba27219f9e84e30dbb",
   "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "originalExecutionAttempted": true,
   "visualStatus": "not reviewed",
@@ -24,8 +24,8 @@
     "features": [
       "depth32float-stencil8",
       "rg11b10ufloat-renderable",
-      "texture-formats-tier1",
       "bgra8unorm-storage",
+      "texture-formats-tier1",
       "texture-compression-bc",
       "dual-source-blending",
       "core-features-and-limits",
@@ -38,14 +38,18 @@
       "texture-compression-etc2",
       "depth-clip-control",
       "texture-compression-bc-sliced-3d",
-      "texture-formats-tier2",
-      "shader-f16",
-      "timestamp-query",
       "clip-distances",
+      "timestamp-query",
+      "shader-f16",
+      "texture-formats-tier2",
       "primitive-index",
       "texture-component-swizzle",
       "subgroups"
     ],
+    "timestampQuery": {
+      "requested": false,
+      "available": true
+    },
     "deviceCreated": true,
     "hardwareAcceleration": "GPU device available; no Humus scene verified"
   },
@@ -58,158 +62,158 @@
     "validation": "passed",
     "sceneFrames": 0
   },
-  "applicationPresents": 4529,
-  "submittedFrames": 4529,
+  "applicationPresents": 3414,
+  "submittedFrames": 3414,
   "presentationMetrics": {
-    "firstPresentMs": 1618.150146484375,
-    "totalSteadyIntervals": 4134,
-    "steadyDurationMs": 54627.800048828125,
-    "submissionFPS": 75.6757547678086,
+    "firstPresentMs": 1627.009765625,
+    "totalSteadyIntervals": 3057,
+    "steadyDurationMs": 54055.794921875,
+    "submissionFPS": 56.552678661338305,
     "frameTimeMs": {
-      "p50": 12.89501953125,
-      "p95": 15.574951171875,
-      "p99": 20.3701171875,
-      "min": 8.699951171875,
-      "max": 72.304931640625
+      "p50": 17.455078125,
+      "p95": 23.300048828125,
+      "p99": 32.9150390625,
+      "min": 9.849853515625,
+      "max": 134.4599609375
     },
-    "retainedIntervals": 4134,
+    "retainedIntervals": 3057,
     "warmupMs": 5000,
     "queueCompletionSamples": [
       {
+        "present": 1440,
+        "latencyMs": 7.275000095367432
+      },
+      {
+        "present": 1500,
+        "latencyMs": 8.984999895095825
+      },
+      {
+        "present": 1560,
+        "latencyMs": 8.569999933242798
+      },
+      {
+        "present": 1620,
+        "latencyMs": 5.584999918937683
+      },
+      {
+        "present": 1680,
+        "latencyMs": 0.5200001001358032
+      },
+      {
+        "present": 1740,
+        "latencyMs": 0.6449999809265137
+      },
+      {
+        "present": 1800,
+        "latencyMs": 6.1600000858306885
+      },
+      {
+        "present": 1860,
+        "latencyMs": 5.960000038146973
+      },
+      {
+        "present": 1920,
+        "latencyMs": 10.639999985694885
+      },
+      {
+        "present": 1980,
+        "latencyMs": 6.705000042915344
+      },
+      {
+        "present": 2040,
+        "latencyMs": 8.659999966621399
+      },
+      {
+        "present": 2100,
+        "latencyMs": 6.2799999713897705
+      },
+      {
+        "present": 2160,
+        "latencyMs": 5.685000061988831
+      },
+      {
+        "present": 2220,
+        "latencyMs": 0.8500000238418579
+      },
+      {
+        "present": 2280,
+        "latencyMs": 5.375
+      },
+      {
+        "present": 2340,
+        "latencyMs": 4.210000038146973
+      },
+      {
+        "present": 2400,
+        "latencyMs": 5.639999985694885
+      },
+      {
+        "present": 2460,
+        "latencyMs": 5.740000009536743
+      },
+      {
+        "present": 2520,
+        "latencyMs": 4.364999890327454
+      },
+      {
         "present": 2580,
-        "latencyMs": 0.7850000858306885
+        "latencyMs": 3.5999999046325684
       },
       {
         "present": 2640,
-        "latencyMs": 0.7549999952316284
+        "latencyMs": 6.054999947547913
       },
       {
         "present": 2700,
-        "latencyMs": 0.7200000286102295
+        "latencyMs": 4.0950000286102295
       },
       {
         "present": 2760,
-        "latencyMs": 0.8300000429153442
+        "latencyMs": 6.049999952316284
       },
       {
         "present": 2820,
-        "latencyMs": 4.759999990463257
+        "latencyMs": 4.899999976158142
       },
       {
         "present": 2880,
-        "latencyMs": 3.8550000190734863
+        "latencyMs": 5.544999957084656
       },
       {
         "present": 2940,
-        "latencyMs": 1.3849999904632568
+        "latencyMs": 4.009999990463257
       },
       {
         "present": 3000,
-        "latencyMs": 0.8799999952316284
+        "latencyMs": 4.830000042915344
       },
       {
         "present": 3060,
-        "latencyMs": 0.8499999046325684
+        "latencyMs": 0.9249999523162842
       },
       {
         "present": 3120,
-        "latencyMs": 3.1700000762939453
+        "latencyMs": 7.245000004768372
       },
       {
         "present": 3180,
-        "latencyMs": 2.09499990940094
+        "latencyMs": 8.040000081062317
       },
       {
         "present": 3240,
-        "latencyMs": 0.7599999904632568
+        "latencyMs": 6.230000019073486
       },
       {
         "present": 3300,
-        "latencyMs": 0.75
-      },
-      {
-        "present": 3360,
-        "latencyMs": 1.9299999475479126
-      },
-      {
-        "present": 3420,
-        "latencyMs": 0.7599999904632568
-      },
-      {
-        "present": 3480,
-        "latencyMs": 1.7100000381469727
-      },
-      {
-        "present": 3540,
-        "latencyMs": 0.8399999141693115
-      },
-      {
-        "present": 3600,
-        "latencyMs": 1.7400000095367432
-      },
-      {
-        "present": 3660,
-        "latencyMs": 4.179999947547913
-      },
-      {
-        "present": 3720,
-        "latencyMs": 4.254999995231628
-      },
-      {
-        "present": 3780,
-        "latencyMs": 3.8799999952316284
-      },
-      {
-        "present": 3840,
-        "latencyMs": 0.9550000429153442
-      },
-      {
-        "present": 3900,
-        "latencyMs": 0.9649999141693115
-      },
-      {
-        "present": 3960,
-        "latencyMs": 0.8999999761581421
-      },
-      {
-        "present": 4020,
-        "latencyMs": 0.8849999904632568
-      },
-      {
-        "present": 4080,
-        "latencyMs": 0.8950001001358032
-      },
-      {
-        "present": 4140,
-        "latencyMs": 3.2850000858306885
-      },
-      {
-        "present": 4200,
-        "latencyMs": 0.9350000619888306
-      },
-      {
-        "present": 4260,
-        "latencyMs": 1.0449999570846558
-      },
-      {
-        "present": 4320,
-        "latencyMs": 1.2799999713897705
-      },
-      {
-        "present": 4380,
-        "latencyMs": 0.9300000667572021
-      },
-      {
-        "present": 4440,
-        "latencyMs": 0.9850000143051147
+        "latencyMs": 5.875
       }
     ],
     "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
     "drawBridge": {
-      "drawBatches": 54046,
-      "batchedDraws": 180030,
-      "batchedUploads": 31611,
-      "uploadedBytes": 10892233,
+      "drawBatches": 40360,
+      "batchedDraws": 134424,
+      "batchedUploads": 23625,
+      "uploadedBytes": 9167257,
       "maxBatchCommands": 10,
       "stagingBytes": 1052672
     },
@@ -220,7 +224,9 @@
     "depthStencilLogicalMinimumBytes": 3686400,
     "pipelineCacheEntries": 5,
     "shaderObjects": 6,
+    "gpuTimingEnabled": false,
     "captureEnabled": false,
+    "sceneEquivalenceEnabled": false,
     "cameraTestEnabled": false
   },
   "assetCacheMetrics": {
@@ -236,7 +242,7 @@
   },
   "stabilitySamples": [
     {
-      "elapsedMs": 1618.4900000095367,
+      "elapsedMs": 1627.344999909401,
       "applicationPresents": 0,
       "wasmLinearMemoryBytes": 288096256,
       "geometryGPUBytes": 60784,
@@ -246,14 +252,14 @@
       "submissionFPS": null
     },
     {
-      "elapsedMs": 31899.669999957085,
-      "applicationPresents": 2279,
+      "elapsedMs": 32322.424999952316,
+      "applicationPresents": 1739,
       "wasmLinearMemoryBytes": 288096256,
       "geometryGPUBytes": 60784,
       "textureGPUBytes": 4025064,
       "pipelineCacheEntries": 5,
       "shaderObjects": 6,
-      "submissionFPS": 75.71302851689134
+      "submissionFPS": 55.96011188500835
     }
   ],
   "sceneEquivalence": null,
