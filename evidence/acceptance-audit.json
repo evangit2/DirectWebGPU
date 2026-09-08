@@ -82,9 +82,9 @@
     {
       "objectiveSections": "9",
       "requirement": "Available GPU/CPU timing and complete transfer accounting",
-      "status": "incomplete",
-      "evidence": "web/gpu-worker.js; evidence/current-performance-summary.json",
-      "finding": "Adapter advertises timestamp-query but GPU shader duration is not measured. CPU-worker resource totals exclude page/GPU-worker fetches."
+      "status": "partial",
+      "evidence": "evidence/gpu-timing-summary.json; evidence/gpu-timing-run.json",
+      "finding": "Actual render-pass GPU timestamps now measured; quantized and excludes clears/uploads/presentation. Host draw encoding measured as wall time, not CPU utilization. Complete transfer accounting remains incomplete."
     },
     {
       "objectiveSections": "10",

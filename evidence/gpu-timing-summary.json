@@ -1,0 +1,26 @@
+{
+  "runId": "d4f98fd0-7bb0-4000-b17e-43ad698ca0d6",
+  "revision": "09dbc62a0d63d8bcadf2a12f59a514a14f294bb8",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "resolution": [
+    1280,
+    720
+  ],
+  "sampleCount": 66,
+  "selection": "Present >=600; earlier samples excluded by explicit frame-count threshold",
+  "sumDrawPassMs": {
+    "min": 1.8350080000000006,
+    "median": 2.228224,
+    "max": 3.145727999999999
+  },
+  "hostDrawEncodeWallMsMedian": 1.0775001049041748,
+  "drawPassCountRange": [
+    40,
+    41
+  ],
+  "zeroDurationPasses": 811,
+  "timestampNanosecondCommonDivisorObserved": 65536,
+  "evidence": "evidence/gpu-timing-run.json",
+  "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization.",
+  "limitations": "Instrumented, screenshot-free run. Sum of pass durations is not full GPU frame duration or shader-only execution time. Observed timestamp granularity limits per-pass accuracy; host wall time is not CPU utilization. No display FPS or instrument-free performance claim."
+}

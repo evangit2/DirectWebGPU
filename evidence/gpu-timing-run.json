@@ -1,0 +1,1484 @@
+{
+  "applicationPresents": 4519,
+  "submittedFrames": 4519,
+  "sceneFrames": 0,
+  "performance": {
+    "firstSceneMs": "not measured",
+    "fps": "not measured",
+    "jsHeapBytes": "not measured",
+    "gpuBytes": "not measured",
+    "wasmLinearMemoryBytes": 19202048
+  },
+  "runId": "d4f98fd0-7bb0-4000-b17e-43ad698ca0d6",
+  "status": "60-second frame-delivery measurement completed",
+  "events": [
+    {
+      "timeMs": 734,
+      "type": "probe",
+      "result": {
+        "secureContext": true,
+        "crossOriginIsolated": true,
+        "sharedArrayBuffer": true,
+        "webgpu": true,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+        "adapter": {
+          "vendor": "apple",
+          "architecture": "metal-3",
+          "device": "",
+          "description": "",
+          "isFallbackAdapter": false
+        },
+        "features": [
+          "depth32float-stencil8",
+          "rg11b10ufloat-renderable",
+          "bgra8unorm-storage",
+          "texture-formats-tier1",
+          "texture-compression-bc",
+          "dual-source-blending",
+          "core-features-and-limits",
+          "float32-filterable",
+          "indirect-first-instance",
+          "texture-compression-astc-sliced-3d",
+          "float32-blendable",
+          "subgroup-size-control",
+          "texture-compression-astc",
+          "texture-compression-etc2",
+          "depth-clip-control",
+          "texture-compression-bc-sliced-3d",
+          "shader-f16",
+          "texture-formats-tier2",
+          "clip-distances",
+          "timestamp-query",
+          "primitive-index",
+          "texture-component-swizzle",
+          "subgroups"
+        ],
+        "timestampQuery": {
+          "requested": true,
+          "available": true
+        },
+        "deviceCreated": true,
+        "hardwareAcceleration": "GPU device available; no Humus scene verified"
+      }
+    },
+    {
+      "timeMs": 752,
+      "type": "identity",
+      "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+    },
+    {
+      "timeMs": 877,
+      "type": "launch-settings",
+      "source": "virtual HKLM\\SOFTWARE\\Humus",
+      "resolution": "1280x720",
+      "mechanism": "original EXE enumerates saved window bounds"
+    },
+    {
+      "timeMs": 877,
+      "type": "asset-cache-metrics",
+      "mode": "warm",
+      "hits": 19,
+      "misses": 0,
+      "cacheBytes": 24689227,
+      "networkBodyBytes": 0,
+      "verifiedBytes": 24689227,
+      "repairedEntries": 0,
+      "limitBytes": 134217728,
+      "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    {
+      "timeMs": 878,
+      "type": "resource-metrics",
+      "resourceCount": 1,
+      "transferSize": 13105,
+      "encodedBodySize": 12805,
+      "decodedBodySize": 12805,
+      "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+      "cachePolicy": "loopback server Cache-Control: no-store"
+    },
+    {
+      "timeMs": 878,
+      "type": "execution-start",
+      "wasmLinearMemoryBytes": 19202048
+    },
+    {
+      "timeMs": 953,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/env.rs:32 stub: using 0"
+    },
+    {
+      "timeMs": 956,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/env.rs:48 stub: using true"
+    },
+    {
+      "timeMs": 957,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:107 stub: using 0"
+    },
+    {
+      "timeMs": 957,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(KERNEL32): not loaded"
+    },
+    {
+      "timeMs": 958,
+      "type": "log",
+      "message": "win32/winapi/src/user32/resource.rs:13 stub: using 0"
+    },
+    {
+      "timeMs": 958,
+      "type": "log",
+      "message": "win32/winapi/src/user32/resource.rs:8 stub: using 0"
+    },
+    {
+      "timeMs": 959,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:414 stub: using 1"
+    },
+    {
+      "timeMs": 959,
+      "type": "log",
+      "message": "win32/winapi/src/advapi32.rs:215 VIRTUAL_REGISTRY_OPEN path=80000002\\software\\humus handle=0x10000 created=false"
+    },
+    {
+      "timeMs": 1804,
+      "type": "window-created",
+      "title": "Title",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "timeMs": 1806,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:125 stub: using HANDLE(1)"
+    },
+    {
+      "timeMs": 1806,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:546 stub: using true"
+    },
+    {
+      "timeMs": 1806,
+      "type": "log",
+      "message": "win32/winapi/src/user32/window.rs:175 WINDOW_CREATION_CALLBACKS hwnd=0x1"
+    },
+    {
+      "timeMs": 1807,
+      "type": "d3d9-created",
+      "message": "win32/winapi/src/d3d9.rs:57 D3D9_CREATE9 sdk=31 object=0x004e700a"
+    },
+    {
+      "timeMs": 1807,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:57 D3D9_CREATE9 sdk=31 object=0x004e700a"
+    },
+    {
+      "timeMs": 1807,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1807,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:160 D3D9_CREATE_DEVICE_PRESENT_PARAMETERS [\n    0x500,\n    0x2d0,\n    0x15,\n    0x1,\n    0x0,\n    0x0,\n    0x1,\n    0x0,\n    0x1,\n    0x1,\n    0x4b,\n    0x0,\n    0x0,\n    0x80000000,\n]"
+    },
+    {
+      "timeMs": 1810,
+      "type": "d3d9-device-created",
+      "backendId": 1,
+      "width": 1280,
+      "height": 720,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed",
+      "sceneFrames": 0
+    },
+    {
+      "timeMs": 1810,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:164 D3D9_DEVICE_CREATED object=0x4e7012 backend=1"
+    },
+    {
+      "timeMs": 1823,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1883,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1883,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1908,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1946,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1947,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1952,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1959,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1960,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1961,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1964,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1965,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1966,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1972,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1973,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    },
+    {
+      "timeMs": 1973,
+      "type": "log",
+      "message": "win32/winapi/src/d3d9.rs:153 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+    },
+    {
+      "timeMs": 1976,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:122 GetModuleHandleA(d3d9.dll): not loaded"
+    },
+    {
+      "timeMs": 1977,
+      "type": "log",
+      "message": "win32/winapi/src/kernel32/dll.rs:133 LoadLibrary(d3d9.dll): not supported, returning null"
+    }
+  ],
+  "droppedEvents": 0,
+  "build": {
+    "revision": "09dbc62a0d63d8bcadf2a12f59a514a14f294bb8",
+    "dirty": false,
+    "dependencies": {
+      "theseus": {
+        "url": "https://github.com/evmar/theseus.git",
+        "revision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+        "license": "No license declaration found in checkout; local investigation only, no hosted redistribution."
+      },
+      "rust": "1.98.1",
+      "wasm_rust": "nightly-2026-09-07",
+      "wasm_bindgen_cli": "0.2.121",
+      "archive": {
+        "url": "https://humus.name/3D/DynamicBranching.zip",
+        "sha256": "8063039867fb69e4c58c6bad90f4aad80e43d0eb5c33818e1ba5a9c2be57077a"
+      },
+      "executable": {
+        "path": "DynamicBranching/DynamicBranching.exe",
+        "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+      },
+      "mojoshader": {
+        "url": "https://github.com/icculus/mojoshader.git",
+        "revision": "ad5dff84830c2863c841f4b1f4e3df78c705b383",
+        "license": "zlib; unmodified source consumed locally, LICENSE.txt retained"
+      },
+      "emsdk": {
+        "url": "https://github.com/emscripten-core/emsdk.git",
+        "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
+        "version": "4.0.7"
+      },
+      "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
+    },
+    "files": [
+      {
+        "path": "DynamicBranching/DynamicBranching.dsp",
+        "bytes": 7163,
+        "sha256": "3c086ee7a6b8e32c2c0719e2510fb05d431a8dc96955bf2da574c625d52a2677"
+      },
+      {
+        "path": "DynamicBranching/DynamicBranching.dsw",
+        "bytes": 555,
+        "sha256": "1a9c43ec3187ada28cd6cd25101b6b9b7fd44b31f7e6c5fdcc7a9d5c396c786d"
+      },
+      {
+        "path": "DynamicBranching/DynamicBranching.exe",
+        "bytes": 925696,
+        "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+      },
+      {
+        "path": "DynamicBranching/Main.cpp",
+        "bytes": 8514,
+        "sha256": "88d32ac76ce4227fa8924572a3641877129819b5abe3d40667fc379431e680ef"
+      },
+      {
+        "path": "DynamicBranching/depthAmbient.shd",
+        "bytes": 435,
+        "sha256": "b5f89e989b1fb9e367b71fa57500340be28771654941b5bbf82b484f0a087e2e"
+      },
+      {
+        "path": "DynamicBranching/if.shd",
+        "bytes": 411,
+        "sha256": "481045950c8b579040a85208e755abb2251650d68ac0808708b7c9275dd44d1d"
+      },
+      {
+        "path": "DynamicBranching/lighting.shd",
+        "bytes": 1585,
+        "sha256": "865b3f054522da77a1cbd884044ec99ed3d8afdf53340825039c3c8200d8e6e8"
+      },
+      {
+        "path": "Models/PillarRoom/Map.hmdl",
+        "bytes": 57028,
+        "sha256": "bd881f835d4e52b93351194c992f59cbd7187ef8850c4c2f7d9ad72225c492d5"
+      },
+      {
+        "path": "Textures/Fonts/Future.dds",
+        "bytes": 349680,
+        "sha256": "9b7f4ea36194f5ab48e38b33dc8039a8aab0ce905d541aa6dee1ed5f30de2022"
+      },
+      {
+        "path": "Textures/Fonts/Future.font",
+        "bytes": 5124,
+        "sha256": "878c2b3e5fa5961d0f3eacb564901e0e91dc185c834e48e01e4803f8cda1a2e3"
+      },
+      {
+        "path": "Textures/Particle.png",
+        "bytes": 613,
+        "sha256": "3987c11a7d2798dc189cd9309910ddfeecfb0551decfd1238c7a59b2d186e24d"
+      },
+      {
+        "path": "Textures/brick01.dds",
+        "bytes": 174904,
+        "sha256": "0c94736d677faa0d962f9e7f6c7688076652faee93130167813e59cb125a27e4"
+      },
+      {
+        "path": "Textures/brick01Bump.png",
+        "bytes": 74397,
+        "sha256": "3e8ea48fdb25da97f55d3f4c939b8c0a8572e2ad6bbb6f1105d6fd340889c823"
+      },
+      {
+        "path": "Textures/laying_rock7.dds",
+        "bytes": 174904,
+        "sha256": "e8ea9d650264bba9b6267470db2cd0c603b08ca1112e719c4974358806188235"
+      },
+      {
+        "path": "Textures/laying_rock7Bump.png",
+        "bytes": 87309,
+        "sha256": "ecaa27e2311541d0882bd5c1b53a5e4818dc808a29a6081a53a540b318aeebf5"
+      },
+      {
+        "path": "Textures/parqfloor2.dds",
+        "bytes": 174904,
+        "sha256": "b120f827ed239af7919a6ae298463eb70adea325acf330bc69a181698adfb292"
+      },
+      {
+        "path": "Textures/parqfloor2Bump.png",
+        "bytes": 8263,
+        "sha256": "7a4762e961cfc7ccff1cbe6d4793374319257237d7463f49090c30e812102795"
+      },
+      {
+        "path": "readme.txt",
+        "bytes": 1101,
+        "sha256": "56dd528b14422b1bb9e1cfe27197aeb2330647f2181118bd864f8d436438204d"
+      }
+    ],
+    "wasm_available": true,
+    "runtimeBuild": {
+      "wasmProfile": "release",
+      "translatedTreeSha256": "fe5f97fbd71d843f80a8be7ea411d085d0a3250e4f227743650375326aa69b39",
+      "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
+      "builtAt": "2026-09-08T20:39:01.696638+00:00",
+      "revision": "09dbc62a0d63d8bcadf2a12f59a514a14f294bb8",
+      "workingTreeDirty": false,
+      "sourceSha256": "99a5d05c93e2c2122e042dfc3b3147d957205290f70e873b07bf10fb70b72122",
+      "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+      "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+      "translationEntryPoints": [
+        "409a00",
+        "004233f4"
+      ],
+      "artifacts": {
+        "humus.js": {
+          "sha256": "6f0b11681802df270a64e54f02bee3679851fd7bad38f1f4fea417819c2616f0",
+          "bytes": 12805
+        },
+        "humus_bg.wasm": {
+          "sha256": "8f6a12b4062857a68601869f596ac94e7b4c9597313d114e216a2c1e34cb7c3b",
+          "bytes": 22636641
+        }
+      }
+    }
+  },
+  "startTimeMs": 677.5849999189377,
+  "startedAt": "2026-09-08T20:39:16.583Z",
+  "requestedDurationMs": 60000,
+  "visibility": "visible",
+  "browser": {
+    "secureContext": true,
+    "crossOriginIsolated": true,
+    "sharedArrayBuffer": true,
+    "webgpu": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "features": [
+      "depth32float-stencil8",
+      "rg11b10ufloat-renderable",
+      "bgra8unorm-storage",
+      "texture-formats-tier1",
+      "texture-compression-bc",
+      "dual-source-blending",
+      "core-features-and-limits",
+      "float32-filterable",
+      "indirect-first-instance",
+      "texture-compression-astc-sliced-3d",
+      "float32-blendable",
+      "subgroup-size-control",
+      "texture-compression-astc",
+      "texture-compression-etc2",
+      "depth-clip-control",
+      "texture-compression-bc-sliced-3d",
+      "shader-f16",
+      "texture-formats-tier2",
+      "clip-distances",
+      "timestamp-query",
+      "primitive-index",
+      "texture-component-swizzle",
+      "subgroups"
+    ],
+    "timestampQuery": {
+      "requested": true,
+      "available": true
+    },
+    "deviceCreated": true,
+    "hardwareAcceleration": "GPU device available; no Humus scene verified"
+  },
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "assetCacheMetrics": {
+    "mode": "warm",
+    "hits": 19,
+    "misses": 0,
+    "cacheBytes": 24689227,
+    "networkBodyBytes": 0,
+    "verifiedBytes": 24689227,
+    "repairedEntries": 0,
+    "limitBytes": 134217728,
+    "scope": "original assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+  },
+  "resourceMetrics": {
+    "resourceCount": 1,
+    "transferSize": 13105,
+    "encodedBodySize": 12805,
+    "decodedBodySize": 12805,
+    "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+    "cachePolicy": "loopback server Cache-Control: no-store"
+  },
+  "originalExecutionAttempted": true,
+  "window": {
+    "title": "Title",
+    "width": 1280,
+    "height": 720
+  },
+  "direct3DCreate9Reached": true,
+  "direct3D9ObjectCreated": true,
+  "d3d9Device": {
+    "backendId": 1,
+    "width": 1280,
+    "height": 720,
+    "colorFormat": "bgra8unorm",
+    "depthFormat": "depth24plus-stencil8",
+    "validation": "passed",
+    "sceneFrames": 0
+  },
+  "gpuSubmissions": 207901,
+  "gpuTiming": [
+    {
+      "present": 1,
+      "drawPasses": 40,
+      "sumDrawPassMs": 3.9976960000000004,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.589824,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 60.40000033378601,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 60,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.752512,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 9,
+      "hostDrawEncodeWallMs": 1.1550006866455078,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 120,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.7525119999999994,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.3550000190734863,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 180,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.162688,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.154999852180481,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 240,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.162688,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0849997997283936,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 300,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9660800000000007,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.214999794960022,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 360,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.7694720000000006,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 17,
+      "hostDrawEncodeWallMs": 1.8399996757507324,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 420,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.686976,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 10,
+      "hostDrawEncodeWallMs": 1.1399999856948853,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 480,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4903679999999992,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 6,
+      "hostDrawEncodeWallMs": 1.1999999284744263,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 540,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.5559039999999995,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.8799998760223389,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 600,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.2100003957748413,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 660,
+      "drawPasses": 41,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 16,
+      "hostDrawEncodeWallMs": 1.059999942779541,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 720,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0971520000000003,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 10,
+      "hostDrawEncodeWallMs": 1.0449997186660767,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 780,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.010000467300415,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 840,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.2937600000000002,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 1.1150000095367432,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 900,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4248319999999994,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.125,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 960,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.1700000762939453,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1020,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.424832,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 1.1049997806549072,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1080,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.0799999237060547,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1140,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.162688,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0399997234344482,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1200,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.424832,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.0299999713897705,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1260,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9005440000000007,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 1.1099997758865356,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1320,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9660800000000007,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 1.0600003004074097,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1380,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.290000081062317,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1440,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0971520000000003,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.1599998474121094,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1500,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.424831999999999,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.1300004720687866,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1560,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.555904,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.1599998474121094,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1620,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.6869759999999996,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 10,
+      "hostDrawEncodeWallMs": 1.0200002193450928,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1680,
+      "drawPasses": 40,
+      "sumDrawPassMs": 3.145727999999999,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 9,
+      "hostDrawEncodeWallMs": 1.170000433921814,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1740,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.6214399999999993,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 8,
+      "hostDrawEncodeWallMs": 1.1050000190734863,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1800,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.62144,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 9,
+      "hostDrawEncodeWallMs": 1.0300003290176392,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1860,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.752512,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 10,
+      "hostDrawEncodeWallMs": 1.089999794960022,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1920,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0971520000000003,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 0.9650002717971802,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 1980,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4248319999999994,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 0.9899997711181641,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2040,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9660800000000007,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.019999623298645,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2100,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9005440000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.0400002002716064,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2160,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9005440000000002,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 1.1500002145767212,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2220,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.2282239999999995,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.2999999523162842,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2280,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4248319999999994,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.0650004148483276,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2340,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4903679999999992,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 10,
+      "hostDrawEncodeWallMs": 1.1349999904632568,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2400,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.0899996757507324,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2460,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4903679999999992,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.149999737739563,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2520,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.8350080000000006,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.049999475479126,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2580,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.883583999999999,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 8,
+      "hostDrawEncodeWallMs": 1.1349999904632568,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2640,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0971520000000003,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.0899995565414429,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2700,
+      "drawPasses": 40,
+      "sumDrawPassMs": 3.0146559999999996,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.393216,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 0.9799995422363281,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2760,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.162688,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.135000228881836,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2820,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.6869759999999983,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0199997425079346,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2880,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.0200001001358032,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 2940,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.29376,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 8,
+      "hostDrawEncodeWallMs": 1.0650001764297485,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3000,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0971520000000003,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 15,
+      "hostDrawEncodeWallMs": 1.1150003671646118,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3060,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.0449998378753662,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3120,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.215000033378601,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3180,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.0099999904632568,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3240,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.162688,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.0300004482269287,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3300,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.490368,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 16,
+      "hostDrawEncodeWallMs": 1.095000147819519,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3360,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4903679999999992,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.1299993991851807,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3420,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.4248320000000008,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.0449998378753662,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3480,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0750000476837158,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3540,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9005440000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 14,
+      "hostDrawEncodeWallMs": 1.0300003290176392,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3600,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.228224,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.1399998664855957,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3660,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9660800000000007,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.0450000762939453,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3720,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.6214399999999993,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 7,
+      "hostDrawEncodeWallMs": 1.0250002145767212,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3780,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.2282240000000004,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.2050001621246338,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3840,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.62144,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.1849995851516724,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3900,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9005440000000007,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.1299996376037598,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 3960,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.424832,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 10,
+      "hostDrawEncodeWallMs": 1.7300001382827759,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4020,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0300002098083496,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4080,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.9491199999999997,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.32768,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.054999828338623,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4140,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 13,
+      "hostDrawEncodeWallMs": 1.0399999618530273,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4200,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.424832,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.075000286102295,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4260,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.3592959999999996,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.262144,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0049996376037598,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4320,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.1626880000000006,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.0749999284744263,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4380,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0971520000000003,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 12,
+      "hostDrawEncodeWallMs": 1.0899996757507324,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4440,
+      "drawPasses": 40,
+      "sumDrawPassMs": 2.0316160000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.131072,
+      "zeroDurationPasses": 11,
+      "hostDrawEncodeWallMs": 1.2350001335144043,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    },
+    {
+      "present": 4500,
+      "drawPasses": 40,
+      "sumDrawPassMs": 1.9005440000000005,
+      "minDrawPassMs": 0,
+      "maxDrawPassMs": 0.196608,
+      "zeroDurationPasses": 16,
+      "hostDrawEncodeWallMs": 1.035000205039978,
+      "scope": "Sum of GPU draw-render-pass durations only; excludes clears, uploads, gaps between passes and Present copy. Host encoding is wall time including awaited pipeline creation, not CPU busy time. Timestamp precision is browser-dependent; zero durations may reflect quantization."
+    }
+  ],
+  "presentationMetrics": {
+    "firstPresentMs": 1762.18017578125,
+    "totalSteadyIntervals": 4139,
+    "steadyDurationMs": 54742.699951171875,
+    "submissionFPS": 75.60825468403658,
+    "frameTimeMs": {
+      "p50": 12.97998046875,
+      "p95": 15.14501953125,
+      "p99": 20.205078125,
+      "min": 8.75,
+      "max": 85.25
+    },
+    "retainedIntervals": 4139,
+    "warmupMs": 5000,
+    "queueCompletionSamples": [
+      {
+        "present": 2580,
+        "latencyMs": 0.8000000715255737
+      },
+      {
+        "present": 2640,
+        "latencyMs": 0.8250000476837158
+      },
+      {
+        "present": 2700,
+        "latencyMs": 0.8300000429153442
+      },
+      {
+        "present": 2760,
+        "latencyMs": 0.7800000905990601
+      },
+      {
+        "present": 2820,
+        "latencyMs": 0.7049999237060547
+      },
+      {
+        "present": 2880,
+        "latencyMs": 0.9099999666213989
+      },
+      {
+        "present": 2940,
+        "latencyMs": 1.1700000762939453
+      },
+      {
+        "present": 3000,
+        "latencyMs": 1.0299999713897705
+      },
+      {
+        "present": 3060,
+        "latencyMs": 1.4300000667572021
+      },
+      {
+        "present": 3120,
+        "latencyMs": 0.9099999666213989
+      },
+      {
+        "present": 3180,
+        "latencyMs": 1.0099999904632568
+      },
+      {
+        "present": 3240,
+        "latencyMs": 0.7549999952316284
+      },
+      {
+        "present": 3300,
+        "latencyMs": 0.6850000619888306
+      },
+      {
+        "present": 3360,
+        "latencyMs": 0.7649999856948853
+      },
+      {
+        "present": 3420,
+        "latencyMs": 0.7599999904632568
+      },
+      {
+        "present": 3480,
+        "latencyMs": 4.649999976158142
+      },
+      {
+        "present": 3540,
+        "latencyMs": 0.8849999904632568
+      },
+      {
+        "present": 3600,
+        "latencyMs": 0.809999942779541
+      },
+      {
+        "present": 3660,
+        "latencyMs": 0.8200000524520874
+      },
+      {
+        "present": 3720,
+        "latencyMs": 1.3899999856948853
+      },
+      {
+        "present": 3780,
+        "latencyMs": 0.8300000429153442
+      },
+      {
+        "present": 3840,
+        "latencyMs": 0.8450000286102295
+      },
+      {
+        "present": 3900,
+        "latencyMs": 0.8349999189376831
+      },
+      {
+        "present": 3960,
+        "latencyMs": 0.8849999904632568
+      },
+      {
+        "present": 4020,
+        "latencyMs": 1
+      },
+      {
+        "present": 4080,
+        "latencyMs": 0.9099999666213989
+      },
+      {
+        "present": 4140,
+        "latencyMs": 1.0999999046325684
+      },
+      {
+        "present": 4200,
+        "latencyMs": 0.9099999666213989
+      },
+      {
+        "present": 4260,
+        "latencyMs": 0.9049999713897705
+      },
+      {
+        "present": 4320,
+        "latencyMs": 0.9399999380111694
+      },
+      {
+        "present": 4380,
+        "latencyMs": 0.9650000333786011
+      },
+      {
+        "present": 4440,
+        "latencyMs": 1.0499999523162842
+      }
+    ],
+    "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+    "drawBridge": {
+      "drawBatches": 54039,
+      "batchedDraws": 180023,
+      "batchedUploads": 31604,
+      "uploadedBytes": 10890721,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "wasmLinearMemoryBytes": 288096256,
+    "geometryGPUBytes": 60784,
+    "textureGPUBytes": 4025064,
+    "colorLogicalBytes": 3686400,
+    "depthStencilLogicalMinimumBytes": 3686400,
+    "pipelineCacheEntries": 5,
+    "shaderObjects": 6,
+    "gpuTimingEnabled": true,
+    "captureEnabled": false,
+    "sceneEquivalenceEnabled": false,
+    "cameraTestEnabled": false
+  },
+  "stabilitySamples": [
+    {
+      "elapsedMs": 1762.8300000429153,
+      "applicationPresents": 0,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": null
+    },
+    {
+      "elapsedMs": 32114.59000003338,
+      "applicationPresents": 2279,
+      "wasmLinearMemoryBytes": 288096256,
+      "geometryGPUBytes": 60784,
+      "textureGPUBytes": 4025064,
+      "pipelineCacheEntries": 5,
+      "shaderObjects": 6,
+      "submissionFPS": 75.73141576319141
+    }
+  ],
+  "firstPresentObservedMs": 1762.8650000095367,
+  "endedAt": "2026-09-08T20:40:18.346Z",
+  "diagnosticAttemptMs": 61763.325000047684
+}

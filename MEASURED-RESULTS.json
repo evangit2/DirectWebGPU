@@ -11,7 +11,6 @@
   "Historical measurements": "evidence/historical-measured-results.json",
   "Acceptance audit": "evidence/acceptance-audit.json",
   "Exact remaining blocker": [
-    "GPU timestamp-query is available on the measured adapter but shader GPU timing is not measured.",
     "JS/application allocation and complete pre-first-frame transfer measurements are incomplete; current counters cover narrower scopes.",
     "Cold/warm startup series predates current rendering and queue changes; repeat after correctness fixes."
   ],
@@ -28,5 +27,6 @@
   "Pixel-center regression evidence": "evidence/pixel-center-before.json",
   "Original launch on diagnostic revision": "evidence/pixel-center-original-before.json",
   "Pixel-center correction evidence": "evidence/pixel-center-coverage.json",
-  "Corrected original scene evidence": "evidence/pixel-center-review.json"
+  "Corrected original scene evidence": "evidence/pixel-center-review.json",
+  "GPU timing evidence": "evidence/gpu-timing-summary.json"
 }
