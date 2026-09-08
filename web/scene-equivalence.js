@@ -9,7 +9,7 @@ export function compareSceneBytes(a,b,width,height,pitch){
  return {pixels,nonblackPixels:nonblack,differentPixels,maxChannelError,meanAbsoluteChannelError:totalError/(pixels*3)};
 }
 export class SceneEquivalence {
- constructor(device,backend){this.device=device;this.original=backend;this.counts={maskDraws:0,lightingDraws:0,otherDraws:0};this.done=false;}
+ constructor(device,backend,omitLighting=false){this.omitLighting=omitLighting;this.device=device;this.original=backend;this.counts={maskDraws:0,lightingDraws:0,otherDraws:0};this.done=false;}
  async ensure(){if(this.reference)return;const d=this.device,b=this.original;
   const color=d.createTexture({size:[b.width,b.height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=d.createTexture({size:[b.width,b.height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
@@ -19,7 +19,7 @@ export class SceneEquivalence {
  async draw(packet){if(this.done)return;await this.ensure();const s=packet.state;
   if(s.get(RS.STENCILENABLE)&&s.get(RS.ALPHATESTENABLE)&&s.get(RS.COLORWRITEENABLE)===0){if(s.get(RS.ZWRITEENABLE))throw Error('equivalence mask unexpectedly writes depth');this.counts.maskDraws++;return;}
   let state=s;
-  if(s.get(RS.STENCILENABLE)){if(s.get(RS.STENCILFUNC)!==3||s.get(RS.ALPHATESTENABLE))throw Error('equivalence unexpected stencil lighting state');state=new D3D9RenderState();for(const [k,v] of Object.entries(s.values))state.set(Number(k),v);state.set(RS.STENCILENABLE,0);this.counts.lightingDraws++;}else this.counts.otherDraws++;
+  if(s.get(RS.STENCILENABLE)){if(s.get(RS.STENCILFUNC)!==3||s.get(RS.ALPHATESTENABLE))throw Error('equivalence unexpected stencil lighting state');state=new D3D9RenderState();for(const [k,v] of Object.entries(s.values))state.set(Number(k),v);state.set(RS.STENCILENABLE,0);this.counts.lightingDraws++;if(this.omitLighting)return;}else this.counts.otherDraws++;
   await this.renderer.draw({...packet,state});
  }
  async compare(present){if(this.done||![1,30,60].includes(present))return null;
@@ -27,7 +27,7 @@ export class SceneEquivalence {
   const reads=[0,1].map(()=>d.createBuffer({size:pitch*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}));
   try{const e=d.createCommandEncoder();[b.color,this.reference.color].forEach((texture,i)=>e.copyTextureToBuffer({texture},{buffer:reads[i],bytesPerRow:pitch},[width,height]));d.queue.submit([e.finish()]);await Promise.all(reads.map(r=>r.mapAsync(GPUMapMode.READ)));
    const bytes=reads.map(r=>new Uint8Array(r.getMappedRange()));const stats=compareSceneBytes(...bytes,width,height,pitch);const hashes=await Promise.all(bytes.map(async a=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',a)),v=>v.toString(16).padStart(2,'0')).join('')));
-   return {present,width,height,sceneY:64,...stats,counts:{...this.counts},fullBufferSha256:{original:hashes[0],unmaskedDiagnostic:hashes[1]},meaning:'Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference.'};
+   return {present,width,height,negativeControl:this.omitLighting?'omit lighting on diagnostic target only':null,sceneY:64,...stats,counts:{...this.counts},fullBufferSha256:{original:hashes[0],unmaskedDiagnostic:hashes[1]},meaning:'Same original shaders/geometry/constants; separate target with colorless mask passes omitted and lighting stencil disabled. RGB comparison excludes top 64 rows. Not an independent native reference.'};
   }finally{reads.forEach(r=>r.destroy());if(present===60)this.dispose();}
  }
  dispose(){if(this.done)return;this.renderer?.dispose();this.reference?.color.destroy();this.reference?.depth.destroy();this.done=true;}

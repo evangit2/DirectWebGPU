@@ -11,14 +11,14 @@ import {createShaderTranslator} from './shaders.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let sceneEquivalence=false;
+let sceneEquivalence=false,omitDiagnosticLighting=false;
 let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:1052672};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;sceneEquivalence=!!data.sceneEquivalence;diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
+ canvas=data.canvas;port=data.port;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
@@ -63,7 +63,7 @@ async function graphics(op,a,memory){
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
   backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device),shaders:null,presents:0,submissions:0};
-  if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend);
+  if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend,omitDiagnosticLighting);
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
