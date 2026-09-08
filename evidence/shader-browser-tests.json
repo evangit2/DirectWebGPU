@@ -1,11 +1,11 @@
 {
   "kind": "shader diagnostic, not Humus acceptance",
-  "runId": "b72b1cd9-d79d-466a-bbf9-a43b32da5c89",
-  "startedAt": "2026-09-08T16:57:05.480Z",
+  "runId": "34672139-e88f-4a48-bd66-3ab3155b1ef9",
+  "startedAt": "2026-09-08T17:01:46.763Z",
   "checks": [
     "VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga",
     "misaligned/truncated bytecode rejected",
-    "PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA",
+    "PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA through persistent texture storage and cached sampler/pipeline",
     "indexed draw consumed persistent vertex/index buffers",
     "browser WGSL compilation and pipeline validation passed",
     "GPU draw completed; sampled interpolated color matched"
@@ -87,7 +87,7 @@
     }
   },
   "build": {
-    "revision": "0712be682516a340040fffd17a5ee816bc3f1da4",
+    "revision": "42d9423f3b858043843fe664f6d1a8745105385f",
     "dirty": false,
     "dependencies": {
       "theseus": {
@@ -214,10 +214,10 @@
     "runtimeBuild": {
       "translatedTreeSha256": "fb125b2bc35606f434cc13e956326b6c53a5ca036368bdfea74b677e7bca403c",
       "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-      "builtAt": "2026-09-08T16:56:57.911345+00:00",
-      "revision": "0712be682516a340040fffd17a5ee816bc3f1da4",
+      "builtAt": "2026-09-08T17:01:37.887956+00:00",
+      "revision": "42d9423f3b858043843fe664f6d1a8745105385f",
       "workingTreeDirty": false,
-      "sourceSha256": "c1913fef929e513ec37c0de7f71b23641c21adb1a7f296332ffb51a9f72110d3",
+      "sourceSha256": "e9f6fd20070a0897eb8ed6c1c605938fd7192c3c2e5b2ee00266ab5a7d16c014",
       "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
       "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
       "translationEntryPoints": [
@@ -573,6 +573,17 @@
       "stencil equality gates additive lighting",
       "discarded fragments leave depth unchanged"
     ]
+  },
+  "pipelineCache": {
+    "result": "passed",
+    "compilations": 5,
+    "translations": 2,
+    "checks": [
+      "unchanged draw reuses linked shader pair and pipeline",
+      "dynamic stencil reference does not compile a new pipeline",
+      "alpha/stencil/blend/depth variants produce verified GPU samples"
+    ],
+    "HumusFrames": 0
   },
   "indexedGeometry": {
     "result": "passed",

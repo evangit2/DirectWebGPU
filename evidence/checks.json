@@ -325,5 +325,28 @@
       }
     },
     "originalRunId": "6a42a94d-7913-40cb-b561-8731c9636933"
+  },
+  "pipelines": {
+    "revision": "42d9423f3b858043843fe664f6d1a8745105385f",
+    "implementation": "cached shader-pair linking, semantic vertex layouts, alpha variants and render-state pipeline creation",
+    "runtimeArtifact": "WASM unchanged; JS source manifest refreshed",
+    "limits": "128 entries and 16 MiB per shader-pair/pipeline cache",
+    "limitations": "DrawPrimitive/DrawIndexedPrimitive bridge and original scene acceptance pending",
+    "browser": {
+      "runId": "34672139-e88f-4a48-bd66-3ab3155b1ef9",
+      "result": "passed",
+      "pipelineCache": {
+        "result": "passed",
+        "compilations": 5,
+        "translations": 2,
+        "checks": [
+          "unchanged draw reuses linked shader pair and pipeline",
+          "dynamic stencil reference does not compile a new pipeline",
+          "alpha/stencil/blend/depth variants produce verified GPU samples"
+        ],
+        "HumusFrames": 0
+      }
+    },
+    "originalRunId": "b679ad67-8672-4d64-b6c6-74a1b0e13be8"
   }
 }
