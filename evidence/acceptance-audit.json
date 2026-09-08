@@ -33,9 +33,9 @@
     {
       "objectiveSections": "5",
       "requirement": "Coordinate conventions, culling and pixel-center reference coverage",
-      "status": "incomplete",
-      "evidence": "runtime/shaders/src/vertex_inputs.rs; web/fixed-function.js; web/d3d9-state.js",
-      "finding": "No explicit D3D9 integer-center adjustment or targeted coverage oracle found; investigate before acceptance."
+      "status": "failed: confirmed coverage mismatch",
+      "evidence": "evidence/pixel-center-before.json; web/pixel-center-test.js",
+      "finding": "Hardware GPU covered (0,0) instead of independently expected D3D9 integer-center pixel (1,1). No correction is applied by MojoShader/Naga or fixed-function generation."
     },
     {
       "objectiveSections": "6",
@@ -94,5 +94,5 @@
       "finding": "Summarizer now requires explicit run, validates visual-review identity/hashes, and defaults to a separate output."
     }
   ],
-  "nextAction": "Inspect generated vertex output for hidden coordinate adjustment, then add an independent pixel-center coverage diagnostic and implement any confirmed correction."
+  "nextAction": "Implement viewport-scaled clip-space half-pixel correction for both programmable and fixed vertex outputs; validate coverage oracle, then repeat original scene/camera/equivalence tests."
 }

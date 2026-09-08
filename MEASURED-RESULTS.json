@@ -1,5 +1,5 @@
 {
-  "Humus": "rendered; full acceptance incomplete",
+  "Humus": "rendered with confirmed pixel-center discrepancy; full acceptance incomplete",
   "Runtime": "Original PE32 x86 translated by pinned Theseus to WASM",
   "Graphics backend": "D3D9 compatibility frontend to hardware WebGPU",
   "Executable SHA-256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
@@ -11,7 +11,7 @@
   "Historical measurements": "evidence/historical-measured-results.json",
   "Acceptance audit": "evidence/acceptance-audit.json",
   "Exact remaining blocker": [
-    "Pixel-center compatibility lacks explicit adjustment/coverage reference test; inspect translator output and verify D3D9 integer-center rasterization.",
+    "Confirmed pixel-center coverage failure: expected (1,1), actual (0,0), in evidence/pixel-center-before.json. Apply viewport-scaled clip-space correction to both vertex paths.",
     "GPU timestamp-query is available on the measured adapter but shader GPU timing is not measured.",
     "JS/application allocation and complete pre-first-frame transfer measurements are incomplete; current counters cover narrower scopes.",
     "Cold/warm startup series predates current rendering and queue changes; repeat after correctness fixes."
@@ -25,5 +25,7 @@
   "Verified local URL": "http://127.0.0.1:8765/humus-runtime",
   "4-hour test": "not run; explicitly user-started control",
   "Native reference": "attempted; no native scene image verified",
-  "CheerpX comparison": "no working rendering baseline available; no speedup against it claimed"
+  "CheerpX comparison": "no working rendering baseline available; no speedup against it claimed",
+  "Pixel-center regression evidence": "evidence/pixel-center-before.json",
+  "Original launch on diagnostic revision": "evidence/pixel-center-original-before.json"
 }
