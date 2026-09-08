@@ -233,5 +233,97 @@
     "limitations": "No original application texture calls reached; full-mip uploads for rectangle writes; sampler and draw integration pending",
     "originalRunId": "c09455bb-0cb7-4291-86e1-96afd505b345",
     "originalResult": "failed"
+  },
+  "samplers": {
+    "revision": "0712be682516a340040fffd17a5ee816bc3f1da4",
+    "nativeTests": "7 D3D9 tests passed, including sampler stdcall, default state, slot isolation and rejected-update preservation",
+    "nativeLogSha256": "a083cd87765784c9e86225733f92cc9ad7080eb45cae0057d8df9f56d7f1ed4a",
+    "cleanRestore": "32 patched files byte-identical",
+    "build": "WASM compiled successfully",
+    "limitations": "Sampler mapper GPU-tested; original draw integration pending",
+    "browser": {
+      "runId": "b72b1cd9-d79d-466a-bbf9-a43b32da5c89",
+      "result": "passed",
+      "samplers": {
+        "result": "passed",
+        "samples": [
+          {
+            "name": "repeat",
+            "rgba": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "name": "clamp",
+            "rgba": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mirror",
+            "rgba": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "bilinear",
+            "rgba": [
+              0.5,
+              0,
+              0.5,
+              1
+            ]
+          },
+          {
+            "name": "mip filtering disabled",
+            "rgba": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "name": "nearest mip",
+            "rgba": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "name": "linear mip",
+            "rgba": [
+              0.5,
+              0.5,
+              0,
+              1
+            ]
+          },
+          {
+            "name": "largest mip restriction",
+            "rgba": [
+              0,
+              1,
+              0,
+              1
+            ]
+          }
+        ],
+        "cacheEntries": 7,
+        "HumusFrames": 0
+      }
+    },
+    "originalRunId": "6a42a94d-7913-40cb-b561-8731c9636933"
   }
 }
