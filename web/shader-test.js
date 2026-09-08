@@ -1,3 +1,4 @@
+import {testDeviceBridge} from './device-test.js';
 import {testStencil} from './stencil-test.js';
 import {createShaderTranslator} from './shaders.js';
 const status=document.getElementById('status');
@@ -48,6 +49,7 @@ document.getElementById('run').onclick=async()=>{
   report.alphaStencil=await testStencil(device,tr,shaders);
   const scoped=await device.popErrorScope();if(scoped||errors.length)throw Error(scoped?.message??errors.join('\n'));
   report.checks.push('browser WGSL compilation and pipeline validation passed','GPU draw completed; sampled interpolated color matched');
+  report.deviceBridge=await testDeviceBridge();
   report.diagnosticDraws=2+report.alphaStencil.draws;report.result='passed';vb.destroy();target.destroy();read.destroy();
  }catch(e){report.result='failed';report.error=String(e.stack??e);}
  finally{device?.destroy();status.textContent=JSON.stringify(report,null,2);const session=await(await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.token,report})});}

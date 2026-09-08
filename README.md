@@ -1,6 +1,6 @@
 # Humus original-binary browser runtime
 
-**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. The D3D9 frontend creates a COM object at `Direct3DCreate9(31)` and execution reaches `IDirect3D9::CreateDevice` after the capability query returns `D3DERR_NOTAVAILABLE` after reading/processing the real scene model. D3D9 rendering is not implemented; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
+**Current milestone:** the unmodified `DynamicBranching.exe` executes through translated x86/WASM startup. The D3D9 frontend creates a COM object at `Direct3DCreate9(31)` and the browser creates an `IDirect3DDevice9` backed by validated WebGPU color/depth attachments after reading/processing the real scene model. D3D9 draw/resource support is incomplete; the canvas is blank and rendering acceptance fails. See `MEASURED-RESULTS.json` for the latest browser attempt and exact blocker.
 
 This repository contains local runtime patches and a test harness, not a source port of the demo. The official archive and generated programs remain ignored. The input EXE SHA-256 is `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`.
 
@@ -40,7 +40,7 @@ The browser verifies the EXE, asset, and WASM hashes, runs WASM in a terminable 
 
 ## Current limitations
 
-Missing D3D9 device/capability/resource/state/shader support is a hard failure, not a dummy device. No application Present, draw submission, scene frames, FPS, or correct-frame startup measurements exist. The Apple Metal non-fallback adapter probe establishes availability only. There is no working CheerpX rendering baseline in this workspace and no performance comparison is claimed.
+Device creation, COM lifetimes, backbuffer surfaces, scene boundaries, clear, and GPU-to-GPU presentation are implemented. Shader capability reporting and draw/resource integration remain incomplete. No application Present, draw submission, scene frames, FPS, or correct-frame startup measurements exist. The Apple Metal non-fallback adapter probe establishes availability only. There is no working CheerpX rendering baseline in this workspace and no performance comparison is claimed.
 
 The runtime still has inherited incomplete APIs and f64-based x87 approximations; failed launches are not proof of correctness. Null-page accesses now fail immediately. AOT static scanning includes possible data and missed indirect targets; unknown instructions/targets trap. CPU vendor/features describe a virtual processor; RDTSC is a virtual 1 MHz counter quantized to host milliseconds, not physical CPU speed. The current guest-memory allocation is inherited at 256 MiB and has not been optimized. Linear memory includes other WASM allocations and must not be summed with guest memory as independent totals.
 
@@ -59,3 +59,5 @@ python3 scripts/test_shaders.py
 Open http://127.0.0.1:8765/shader-test.html and click **Run shader diagnostic**. The tests use authored diagnostic VS 1.1/PS 2.0 bytecode, including a texture lookup. They are separate from the original asset mount and do not count as Humus acceptance. A one-time GPU readback verifies output; this is not the application's presentation path. The browser uploads its report through the same bounded evidence receiver. `runtime/shaders/Cargo.lock` pins Naga dependencies; `dependencies.json` pins MojoShader and Emscripten. Third-party notices remain in their source checkouts.
 
 `CreateWindowExA` now dispatches synchronous `WM_NCCREATE` and `WM_CREATE` callbacks with a guest CREATESTRUCTA. The original Humus callback stores HWND 1 before its device request. This is a narrow creation path; complete Win32 window lifecycle and Unicode creation remain unimplemented.
+
+The UI starts two stoppable workers: the CPU worker executes translated x86; the GPU worker owns the OffscreenCanvas, validates WebGPU operations asynchronously, and wakes synchronous host calls through bounded shared-memory replies. Stop terminates both. Initial render-state setters cache validated values; draw-time state application and resource uploads remain unfinished. Diagnostic presentation is counted separately from original application Presents and scene frames.

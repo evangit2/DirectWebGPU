@@ -1,10 +1,10 @@
 function boundedPayload(){const copy={...report,events:[...report.events]};let data=JSON.stringify({token,report:copy});while(new TextEncoder().encode(data).length>240000&&copy.events.length){copy.events.shift();copy.droppedEvents++;data=JSON.stringify({token,report:copy})}return data}
 const $=id=>document.getElementById(id);
-let build,worker,token,timer,probeWorker;
+let build,worker,gpuWorker,token,timer,probeWorker;
 let report={runId:null,status:'idle',events:[],droppedEvents:0,applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'}};
 function log(type,data={}){report.events.push({timeMs:Math.round(performance.now()),type,...data});if(report.events.length>250){report.events.shift();report.droppedEvents++}$('logs').textContent=report.events.map(e=>`${e.timeMs} ${e.type}: ${e.message??JSON.stringify(e.result??e)}`).join('\n');$('logs').scrollTop=$('logs').scrollHeight;}
 async function upload(){if(!token)return;try{const r=await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:boundedPayload()});if(!r.ok)throw Error('evidence upload '+r.status)}catch(e){log('upload-error',{message:e.message})}}
-function stop(status='stopped'){clearTimeout(timer);worker?.terminate();worker=null;report.status=status;report.endedAt=new Date().toISOString();report.diagnosticAttemptMs=performance.now()-report.startTimeMs;$('status').textContent=status;$('start').disabled=false;$('long').disabled=false;$('stop').disabled=true;void upload()}
+function stop(status='stopped'){clearTimeout(timer);worker?.terminate();worker=null;gpuWorker?.terminate();gpuWorker=null;report.status=status;report.endedAt=new Date().toISOString();report.diagnosticAttemptMs=performance.now()-report.startTimeMs;$('status').textContent=status;$('start').disabled=false;$('long').disabled=false;$('stop').disabled=true;void upload()}
 async function start(long=false){
  if(worker)return;
  try{
@@ -13,9 +13,14 @@ async function start(long=false){
   const response=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok)throw Error('session creation '+response.status);token=(await response.json()).token;
   $('start').disabled=true;$('long').disabled=true;$('stop').disabled=false;$('status').textContent='Executing original Humus binary…';
   worker=new Worker('/worker.js',{type:'module'});
+  const activeRunId=report.runId;
   worker.onmessage=({data})=>{
+   if(!worker||report.runId!==activeRunId)return;
    const {type,...rest}=data;log(type,rest);
    if(type==='probe')report.browser=rest.result;
+   if(type==='d3d9-device-created')report.d3d9Device=rest;
+   if(type==='application-present'){report.applicationPresents=rest.count;report.submittedFrames=rest.submittedFrames;}
+   if(type==='gpu-submission')report.gpuSubmissions=rest.count;
    if(type==='identity')report.executableSha256=rest.sha256;
    if(type==='window-created'){report.window=rest;$('scene').style.aspectRatio=`${rest.width}/${rest.height}`}
    if(type==='d3d9-created'){report.direct3DCreate9Reached=true;report.direct3D9ObjectCreated=true;}
@@ -29,7 +34,10 @@ async function start(long=false){
   worker.onerror=e=>{report.blocker=e.message;log('worker-error',{message:e.message});stop('failed: '+e.message)};
   const oldCanvas=$('scene');const canvas=oldCanvas.cloneNode();oldCanvas.replaceWith(canvas);
   const offscreen=canvas.transferControlToOffscreen();
-  worker.postMessage({type:'start',build,canvas:offscreen},[offscreen]);
+  const channel=new MessageChannel();gpuWorker=new Worker('/gpu-worker.js',{type:'module'});
+  gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;
+  gpuWorker.postMessage({type:'init',canvas:offscreen,port:channel.port1},[offscreen,channel.port1]);
+  worker.postMessage({type:'start',build,gpuPort:channel.port2},[channel.port2]);
   // Single attempts have a watchdog; long sessions are user-started and stoppable.
   timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:60000);
  }catch(e){log('failed',{message:e.message});stop('failed: '+e.message)}

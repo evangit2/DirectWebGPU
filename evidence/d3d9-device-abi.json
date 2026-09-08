@@ -1,0 +1,600 @@
+{
+  "reference": "mingw-w64 IDirect3DDevice9 declaration; SDK ABI",
+  "methods": [
+    {
+      "slot": 0,
+      "name": "QueryInterface",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 1,
+      "name": "AddRef",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 2,
+      "name": "Release",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 3,
+      "name": "TestCooperativeLevel",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 4,
+      "name": "GetAvailableTextureMem",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 5,
+      "name": "EvictManagedResources",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 6,
+      "name": "GetDirect3D",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 7,
+      "name": "GetDeviceCaps",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 8,
+      "name": "GetDisplayMode",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 9,
+      "name": "GetCreationParameters",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 10,
+      "name": "SetCursorProperties",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 11,
+      "name": "SetCursorPosition",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 12,
+      "name": "ShowCursor",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 13,
+      "name": "CreateAdditionalSwapChain",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 14,
+      "name": "GetSwapChain",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 15,
+      "name": "GetNumberOfSwapChains",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 16,
+      "name": "Reset",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 17,
+      "name": "Present",
+      "argumentDwordsIncludingThis": 5
+    },
+    {
+      "slot": 18,
+      "name": "GetBackBuffer",
+      "argumentDwordsIncludingThis": 5
+    },
+    {
+      "slot": 19,
+      "name": "GetRasterStatus",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 20,
+      "name": "SetDialogBoxMode",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 21,
+      "name": "SetGammaRamp",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 22,
+      "name": "GetGammaRamp",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 23,
+      "name": "CreateTexture",
+      "argumentDwordsIncludingThis": 9
+    },
+    {
+      "slot": 24,
+      "name": "CreateVolumeTexture",
+      "argumentDwordsIncludingThis": 10
+    },
+    {
+      "slot": 25,
+      "name": "CreateCubeTexture",
+      "argumentDwordsIncludingThis": 8
+    },
+    {
+      "slot": 26,
+      "name": "CreateVertexBuffer",
+      "argumentDwordsIncludingThis": 7
+    },
+    {
+      "slot": 27,
+      "name": "CreateIndexBuffer",
+      "argumentDwordsIncludingThis": 7
+    },
+    {
+      "slot": 28,
+      "name": "CreateRenderTarget",
+      "argumentDwordsIncludingThis": 9
+    },
+    {
+      "slot": 29,
+      "name": "CreateDepthStencilSurface",
+      "argumentDwordsIncludingThis": 9
+    },
+    {
+      "slot": 30,
+      "name": "UpdateSurface",
+      "argumentDwordsIncludingThis": 5
+    },
+    {
+      "slot": 31,
+      "name": "UpdateTexture",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 32,
+      "name": "GetRenderTargetData",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 33,
+      "name": "GetFrontBufferData",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 34,
+      "name": "StretchRect",
+      "argumentDwordsIncludingThis": 6
+    },
+    {
+      "slot": 35,
+      "name": "ColorFill",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 36,
+      "name": "CreateOffscreenPlainSurface",
+      "argumentDwordsIncludingThis": 7
+    },
+    {
+      "slot": 37,
+      "name": "SetRenderTarget",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 38,
+      "name": "GetRenderTarget",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 39,
+      "name": "SetDepthStencilSurface",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 40,
+      "name": "GetDepthStencilSurface",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 41,
+      "name": "BeginScene",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 42,
+      "name": "EndScene",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 43,
+      "name": "Clear",
+      "argumentDwordsIncludingThis": 7
+    },
+    {
+      "slot": 44,
+      "name": "SetTransform",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 45,
+      "name": "GetTransform",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 46,
+      "name": "MultiplyTransform",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 47,
+      "name": "SetViewport",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 48,
+      "name": "GetViewport",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 49,
+      "name": "SetMaterial",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 50,
+      "name": "GetMaterial",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 51,
+      "name": "SetLight",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 52,
+      "name": "GetLight",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 53,
+      "name": "LightEnable",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 54,
+      "name": "GetLightEnable",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 55,
+      "name": "SetClipPlane",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 56,
+      "name": "GetClipPlane",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 57,
+      "name": "SetRenderState",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 58,
+      "name": "GetRenderState",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 59,
+      "name": "CreateStateBlock",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 60,
+      "name": "BeginStateBlock",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 61,
+      "name": "EndStateBlock",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 62,
+      "name": "SetClipStatus",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 63,
+      "name": "GetClipStatus",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 64,
+      "name": "GetTexture",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 65,
+      "name": "SetTexture",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 66,
+      "name": "GetTextureStageState",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 67,
+      "name": "SetTextureStageState",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 68,
+      "name": "GetSamplerState",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 69,
+      "name": "SetSamplerState",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 70,
+      "name": "ValidateDevice",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 71,
+      "name": "SetPaletteEntries",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 72,
+      "name": "GetPaletteEntries",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 73,
+      "name": "SetCurrentTexturePalette",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 74,
+      "name": "GetCurrentTexturePalette",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 75,
+      "name": "SetScissorRect",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 76,
+      "name": "GetScissorRect",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 77,
+      "name": "SetSoftwareVertexProcessing",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 78,
+      "name": "GetSoftwareVertexProcessing",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 79,
+      "name": "SetNPatchMode",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 80,
+      "name": "GetNPatchMode",
+      "argumentDwordsIncludingThis": 1
+    },
+    {
+      "slot": 81,
+      "name": "DrawPrimitive",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 82,
+      "name": "DrawIndexedPrimitive",
+      "argumentDwordsIncludingThis": 7
+    },
+    {
+      "slot": 83,
+      "name": "DrawPrimitiveUP",
+      "argumentDwordsIncludingThis": 5
+    },
+    {
+      "slot": 84,
+      "name": "DrawIndexedPrimitiveUP",
+      "argumentDwordsIncludingThis": 9
+    },
+    {
+      "slot": 85,
+      "name": "ProcessVertices",
+      "argumentDwordsIncludingThis": 7
+    },
+    {
+      "slot": 86,
+      "name": "CreateVertexDeclaration",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 87,
+      "name": "SetVertexDeclaration",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 88,
+      "name": "GetVertexDeclaration",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 89,
+      "name": "SetFVF",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 90,
+      "name": "GetFVF",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 91,
+      "name": "CreateVertexShader",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 92,
+      "name": "SetVertexShader",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 93,
+      "name": "GetVertexShader",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 94,
+      "name": "SetVertexShaderConstantF",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 95,
+      "name": "GetVertexShaderConstantF",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 96,
+      "name": "SetVertexShaderConstantI",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 97,
+      "name": "GetVertexShaderConstantI",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 98,
+      "name": "SetVertexShaderConstantB",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 99,
+      "name": "GetVertexShaderConstantB",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 100,
+      "name": "SetStreamSource",
+      "argumentDwordsIncludingThis": 5
+    },
+    {
+      "slot": 101,
+      "name": "GetStreamSource",
+      "argumentDwordsIncludingThis": 5
+    },
+    {
+      "slot": 102,
+      "name": "SetStreamSourceFreq",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 103,
+      "name": "GetStreamSourceFreq",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 104,
+      "name": "SetIndices",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 105,
+      "name": "GetIndices",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 106,
+      "name": "CreatePixelShader",
+      "argumentDwordsIncludingThis": 3
+    },
+    {
+      "slot": 107,
+      "name": "SetPixelShader",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 108,
+      "name": "GetPixelShader",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 109,
+      "name": "SetPixelShaderConstantF",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 110,
+      "name": "GetPixelShaderConstantF",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 111,
+      "name": "SetPixelShaderConstantI",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 112,
+      "name": "GetPixelShaderConstantI",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 113,
+      "name": "SetPixelShaderConstantB",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 114,
+      "name": "GetPixelShaderConstantB",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 115,
+      "name": "DrawRectPatch",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 116,
+      "name": "DrawTriPatch",
+      "argumentDwordsIncludingThis": 4
+    },
+    {
+      "slot": 117,
+      "name": "DeletePatch",
+      "argumentDwordsIncludingThis": 2
+    },
+    {
+      "slot": 118,
+      "name": "CreateQuery",
+      "argumentDwordsIncludingThis": 3
+    }
+  ]
+}

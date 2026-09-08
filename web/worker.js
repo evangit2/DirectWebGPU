@@ -1,4 +1,4 @@
-let memory, device, lastPanic, scene, logCount=0;
+let memory, device, lastPanic, gpuPort, logCount=0;
 const send=(type,data={})=>{if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
@@ -28,13 +28,9 @@ self.send_to_host=(func,args,retAddr)=>{
   if(!Number.isInteger(ptr)||!Number.isInteger(len)||ptr<0||len<0||ptr+len>memory.buffer.byteLength)throw Error('host console pointer out of bounds');
   send('log',{message:new TextDecoder().decode(new Uint8Array(memory.buffer,ptr,Math.min(len,4096)).slice())});return;
  }
- if(func==='create_window'){
-  const [title,width,height]=args;
-  if(!scene||!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>4096||height>4096)throw Error('invalid window dimensions');
-  scene.width=width;scene.height=height;
-  send('window-created',{title,width,height});
-  if(!Number.isInteger(retAddr)||retAddr<0||retAddr%4||retAddr+4>memory.buffer.byteLength)throw Error('invalid host reply pointer');
-  Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;
+ if(func==='create_window'||func==='graphics_call'){
+  if(!gpuPort)throw Error('GPU transport unavailable');
+  gpuPort.postMessage({func,args:Array.from(args),buffer:memory.buffer,retAddr});return;
  }
  // Unsupported host operations fail locally instead of leaving a blocked worker.
  throw Error(`unsupported host operation: ${func}; args=${JSON.stringify(args)} returnPointer=${retAddr}`);
@@ -43,8 +39,8 @@ self.onmessage=async({data})=>{
  try{
   if(data.type==='probe'){send('probe',{result:await gpuProbe()});return}
   if(data.type!=='start')throw Error('unsupported worker command');
-  scene=data.canvas;
-  send('probe',{result:await gpuProbe()});
+  gpuPort=data.gpuPort;
+  await new Promise((resolve,reject)=>{gpuPort.onmessage=({data})=>{if(data.ready)resolve(data.result);else reject(Error(data.error??'GPU initialization failed'))};gpuPort.start();});
   const build=data.build;
   const exeFile=build.files.find(f=>f.path===build.dependencies.executable.path);
   if(!exeFile)throw Error('original executable missing from asset manifest');

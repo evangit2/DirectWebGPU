@@ -44,6 +44,32 @@ index ac09bc9..c84c2f9 100644
          const MEM_DISCARDABLE = 0x2000000;
          const MEM_SHARED = 0x10000000;
          const MEM_EXECUTE = 0x20000000;
+diff --git a/host/src/lib.rs b/host/src/lib.rs
+index 935289d..1f214f5 100644
+--- a/host/src/lib.rs
++++ b/host/src/lib.rs
+@@ -103,3 +103,6 @@ pub fn init() {
+ pub fn host() -> &'static Host {
+     &*HOST
+ }
++
++#[cfg(not(target_family="wasm"))]
++pub fn graphics_call(_op:u32,_values:&[u32])->u32{0x8876086a} // native diagnostic has no browser GPU
+diff --git a/host/src/wasm.rs b/host/src/wasm.rs
+index 92da1ea..443e1fb 100644
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -309,3 +309,10 @@ impl WebHostSendChannel {
+         send_to_host(msg, args, 0);
+     }
+ }
++
++/// Synchronous rare graphics operations; result must be nonzero to signal completion.
++pub fn graphics_call(op:u32, values:&[u32])->u32 {
++    let args=js_sys::Array::new();args.push(&JsValue::from(op));
++    for value in values{args.push(&JsValue::from(*value));}
++    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
++}
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
 index e1edcc6..673ce94 100644
 --- a/runtime/src/memory.rs
@@ -236,10 +262,10 @@ index c8b11ff..7f5a75e 100644
 +}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..5256d5b
+index 0000000..248f38f
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,181 @@
+@@ -0,0 +1,209 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -255,7 +281,11 @@ index 0000000..5256d5b
 +const IID_D3D9: [u8;16] = [0xca,0xcb,0xbd,0x81,0xd4,0x64,0x6d,0x42,0xae,0x8d,0xad,1,0x47,0xf4,0x27,0x5c];
 +static OBJECTS: LazyLock<Mutex<HashMap<u32,u32>>> = LazyLock::new(||Mutex::new(HashMap::new()));
 +
-+pub const VTABLES: [(&str, &[&str]);1] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES)];
++#[path="d3d9/device.rs"]
++pub mod IDirect3DDevice9;
++#[path="d3d9/surface.rs"]
++pub mod IDirect3DSurface9;
++pub const VTABLES: [(&str, &[&str]);3] = [("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES)];
 +fn valid(ctx: &Context, p: u32, n: usize) -> bool {
 +    p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
 +}
@@ -372,13 +402,16 @@ index 0000000..5256d5b
 +        log::info!("D3D9_CAPS_UNAVAILABLE adapter={index} type={device_type}");
 +        D3DERR_NOTAVAILABLE
 +    }
-+    pub fn CreateDevice_stdcall(ctx: &mut Context) -> runtime::Cont {
-+        let ptr=ctx.memory.read::<u32>(ctx.cpu.regs.esp+24);
-+        if valid(ctx,ptr,56) {
-+            let params:Vec<_>=(0..14).map(|i|ctx.memory.read::<u32>(ptr+i*4)).collect();
-+            log::info!("D3D9_CREATE_DEVICE_PRESENT_PARAMETERS {params:#x?}");
-+        }
-+        unsupported(ctx,"CreateDevice",7)
++    #[win32_derive::dllexport]
++    pub fn CreateDevice(ctx:&mut Context,this:u32,index:u32,kind:u32,focus:u32,behavior:u32,presentation:u32,out:u32)->u32{
++        if !adapter(this,index)||kind!=1||focus!=1||behavior!=0x40||!valid(ctx,presentation,56)||!valid(ctx,out,4){return D3DERR_INVALIDCALL}
++        ctx.memory.write::<u32>(out,0);
++        let params:Vec<_>=(0..14).map(|i|ctx.memory.read::<u32>(presentation+i*4)).collect();
++        log::info!("D3D9_CREATE_DEVICE_PRESENT_PARAMETERS {params:#x?}");
++        let backend=host::graphics_call(1,&params);
++        if backend==0{return D3DERR_NOTAVAILABLE}if backend&0x80000000!=0{return backend}
++        let object=IDirect3DDevice9::create(ctx,this,backend,focus,behavior,params[0],params[1],params[2]);
++        ctx.memory.write::<u32>(out,object);log::info!("D3D9_DEVICE_CREATED object={object:#x} backend={backend}");D3D_OK
 +    }
 +}
 +
@@ -410,6 +443,27 @@ index 0000000..5256d5b
 +        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,1,0x1300),D3DERR_INVALIDCALL);
 +        assert_eq!(IDirect3D9::GetAdapterDisplayMode(&mut ctx,obj,0,0x1300),D3D_OK);
 +        assert_eq!(ctx.memory.read::<u32>(0x1300),1280);
++        unsafe {IDirect3DDevice9::VTABLE=0x1800;IDirect3DSurface9::VTABLE=0x1a00;}
++        let dev=IDirect3DDevice9::create(&mut ctx,obj,1,1,0x40,800,600,21);
++        assert_eq!(IDirect3DDevice9::BeginScene(&mut ctx,dev),D3D_OK);
++        assert_eq!(IDirect3DDevice9::BeginScene(&mut ctx,dev),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::EndScene(&mut ctx,dev),D3D_OK);
++        assert_eq!(IDirect3DDevice9::EndScene(&mut ctx,dev),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::GetDirect3D(&mut ctx,dev,0x1200),D3D_OK);
++        assert_eq!(ctx.memory.read::<u32>(0x1200),obj);IDirect3D9::Release(&mut ctx,obj);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,137,0),D3D_OK);
++        assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,137,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),0);
++        assert_eq!(IDirect3DDevice9::GetRenderTarget(&mut ctx,dev,0,0x1200),D3D_OK);
++        let surface=ctx.memory.read::<u32>(0x1200);
++        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),1); // Surface keeps device alive.
++        assert_eq!(IDirect3DSurface9::GetDesc(&mut ctx,surface,0x1600),D3D_OK);
++        assert_eq!(ctx.memory.read::<u32>(0x1618),800);assert_eq!(ctx.memory.read::<u32>(0x161c),600);
++        assert_eq!(IDirect3DSurface9::GetDevice(&mut ctx,surface,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),dev);
++        assert_eq!(IDirect3DSurface9::Release(&mut ctx,surface),0);
++        assert_eq!(IDirect3DDevice9::AddRef(&mut ctx,dev),2);
++        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),1);
++        assert_eq!(IDirect3DDevice9::Release(&mut ctx,dev),0);
++        assert_eq!(ctx.memory.read::<u32>(dev),0);
 +        ctx.memory.bytes[0x1400..0x1530].fill(0xa5);
 +        ctx.call32_x86(runtime::Cont(IDirect3D9::GetDeviceCaps_stdcall),vec![obj,0,1,0x1400]);
 +        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);
@@ -421,6 +475,232 @@ index 0000000..5256d5b
 +        assert!(!OBJECTS.lock().unwrap().contains_key(&obj));
 +    }
 +}
+diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
+new file mode 100644
+index 0000000..93e963c
+--- /dev/null
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -0,0 +1,175 @@
++//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
++use super::*;
++#[derive(Clone)]
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>}
++static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
++pub static mut VTABLE:u32=0;
++const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
++fn device(this:u32)->Device{DEVICES.lock().unwrap().get(&this).expect("invalid/released IDirect3DDevice9").clone()}
++fn fail(ctx:&Context,name:&str,count:u32)->!{
++ let sp=ctx.cpu.regs.esp;let args:Vec<_>=(0..count).map(|i|ctx.memory.read::<u32>(sp+4+i*4)).collect();
++ panic!("unsupported API: d3d9!IDirect3DDevice9::{name}; args={args:#x?}; stack_return={:#010x}",ctx.memory.read::<u32>(sp));
++}
++pub fn create(ctx:&mut Context,parent:u32,backend:u32,focus:u32,flags:u32,width:u32,height:u32,format:u32)->u32{
++ let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
++ let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
++ let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states()}).is_none());p
++}
++#[win32_derive::dllexport]
++pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{
++ device(this);if !valid(ctx,out,4){return E_POINTER}ctx.memory.write::<u32>(out,0);
++ if !valid(ctx,iid,16){return E_POINTER}let id=&ctx.memory.bytes[iid as usize..iid as usize+16];
++ if id!=IID_UNKNOWN&&id!=IID_DEVICE{return E_NOINTERFACE}AddRef(ctx,this);ctx.memory.write::<u32>(out,this);D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn AddRef(_ctx:&mut Context,this:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid device AddRef");d.refs=d.refs.checked_add(1).expect("device ref overflow");d.refs}
++#[win32_derive::dllexport]
++pub fn Release(ctx:&mut Context,this:u32)->u32{
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid device Release");d.refs-=1;let refs=d.refs;
++ if refs!=0{return refs}let d=map.remove(&this).unwrap();drop(map);
++ IDirect3DSurface9::destroy_owned(ctx,d.color);IDirect3DSurface9::destroy_owned(ctx,d.depth);
++ host::graphics_call(2,&[d.backend]);IDirect3D9::Release(ctx,d.parent);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);0
++}
++#[win32_derive::dllexport]
++pub fn GetDirect3D(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3D9::AddRef(ctx,d.parent);ctx.memory.write::<u32>(out,d.parent);D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetCreationParameters(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,16){return D3DERR_INVALIDCALL}for(i,v)in [0,1,d.focus,d.flags].into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v)}D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetDeviceCaps(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);IDirect3D9::GetDeviceCaps(ctx,d.parent,0,1,out)}
++#[win32_derive::dllexport]
++pub fn BeginScene(_ctx:&mut Context,this:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid BeginScene device");if d.scene{return D3DERR_INVALIDCALL}d.scene=true;D3D_OK}
++#[win32_derive::dllexport]
++pub fn EndScene(_ctx:&mut Context,this:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid EndScene device");if !d.scene{return D3DERR_INVALIDCALL}d.scene=false;D3D_OK}
++fn hresult(value:u32)->u32{if value==1{D3D_OK}else{value}}
++#[win32_derive::dllexport]
++pub fn Clear(_ctx:&mut Context,this:u32,count:u32,rects:u32,flags:u32,color:u32,z_bits:u32,stencil:u32)->u32{
++ let d=device(this);if count!=0||rects!=0{return D3DERR_INVALIDCALL}hresult(host::graphics_call(3,&[d.backend,flags,color,z_bits,stencil]))
++}
++#[win32_derive::dllexport]
++pub fn Present(_ctx:&mut Context,this:u32,src:u32,dst:u32,window:u32,dirty:u32)->u32{
++ let d=device(this);if d.scene||src!=0||dst!=0||window!=0||dirty!=0{return D3DERR_INVALIDCALL}hresult(host::graphics_call(4,&[d.backend]))
++}
++pub const VTABLE_ENTRIES:[&str;119]=["QueryInterface","AddRef","Release","TestCooperativeLevel","GetAvailableTextureMem","EvictManagedResources","GetDirect3D","GetDeviceCaps","GetDisplayMode","GetCreationParameters","SetCursorProperties","SetCursorPosition","ShowCursor","CreateAdditionalSwapChain","GetSwapChain","GetNumberOfSwapChains","Reset","Present","GetBackBuffer","GetRasterStatus","SetDialogBoxMode","SetGammaRamp","GetGammaRamp","CreateTexture","CreateVolumeTexture","CreateCubeTexture","CreateVertexBuffer","CreateIndexBuffer","CreateRenderTarget","CreateDepthStencilSurface","UpdateSurface","UpdateTexture","GetRenderTargetData","GetFrontBufferData","StretchRect","ColorFill","CreateOffscreenPlainSurface","SetRenderTarget","GetRenderTarget","SetDepthStencilSurface","GetDepthStencilSurface","BeginScene","EndScene","Clear","SetTransform","GetTransform","MultiplyTransform","SetViewport","GetViewport","SetMaterial","GetMaterial","SetLight","GetLight","LightEnable","GetLightEnable","SetClipPlane","GetClipPlane","SetRenderState","GetRenderState","CreateStateBlock","BeginStateBlock","EndStateBlock","SetClipStatus","GetClipStatus","GetTexture","SetTexture","GetTextureStageState","SetTextureStageState","GetSamplerState","SetSamplerState","ValidateDevice","SetPaletteEntries","GetPaletteEntries","SetCurrentTexturePalette","GetCurrentTexturePalette","SetScissorRect","GetScissorRect","SetSoftwareVertexProcessing","GetSoftwareVertexProcessing","SetNPatchMode","GetNPatchMode","DrawPrimitive","DrawIndexedPrimitive","DrawPrimitiveUP","DrawIndexedPrimitiveUP","ProcessVertices","CreateVertexDeclaration","SetVertexDeclaration","GetVertexDeclaration","SetFVF","GetFVF","CreateVertexShader","SetVertexShader","GetVertexShader","SetVertexShaderConstantF","GetVertexShaderConstantF","SetVertexShaderConstantI","GetVertexShaderConstantI","SetVertexShaderConstantB","GetVertexShaderConstantB","SetStreamSource","GetStreamSource","SetStreamSourceFreq","GetStreamSourceFreq","SetIndices","GetIndices","CreatePixelShader","SetPixelShader","GetPixelShader","SetPixelShaderConstantF","GetPixelShaderConstantF","SetPixelShaderConstantI","GetPixelShaderConstantI","SetPixelShaderConstantB","GetPixelShaderConstantB","DrawRectPatch","DrawTriPatch","DeletePatch","CreateQuery"];
++pub fn TestCooperativeLevel_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"TestCooperativeLevel",1)}
++pub fn GetAvailableTextureMem_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetAvailableTextureMem",1)}
++pub fn EvictManagedResources_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"EvictManagedResources",1)}
++pub fn GetDisplayMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetDisplayMode",3)}
++pub fn SetCursorProperties_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetCursorProperties",4)}
++pub fn SetCursorPosition_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetCursorPosition",4)}
++pub fn ShowCursor_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ShowCursor",2)}
++pub fn CreateAdditionalSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateAdditionalSwapChain",3)}
++pub fn GetSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSwapChain",3)}
++pub fn GetNumberOfSwapChains_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetNumberOfSwapChains",1)}
++pub fn Reset_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"Reset",2)}
++#[win32_derive::dllexport]
++pub fn GetBackBuffer(ctx:&mut Context,this:u32,swap:u32,index:u32,kind:u32,out:u32)->u32{if swap!=0||index!=0||kind!=0{return D3DERR_INVALIDCALL}GetRenderTarget(ctx,this,0,out)}
++pub fn GetRasterStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetRasterStatus",3)}
++pub fn SetDialogBoxMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetDialogBoxMode",2)}
++pub fn SetGammaRamp_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetGammaRamp",4)}
++pub fn GetGammaRamp_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetGammaRamp",3)}
++pub fn CreateTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateTexture",9)}
++pub fn CreateVolumeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVolumeTexture",10)}
++pub fn CreateCubeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateCubeTexture",8)}
++pub fn CreateVertexBuffer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVertexBuffer",7)}
++pub fn CreateIndexBuffer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateIndexBuffer",7)}
++pub fn CreateRenderTarget_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateRenderTarget",9)}
++pub fn CreateDepthStencilSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateDepthStencilSurface",9)}
++pub fn UpdateSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UpdateSurface",5)}
++pub fn UpdateTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UpdateTexture",3)}
++pub fn GetRenderTargetData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetRenderTargetData",3)}
++pub fn GetFrontBufferData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetFrontBufferData",3)}
++pub fn StretchRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"StretchRect",6)}
++pub fn ColorFill_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ColorFill",4)}
++pub fn CreateOffscreenPlainSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateOffscreenPlainSurface",7)}
++#[win32_derive::dllexport]
++pub fn SetRenderTarget(_ctx:&mut Context,this:u32,index:u32,surface:u32)->u32{let d=device(this);if index!=0||surface!=d.color{return D3DERR_INVALIDCALL}D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetRenderTarget(ctx:&mut Context,this:u32,index:u32,out:u32)->u32{let d=device(this);if index!=0||!valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DSurface9::AddRef(ctx,d.color);ctx.memory.write::<u32>(out,d.color);D3D_OK}
++#[win32_derive::dllexport]
++pub fn SetDepthStencilSurface(_ctx:&mut Context,this:u32,surface:u32)->u32{let d=device(this);if surface!=d.depth{return D3DERR_INVALIDCALL}D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetDepthStencilSurface(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DSurface9::AddRef(ctx,d.depth);ctx.memory.write::<u32>(out,d.depth);D3D_OK}
++pub fn SetTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetTransform",3)}
++pub fn GetTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetTransform",3)}
++pub fn MultiplyTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"MultiplyTransform",3)}
++pub fn SetViewport_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetViewport",2)}
++pub fn GetViewport_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetViewport",2)}
++pub fn SetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetMaterial",2)}
++pub fn GetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetMaterial",2)}
++pub fn SetLight_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetLight",3)}
++pub fn GetLight_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetLight",3)}
++pub fn LightEnable_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"LightEnable",3)}
++pub fn GetLightEnable_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetLightEnable",3)}
++pub fn SetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetClipPlane",3)}
++pub fn GetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetClipPlane",3)}
++fn default_states()->HashMap<u32,u32>{[(7,1),(14,1),(15,0),(19,2),(20,1),(22,3),(23,4),(24,0),(25,8),(27,0),(52,0),(53,1),(54,1),(55,1),(56,8),(57,0),(58,u32::MAX),(59,u32::MAX),(137,1),(168,15),(171,1)].into_iter().collect()}
++#[win32_derive::dllexport]
++pub fn SetRenderState(ctx:&mut Context,this:u32,kind:u32,value:u32)->u32{
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid SetRenderState device");
++ if !d.states.contains_key(&kind){drop(map);fail(ctx,"SetRenderState (unsupported state)",3)}
++ let valid=match kind{7|14|15|27|52|137=>value<=1,19|20=>(1..=11).contains(&value),22=>(1..=3).contains(&value),23|25|53|54|55|56=>(1..=8).contains(&value),24=>value<=255,168=>value<=15,171=>(1..=5).contains(&value),_=>true};
++ if !valid{return D3DERR_INVALIDCALL}d.states.insert(kind,value);D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetRenderState(ctx:&mut Context,this:u32,kind:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}let Some(value)=d.states.get(&kind)else{return D3DERR_INVALIDCALL};ctx.memory.write::<u32>(out,*value);D3D_OK}
++pub fn CreateStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateStateBlock",3)}
++pub fn BeginStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"BeginStateBlock",1)}
++pub fn EndStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"EndStateBlock",2)}
++pub fn SetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetClipStatus",2)}
++pub fn GetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetClipStatus",2)}
++pub fn GetTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetTexture",3)}
++pub fn SetTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetTexture",3)}
++pub fn GetTextureStageState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetTextureStageState",4)}
++pub fn SetTextureStageState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetTextureStageState",4)}
++pub fn GetSamplerState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSamplerState",4)}
++pub fn SetSamplerState_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetSamplerState",4)}
++pub fn ValidateDevice_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ValidateDevice",2)}
++pub fn SetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPaletteEntries",3)}
++pub fn GetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPaletteEntries",3)}
++pub fn SetCurrentTexturePalette_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetCurrentTexturePalette",2)}
++pub fn GetCurrentTexturePalette_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetCurrentTexturePalette",2)}
++pub fn SetScissorRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetScissorRect",2)}
++pub fn GetScissorRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetScissorRect",2)}
++pub fn SetSoftwareVertexProcessing_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetSoftwareVertexProcessing",2)}
++pub fn GetSoftwareVertexProcessing_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSoftwareVertexProcessing",1)}
++pub fn SetNPatchMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetNPatchMode",2)}
++pub fn GetNPatchMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetNPatchMode",1)}
++pub fn DrawPrimitive_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawPrimitive",4)}
++pub fn DrawIndexedPrimitive_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitive",7)}
++pub fn DrawPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawPrimitiveUP",5)}
++pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitiveUP",9)}
++pub fn ProcessVertices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ProcessVertices",7)}
++pub fn CreateVertexDeclaration_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVertexDeclaration",3)}
++pub fn SetVertexDeclaration_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexDeclaration",2)}
++pub fn GetVertexDeclaration_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexDeclaration",2)}
++pub fn SetFVF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetFVF",2)}
++pub fn GetFVF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetFVF",2)}
++pub fn CreateVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVertexShader",3)}
++pub fn SetVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexShader",2)}
++pub fn GetVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShader",2)}
++pub fn SetVertexShaderConstantF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexShaderConstantF",4)}
++pub fn GetVertexShaderConstantF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShaderConstantF",4)}
++pub fn SetVertexShaderConstantI_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexShaderConstantI",4)}
++pub fn GetVertexShaderConstantI_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShaderConstantI",4)}
++pub fn SetVertexShaderConstantB_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetVertexShaderConstantB",4)}
++pub fn GetVertexShaderConstantB_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetVertexShaderConstantB",4)}
++pub fn SetStreamSource_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetStreamSource",5)}
++pub fn GetStreamSource_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetStreamSource",5)}
++pub fn SetStreamSourceFreq_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetStreamSourceFreq",3)}
++pub fn GetStreamSourceFreq_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetStreamSourceFreq",3)}
++pub fn SetIndices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetIndices",2)}
++pub fn GetIndices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetIndices",2)}
++pub fn CreatePixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreatePixelShader",3)}
++pub fn SetPixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPixelShader",2)}
++pub fn GetPixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPixelShader",2)}
++pub fn SetPixelShaderConstantF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPixelShaderConstantF",4)}
++pub fn GetPixelShaderConstantF_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPixelShaderConstantF",4)}
++pub fn SetPixelShaderConstantI_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPixelShaderConstantI",4)}
++pub fn GetPixelShaderConstantI_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPixelShaderConstantI",4)}
++pub fn SetPixelShaderConstantB_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPixelShaderConstantB",4)}
++pub fn GetPixelShaderConstantB_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPixelShaderConstantB",4)}
++pub fn DrawRectPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawRectPatch",4)}
++pub fn DrawTriPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawTriPatch",4)}
++pub fn DeletePatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DeletePatch",2)}
++pub fn CreateQuery_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateQuery",3)}
+diff --git a/win32/winapi/src/d3d9/surface.rs b/win32/winapi/src/d3d9/surface.rs
+new file mode 100644
+index 0000000..9063ba4
+--- /dev/null
++++ b/win32/winapi/src/d3d9/surface.rs
+@@ -0,0 +1,39 @@
++//! COM views of device-owned GPU attachments. External refs retain the device.
++use super::*;
++#[derive(Clone)]
++struct Surface{refs:u32,device:u32,desc:[u32;8]}
++static SURFACES:LazyLock<Mutex<HashMap<u32,Surface>>>=LazyLock::new(||Mutex::new(HashMap::new()));
++pub static mut VTABLE:u32=0;
++const IID_SURFACE:[u8;16]=[0x3a,0xaf,0xfb,0x0c,0xf6,0x9f,0x9a,0x42,0x99,0xb3,0xa2,0x79,0x6a,0xf8,0xb8,0x9b];
++const IID_RESOURCE:[u8;16]=[0x5d,0xc0,0xee,0x05,0x7d,0x8f,0x62,0x43,0xb9,0x99,0xd1,0xba,0xf3,0x57,0xc7,0x04];
++pub const VTABLE_ENTRIES:[&str;17]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","GetContainer","GetDesc","LockRect","UnlockRect","GetDC","ReleaseDC"];
++fn surface(this:u32)->Surface{SURFACES.lock().unwrap().get(&this).expect("invalid/released surface").clone()}
++pub fn create_owned(ctx:&mut Context,owner:u32,width:u32,height:u32,format:u32,usage:u32)->u32{
++ let vt=unsafe{VTABLE};assert!(valid(ctx,vt,17*4),"surface vtable missing");let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vt);
++ assert!(SURFACES.lock().unwrap().insert(p,Surface{refs:0,device:owner,desc:[format,1,usage,0,0,0,width,height]}).is_none());p
++}
++pub fn destroy_owned(ctx:&mut Context,this:u32){let s=SURFACES.lock().unwrap().remove(&this).expect("invalid owned surface");assert_eq!(s.refs,0);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);}
++#[win32_derive::dllexport]
++pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{surface(this);if !valid(ctx,out,4){return E_POINTER}ctx.memory.write::<u32>(out,0);if !valid(ctx,iid,16){return E_POINTER}let id=&ctx.memory.bytes[iid as usize..iid as usize+16];if id!=IID_UNKNOWN&&id!=IID_SURFACE&&id!=IID_RESOURCE{return E_NOINTERFACE}AddRef(ctx,this);ctx.memory.write::<u32>(out,this);D3D_OK}
++#[win32_derive::dllexport]
++pub fn AddRef(ctx:&mut Context,this:u32)->u32{let mut map=SURFACES.lock().unwrap();let s=map.get_mut(&this).expect("invalid surface AddRef");s.refs=s.refs.checked_add(1).expect("surface ref overflow");let n=s.refs;let owner=s.device;drop(map);IDirect3DDevice9::AddRef(ctx,owner);n}
++#[win32_derive::dllexport]
++pub fn Release(ctx:&mut Context,this:u32)->u32{let mut map=SURFACES.lock().unwrap();let s=map.get_mut(&this).expect("invalid surface Release");assert!(s.refs>0);s.refs-=1;let n=s.refs;let owner=s.device;drop(map);IDirect3DDevice9::Release(ctx,owner);n}
++#[win32_derive::dllexport]
++pub fn GetDevice(ctx:&mut Context,this:u32,out:u32)->u32{let s=surface(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DDevice9::AddRef(ctx,s.device);ctx.memory.write::<u32>(out,s.device);D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetType(_ctx:&mut Context,this:u32)->u32{surface(this);1}
++#[win32_derive::dllexport]
++pub fn GetDesc(ctx:&mut Context,this:u32,out:u32)->u32{let s=surface(this);if !valid(ctx,out,32){return D3DERR_INVALIDCALL}for(i,v)in s.desc.into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v);}D3D_OK}
++fn fail(ctx:&Context,name:&str)->!{panic!("unsupported API: d3d9!IDirect3DSurface9::{name}; stack_return={:#010x}",ctx.memory.read::<u32>(ctx.cpu.regs.esp))}
++pub fn SetPrivateData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPrivateData")}
++pub fn GetPrivateData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPrivateData")}
++pub fn FreePrivateData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"FreePrivateData")}
++pub fn SetPriority_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPriority")}
++pub fn GetPriority_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetPriority")}
++pub fn PreLoad_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"PreLoad")}
++pub fn GetContainer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetContainer")}
++pub fn LockRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"LockRect")}
++pub fn UnlockRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UnlockRect")}
++pub fn GetDC_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetDC")}
++pub fn ReleaseDC_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ReleaseDC")}
 diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
 index 22d8d8e..b0d1fa9 100644
 --- a/win32/winapi/src/heap.rs
