@@ -23,6 +23,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
    dirty=bool(subprocess.run(['git','status','--porcelain'],cwd=ROOT,capture_output=True,text=True).stdout)
    files=[{'path':p.relative_to(asset_root).as_posix(),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(asset_root.rglob('*')) if p.is_file()]
    return self.reply(200,{'revision':revision,'dirty':dirty,'guest':runtime['guest'],'dependencies':deps,'files':files,'wasm_available':runtime_path.exists() and runtime['wasmArtifact'] in runtime['artifacts'],'runtimeBuild':runtime})
+  # build-manifest.json is generated for static Pages deployment.  A local
+  # server may have that ignored file in the checkout while /api/build is the
+  # authoritative manifest for its selected guest and private asset root.
+  if path=='/build-manifest.json': return self.reply(404,{'error':'use /api/build for local guest manifests'})
   if path.startswith('/assets/'):
    base=self.server.asset_root; p=(base/path.removeprefix('/assets/')).resolve()
   else:

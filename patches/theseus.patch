@@ -606,7 +606,7 @@ index 2199e6d..76bab31 100644
  }
  
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
-index e1edcc6..5b2d4b9 100644
+index e1edcc6..b2cb475 100644
 --- a/runtime/src/memory.rs
 +++ b/runtime/src/memory.rs
 @@ -10,6 +10,12 @@ pub struct Memory<'a> {
@@ -631,7 +631,7 @@ index e1edcc6..5b2d4b9 100644
          }
      }
  
-@@ -34,45 +42,94 @@ impl<'a> Memory<'a> {
+@@ -34,45 +42,96 @@ impl<'a> Memory<'a> {
                  std::slice::from_raw_parts_mut(self.bytes.as_mut_ptr(), self.bytes.len())
              },
              null_page: self.null_page,
@@ -698,16 +698,20 @@ index e1edcc6..5b2d4b9 100644
  
      pub fn read<T: MemRead>(&self, addr: u32) -> T {
 -        self.check_access(addr);
-+        self.check_range(addr, std::mem::size_of::<T>(), "read");
++        let size = std::mem::size_of::<T>();
++        self.check_range(addr, size, "read");
          let addr = addr as usize;
-         T::read_from_bytes(&self.bytes[addr..addr + std::mem::size_of::<T>()]).unwrap()
+-        T::read_from_bytes(&self.bytes[addr..addr + std::mem::size_of::<T>()]).unwrap()
++        T::read_from_bytes(&self.bytes[addr..addr + size]).unwrap()
      }
  
      pub fn write<T: MemWrite>(&mut self, addr: u32, val: T) {
 -        self.check_access(addr);
-+        self.check_range(addr, std::mem::size_of::<T>(), "write");
++        let size = std::mem::size_of::<T>();
++        self.check_range(addr, size, "write");
          let addr = addr as usize;
-         val.write_to(&mut self.bytes[addr..addr + std::mem::size_of::<T>()])
+-        val.write_to(&mut self.bytes[addr..addr + std::mem::size_of::<T>()])
++        val.write_to(&mut self.bytes[addr..addr + size])
              .unwrap();
      }
  
@@ -734,7 +738,7 @@ index e1edcc6..5b2d4b9 100644
          let buf = &self.bytes[addr as usize..];
          let mut str: Vec<u16> = vec![];
          for chunk in buf.chunks_exact(2) {
-@@ -102,14 +159,14 @@ impl<'a> std::ops::Index<u32> for Memory<'a> {
+@@ -102,14 +161,14 @@ impl<'a> std::ops::Index<u32> for Memory<'a> {
      type Output = u8;
  
      fn index(&self, addr: u32) -> &Self::Output {
@@ -751,7 +755,7 @@ index e1edcc6..5b2d4b9 100644
          &mut self.bytes[addr as usize]
      }
  }
-@@ -118,14 +175,14 @@ impl<'a> std::ops::Index<std::ops::RangeFrom<u32>> for Memory<'a> {
+@@ -118,14 +177,14 @@ impl<'a> std::ops::Index<std::ops::RangeFrom<u32>> for Memory<'a> {
      type Output = [u8];
  
      fn index(&self, index: std::ops::RangeFrom<u32>) -> &Self::Output {
@@ -768,7 +772,7 @@ index e1edcc6..5b2d4b9 100644
          &mut self.bytes[index.start as usize..]
      }
  }
-@@ -134,14 +191,30 @@ impl<'a> std::ops::Index<std::ops::Range<u32>> for Memory<'a> {
+@@ -134,14 +193,30 @@ impl<'a> std::ops::Index<std::ops::Range<u32>> for Memory<'a> {
      type Output = [u8];
  
      fn index(&self, index: std::ops::Range<u32>) -> &Self::Output {
