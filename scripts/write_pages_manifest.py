@@ -23,13 +23,15 @@ files = [{'path': str(p.relative_to(r / 'assets/original/package')),
          for p in sorted((r / 'assets/original/package').rglob('*')) if p.is_file()]
 
 runtime_build_path = r / 'web/generated/runtime-build.json'
+runtime_build = json.loads(runtime_build_path.read_text()) if runtime_build_path.exists() else None
 manifest = {
     'revision': revision,
     'dirty': False,
     'dependencies': deps,
     'files': files,
     'wasm_available': runtime_build_path.exists(),
-    'runtimeBuild': json.loads(runtime_build_path.read_text()) if runtime_build_path.exists() else None,
+    'guest': runtime_build.get('guest') if runtime_build else None,
+    'runtimeBuild': runtime_build,
 }
 
 out = r / 'web/build-manifest.json'
