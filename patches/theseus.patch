@@ -978,6 +978,56 @@ index ff6ddc5..03ec582 100644
 +        assert_eq!(ctx.cpu.regs.esp, 0x2000);
 +    }
 +}
+diff --git a/runtime/src/ops/int.rs b/runtime/src/ops/int.rs
+index 810fad9..1d92442 100644
+--- a/runtime/src/ops/int.rs
++++ b/runtime/src/ops/int.rs
+@@ -1,5 +1,8 @@
+ pub trait Int:
+-    num_traits::PrimInt + num_traits::ops::overflowing::OverflowingSub + num_traits::WrappingAdd
++    num_traits::PrimInt
++    + num_traits::ops::overflowing::OverflowingAdd
++    + num_traits::ops::overflowing::OverflowingSub
++    + num_traits::WrappingAdd
+ {
+     fn bits() -> usize;
+     fn low_byte(&self) -> u8;
+diff --git a/runtime/src/ops/math.rs b/runtime/src/ops/math.rs
+index 8e7f149..f02fe2f 100644
+--- a/runtime/src/ops/math.rs
++++ b/runtime/src/ops/math.rs
+@@ -30,8 +30,9 @@ pub fn add<I: Int>(x: I, y: I, flags: &mut Flags) -> I {
+ }
+ 
+ pub fn addc<I: Int>(x: I, y: I, z: I, flags: &mut Flags) -> I {
+-    let result = x.wrapping_add(&y.wrapping_add(&z));
+-    flags.set(Flags::CF, result < x || (result == x && !z.is_zero()));
++    let (source, source_carry) = y.overflowing_add(&z);
++    let (result, result_carry) = x.overflowing_add(&source);
++    flags.set(Flags::CF, source_carry || result_carry);
+     flags.set(Flags::ZF, result.is_zero());
+     flags.set(Flags::SF, result.high_bit().is_one());
+     // Overflow is true exactly when the high (sign) bits are like:
+@@ -198,4 +199,19 @@ mod tests {
+         assert_eq!(result, 0x00);
+         assert_eq!(flags.to_string(), "PF ZF");
+     }
++
++    #[test]
++    fn adc_preserves_source_carry() {
++        let mut flags = Flags::default();
++        assert_eq!(addc(0u8, 0xff, 1, &mut flags), 0);
++        assert!(flags.contains(Flags::CF));
++
++        flags = Flags::default();
++        assert_eq!(addc(1u32, 0xffff_ffff, 1, &mut flags), 1);
++        assert!(flags.contains(Flags::CF));
++
++        flags = Flags::default();
++        assert_eq!(addc(0u32, 0xffff_fffe, 1, &mut flags), 0xffff_ffff);
++        assert!(!flags.contains(Flags::CF));
++    }
+ }
 diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
 index a4c06e3..d8640d4 100644
 --- a/runtime/src/ops/misc.rs
