@@ -52,5 +52,58 @@ pub fn sampler_bindings(bytes:&[u8])->Result<Vec<u32>,String>{
  Ok(combined_samplers::split_with_bindings(bytes)?.1)
 }
 
+/// Flatten WebGPU resources as group, binding, kind, detail tuples. Kind 0 is
+/// a uniform buffer (detail is its byte size), kind 1 is a sampled texture
+/// (detail uses SPIR-V's 0/1/2/3 dimension numbering), and kind 2 is a sampler.
+/// This reflects both vkd3d's already-separate resources and MojoShader's
+/// combined samplers after the existing split pass.
+#[wasm_bindgen]
+pub fn shader_bindings(bytes: &[u8]) -> Result<Vec<u32>, String> {
+    if bytes.len() < 20 || bytes.len() > 4 * 1024 * 1024 || bytes.len() % 4 != 0 {
+        return Err("invalid resource reflection SPIR-V length".into());
+    }
+    let split = combined_samplers::split(bytes)?;
+    let options = naga::front::spv::Options {
+        adjust_coordinate_space: false,
+        ..Default::default()
+    };
+    let module = naga::front::spv::parse_u8_slice(&split, &options)
+        .map_err(|e| format!("SPIR-V reflection parse: {e}"))?;
+    naga::valid::Validator::new(
+        naga::valid::ValidationFlags::all(),
+        naga::valid::Capabilities::empty(),
+    )
+    .validate(&module)
+    .map_err(|e| format!("SPIR-V reflection validation: {e:?}"))?;
+    let mut layouter = naga::proc::Layouter::default();
+    layouter
+        .update(module.to_ctx())
+        .map_err(|e| format!("SPIR-V reflection layout: {e}"))?;
+    let mut resources = Vec::new();
+    for (_, global) in module.global_variables.iter() {
+        let Some(binding) = &global.binding else { continue };
+        let (kind, detail) = match (&global.space, &module.types[global.ty].inner) {
+            (naga::AddressSpace::Uniform, _) => (0, layouter[global.ty].size),
+            (naga::AddressSpace::Handle, naga::TypeInner::Image { dim, .. }) => {
+                let dimension = match dim {
+                    naga::ImageDimension::D1 => 0,
+                    naga::ImageDimension::D2 => 1,
+                    naga::ImageDimension::D3 => 2,
+                    naga::ImageDimension::Cube => 3,
+                };
+                (1, dimension)
+            }
+            (naga::AddressSpace::Handle, naga::TypeInner::Sampler { .. }) => (2, 0),
+            _ => continue,
+        };
+        resources.push([binding.group, binding.binding, kind, detail]);
+        if resources.len() > 64 {
+            return Err("too many reflected shader resources".into());
+        }
+    }
+    resources.sort();
+    Ok(resources.into_iter().flatten().collect())
+}
+
 #[wasm_bindgen]
 pub fn vertex_position_wgsl(source:&str,width:u32,height:u32)->Result<String,String>{vertex_inputs::pixel_center(source,width,height)}

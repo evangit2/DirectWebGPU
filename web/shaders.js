@@ -1,14 +1,16 @@
 // Reusable bytecode translator. No application-specific shaders or geometry.
 import createMojo from './generated/mojoshader.js';
 import initNaga,{spirv_to_wgsl,sampler_bindings,alpha_test_wgsl,vertex_inputs_wgsl,vertex_position_wgsl} from './generated/shader_translation.js';
+import {createVkd3dShaderTranslator} from './vkd3d-shaders.js';
+import {RUNTIME_MODES} from './runtime-mode.js';
 // Naga 30 emits f32::MAX as a shortest-roundtrip decimal above the finite
 // range accepted by browser WGSL parsers. Hexadecimal preserves the exact bits.
 export function canonicalFloatLimits(source){return source.replace(/\b340282350000000000000000000000000000000f\b/g,'0x1.fffffep+127f');}
 let initialized;
-export async function createShaderTranslator(){
+async function createLegacyShaderTranslator(){
  initialized??=Promise.all([createMojo(),initNaga()]);
  const [mojo]=await initialized;
- return {validate(stage,bytes){
+ return {mode:RUNTIME_MODES.LEGACY,validate(stage,bytes){
   if(![0,1].includes(stage)||!(bytes instanceof Uint8Array)||bytes.length<8||bytes.length>1048576||bytes.length%4)throw Error('invalid shader bytecode range');
   const pointer=mojo._malloc(bytes.length);if(!pointer)throw Error('shader validation allocation failed');
   try{mojo.HEAPU8.set(bytes,pointer);if(!mojo._shader_validate(stage,pointer,bytes.length))throw Error(mojo.UTF8ToString(mojo._shader_error()));}finally{mojo._free(pointer)}
@@ -37,4 +39,10 @@ export async function createShaderTranslator(){
    return {vertex:stages[0],pixel:stages[1]};
   }finally{mojo._shader_reset();if(vp)mojo._free(vp);if(pp)mojo._free(pp);}
  }};
+}
+
+export async function createShaderTranslator(mode=RUNTIME_MODES.LEGACY){
+ if(mode===RUNTIME_MODES.LEGACY)return createLegacyShaderTranslator();
+ if(mode===RUNTIME_MODES.WINED3D)return createVkd3dShaderTranslator();
+ throw new RangeError(`unsupported DirectWebGPU shader mode: ${mode}`);
 }

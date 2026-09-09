@@ -3,6 +3,7 @@
 export const memory: WebAssembly.Memory;
 export const alpha_test_wgsl: (a: number, b: number, c: number, d: number) => [number, number, number, number];
 export const sampler_bindings: (a: number, b: number) => [number, number, number, number];
+export const shader_bindings: (a: number, b: number) => [number, number, number, number];
 export const spirv_to_wgsl: (a: number, b: number) => [number, number, number, number];
 export const vertex_inputs_wgsl: (a: number, b: number, c: number, d: number) => [number, number, number, number];
 export const vertex_position_wgsl: (a: number, b: number, c: number, d: number) => [number, number, number, number];

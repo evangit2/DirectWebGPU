@@ -15,6 +15,9 @@ for (const f of b.files) {
 if (!existsSync('web/generated/humus_bg.wasm')) throw new Error('missing humus_bg.wasm');
 if (!existsSync('web/generated/humus.js')) throw new Error('missing humus.js');
 if (!existsSync('web/generated/mojoshader.wasm')) throw new Error('missing mojoshader.wasm');
+if (!existsSync('web/generated/vkd3d_shader.js')) throw new Error('missing vkd3d_shader.js');
+if (!existsSync('web/generated/vkd3d_shader.wasm')) throw new Error('missing vkd3d_shader.wasm');
+if (!existsSync('web/generated/vkd3d-LICENSE')) throw new Error('missing vkd3d license');
 if (!existsSync('web/coi-serviceworker.js')) throw new Error('missing coi-serviceworker.js');
 
 console.log('manifest OK:', b.files.length, 'files; wasm artifact',

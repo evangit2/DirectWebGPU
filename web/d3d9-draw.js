@@ -46,9 +46,10 @@ export class DrawRenderer{
   if(entry.shaders.vertex.samplers.length)throw RangeError('vertex texture sampling unsupported');
   const textureKey=[];
   for(const s of entry.shaders.pixel.samplers){
-   if(s.group!==2||s.dimension!==1||s.textureBinding>=16)throw RangeError('unsupported texture sampler reflection');
-   const textureId=packet.textures[s.textureBinding],texture=b.textures.get(textureId),samplerState=packet.samplers[s.textureBinding];
-   textureKey.push(s.textureBinding,textureId,...samplerState);
+   const sourceIndex=s.sourceIndex??s.textureBinding;
+   if(s.group!==2||s.dimension!==1||sourceIndex>=16||s.textureBinding>=32||s.samplerBinding>=32)throw RangeError('unsupported texture sampler reflection');
+   const textureId=packet.textures[sourceIndex],texture=b.textures.get(textureId),samplerState=packet.samplers[sourceIndex];
+   textureKey.push(sourceIndex,textureId,...samplerState);
    textureEntries.push({binding:s.textureBinding,resource:texture.view},{binding:s.samplerBinding,resource:this.samplers.get(samplerState,texture.levels)});
   }
   if(this.uniformCursor>=256)this.flush();
@@ -58,9 +59,11 @@ export class DrawRenderer{
   for(let group=0;group<=last;group++){
    const stage=group===1?0:group===3?1:-1;
    if(stage>=0&&packed[stage].length){
-    const buffer=this.uniforms[stage],offset=uniformSlot*4608;d.queue.writeBuffer(buffer,offset,packed[stage]);
+   const buffer=this.uniforms[stage],offset=uniformSlot*4608;d.queue.writeBuffer(buffer,offset,packed[stage]);
     const key=`${stage}:${uniformSlot}:${packed[stage].byteLength}`;let bindGroup=bindingCache.uniform.get(key);
-    if(!bindGroup)bindGroup=d.createBindGroup({layout:entry.pipeline.getBindGroupLayout(group),entries:[{binding:0,resource:{buffer,offset,size:packed[stage].byteLength}}]}),bindingCache.uniform.set(key,bindGroup);
+    const reflected=entry.shaders[stage?'pixel':'vertex'].uniformBindings;
+    const entries=reflected?.length?reflected.map(binding=>({binding:binding.binding,resource:{buffer,offset:offset+binding.offsetBytes,size:binding.sizeBytes}})):[{binding:0,resource:{buffer,offset,size:packed[stage].byteLength}}];
+    if(!bindGroup)bindGroup=d.createBindGroup({layout:entry.pipeline.getBindGroupLayout(group),entries}),bindingCache.uniform.set(key,bindGroup);
     groups.push(bindGroup);
    }else if(group===2&&textureEntries.length){
     const key=textureKey.join(',');let bindGroup=bindingCache.textures.get(key);

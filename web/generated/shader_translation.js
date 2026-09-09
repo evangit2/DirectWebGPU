@@ -45,6 +45,27 @@ export function sampler_bindings(bytes) {
 }
 
 /**
+ * Flatten WebGPU resources as group, binding, kind, detail tuples. Kind 0 is
+ * a uniform buffer (detail is its byte size), kind 1 is a sampled texture
+ * (detail uses SPIR-V's 0/1/2/3 dimension numbering), and kind 2 is a sampler.
+ * This reflects both vkd3d's already-separate resources and MojoShader's
+ * combined samplers after the existing split pass.
+ * @param {Uint8Array} bytes
+ * @returns {Uint32Array}
+ */
+export function shader_bindings(bytes) {
+    const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.shader_bindings(ptr0, len0);
+    if (ret[3]) {
+        throw takeFromExternrefTable0(ret[2]);
+    }
+    var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+    return v2;
+}
+
+/**
  * Accept linked SPIR-V, reject invalid modules, and emit validated WGSL.
  * Coordinate adjustment is disabled: DX9 and WebGPU both use depth 0..1.
  * Viewport Y, pixel centers and winding remain responsibilities of the renderer.

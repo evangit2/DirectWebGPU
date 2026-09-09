@@ -9,6 +9,15 @@ export function alpha_test_wgsl(source: string, compare: number, reference: numb
 export function sampler_bindings(bytes: Uint8Array): Uint32Array;
 
 /**
+ * Flatten WebGPU resources as group, binding, kind, detail tuples. Kind 0 is
+ * a uniform buffer (detail is its byte size), kind 1 is a sampled texture
+ * (detail uses SPIR-V's 0/1/2/3 dimension numbering), and kind 2 is a sampler.
+ * This reflects both vkd3d's already-separate resources and MojoShader's
+ * combined samplers after the existing split pass.
+ */
+export function shader_bindings(bytes: Uint8Array): Uint32Array;
+
+/**
  * Accept linked SPIR-V, reject invalid modules, and emit validated WGSL.
  * Coordinate adjustment is disabled: DX9 and WebGPU both use depth 0..1.
  * Viewport Y, pixel centers and winding remain responsibilities of the renderer.
@@ -25,6 +34,7 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly alpha_test_wgsl: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly sampler_bindings: (a: number, b: number) => [number, number, number, number];
+    readonly shader_bindings: (a: number, b: number) => [number, number, number, number];
     readonly spirv_to_wgsl: (a: number, b: number) => [number, number, number, number];
     readonly vertex_inputs_wgsl: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly vertex_position_wgsl: (a: number, b: number, c: number, d: number) => [number, number, number, number];

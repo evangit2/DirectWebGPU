@@ -1,6 +1,6 @@
 {
-  "revision": "ba58fa1a58fc9ab26882da50e946d60500773b6e",
-  "builtAt": "2026-09-08T20:33:56.718135+00:00",
+  "revision": "d7ee549071cc1c9c6544e6d0931cb7fd73e5bee7",
+  "builtAt": "2026-09-09T20:34:04.501429+00:00",
   "dependencies": {
     "theseus": {
       "url": "https://github.com/evmar/theseus.git",
@@ -28,24 +28,55 @@
       "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
       "version": "4.0.7"
     },
+    "vkd3d": {
+      "url": "https://dl.winehq.org/vkd3d/source/vkd3d-2.1.tar.xz",
+      "version": "2.1",
+      "sha256": "7510146aff2adfb4ae07ab890701a607e5ff7c66e57100cfc9f630ec92eeda6a",
+      "license": "LGPL-2.1-or-later; adapter links libvkd3d-shader as WASM, patch recorded in patches/vkd3d.patch"
+    },
+    "spirv_headers": {
+      "url": "https://github.com/KhronosGroup/SPIRV-Headers.git",
+      "revision": "04fd3caa1e8267e4d95c806cad901181728e1006"
+    },
+    "vulkan_headers": {
+      "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
+      "revision": "ee2ec5fd83dafce291024683b50dc89219333076"
+    },
     "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
   },
+  "vkd3dPatchSha256": "5b640f11de3731b2090fa23fd7ad33c8a9e1c724eedd1261bb5f2749e00644fb",
   "artifacts": {
     "mojoshader.js": {
       "sha256": "46cd28c62e9ba4c71c62953a6f40236112a940f1b0e776e9b3889138a0af238c",
       "bytes": 10967
     },
     "mojoshader.wasm": {
-      "sha256": "5920161b7260a5a9b6c66b19406f537d94c4e1fdc77a1c913c9e91a704fdea02",
-      "bytes": 113759
+      "sha256": "b105a04bf2c15dd5c25f5ad9e3fb5bdf1d77b368bbee218ae1024b76a875bf93",
+      "bytes": 113779
+    },
+    "vkd3d_shader.js": {
+      "sha256": "a8317b62c82fbb5530873cff7e3c6ec318ce55412d2d2a7267a2e2d8055e30e6",
+      "bytes": 14758
+    },
+    "vkd3d_shader.wasm": {
+      "sha256": "58686c4fa986cfb01df41fec4416616577f0e794697fda1ab8850ddea0b9ead0",
+      "bytes": 1250990
+    },
+    "vkd3d-COPYING": {
+      "sha256": "1f69abfaeee0131bba28ad72d87683a223743d8c9ee1da113fde10cb082f3c91",
+      "bytes": 786
+    },
+    "vkd3d-LICENSE": {
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+      "bytes": 26530
     },
     "shader_translation.js": {
-      "sha256": "20cad63c4cf2f529362d0c65d8ec7200b6eb85b8a63f3f723693a44e9b8b79da",
-      "bytes": 11145
+      "sha256": "69d23d6328cf60aa446af612080b7948b3e9f5ed3b1ba22945e78c229d507912",
+      "bytes": 11956
     },
     "shader_translation_bg.wasm": {
-      "sha256": "e736f7886245eee242b855761e318534e15cc94a4cd4995d78a104e5cb268af2",
-      "bytes": 2127618
+      "sha256": "5cd4d38b3564d6f546275680c6f09b55f0560e43beccc389ca3c30c36d197205",
+      "bytes": 2144938
     },
     "vertex.bin": {
       "sha256": "83aae20d5f7916e0ffffe70bfa8aa57307bf957fadfebd7be8c2ff3dd25ceb37",

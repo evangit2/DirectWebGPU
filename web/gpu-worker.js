@@ -10,10 +10,12 @@ import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
 import {TextureStorage} from './gpu-textures.js';
 import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
+import {runtimeModeInfo} from './runtime-mode.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
 let gpuTiming=false;
+let shaderMode='legacy-win32';
 let sceneEquivalence=false,omitDiagnosticLighting=false;
 let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:1052672};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
@@ -22,8 +24,8 @@ const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
- const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
+ canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;shaderMode=runtimeModeInfo(data.runtimeMode??'legacy-win32').mode;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
+ const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent,runtime:runtimeModeInfo(shaderMode)};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
  const requiredFeatures=adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[];result.timestampQuery={requested:gpuTiming,available:adapter.features.has('timestamp-query')};if(gpuTiming&&result.timestampQuery.available)requiredFeatures.push('timestamp-query');
@@ -138,7 +140,7 @@ async function graphics(op,a,memory){
    if(op===8&&a.length===4){
     const [,stage,pointer,length]=a;
     if(!(memory instanceof SharedArrayBuffer)||pointer<4096||length<8||length>1048576||length%4||pointer+length>memory.byteLength)return INVALID;
-    backend.shaders??=new ShaderObjects(await createShaderTranslator());
+    backend.shaders??=new ShaderObjects(await createShaderTranslator(shaderMode));
     return backend.shaders.create(stage,new Uint8Array(memory,pointer,length));
    }
    if(op===9&&a.length===2){if(!backend.shaders)return INVALID;backend.draws?.flush();backend.shaders.destroy(a[1]);return 1;}
