@@ -1,5 +1,7 @@
 # DirectWebGPU original-binary browser runtime
 
+**Development direction:** WineD3D-derived D3D8/9 semantics feeding a purpose-built WebGPU backend, while retaining Theseus, the lightweight Win32 environment and separate GPU worker. The existing custom implementation will remain available as a separate deprecated mode. The new mode is not implemented yet; the commands below still launch the legacy implementation. See the [feasibility report and incremental migration plan](docs/wined3d-feasibility.md) for the five-option comparison, licensing, module boundaries and original-EXE acceptance gates.
+
 **Current milestone:** the original EXE renders the textured scene at 800×600 and 1280×720 through hardware WebGPU. Camera movement, bounded draw/upload batching, sampled lighting equivalence and three-minute stability are verified within their documented scopes. Full acceptance remains incomplete: see `evidence/acceptance-audit.json` and `MEASURED-RESULTS.json`. The detailed development notes below include historical checkpoints.
 
 This repository contains the browser runtime, the original Humus demo package, generated WASM artifacts, and the translated program output needed to run the demo locally. It is not a source port of the demo. The input EXE SHA-256 is `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`.

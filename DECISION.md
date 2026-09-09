@@ -1,5 +1,7 @@
 # Current implementation decision
 
+The long-term architecture decision is now [WineD3D-derived semantics with a WebGPU backend](docs/wined3d-feasibility.md). Develop that mode beside the preserved, deprecated custom mode; retain the Theseus CPU and lightweight Win32 environment. This supersedes the earlier restriction below on reconsidering the architecture. The report is an investigation, and the implementation described below remains the runnable legacy path until the new mode passes original-EXE acceptance.
+
 Use pinned Theseus for local original-x86 execution, selected Win32/D3D9 compatibility, MojoShader/Naga for actual shader translation, and hardware WebGPU. The CPU worker communicates with a separate GPU worker through bounded copied draw/upload batches and synchronous boundary replies. The real EXE now renders; the historical first-API blockers below are resolved for the measured subset. See COMPATIBILITY.md and MEASURED-RESULTS.json for current limits and evidence.
 
 The master branch preserves the prior baseline. No working CheerpX rendering baseline or accepted native scene reference is available. Local-only operation remains required pending Theseus redistribution-license clarification. Reconsider the path only for a demonstrated essential execution/API/shader semantic blocker that cannot reasonably be implemented; current work concerns measurement, memory reduction and validation.
