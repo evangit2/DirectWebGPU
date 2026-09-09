@@ -1972,10 +1972,10 @@ index 0000000..67a39ff
 +pub fn BASS_MusicLoad(_ctx: &mut Context, _mem: bool, _file: u32, _offset_low: u32, _offset_high: u32, _length: u32, _flags: u32) -> u32 { 1 }
 diff --git a/win32/winapi/src/d3d8.rs b/win32/winapi/src/d3d8.rs
 new file mode 100644
-index 0000000..193ff26
+index 0000000..b451bc4
 --- /dev/null
 +++ b/win32/winapi/src/d3d8.rs
-@@ -0,0 +1,316 @@
+@@ -0,0 +1,323 @@
 +//! Direct3D 8 compatibility frontend backed by the existing D3D9/WebGPU
 +//! resource and draw implementation. D3D8 COM layout differs from D3D9, so
 +//! these vtables preserve the D3D8 ABI and translate calls explicitly.
@@ -2217,12 +2217,19 @@ index 0000000..193ff26
 + pub use crate::d3d9::IDirect3DSurface9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,GetContainer_stdcall,GetDesc_stdcall,LockRect_stdcall,UnlockRect_stdcall};
 +}
 +pub mod IDirect3DVertexBuffer8{
++ use super::*;
 + pub static mut VTABLE:u32=0;pub const VTABLE_ENTRIES:[&str;14]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","Lock","Unlock","GetDesc"];
-+ pub use crate::d3d9::IDirect3DVertexBuffer9::*;
++ pub use crate::d3d9::IDirect3DVertexBuffer9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,SetPriority_stdcall,GetPriority_stdcall,PreLoad_stdcall,GetType_stdcall,Unlock_stdcall,GetDesc_stdcall};
++ // D3D8 applications commonly use DISCARD/NOOVERWRITE as lock hints on
++ // managed buffers. The shared D3D9 storage keeps stricter usage validation;
++ // consume those hints at the D3D8 boundary while preserving the writable map.
++ #[win32_derive::dllexport]pub fn Lock(ctx:&mut Context,this:u32,offset:u32,size:u32,out:u32,flags:u32)->u32{d3d9::IDirect3DVertexBuffer9::Lock(ctx,this,offset,size,out,flags&!0x3800)}
 +}
 +pub mod IDirect3DIndexBuffer8{
++ use super::*;
 + pub static mut VTABLE:u32=0;pub const VTABLE_ENTRIES:[&str;14]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","Lock","Unlock","GetDesc"];
-+ pub use crate::d3d9::IDirect3DIndexBuffer9::*;
++ pub use crate::d3d9::IDirect3DIndexBuffer9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,SetPriority_stdcall,GetPriority_stdcall,PreLoad_stdcall,GetType_stdcall,Unlock_stdcall,GetDesc_stdcall};
++ #[win32_derive::dllexport]pub fn Lock(ctx:&mut Context,this:u32,offset:u32,size:u32,out:u32,flags:u32)->u32{d3d9::IDirect3DIndexBuffer9::Lock(ctx,this,offset,size,out,flags&!0x3800)}
 +}
 +
 +#[cfg(test)]
