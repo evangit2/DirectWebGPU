@@ -16,6 +16,12 @@ out.mkdir(exist_ok=True)
 deps = json.loads((root / 'dependencies.json').read_text())
 emcc = vendor / 'emsdk/upstream/emscripten/emcc'
 
+
+def normalize_generated_javascript(path):
+    """Keep deterministic Emscripten output free of whitespace-only lines."""
+    lines = path.read_text().splitlines()
+    path.write_text('\n'.join(line.rstrip() for line in lines) + '\n')
+
 mojo_flags = ['-O2', '-DMOJOSHADER_NO_VERSION_INCLUDE', '-I' + str(mojo)]
 for profile in ['D3D', 'HLSL', 'GLSL', 'GLSL120', 'GLSLES', 'GLSLES3', 'ARB1', 'ARB1_NV', 'METAL', 'GLSPIRV']:
     mojo_flags += ['-DSUPPORT_PROFILE_' + profile + '=0']
@@ -28,6 +34,7 @@ subprocess.run([
     '-sEXPORTED_FUNCTIONS=["_malloc","_free","_shader_pair","_shader_reset","_shader_error","_shader_output","_shader_length","_shader_uniform_count","_shader_uniform_value","_shader_constant_count","_shader_constant_value","_shader_input_count","_shader_input_value","_shader_validate"]',
     '-sEXPORTED_RUNTIME_METHODS=["UTF8ToString","HEAPU8"]', '-o', str(out / 'mojoshader.js'),
 ], check=True)
+normalize_generated_javascript(out / 'mojoshader.js')
 
 vkd3d_source = vendor / f"vkd3d-{deps['vkd3d']['version']}"
 vkd3d_build = vendor / 'vkd3d-wasm-build'
@@ -63,6 +70,7 @@ subprocess.run([
     '-sEXPORTED_FUNCTIONS=["_malloc","_free","_vkd3d_bridge_compile_pair","_vkd3d_bridge_reset","_vkd3d_bridge_output","_vkd3d_bridge_output_length","_vkd3d_bridge_error","_vkd3d_bridge_input_count","_vkd3d_bridge_input_register","_vkd3d_bridge_input_semantic_index","_vkd3d_bridge_input_semantic","_vkd3d_bridge_version"]',
     '-sEXPORTED_RUNTIME_METHODS=["UTF8ToString","HEAPU8"]', '-o', str(out / 'vkd3d_shader.js'),
 ], check=True)
+normalize_generated_javascript(out / 'vkd3d_shader.js')
 shutil.copy2(vkd3d_source / 'COPYING', out / 'vkd3d-COPYING')
 shutil.copy2(vkd3d_source / 'LICENSE', out / 'vkd3d-LICENSE')
 

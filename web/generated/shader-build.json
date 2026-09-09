@@ -1,6 +1,6 @@
 {
-  "revision": "d7ee549071cc1c9c6544e6d0931cb7fd73e5bee7",
-  "builtAt": "2026-09-09T20:34:04.501429+00:00",
+  "revision": "4c239fb2ad491258d750a5ee4d709849729cf9c3",
+  "builtAt": "2026-09-09T20:44:43.002685+00:00",
   "dependencies": {
     "theseus": {
       "url": "https://github.com/evmar/theseus.git",
@@ -44,19 +44,19 @@
     },
     "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
   },
-  "vkd3dPatchSha256": "5b640f11de3731b2090fa23fd7ad33c8a9e1c724eedd1261bb5f2749e00644fb",
+  "vkd3dPatchSha256": "8d29d0f58827784778a9b69540200f70fe14d606dadc5568a5d3f77462a6b890",
   "artifacts": {
     "mojoshader.js": {
-      "sha256": "46cd28c62e9ba4c71c62953a6f40236112a940f1b0e776e9b3889138a0af238c",
-      "bytes": 10967
+      "sha256": "d99eb01510027f554a59d18bd98c139b128356c80a8ae88a87f8ffe4dd394a2b",
+      "bytes": 10965
     },
     "mojoshader.wasm": {
       "sha256": "b105a04bf2c15dd5c25f5ad9e3fb5bdf1d77b368bbee218ae1024b76a875bf93",
       "bytes": 113779
     },
     "vkd3d_shader.js": {
-      "sha256": "a8317b62c82fbb5530873cff7e3c6ec318ce55412d2d2a7267a2e2d8055e30e6",
-      "bytes": 14758
+      "sha256": "e0380083c344a8de00ed29d5851e23fe791291fe5d370378f7618918a1caed8b",
+      "bytes": 14756
     },
     "vkd3d_shader.wasm": {
       "sha256": "58686c4fa986cfb01df41fec4416616577f0e794697fda1ab8850ddea0b9ead0",
