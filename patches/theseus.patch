@@ -606,7 +606,7 @@ index 2199e6d..76bab31 100644
  }
  
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
-index e1edcc6..b2cb475 100644
+index e1edcc6..11fed2a 100644
 --- a/runtime/src/memory.rs
 +++ b/runtime/src/memory.rs
 @@ -10,6 +10,12 @@ pub struct Memory<'a> {
@@ -631,7 +631,7 @@ index e1edcc6..b2cb475 100644
          }
      }
  
-@@ -34,45 +42,96 @@ impl<'a> Memory<'a> {
+@@ -34,45 +42,118 @@ impl<'a> Memory<'a> {
                  std::slice::from_raw_parts_mut(self.bytes.as_mut_ptr(), self.bytes.len())
              },
              null_page: self.null_page,
@@ -713,6 +713,28 @@ index e1edcc6..b2cb475 100644
 -        val.write_to(&mut self.bytes[addr..addr + std::mem::size_of::<T>()])
 +        val.write_to(&mut self.bytes[addr..addr + size])
              .unwrap();
++        if addr <= 0x04638403
++            && addr
++                .checked_add(size)
++                .is_some_and(|end| end > 0x04638403)
++        {
++            log::warn!(
++                "HB_MEM bad-byte-write addr={addr:#010x} size={size} eip={:#010x} bytes={:02x?}",
++                self.last_eip,
++                &self.bytes[addr..addr + size]
++            );
++        }
++        if addr <= 0x04638005
++            && addr
++                .checked_add(size)
++                .is_some_and(|end| end > 0x04638005)
++        {
++            log::warn!(
++                "HB_MEM source-byte-write addr={addr:#010x} size={size} eip={:#010x} bytes={:02x?}",
++                self.last_eip,
++                &self.bytes[addr..addr + size]
++            );
++        }
      }
  
      pub fn read_str(&self, addr: u32) -> &str {
@@ -738,7 +760,7 @@ index e1edcc6..b2cb475 100644
          let buf = &self.bytes[addr as usize..];
          let mut str: Vec<u16> = vec![];
          for chunk in buf.chunks_exact(2) {
-@@ -102,14 +161,14 @@ impl<'a> std::ops::Index<u32> for Memory<'a> {
+@@ -102,14 +183,14 @@ impl<'a> std::ops::Index<u32> for Memory<'a> {
      type Output = u8;
  
      fn index(&self, addr: u32) -> &Self::Output {
@@ -755,7 +777,7 @@ index e1edcc6..b2cb475 100644
          &mut self.bytes[addr as usize]
      }
  }
-@@ -118,14 +177,14 @@ impl<'a> std::ops::Index<std::ops::RangeFrom<u32>> for Memory<'a> {
+@@ -118,14 +199,14 @@ impl<'a> std::ops::Index<std::ops::RangeFrom<u32>> for Memory<'a> {
      type Output = [u8];
  
      fn index(&self, index: std::ops::RangeFrom<u32>) -> &Self::Output {
@@ -772,7 +794,7 @@ index e1edcc6..b2cb475 100644
          &mut self.bytes[index.start as usize..]
      }
  }
-@@ -134,14 +193,30 @@ impl<'a> std::ops::Index<std::ops::Range<u32>> for Memory<'a> {
+@@ -134,14 +215,30 @@ impl<'a> std::ops::Index<std::ops::Range<u32>> for Memory<'a> {
      type Output = [u8];
  
      fn index(&self, index: std::ops::Range<u32>) -> &Self::Output {
@@ -2243,7 +2265,7 @@ index 0000000..67a39ff
 +pub fn BASS_MusicLoad(_ctx: &mut Context, _mem: bool, _file: u32, _offset_low: u32, _offset_high: u32, _length: u32, _flags: u32) -> u32 { 1 }
 diff --git a/win32/winapi/src/d3d8.rs b/win32/winapi/src/d3d8.rs
 new file mode 100644
-index 0000000..b451bc4
+index 0000000..09fed58
 --- /dev/null
 +++ b/win32/winapi/src/d3d8.rs
 @@ -0,0 +1,323 @@
@@ -2494,13 +2516,13 @@ index 0000000..b451bc4
 + // D3D8 applications commonly use DISCARD/NOOVERWRITE as lock hints on
 + // managed buffers. The shared D3D9 storage keeps stricter usage validation;
 + // consume those hints at the D3D8 boundary while preserving the writable map.
-+ #[win32_derive::dllexport]pub fn Lock(ctx:&mut Context,this:u32,offset:u32,size:u32,out:u32,flags:u32)->u32{d3d9::IDirect3DVertexBuffer9::Lock(ctx,this,offset,size,out,flags&!0x3800)}
++ #[win32_derive::dllexport]pub fn Lock(ctx:&mut Context,this:u32,offset:u32,size:u32,out:u32,flags:u32)->u32{d3d9::IDirect3DVertexBuffer9::lock_d3d8(ctx,this,offset,size,out,flags&!0x3800)}
 +}
 +pub mod IDirect3DIndexBuffer8{
 + use super::*;
 + pub static mut VTABLE:u32=0;pub const VTABLE_ENTRIES:[&str;14]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","Lock","Unlock","GetDesc"];
 + pub use crate::d3d9::IDirect3DIndexBuffer9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,SetPriority_stdcall,GetPriority_stdcall,PreLoad_stdcall,GetType_stdcall,Unlock_stdcall,GetDesc_stdcall};
-+ #[win32_derive::dllexport]pub fn Lock(ctx:&mut Context,this:u32,offset:u32,size:u32,out:u32,flags:u32)->u32{d3d9::IDirect3DIndexBuffer9::Lock(ctx,this,offset,size,out,flags&!0x3800)}
++ #[win32_derive::dllexport]pub fn Lock(ctx:&mut Context,this:u32,offset:u32,size:u32,out:u32,flags:u32)->u32{d3d9::IDirect3DIndexBuffer9::lock_d3d8(ctx,this,offset,size,out,flags&!0x3800)}
 +}
 +
 +#[cfg(test)]
@@ -2892,10 +2914,10 @@ index 0000000..484339d
 +mod up;
 diff --git a/win32/winapi/src/d3d9/buffers.rs b/win32/winapi/src/d3d9/buffers.rs
 new file mode 100644
-index 0000000..5073f2f
+index 0000000..0bb5206
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/buffers.rs
-@@ -0,0 +1,460 @@
+@@ -0,0 +1,514 @@
 +//! Vertex/index buffer COM storage with persistent guest lock memory.
 +use super::*;
 +#[derive(Clone)]
@@ -2913,6 +2935,7 @@ index 0000000..5073f2f
 +    format: u32,
 +    fvf: u32,
 +    locked: Option<(u32, u32, bool)>,
++    lock_depth: u32,
 +}
 +static BUFFERS: LazyLock<Mutex<HashMap<u32, Buffer>>> =
 +    LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -3011,6 +3034,7 @@ index 0000000..5073f2f
 +            format,
 +            fvf,
 +            locked: None,
++            lock_depth: 0,
 +        },
 +    );
 +    ctx.memory.write::<u32>(out, this);
@@ -3148,6 +3172,7 @@ index 0000000..5073f2f
 +            format: if kind == 6 { 100 } else { 101 },
 +            fvf: 0,
 +            locked: None,
++            lock_depth: 0,
 +        },
 +    );
 +    this
@@ -3179,8 +3204,8 @@ index 0000000..5073f2f
 +    }
 +    D3D_OK
 +}
-+fn lock_range(b: &Buffer, offset: u32, size: u32, flags: u32) -> Option<(u32, u32, bool)> {
-+    if b.locked.is_some() || flags & !0x3010 != 0 || offset >= b.size {
++fn requested_range(b: &Buffer, offset: u32, size: u32, flags: u32) -> Option<(u32, u32, bool)> {
++    if flags & !0x3010 != 0 || offset >= b.size {
 +        return None;
 +    }
 +    let count = if size == 0 { b.size - offset } else { size };
@@ -3198,17 +3223,50 @@ index 0000000..5073f2f
 +    }
 +    Some((offset, count, readonly))
 +}
++#[cfg(test)]
++fn lock_range(b: &Buffer, offset: u32, size: u32, flags: u32) -> Option<(u32, u32, bool)> {
++    if b.locked.is_some() {
++        return None;
++    }
++    requested_range(b, offset, size, flags)
++}
 +#[win32_derive::dllexport]
 +pub fn Lock(ctx: &mut Context, this: u32, offset: u32, size: u32, out: u32, flags: u32) -> u32 {
++    lock_impl(ctx, this, offset, size, out, flags, false)
++}
++pub fn lock_d3d8(ctx: &mut Context, this: u32, offset: u32, size: u32, out: u32, flags: u32) -> u32 {
++    lock_impl(ctx, this, offset, size, out, flags, true)
++}
++fn lock_impl(
++    ctx: &mut Context,
++    this: u32,
++    offset: u32,
++    size: u32,
++    out: u32,
++    flags: u32,
++    allow_nested_read: bool,
++) -> u32 {
 +    if !valid(ctx, out, 4) {
 +        return D3DERR_INVALIDCALL;
 +    }
 +    ctx.memory.write::<u32>(out, 0);
 +    let mut map = BUFFERS.lock().unwrap();
 +    let b = map.get_mut(&this).expect("invalid buffer Lock");
-+    let Some(range) = lock_range(b, offset, size, flags) else {
++    let Some(range) = requested_range(b, offset, size, flags) else {
 +        return D3DERR_INVALIDCALL;
 +    };
++    if let Some((locked_offset, locked_count, locked_readonly)) = b.locked {
++        if !allow_nested_read
++            || !locked_readonly
++            || !range.2
++            || (locked_offset, locked_count) != (range.0, range.1)
++        {
++            return D3DERR_INVALIDCALL;
++        }
++        b.lock_depth = b.lock_depth.checked_add(1).expect("buffer lock depth overflow");
++        ctx.memory.write::<u32>(out, b.data + offset);
++        return D3D_OK;
++    }
 +    // DISCARD invalidates all previous contents. Zeroing is one permitted value
 +    // for undefined bytes; upload the full allocation when it is unlocked.
 +    if flags & 0x2000 != 0 {
@@ -3217,12 +3275,19 @@ index 0000000..5073f2f
 +    } else {
 +        b.locked = Some(range)
 +    }
++    b.lock_depth = 1;
 +    ctx.memory.write::<u32>(out, b.data + offset);
 +    D3D_OK
 +}
 +#[win32_derive::dllexport]
 +pub fn Unlock(ctx: &mut Context, this: u32) -> u32 {
-+    let b = buffer(this);
++    let mut map = BUFFERS.lock().unwrap();
++    let b = map.get_mut(&this).expect("invalid buffer Unlock");
++    if b.lock_depth > 1 {
++        b.lock_depth -= 1;
++        return D3D_OK;
++    }
++    let b = b.clone();
 +    let Some((offset, count, readonly)) = b.locked else {
 +        return D3DERR_INVALIDCALL;
 +    };
@@ -3235,7 +3300,9 @@ index 0000000..5073f2f
 +            return result;
 +        }
 +    }
-+    BUFFERS.lock().unwrap().get_mut(&this).unwrap().locked = None;
++    let entry = map.get_mut(&this).unwrap();
++    entry.locked = None;
++    entry.lock_depth = 0;
 +    D3D_OK
 +}
 +fn fail(ctx: &Context, name: &str) -> ! {
@@ -3281,6 +3348,7 @@ index 0000000..5073f2f
 +            format: 101,
 +            fvf: 0,
 +            locked: None,
++            lock_depth: 0,
 +        };
 +        assert_eq!(lock_range(&b, 2, 0, 0), Some((2, 12, false)));
 +        assert!(lock_range(&b, u32::MAX, 4, 0).is_none());
@@ -3296,6 +3364,7 @@ index 0000000..5073f2f
 +    }
 +    #[test]
 +    fn com_description_lock_pointer_and_readonly_unlock() {
++        crate::trace::init("");
 +        let mut ctx = runtime::Context {
 +            cpu: Default::default(),
 +            thread_handle: 1,
@@ -3325,6 +3394,7 @@ index 0000000..5073f2f
 +                format: 101,
 +                fvf: 0,
 +                locked: None,
++                lock_depth: 0,
 +            },
 +        );
 +        assert_eq!(GetDesc(&mut ctx, this, 0x1100), D3D_OK);
@@ -3341,6 +3411,12 @@ index 0000000..5073f2f
 +        assert_eq!(ctx.memory.read::<u32>(0x1200), 0x4002);
 +        assert_eq!(Unlock(&mut ctx, this), D3D_OK);
 +        assert_eq!(Unlock(&mut ctx, this), D3DERR_INVALIDCALL);
++        assert_eq!(lock_d3d8(&mut ctx, this, 2, 0, 0x1200, 0x10), D3D_OK);
++        assert_eq!(lock_d3d8(&mut ctx, this, 2, 0, 0x1200, 0x10), D3D_OK);
++        assert_eq!(buffer(this).lock_depth, 2);
++        assert_eq!(Unlock(&mut ctx, this), D3D_OK);
++        assert_eq!(buffer(this).lock_depth, 1);
++        assert_eq!(Unlock(&mut ctx, this), D3D_OK);
 +        ctx.memory.bytes[0x1300..0x1310].copy_from_slice(&[
 +            0x5e, 0xd6, 0x9d, 0x7c, 0xf7, 0xd3, 0x29, 0x45, 0xac, 0xee, 0x78, 0x58, 0x30, 0xac,
 +            0xde, 0x35,
