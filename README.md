@@ -20,7 +20,7 @@ scripts/build_wasm.sh release
 python3 scripts/serve.py 8765
 ```
 
-Open http://127.0.0.1:8765/humus-runtime and click **Start Humus**. The server binds only to loopback. Localhost is a browser secure context; the actual browser probe checks cross-origin isolation and requests a WebGPU adapter/device. The runnable Humus package and generated browser artifacts are included in this repository. Humus permits redistribution with its readme, retained in `assets/original/package/readme.txt`.
+Open http://127.0.0.1:8765/humus-runtime and click **Start Humus**. The click also unlocks browser audio when the executable opens DirectSound or waveOut; browser autoplay policy can keep an autostart run silent until a user gesture. The server binds only to loopback. Localhost is a browser secure context; the actual browser probe checks cross-origin isolation and requests a WebGPU adapter/device. The runnable Humus package and generated browser artifacts are included in this repository. Humus permits redistribution with its readme, retained in `assets/original/package/readme.txt`.
 
 The repository includes the translated Humus output and generated browser artifacts required to run the demo. The build-only Theseus, Emscripten, and MojoShader checkouts remain excluded from the runnable release; their pinned revisions and fetch instructions are recorded in `dependencies.json` and `scripts/restore.sh`. Theseus does not declare a license in the inspected revision; review that upstream status before redistributing generated artifacts beyond the intended project context.
 
