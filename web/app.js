@@ -3,24 +3,29 @@ function boundedPayload(){const copy={...report,events:[...report.events]};let d
 const $=id=>document.getElementById(id);
 let build,worker,gpuWorker,token,timer,probeWorker,HAS_BACKEND=false;
 class BrowserAudio {
- constructor(){this.context=null;this.streams=new Map();this.pending=[];}
+ constructor(){this.context=null;this.streams=new Map();this.pending=[];this.bytes=0;this.buffers=0;}
  ensure(){
   if(this.context)return this.context;
   const C=globalThis.AudioContext??globalThis.webkitAudioContext;if(!C)return null;
   try{this.context=new C();}catch(_){return null}return this.context;
  }
  open(id,sampleRate,channels){this.ensure();this.streams.set(id,{sampleRate,channels,nextTime:0});}
- unlock(){const c=this.ensure();if(!c)return;void c.resume().then(()=>{const pending=this.pending.splice(0);for(const item of pending)this.write(item.id,item.data);});}
+ unlock(){const c=this.ensure();if(!c)return;void c.resume().then(()=>{const pending=this.pending.splice(0);for(const item of pending)this.write(item.id,item.data);audioDiagnostic('audio-unlocked');}).catch(()=>audioDiagnostic('audio-unlock-failed'));}
  write(id,data){
   const c=this.ensure(),s=this.streams.get(id);if(!c||!s)return;
   if(c.state!=='running'){if(this.pending.length<32)this.pending.push({id,data});return;}
+  if(!(data instanceof ArrayBuffer)||data.byteLength<2||data.byteLength%2)return;
   const sourceBytes=new Int16Array(data),frames=Math.floor(sourceBytes.length/s.channels);if(!frames)return;
   const buffer=c.createBuffer(s.channels,frames,s.sampleRate);
   for(let channel=0;channel<s.channels;channel++){const out=buffer.getChannelData(channel);for(let frame=0;frame<frames;frame++)out[frame]=sourceBytes[frame*s.channels+channel]/32768;}
-  const source=c.createBufferSource();source.buffer=buffer;source.connect(c.destination);const now=c.currentTime;s.nextTime=Math.max(s.nextTime,now+0.01);source.start(s.nextTime);s.nextTime+=buffer.duration;
+  const source=c.createBufferSource();source.buffer=buffer;source.connect(c.destination);const now=c.currentTime;s.nextTime=Math.max(s.nextTime,now+0.01);source.start(s.nextTime);s.nextTime+=buffer.duration;this.bytes+=data.byteLength;this.buffers++;
  }
 }
 const browserAudio=new BrowserAudio();
+function audioDiagnostic(type,data={}){
+ report.audio={contextState:browserAudio.context?.state??'unavailable',streams:browserAudio.streams.size,bytesScheduled:browserAudio.bytes,buffersScheduled:browserAudio.buffers,pendingChunks:browserAudio.pending.length,...data};
+ if(new URL(location.href).searchParams.has('debugDiagnostics'))log(type,{message:JSON.stringify(report.audio)});
+}
 function benchmarkDuration(){const value=new URL(location.href).searchParams.get('benchmarkSeconds')??'60';if(!/^\d+$/.test(value)||Number(value)<60||Number(value)>600)throw Error('benchmarkSeconds must be an integer from 60 through 600');return Number(value)*1000;}
 let report={runId:null,status:'idle',events:[],droppedEvents:0,applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'}};
 function log(type,data={}){report.events.push({timeMs:Math.round(performance.now()),type,...data});if(report.events.length>250){report.events.shift();report.droppedEvents++}$('logs').textContent=report.events.map(e=>`${e.timeMs} ${e.type}: ${e.message??JSON.stringify(e.result??e)}`).join('\n');$('logs').scrollTop=$('logs').scrollHeight;}
@@ -43,9 +48,9 @@ async function start(long=false){
   worker=new Worker(new URL(`./worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
-   if(data.type==='audio-open'){browserAudio.open(data.streamId,data.sampleRate,data.channels);return;}
-   if(data.type==='audio-write'){browserAudio.write(data.streamId,data.data);return;}
-   if(data.type==='audio-resume'){browserAudio.unlock();return;}
+   if(data.type==='audio-open'){browserAudio.open(data.streamId,data.sampleRate,data.channels);audioDiagnostic('audio-open',{sampleRate:data.sampleRate,channels:data.channels});return;}
+   if(data.type==='audio-write'){browserAudio.write(data.streamId,data.data);audioDiagnostic('audio-write');return;}
+   if(data.type==='audio-resume'){browserAudio.unlock();audioDiagnostic('audio-resume');return;}
    if(!worker||report.runId!==activeRunId)return;
    const {type,...rest}=data;if(type==='performance-sample'){report.presentationMetrics=rest.sample;const elapsedMs=performance.now()-report.startTimeMs;report.stabilitySamples??=[];if(!report.stabilitySamples.length||elapsedMs-report.stabilitySamples.at(-1).elapsedMs>=30000){if(report.stabilitySamples.length<21){const m=rest.sample;report.stabilitySamples.push({elapsedMs,applicationPresents:report.applicationPresents,wasmLinearMemoryBytes:m.wasmLinearMemoryBytes,geometryGPUBytes:m.geometryGPUBytes,textureGPUBytes:m.textureGPUBytes,pipelineCacheEntries:m.pipelineCacheEntries,shaderObjects:m.shaderObjects,submissionFPS:m.submissionFPS});}}if(new URL(location.href).searchParams.has('debugDiagnostics'))log(type,{message:`present=${report.applicationPresents} submissionFPS=${rest.sample.submissionFPS??'n/a'} p95=${rest.sample.frameTimeMs?.p95??'n/a'}ms gpuQueue=${rest.sample.queueCompletionSamples?.at(-1)?.latencyMs?.toFixed?.(1)??'n/a'}ms drawBatches=${rest.sample.drawBridge?.drawBatches??'n/a'} batchedDraws=${rest.sample.drawBridge?.batchedDraws??'n/a'} batchedUploads=${rest.sample.drawBridge?.batchedUploads??'n/a'}`});return;}if(['controlled-input','camera-sample','render-state-sample'].includes(type)){report.inputTest??=[];if(report.inputTest.length<140)report.inputTest.push({type,...rest});return;}if(type==='guest-memory'){report.guestMemory??=[];if(report.guestMemory.length<11)report.guestMemory.push(rest.sample);return;}if(type==='realm-resources'){report.realmResources??={};report.realmResources[rest.sample.realm]=rest.sample;return;}if(type==='gpu-timing'){report.gpuTiming??=[];if(report.gpuTiming.length>=128)report.gpuTiming.shift();report.gpuTiming.push(rest.sample);return;}if(type==='scene-equivalence'){report.sceneEquivalence??=[];if(report.sceneEquivalence.length<3)report.sceneEquivalence.push(rest.sample);return;}if(type==='frame-capture'){report.frameCaptures??=[];if(report.frameCaptures.length<3)report.frameCaptures.push(rest.sample);if(new URL(location.href).searchParams.has('debugDiagnostics'))log(type,{message:`present=${rest.sample.present} nonblack=${rest.sample.sceneRegion?.nonblackPixels??'n/a'}/${rest.sample.sceneRegion?.pixels??'n/a'} mean=${rest.sample.sceneRegion?.meanRgb?.join(',')??'n/a'}`});return;}if(type==='draw-diagnostic'){report.drawDiagnostics??=[];if(report.drawDiagnostics.length<3)report.drawDiagnostics.push(rest.sample);if(new URL(location.href).searchParams.has('debugDiagnostics'))log(type,{message:`fixed=${rest.sample.fixed?1:0} vertex=${rest.sample.vertex} pixel=${rest.sample.pixel} kind=${rest.sample.kind} count=${rest.sample.count} textures=${rest.sample.textures?.join(',')??'n/a'} sampler0=${rest.sample.samplers?.[0]?.join(',')??'n/a'} texture0=${rest.sample.textureInfo?.[0]?JSON.stringify(rest.sample.textureInfo[0]):'n/a'} state=${JSON.stringify(Object.fromEntries(Object.entries(rest.sample.state??{}).filter(([k])=>['7','14','22','23','27','168'].includes(k))))} viewport=${rest.sample.viewport?.join(',')??'n/a'} inputs=${rest.sample.pair?.vertex?.inputs?.map(i=>`${i.usage}:${i.index}@${i.location}`).join(',')??'n/a'} samplers=${rest.sample.pair?.pixel?.samplers?.length??'n/a'} declarationBytes=${rest.sample.declaration?.length??0} geometry=${(rest.sample.geometry??[]).map(g=>`${g.slot}:${g.stride}/${g.bytes.length} first=${g.bytes.slice(0,40).join('.')} verts=${JSON.stringify(g.float32?.slice(0,2)??[])}`).join(',')}`});return;}if(type!=='gpu-submission'&&type!=='application-present')log(type,rest);
    if(type==='probe')report.browser=rest.result;
