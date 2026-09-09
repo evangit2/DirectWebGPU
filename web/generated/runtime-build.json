@@ -40,10 +40,10 @@
   "wasmProfile": "release",
   "translatedTreeSha256": "d862323f7f5730166b8ab5d840cb364decceab7a698849c9a0c1785ad361f787",
   "cargoLockSha256": "968c5d084c3a8ffaae74c4436735dad977229fbde0141ec4279b7d8a134164fd",
-  "builtAt": "2026-09-09T14:19:36.581013+00:00",
-  "revision": "f9e607cff415ec988c6b5d11f084ce9086cdeca8",
+  "builtAt": "2026-09-09T17:12:10.439927+00:00",
+  "revision": "8bc39822704f61acff190f282156a1e95e17a72b",
   "workingTreeDirty": false,
-  "sourceSha256": "86c0cd3c43863a6b4539a7d2c57a5e66bf65f2ce045fdad605c0be6e52918b8d",
+  "sourceSha256": "6cc765ec40b5842e18df34366a07dad5caa5220e0fedaca6da9eb60ee71a3732",
   "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
   "translationEntryPoints": [
