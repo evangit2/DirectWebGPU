@@ -4048,7 +4048,7 @@ index 0000000..2cd110b
 +#[derive(Clone,Copy,Default)]
 +struct Stream{buffer:u32,offset:u32,stride:u32}
 +#[derive(Clone)]
-+struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,states:HashMap<u32,u32>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],target_size:[u32;2],constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,up_buffer:u32,states:HashMap<u32,u32>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],target_size:[u32;2],constants:std::sync::Arc<Mutex<super::constants::Registers>>]
 +static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
 +pub static mut VTABLE:u32=0;
 +const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
@@ -4061,7 +4061,7 @@ index 0000000..2cd110b
 + let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
 + let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
 + let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
-+ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:[[0,1,1,1,0,1,1,0,0,0,1,0,0,0];16],viewport:[0,0,width,height,0,0x3f800000],target_size:[width,height],constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,up_buffer:0,states:default_states(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:[[0,1,1,1,0,1,1,0,0,0,1,0,0,0];16],viewport:[0,0,width,height,0,0x3f800000],target_size:[width,height],constants:Default::default()}).is_none());p
 +}
 +pub fn exists(this:u32)->bool{DEVICES.lock().unwrap().contains_key(&this)}
 +#[win32_derive::dllexport]
@@ -4082,6 +4082,7 @@ index 0000000..2cd110b
 + for texture in d.textures{super::IDirect3DTexture9::release_binding(ctx,texture)}
 + for shader in d.shaders{super::shader::release_binding(ctx,shader)}
 + IDirect3DSurface9::destroy_owned(ctx,d.color);IDirect3DSurface9::destroy_owned(ctx,d.depth);
++ if d.up_buffer!=0{host::graphics_call(7,&[d.backend,d.up_buffer]);}
 + host::graphics_call(2,&[d.backend]);IDirect3D9::Release(ctx,d.parent);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);0
 +}
 +#[win32_derive::dllexport]
@@ -4237,13 +4238,16 @@ index 0000000..2cd110b
 + if size>16*1024*1024||!valid(ctx,pointer,size as usize){return D3DERR_INVALIDCALL;}
 + let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);
 + let Some(prepared)=super::up::prepare(kind,primitives,stride,&declaration,&ctx.memory.bytes[pointer as usize..(pointer+size)as usize])else{return D3DERR_INVALIDCALL;};
-+ // User memory is consumed before returning. The serial RPC copies into a GPU
-+ // buffer before the draw; destruction is deferred by WebGPU for submitted work.
-+ let gpu=host::graphics_call(5,&[d.backend,6,prepared.bytes.len()as u32,100]);
-+ if gpu==0||gpu>=0x80000000{return D3DERR_NOTAVAILABLE;}
++ // User memory is consumed before returning. Keep one device-local transient
++ // vertex buffer for all user-pointer draws; uploads and draws remain ordered
++ // in the shared batch, so this removes a create/destroy round trip per draw.
++ let gpu=if d.up_buffer!=0{d.up_buffer}else{
++  let gpu=host::graphics_call(5,&[d.backend,6,16*1024*1024,100]);
++  if gpu==0||gpu>=0x80000000{return D3DERR_NOTAVAILABLE;}
++  DEVICES.lock().unwrap().get_mut(&this).unwrap().up_buffer=gpu;gpu
++ };
 + let uploaded=host::graphics_call(6,&[d.backend,gpu,0,prepared.bytes.as_ptr()as usize as u32,prepared.bytes.len()as u32]);
 + let result=if uploaded==1{draw_prepared(ctx,this,prepared.kind,0,primitives,None,Some((gpu,prepared.stride,&prepared.declaration)))}else{uploaded};
-+ host::graphics_call(7,&[d.backend,gpu]);
 + result
 +}
 +pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitiveUP",9)}
