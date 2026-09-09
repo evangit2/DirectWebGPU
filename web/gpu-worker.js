@@ -21,7 +21,7 @@ const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
+ canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
