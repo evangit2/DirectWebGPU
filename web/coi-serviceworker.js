@@ -10,13 +10,12 @@ if (typeof window === 'undefined') {
   self.addEventListener('fetch', (event) => {
     const r = event.request;
     if (r.cache === 'only-if-cached' && r.mode !== 'same-origin') return;
+    if (r.mode !== 'navigate') return; // only intercept document navigations
 
     event.respondWith(
       fetch(r)
         .then((response) => {
-          if (response.type !== 'basic' || !response.headers.get('content-type')?.includes('text/html')) {
-            return response; // only rewrite same-origin documents
-          }
+          if (response.type !== 'basic') return response;
           const headers = new Headers(response.headers);
           headers.set('Cross-Origin-Opener-Policy', 'same-origin');
           headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
@@ -35,14 +34,12 @@ if (typeof window === 'undefined') {
     if (!('serviceWorker' in navigator)) return;
     const swUrl = new URL('coi-serviceworker.js', document.currentScript?.src ?? location.href).href;
     try {
-      await navigator.serviceWorker.register(swUrl);
-      if (navigator.serviceWorker.controller) return; // already controlled
-      // Wait (bounded) until this page is controlled by the SW.
-      await new Promise((resolve) => {
-        navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
-        setTimeout(resolve, 3000);
-      });
-      // Reload once per tab so the document response carries COOP/COEP.
+      const reg = await navigator.serviceWorker.register(swUrl);
+      await navigator.serviceWorker.ready; // SW activated
+      if (navigator.serviceWorker.controller) return; // page already controlled — headers applied
+      // Not controlled (first visit): reload once per tab so the document is
+      // served through the SW with COOP/COEP. controllerchange resolves after
+      // the reload once the SW claims the client.
       if (!sessionStorage.getItem('coi-reloaded')) {
         sessionStorage.setItem('coi-reloaded', '1');
         location.reload();
