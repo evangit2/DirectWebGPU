@@ -91,7 +91,7 @@ self.onmessage=async({data})=>{
    if(guest.registryDwords?.length)send('launch-settings',{source:'guest manifest registry seed',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
   }
   exe.configure_guest_memory_metrics(data.guestMemory===true);
-  exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d8,d3d9');
+  exe.set_trace(data.trace??(data.benchmark?'':'kernel32,user32,advapi32,d3d8,d3d9'));
   send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});
   send('realm-resources',{sample:resourceMetrics(performance,'cpuWorker','before EXE execution')});

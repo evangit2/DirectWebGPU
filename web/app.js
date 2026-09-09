@@ -49,7 +49,7 @@ async function start(long=false){
   gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;
   const drawDiagnosticsParam=new URL(location.href).searchParams.get('drawDiagnostics');
   gpuWorker.postMessage({type:'init',gpuTiming:new URL(location.href).searchParams.has('gpuTiming'),sceneEquivalenceControl:new URL(location.href).searchParams.get('sceneEquivalenceControl'),sceneEquivalence:new URL(location.href).searchParams.has('sceneEquivalence'),canvas:offscreen,port:channel.port1,startEpoch:performance.timeOrigin+report.startTimeMs,drawDiagnostics:drawDiagnosticsParam===null?0:(/^\d+$/.test(drawDiagnosticsParam)?Math.min(64,Number(drawDiagnosticsParam)):3),captureFrames:new URL(location.href).searchParams.has('captureFrames'),cameraTest:new URL(location.href).searchParams.has('cameraTest')},[offscreen,channel.port1]);
-  worker.postMessage({type:'start',guestMemory:new URL(location.href).searchParams.get('guestMemory')==='1',resolution:new URL(location.href).searchParams.get('resolution'),build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),gpuPort:channel.port2},[channel.port2]);
+  worker.postMessage({type:'start',guestMemory:new URL(location.href).searchParams.get('guestMemory')==='1',resolution:new URL(location.href).searchParams.get('resolution'),build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),trace:new URL(location.href).searchParams.get('trace'),gpuPort:channel.port2},[channel.port2]);
   // Single attempts have a watchdog; long sessions are user-started and stoppable.
   timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:new URL(location.href).searchParams.has('benchmark')?120000:60000);
  }catch(e){log('failed',{message:e.message});stop('failed: '+e.message)}
@@ -75,13 +75,15 @@ try{
 
 function bindInput(canvas){
  const keys={Escape:[1,27],KeyW:[17,87],KeyA:[30,65],KeyS:[31,83],KeyD:[32,68],KeyQ:[16,81],KeyE:[18,69],Space:[57,32],Enter:[28,13],F1:[59,112],F2:[60,113],F3:[61,114],ArrowUp:[72,38,1],ArrowDown:[80,40,1],ArrowLeft:[75,37,1],ArrowRight:[77,39,1],ShiftLeft:[42,160],ShiftRight:[54,161],ControlLeft:[29,162],ControlRight:[29,163,1]};
+ const debugInput=new URL(location.href).searchParams.has('debugInput');
+ const sendInput=message=>{if(debugInput)log('input',{message:message.join(',')});gpuWorker?.postMessage({type:'input',message})};
  const pressed=new Map();
- for(const type of ['keydown','keyup'])canvas.addEventListener(type,e=>{const k=keys[e.code];if(!k||!worker)return;e.preventDefault();if(type==='keydown')pressed.set(e.code,k);else pressed.delete(e.code);gpuWorker?.postMessage({type:'input',message:[type==='keydown'?5:6,k[0],k[1],(k[2]??0)|(e.repeat?2:0)]})});
- canvas.addEventListener('blur',()=>{for(const k of pressed.values())gpuWorker?.postMessage({type:'input',message:[6,k[0],k[1],k[2]??0]});pressed.clear()});
+ for(const type of ['keydown','keyup'])canvas.addEventListener(type,e=>{const k=keys[e.code];if(!k||!worker)return;e.preventDefault();if(type==='keydown')pressed.set(e.code,k);else pressed.delete(e.code);sendInput([type==='keydown'?5:6,k[0],k[1],(k[2]??0)|(e.repeat?2:0)])});
+ canvas.addEventListener('blur',()=>{for(const k of pressed.values())sendInput([6,k[0],k[1],k[2]??0]);pressed.clear()});
  for(const type of ['pointerdown','pointerup','pointermove'])canvas.addEventListener(type,e=>{
   if(!worker)return;if(type==='pointerdown'){canvas.focus();canvas.setPointerCapture(e.pointerId)}const r=canvas.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)*canvas.width/r.width),y=Math.floor((e.clientY-r.top)*canvas.height/r.height);
   const buttons=(e.buttons&1)|((e.buttons&4)>>1)|((e.buttons&2)<<1),changed=type==='pointermove'?0:({0:1,1:2,2:4})[e.button]??0;
-  gpuWorker?.postMessage({type:'input',message:[type==='pointerdown'?2:type==='pointerup'?3:4,x,y,changed|(buttons<<16)]});
+  sendInput([type==='pointerdown'?2:type==='pointerup'?3:4,x,y,changed|(buttons<<16)]);
  });
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
 }

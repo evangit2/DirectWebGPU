@@ -7088,3 +7088,99 @@ index 0000000..dfc1439
 +
 +#[win32_derive::dllexport]
 +pub fn ordinal103(_ctx: &mut Context, _hwnd: u32, _msg: u32, _name: Ptr<u8>, _buf: u32, _len: i32) -> u32 { 0 }
+diff --git a/win32/winapi/src/user32/input.rs b/win32/winapi/src/user32/input.rs
+index a2e2aa7..e6b7d94 100644
+--- a/win32/winapi/src/user32/input.rs
++++ b/win32/winapi/src/user32/input.rs
+@@ -283,6 +283,10 @@ impl Input {
+             host::MouseButton::Right,
+             host::MouseButton::Middle,
+         ];
++        // Win32 exposes mouse buttons through the same key-state APIs as the
++        // keyboard. Keep these virtual-key entries synchronized with the
++        // DirectInput mouse state so polling and message-driven games agree.
++        let vkeys = [0x01u8, 0x02u8, 0x04u8]; // VK_LBUTTON, VK_RBUTTON, VK_MBUTTON
+         for (index, button) in buttons.into_iter().enumerate() {
+             let down = if mouse.buttons.contains(button) {
+                 KEY_DOWN
+@@ -293,6 +297,7 @@ impl Input {
+                 continue;
+             }
+             self.mouse.buttons[index] = down;
++            self.set_key(vkeys[index], down != 0, false);
+             let sequence = self.next_sequence();
+             self.mouse_buffer.push(DeviceEvent {
+                 ofs: MOUSE_BUTTON_0 + index as u32,
+diff --git a/win32/winapi/src/user32/rect.rs b/win32/winapi/src/user32/rect.rs
+index e190688..cbe5ea5 100644
+--- a/win32/winapi/src/user32/rect.rs
++++ b/win32/winapi/src/user32/rect.rs
+@@ -1,6 +1,6 @@
+ use runtime::Context;
+
+-use super::HWND;
++use super::{state, HWND};
+ use crate::{POINT, Ptr, RECT};
+
+ #[win32_derive::dllexport]
+@@ -15,10 +15,57 @@ pub fn OffsetRect(ctx: &mut Context, lprc: Ptr<RECT>, dx: i32, dy: i32) -> bool
+     lprc.write(&mut ctx.memory, rect).is_some()
+ }
+
++fn window_origin() -> (i32, i32) {
++    state()
++        .window
++        .borrow()
++        .as_ref()
++        .map(|window| {
++            let window = window.borrow();
++            (window.x, window.y)
++        })
++        .unwrap_or((0, 0))
++}
++
+ #[win32_derive::dllexport]
+-pub fn ClientToScreen(_ctx: &mut Context, _hWnd: HWND, _lpPoint: Ptr<POINT>) -> bool {
+-    // The window's client area sits at the screen origin.
+-    true
++pub fn ClientToScreen(ctx: &mut Context, _hWnd: HWND, lpPoint: Ptr<POINT>) -> bool {
++    let Some(mut point) = lpPoint.read(&ctx.memory) else {
++        return false;
++    };
++    let (x, y) = window_origin();
++    point.x += x;
++    point.y += y;
++    lpPoint.write(&mut ctx.memory, point).is_some()
++}
++
++#[win32_derive::dllexport]
++pub fn ScreenToClient(ctx: &mut Context, _hWnd: HWND, lpPoint: Ptr<POINT>) -> bool {
++    let Some(mut point) = lpPoint.read(&ctx.memory) else {
++        return false;
++    };
++    let (x, y) = window_origin();
++    point.x -= x;
++    point.y -= y;
++    lpPoint.write(&mut ctx.memory, point).is_some()
++}
++
++#[win32_derive::dllexport]
++pub fn GetWindowRect(ctx: &mut Context, _hWnd: HWND, lpRect: Ptr<RECT>) -> bool {
++    let Some(window) = state().window.borrow().as_ref().cloned() else {
++        return false;
++    };
++    let window = window.borrow();
++    lpRect
++        .write(
++            &mut ctx.memory,
++            RECT {
++                left: window.x,
++                top: window.y,
++                right: window.x + window.width as i32,
++                bottom: window.y + window.height as i32,
++            },
++        )
++        .is_some()
+ }
+
+ #[win32_derive::dllexport]
