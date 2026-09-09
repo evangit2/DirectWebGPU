@@ -5,7 +5,7 @@ index e4b4a85..d7f2cc8 100644
 @@ -226,6 +226,15 @@ dependencies = [
   "web-sys",
  ]
-
+ 
 +[[package]]
 +name = "humus"
 +version = "0.1.0"
@@ -56,7 +56,7 @@ index d25e3f2..6c2f4ad 100644
 +            self.0.metadata().map(|meta| meta.len())
 +        }
      }
-
+ 
      impl Read for File {
 @@ -216,6 +219,9 @@ mod imp {
              self.dirty = true;
@@ -65,7 +65,7 @@ index d25e3f2..6c2f4ad 100644
 +        pub fn len(&self) -> Result<u64> {
 +            Ok(self.data.len() as u64)
 +        }
-
+ 
          fn store(&mut self) {
              if !self.dirty {
 diff --git a/host/src/lib.rs b/host/src/lib.rs
@@ -112,7 +112,7 @@ index c6a4023..5778ad1 100644
 +    /// precision control is not honored; integral rounding honors RC.
      pub control: u16,
  }
-
+ 
 @@ -28,7 +33,12 @@ impl Default for FPU {
          Self {
              st: [0.; 8],
@@ -130,7 +130,7 @@ index c6a4023..5778ad1 100644
 @@ -91,21 +101,409 @@ impl FPU {
          self.st[self.st_offset(ofs)] = val;
      }
-
+ 
 +    pub fn compare(&mut self, a: f64, b: f64, unordered_instruction: bool) {
 +        let signaling = |v: f64| v.is_nan() && v.to_bits() & (1u64 << 51) == 0;
 +        if (a.is_nan() || b.is_nan()) && (!unordered_instruction || signaling(a) || signaling(b)) {
@@ -168,7 +168,7 @@ index c6a4023..5778ad1 100644
          status |= (self.st_top as u16 & 0b111) << 11;
          status
      }
-
+ 
 +    /// Approximate x87 FYL2X within the runtime's existing f64 model.
 +    pub fn log2_multiply_pop(&mut self) {
 +        let x = self.get(0);
@@ -546,7 +546,7 @@ index c6a4023..5778ad1 100644
      }
  }
 diff --git a/runtime/src/lib.rs b/runtime/src/lib.rs
-index 0da5529..1b44a65 100644
+index 0da5529..2c9f2c3 100644
 --- a/runtime/src/lib.rs
 +++ b/runtime/src/lib.rs
 @@ -7,6 +7,7 @@ mod memory;
@@ -554,7 +554,7 @@ index 0da5529..1b44a65 100644
  mod ops;
  mod registers;
 +mod sse;
-
+ 
  pub use exe::EXEData;
  pub use flags::Flags;
 @@ -15,6 +16,7 @@ pub use mapping::{Mapping, Mappings, round_to_page};
@@ -562,9 +562,31 @@ index 0da5529..1b44a65 100644
  pub use ops::*;
  pub use registers::Regs;
 +pub use sse::*;
-
+ 
  #[repr(C)]
  #[derive(
+@@ -85,6 +87,21 @@ pub fn unknown_block(addr: u32) -> Cont {
+ }
+ 
+ impl Context {
++    /// Record translated execution context for diagnostics on a later memory fault.
++    pub fn mark_eip(&mut self, eip: u32) {
++        self.memory.set_last_eip(eip);
++        self.memory.set_last_regs([
++            self.cpu.regs.eax,
++            self.cpu.regs.ecx,
++            self.cpu.regs.edx,
++            self.cpu.regs.ebx,
++            self.cpu.regs.esi,
++            self.cpu.regs.edi,
++            self.cpu.regs.esp,
++            self.cpu.regs.ebp,
++        ]);
++    }
++
+     /// Call an x86 stdcall function, only returning once the function returns.
+     pub fn call32_x86(&mut self, f: Cont, args: Vec<u32>) {
+         let esp = self.cpu.regs.esp;
 diff --git a/runtime/src/machine.rs b/runtime/src/machine.rs
 index 2199e6d..76bab31 100644
 --- a/runtime/src/machine.rs
@@ -572,7 +594,7 @@ index 2199e6d..76bab31 100644
 @@ -1,4 +1,4 @@
 -use crate::{Cont, ContFn, Flags, Memory, Regs, SegOfs, fpu::FPU, mmx::MMX, segofs};
 +use crate::{Cont, ContFn, Flags, Memory, Regs, SegOfs, fpu::FPU, mmx::MMX, sse::SSE, segofs};
-
+ 
  #[derive(Default)]
  pub struct CPU {
 @@ -6,6 +6,7 @@ pub struct CPU {
@@ -582,27 +604,203 @@ index 2199e6d..76bab31 100644
 +    pub sse: SSE,
      pub real_mode: bool,
  }
-
+ 
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
-index e1edcc6..673ce94 100644
+index e1edcc6..5b2d4b9 100644
 --- a/runtime/src/memory.rs
 +++ b/runtime/src/memory.rs
-@@ -39,13 +39,13 @@ impl<'a> Memory<'a> {
-
+@@ -10,6 +10,12 @@ pub struct Memory<'a> {
+     /// When true, panic on access to low memory.
+     /// TODO: full memory mapping access controls etc.
+     pub null_page: bool,
++    /// Guest code address most recently entered by the translated CPU loop or
++    /// a host callback. This is diagnostic context for invalid guest pointers.
++    pub last_eip: u32,
++    /// General-purpose registers at the most recently entered translated block.
++    /// This is diagnostic context for invalid guest pointers.
++    pub last_regs: [u32; 8],
+ }
+ 
+ /// A trait for types that can be read from memory with .read().
+@@ -25,6 +31,8 @@ impl<'a> Memory<'a> {
+         Memory {
+             bytes,
+             null_page: true,
++            last_eip: 0,
++            last_regs: [0; 8],
+         }
+     }
+ 
+@@ -34,45 +42,94 @@ impl<'a> Memory<'a> {
+                 std::slice::from_raw_parts_mut(self.bytes.as_mut_ptr(), self.bytes.len())
+             },
+             null_page: self.null_page,
++            last_eip: self.last_eip,
++            last_regs: self.last_regs,
+         }
+     }
+ 
      #[inline(never)]
      pub fn null_ptr(&self) {
 -        log::error!("null page read/write");
 +        panic!("guest null-page read/write");
      }
-
+ 
      #[inline]
-     fn check_access(&self, addr: u32) {
+-    fn check_access(&self, addr: u32) {
++    pub fn set_last_eip(&mut self, eip: u32) {
++        self.last_eip = eip;
++    }
++
++    pub fn set_last_regs(&mut self, regs: [u32; 8]) {
++        self.last_regs = regs;
++    }
++
++    fn diagnostic_context(&self) -> String {
++        format!(
++            "eip={:#010x} eax={:#010x} ecx={:#010x} edx={:#010x} \
++             ebx={:#010x} esi={:#010x} edi={:#010x} esp={:#010x} ebp={:#010x}",
++            self.last_eip,
++            self.last_regs[0],
++            self.last_regs[1],
++            self.last_regs[2],
++            self.last_regs[3],
++            self.last_regs[4],
++            self.last_regs[5],
++            self.last_regs[6],
++            self.last_regs[7]
++        )
++    }
++
++    fn check_range(&self, addr: u32, size: usize, operation: &str) {
          if addr < 0x1000 && self.null_page {
 -            self.null_ptr();
 +            panic!("guest null-page access at {addr:#010x}");
++        }
++        let start = addr as usize;
++        let Some(end) = start.checked_add(size) else {
++            panic!(
++                "guest memory {operation} overflow at {addr:#010x} size={size} \
++                 memory_len={} {}",
++                self.bytes.len(),
++                self.diagnostic_context()
++            );
++        };
++        if end > self.bytes.len() {
++            panic!(
++                "guest memory {operation} out of bounds at {addr:#010x} size={size} \
++                 memory_len={} {}",
++                self.bytes.len(),
++                self.diagnostic_context()
++            );
          }
      }
-
+ 
+     pub fn read<T: MemRead>(&self, addr: u32) -> T {
+-        self.check_access(addr);
++        self.check_range(addr, std::mem::size_of::<T>(), "read");
+         let addr = addr as usize;
+         T::read_from_bytes(&self.bytes[addr..addr + std::mem::size_of::<T>()]).unwrap()
+     }
+ 
+     pub fn write<T: MemWrite>(&mut self, addr: u32, val: T) {
+-        self.check_access(addr);
++        self.check_range(addr, std::mem::size_of::<T>(), "write");
+         let addr = addr as usize;
+         val.write_to(&mut self.bytes[addr..addr + std::mem::size_of::<T>()])
+             .unwrap();
+     }
+ 
+     pub fn read_str(&self, addr: u32) -> &str {
+-        self.check_access(addr);
++        self.check_range(addr, 0, "read_str");
+         let buf = &self.bytes[addr as usize..];
+-        let nul = buf.iter().position(|&c| c == 0).unwrap();
++        let Some(nul) = buf.iter().position(|&c| c == 0) else {
++            panic!(
++                "guest unterminated string at {addr:#010x} memory_len={} {}",
++                self.bytes.len(),
++                self.diagnostic_context()
++            );
++        };
+         let buf = &buf[..nul];
+         std::str::from_utf8(buf).unwrap()
+     }
+ 
+     /// This returns an allocated string rather than a reference due to alignment.
+     pub fn read_wstr(&self, addr: u32) -> U16String {
+-        self.check_access(addr);
++        self.check_range(addr, 0, "read_wstr");
+         let buf = &self.bytes[addr as usize..];
+         let mut str: Vec<u16> = vec![];
+         for chunk in buf.chunks_exact(2) {
+@@ -102,14 +159,14 @@ impl<'a> std::ops::Index<u32> for Memory<'a> {
+     type Output = u8;
+ 
+     fn index(&self, addr: u32) -> &Self::Output {
+-        self.check_access(addr);
++        self.check_range(addr, 1, "index");
+         &self.bytes[addr as usize]
+     }
+ }
+ 
+ impl<'a> std::ops::IndexMut<u32> for Memory<'a> {
+     fn index_mut(&mut self, addr: u32) -> &mut Self::Output {
+-        self.check_access(addr);
++        self.check_range(addr, 1, "index_mut");
+         &mut self.bytes[addr as usize]
+     }
+ }
+@@ -118,14 +175,14 @@ impl<'a> std::ops::Index<std::ops::RangeFrom<u32>> for Memory<'a> {
+     type Output = [u8];
+ 
+     fn index(&self, index: std::ops::RangeFrom<u32>) -> &Self::Output {
+-        self.check_access(index.start);
++        self.check_range(index.start, 0, "range");
+         &self.bytes[index.start as usize..]
+     }
+ }
+ 
+ impl<'a> std::ops::IndexMut<std::ops::RangeFrom<u32>> for Memory<'a> {
+     fn index_mut(&mut self, index: std::ops::RangeFrom<u32>) -> &mut Self::Output {
+-        self.check_access(index.start);
++        self.check_range(index.start, 0, "range_mut");
+         &mut self.bytes[index.start as usize..]
+     }
+ }
+@@ -134,14 +191,30 @@ impl<'a> std::ops::Index<std::ops::Range<u32>> for Memory<'a> {
+     type Output = [u8];
+ 
+     fn index(&self, index: std::ops::Range<u32>) -> &Self::Output {
+-        self.check_access(index.start);
++        let size = index.end.checked_sub(index.start).unwrap_or_else(|| {
++            panic!(
++                "guest memory range reversed at {:#010x}..{:#010x} {}",
++                index.start,
++                index.end,
++                self.diagnostic_context()
++            )
++        }) as usize;
++        self.check_range(index.start, size, "range");
+         &self.bytes[index.start as usize..index.end as usize]
+     }
+ }
+ 
+ impl<'a> std::ops::IndexMut<std::ops::Range<u32>> for Memory<'a> {
+     fn index_mut(&mut self, index: std::ops::Range<u32>) -> &mut Self::Output {
+-        self.check_access(index.start);
++        let size = index.end.checked_sub(index.start).unwrap_or_else(|| {
++            panic!(
++                "guest memory range reversed at {:#010x}..{:#010x} {}",
++                index.start,
++                index.end,
++                self.diagnostic_context()
++            )
++        }) as usize;
++        self.check_range(index.start, size, "range_mut");
+         &mut self.bytes[index.start as usize..index.end as usize]
+     }
+ }
 diff --git a/runtime/src/ops/bit.rs b/runtime/src/ops/bit.rs
 new file mode 100644
 index 0000000..d005c5b
@@ -638,13 +836,21 @@ index 0000000..d005c5b
 + }
 +}
 diff --git a/runtime/src/ops/control_flow.rs b/runtime/src/ops/control_flow.rs
-index c904af8..12cca51 100644
+index c904af8..8ca53a3 100644
 --- a/runtime/src/ops/control_flow.rs
 +++ b/runtime/src/ops/control_flow.rs
-@@ -41,6 +41,22 @@ impl Context {
+@@ -24,6 +24,7 @@ impl Context {
+         // Ensure it is valid, though we ignore it.
+         self.push32(RETURN_FROM_X86_ADDR32);
+         self.cpu.regs.eip_context = from;
++        self.mark_eip(from);
+         func(self); // pops the above return address
+     }
+ 
+@@ -41,6 +42,22 @@ impl Context {
          from
      }
-
+ 
 +    pub fn jp(&mut self, from: Cont, x: Cont) -> Cont {
 +        if self.cpu.flags.contains(Flags::PF) {
 +            x
@@ -664,10 +870,10 @@ index c904af8..12cca51 100644
      pub fn jb(&mut self, from: Cont, x: Cont) -> Cont {
          if self.cpu.flags.contains(Flags::CF) {
              return x;
-@@ -158,6 +174,15 @@ impl Context {
+@@ -158,6 +175,15 @@ impl Context {
          self.jmpf16(cs, ip)
      }
-
+ 
 +    /// 32-bit far return used by a few Win32 helper thunks. Theseus keeps a
 +    /// flat code segment, so discard the selector after restoring the offset.
 +    pub fn retf32(&mut self, n: u16) -> Cont {
@@ -680,7 +886,7 @@ index c904af8..12cca51 100644
      pub fn jmpf16(&mut self, seg: u16, ofs: u16) -> Cont {
          self.cpu.regs.set_cs(seg);
          self.indirect(segofs(seg, ofs))
-@@ -177,3 +202,38 @@ impl Context {
+@@ -177,3 +203,38 @@ impl Context {
          }
      }
  }
@@ -819,7 +1025,7 @@ index ff33cee..7a225e3 100644
 --- a/runtime/src/ops/mod.rs
 +++ b/runtime/src/ops/mod.rs
 @@ -9,6 +9,10 @@ mod string;
-
+ 
  pub use flags::*;
  pub use math::*;
 +pub use misc::cpuid;
@@ -834,7 +1040,7 @@ index b71984d..183c55e 100644
 --- a/runtime/src/ops/string.rs
 +++ b/runtime/src/ops/string.rs
 @@ -166,8 +166,18 @@ impl Context {
-
+ 
      fn movs<S: StringInt>(&mut self) {
          let src_addr = self.addr(self.cpu.regs.ds, self.cpu.regs.esi);
 -        let val = self.memory.read::<S>(src_addr);
@@ -992,7 +1198,7 @@ index 3746d0c..aef73a1 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
 @@ -71,6 +71,30 @@ impl<'a> CodeGen<'a> {
-
+ 
      pub fn codegen_fpu(&mut self, instr: &iced_x86::Instruction) -> bool {
          use iced_x86::Mnemonic::*;
 +        if format!("{:?}", instr.mnemonic()).starts_with('F')
@@ -1031,13 +1237,13 @@ index 3746d0c..aef73a1 100644
 +            Fldl2t => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG2_10);"),
 +            Fldlg2 => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG10_2);"),
 +            Fldpi => self.line("ctx.cpu.fpu.push(std::f64::consts::PI);"),
-
+ 
              Fst | Fstp => {
                  self.line(self.fpu_set_op(instr, 0, self.fpu_get_reg(0)));
 @@ -149,14 +178,23 @@ impl<'a> CodeGen<'a> {
                  }
              }
-
+ 
 -            Fimul => {
 +            Fimul | Fiadd | Fisub | Fisubr | Fidiv | Fidivr => {
                  let size = op_size(instr, 0);
@@ -1063,12 +1269,12 @@ index 3746d0c..aef73a1 100644
 +                };
 +                self.line(self.fpu_set_reg(0, format!("{left} {op} {right}")));
              }
-
+ 
              Fprem => {
 @@ -166,6 +204,10 @@ impl<'a> CodeGen<'a> {
                  ));
              }
-
+ 
 +            Fabs => {
 +                self.line(self.fpu_set_reg(0, format!("{}.abs()", self.fpu_get_reg(0))));
 +            }
@@ -1079,7 +1285,7 @@ index 3746d0c..aef73a1 100644
 @@ -187,17 +229,23 @@ impl<'a> CodeGen<'a> {
                  self.line(self.fpu_set_op(instr, 1, "t".into()));
              }
-
+ 
 -            Fcom | Fcomp => {
 +            Fcom | Fcomp | Fcompp | Fucom | Fucomp | Fucompp => {
                  let (arg0, arg1) = match instr.op_count() {
@@ -1107,14 +1313,14 @@ index 3746d0c..aef73a1 100644
 @@ -207,14 +255,15 @@ impl<'a> CodeGen<'a> {
                  self.line(self.set_op(instr, 0, "ctx.cpu.fpu.status()".into()));
              }
-
+ 
 -            // We don't model FPU exceptions, so clearing them is a no-op.
 -            Fnclex => {}
 +            // Clear the exception flags represented by the runtime.
 +            Fnclex => {
 +                self.line("ctx.cpu.fpu.clear_exceptions();");
 +            }
-
+ 
              Fninit => {
                  // Also empties the stack, which is how a program recovers from
                  // leaving values on it.
@@ -1122,12 +1328,12 @@ index 3746d0c..aef73a1 100644
 -                self.line("ctx.cpu.fpu.st_top = 8;");
 +                self.line("ctx.cpu.fpu.initialize();");
              }
-
+ 
              Fnstcw => {
 @@ -227,6 +276,31 @@ impl<'a> CodeGen<'a> {
                  self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
              }
-
+ 
 +            Fnsave | Frstor => {
 +                if self.module.bitness() != 32 || instr.memory_size().size() != 108 {
 +                    return false;
@@ -1167,7 +1373,7 @@ index 827dd83..0e33598 100644
 -                self.line(format!("ctx.enter({}, {:x});", self.get_op(instr, 0), op1));
 +                self.line(format!("ctx.enter({}, 0x{:x});", self.get_op(instr, 0), op1));
              }
-
+ 
              Xchg => {
 @@ -93,7 +93,26 @@ impl<'a> CodeGen<'a> {
                      self.todo(format!("int {:#x}", instr.immediate8()));
@@ -1194,7 +1400,7 @@ index 827dd83..0e33598 100644
 +            Pushfd => self.line("pushfd(ctx);"),
 +            Popfd => self.line("popfd(ctx);"),
 +            Int3 | Cmpxchg | Xgetbv | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
-
+ 
              // CBW/CWDE: sign extend to next larger ax
              Cbw => self.line("ctx.cpu.regs.set_ax(ctx.cpu.regs.get_al() as i8 as i16 as u16);"),
 diff --git a/tc/src/codegen/mmx.rs b/tc/src/codegen/mmx.rs
@@ -1203,7 +1409,7 @@ index 1f7c62d..8a1933c 100644
 +++ b/tc/src/codegen/mmx.rs
 @@ -70,6 +70,9 @@ impl<'a> CodeGen<'a> {
      }
-
+ 
      pub fn codegen_mmx(&mut self, instr: &iced_x86::Instruction) -> bool {
 +        if !(0..instr.op_count()).any(|n| instr.op_kind(n) == iced_x86::OpKind::Register && is_mmx_reg(instr.op_register(n))) {
 +            return false;
@@ -1212,7 +1418,7 @@ index 1f7c62d..8a1933c 100644
          match instr.mnemonic() {
              Movd => self.line(self.mmx_set_32(instr, 0, self.mmx_get_32(instr, 1))),
 diff --git a/tc/src/codegen/mod.rs b/tc/src/codegen/mod.rs
-index 4d80652..71c789b 100644
+index 4d80652..722af2a 100644
 --- a/tc/src/codegen/mod.rs
 +++ b/tc/src/codegen/mod.rs
 @@ -6,6 +6,7 @@ mod fpu;
@@ -1221,7 +1427,7 @@ index 4d80652..71c789b 100644
  mod mmx;
 +mod sse;
  mod string;
-
+ 
  use crate::{Block, BlockType, Instr, Module, State, memory::Memory, write_if_changed};
 @@ -95,7 +96,7 @@ impl<'a> CodeGen<'a> {
          if instr.memory_index() != None {
@@ -1232,9 +1438,20 @@ index 4d80652..71c789b 100644
                      get_reg(instr.memory_index()),
                      instr.memory_index_scale()
                  ));
-@@ -305,6 +306,14 @@ impl<'a> CodeGen<'a> {
+@@ -272,6 +273,10 @@ impl<'a> CodeGen<'a> {
+                     "pub fn {name}(ctx: &mut Context) -> Cont {{",
+                     name = block.name()
+                 ));
++                self.line(format!(
++                    "ctx.mark_eip({:#x});",
++                    instrs.first().unwrap().ip.to_addr()
++                ));
+                 // self.line(format!("println!(\"{name}\");", name = block.name()));
+                 for instr in instrs {
+                     if self.trace {
+@@ -305,6 +310,14 @@ impl<'a> CodeGen<'a> {
      }
-
+ 
      fn gen_instr(&mut self, instr: &Instr) -> anyhow::Result<()> {
 +        // Keep unexecuted extended-precision CRT paths translatable, but stop
 +        // precisely if reached. Never silently narrow x87 80-bit operands.
@@ -1247,7 +1464,7 @@ index 4d80652..71c789b 100644
          // log::info!("gen: {:08x} {}", instr.iced.ip32(), instr.iced);
          self.line(format!("// {} {}", instr.ip, instr.iced));
          if self.codegen_control_flow(instr) {
-@@ -312,9 +321,10 @@ impl<'a> CodeGen<'a> {
+@@ -312,9 +325,10 @@ impl<'a> CodeGen<'a> {
          } else if self.codegen_string(&instr.iced) {
          } else if self.codegen_misc(&instr.iced) {
          } else if self.codegen_fpu(&instr.iced) {
@@ -1478,9 +1695,9 @@ index c8b11ff..a1f2d71 100644
 --- a/win32/winapi/src/advapi32.rs
 +++ b/win32/winapi/src/advapi32.rs
 @@ -6,11 +6,6 @@ pub type HKEY = u32;
-
+ 
  const ERROR_FILE_NOT_FOUND: u32 = 2;
-
+ 
 -#[win32_derive::dllexport]
 -pub fn RegCloseKey(_ctx: &mut Context, _hKey: HKEY) -> u32 /* WIN32_ERROR */ {
 -    stub!(0)
@@ -1492,7 +1709,7 @@ index c8b11ff..a1f2d71 100644
 @@ -44,31 +39,6 @@ pub fn RegCreateKeyExW(
      stub!(0)
  }
-
+ 
 -#[win32_derive::dllexport]
 -pub fn RegOpenKeyExA(
 -    _ctx: &mut Context,
@@ -5132,7 +5349,7 @@ index 6f4f73b..d8e3282 100644
 @@ -245,6 +245,12 @@ pub mod IDirectInputDevice {
          addr
      }
-
+ 
 +    pub(crate) fn new_with_vtable(ctx: &mut Context, heap: &mut Heap, vtable: u32) -> u32 {
 +        let addr = heap.alloc(&mut ctx.memory, 4);
 +        ctx.memory.write(addr, vtable);
@@ -5517,7 +5734,7 @@ index 37a90d6..376f944 100644
 +++ b/win32/winapi/src/gdi32/mod.rs
 @@ -3,7 +3,9 @@ use std::sync::Mutex;
  use crate::{ABIReturn, FromABIParam, HANDLE, handle::Handles, locked_state::LockedState};
-
+ 
  mod bitmap;
 +mod compat;
  pub use bitmap::*;
@@ -5526,13 +5743,13 @@ index 37a90d6..376f944 100644
  pub use dc::*;
  mod misc;
 diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
-index 22d8d8e..c8b897a 100644
+index 22d8d8e..381af07 100644
 --- a/win32/winapi/src/heap.rs
 +++ b/win32/winapi/src/heap.rs
-@@ -23,6 +23,13 @@ impl Heap {
+@@ -23,15 +23,41 @@ impl Heap {
          }
      }
-
+ 
 +    /// Occupancy includes each allocation's four-byte header; this is not RSS.
 +    pub fn memory_stats(&self) -> (u32, u32, usize) {
 +        let free = self.freelist.borrow();
@@ -5543,10 +5760,18 @@ index 22d8d8e..c8b897a 100644
      fn range(&self) -> std::ops::Range<u32> {
          self.addr..self.addr + self.size
      }
-@@ -34,6 +41,23 @@ impl Heap {
-             .unwrap_or_else(|| panic!("heap size {:x} oom {:x}", self.size, size))
-     }
-
+ 
+     pub fn alloc(&self, mem: &mut Memory, size: u32) -> u32 {
+-        self.freelist
++        let addr = self
++            .freelist
+             .borrow_mut()
+             .alloc(mem, size)
+-            .unwrap_or_else(|| panic!("heap size {:x} oom {:x}", self.size, size))
++            .unwrap_or_else(|| panic!("heap size {:x} oom {:x}", self.size, size));
++        addr
++    }
++
 +    /// Move an allocation without losing the old block on allocation failure.
 +    pub fn realloc(&self, mem: &mut Memory, addr: u32, size: u32, zero_new: bool) -> Option<u32> {
 +        if addr < self.addr + 4 || !self.range().contains(&(addr - 4)) { return None; }
@@ -5562,14 +5787,12 @@ index 22d8d8e..c8b897a 100644
 +        }
 +        self.free(mem, addr);
 +        Some(new_addr)
-+    }
-+
-     #[allow(unused)]
-     pub fn size(&self, mem: &mut Memory, addr: u32) -> u32 {
-         mem.read::<u32>(addr - 4) - 4
-@@ -61,8 +85,12 @@ impl FreeList {
      }
-
+ 
+     #[allow(unused)]
+@@ -61,8 +87,12 @@ impl FreeList {
+     }
+ 
      fn alloc(&mut self, mem: &mut Memory, size: u32) -> Option<u32> {
 -        // TODO: align
 -        let size = size + 4;
@@ -5582,7 +5805,18 @@ index 22d8d8e..c8b897a 100644
          let i = self.nodes.iter().position(|f| f.size >= size)?;
          let free = &mut self.nodes[i];
          let addr = free.addr;
-@@ -139,3 +167,43 @@ impl FreeNode {
+@@ -79,7 +109,9 @@ impl FreeList {
+         let addr = addr - 4;
+         let size = mem.read::<u32>(addr);
+ 
+-        let mut insert_index = 0;
++        // Keep the free list ordered by address. If the block is above every
++        // existing node, it belongs after the last node rather than at index 0.
++        let mut insert_index = self.nodes.len();
+         for (i, node) in self.nodes.iter().enumerate() {
+             if node.range().contains(&addr) {
+                 // address is within already free block
+@@ -139,3 +171,70 @@ impl FreeNode {
          self.addr..self.addr + self.size
      }
  }
@@ -5624,6 +5858,33 @@ index 22d8d8e..c8b897a 100644
 +        assert_eq!(heap.memory_stats().0, 32);
 +        heap.free(&mut mem, b);
 +        assert_eq!(heap.memory_stats().0, 0);
++    }
++}
++
++#[cfg(test)]
++mod freelist_tests {
++    use super::*;
++
++    #[test]
++    fn freeing_above_all_free_nodes_preserves_address_order() {
++        let mut mem = Memory::leak_new(0x4000);
++        let heap = Heap::new(0x1000, 0x1000);
++        let a = heap.alloc(&mut mem, 0x100);
++        let b = heap.alloc(&mut mem, 0x100);
++        let c = heap.alloc(&mut mem, 0xdf4);
++
++        heap.free(&mut mem, a);
++        heap.free(&mut mem, c);
++
++        let free = heap.freelist.borrow();
++        assert_eq!(free.nodes.len(), 2);
++        assert!(free.nodes[0].addr < free.nodes[1].addr);
++        assert_eq!(free.nodes[0].addr, a - 4);
++        assert_eq!(free.nodes[1].addr, c - 4);
++        drop(free);
++
++        heap.free(&mut mem, b);
++        assert_eq!(heap.memory_stats(), (0, 0x1000, 1));
 +    }
 +}
 diff --git a/win32/winapi/src/kernel32/compat.rs b/win32/winapi/src/kernel32/compat.rs
@@ -5753,7 +6014,7 @@ index 19a9439..ac95309 100644
      File(host::fs::File),
      FindHandle(crate::kernel32::FindHandle),
  }
-
+ 
 +pub struct FileMapping {
 +    /// Snapshot of the file-backed bytes.  Keeping the mapping's contents
 +    /// here lets MapViewOfFile expose the same bytes the Win32 caller opened,
@@ -5771,7 +6032,7 @@ index e8fc9ef..ef8fbc2 100644
 @@ -269,6 +269,15 @@ pub fn SetFilePointer(
      }
  }
-
+ 
 +#[win32_derive::dllexport]
 +pub fn GetFileSize(ctx: &mut Context, hFile: crate::HANDLE, lpFileSizeHigh: Ptr<u32>) -> u32 {
 +    let kernel32 = lock();
@@ -5785,11 +6046,11 @@ index e8fc9ef..ef8fbc2 100644
  pub fn SetEndOfFile(_ctx: &mut Context, hFile: crate::HANDLE) -> bool {
      let mut kernel32 = lock();
 diff --git a/win32/winapi/src/kernel32/heap.rs b/win32/winapi/src/kernel32/heap.rs
-index aca97ba..ab55901 100644
+index aca97ba..5995be5 100644
 --- a/win32/winapi/src/kernel32/heap.rs
 +++ b/win32/winapi/src/kernel32/heap.rs
-@@ -83,33 +83,19 @@ pub fn HeapFree(
-
+@@ -83,33 +83,22 @@ pub fn HeapFree(
+ 
  #[win32_derive::dllexport]
  pub fn HeapReAlloc(
 -    _ctx: &mut Context,
@@ -5822,17 +6083,19 @@ index aca97ba..ab55901 100644
 -    let copy_size = old_size.min(dwBytes);
 -    mem.copy(lpMem, new_addr, copy_size);
 -    heap.free(mem, lpMem);
--    new_addr
--    */
 +    // No in-place growth is currently available. Failure preserves the old block.
 +    if dwFlags & 0x10 != 0 { return 0; }
 +    assert_eq!(dwFlags & !0x9, 0, "unsupported HeapReAlloc flags {dwFlags:#x}");
 +    if lpMem.addr == 0 { return 0; }
 +    let state = kernel32::lock();
 +    let heap = state.heaps.get(&hHeap).expect("invalid HeapReAlloc heap");
-+    heap.realloc(&mut ctx.memory, lpMem.addr, dwBytes, dwFlags & 8 != 0).unwrap_or(0)
++    let new_addr = heap
++        .realloc(&mut ctx.memory, lpMem.addr, dwBytes, dwFlags & 8 != 0)
++        .unwrap_or(0);
+     new_addr
+-    */
  }
-
+ 
  win32flags! {
 diff --git a/win32/winapi/src/kernel32/mod.rs b/win32/winapi/src/kernel32/mod.rs
 index 92a0c4b..21f6459 100644
@@ -5848,7 +6111,7 @@ index 92a0c4b..21f6459 100644
  mod file;
 @@ -13,6 +16,7 @@ mod thread;
  mod time;
-
+ 
  pub use dll::*;
 +pub use compat::*;
  pub use env::*;
@@ -5856,10 +6119,10 @@ index 92a0c4b..21f6459 100644
  pub use file::*;
 diff --git a/win32/winapi/src/kernel32/unsupported.rs b/win32/winapi/src/kernel32/unsupported.rs
 new file mode 100644
-index 0000000..88ce230
+index 0000000..d132b80
 --- /dev/null
 +++ b/win32/winapi/src/kernel32/unsupported.rs
-@@ -0,0 +1,183 @@
+@@ -0,0 +1,188 @@
 +// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
 +#[win32_derive::dllexport]
 +pub fn CreateFileMappingA(
@@ -5871,7 +6134,7 @@ index 0000000..88ce230
 +    maximum_size_low: u32,
 +    _name: u32,
 +) -> crate::HANDLE {
-+    use std::io::Read;
++    use std::io::{Read, Seek, SeekFrom};
 +
 +    const MAX_MAPPING_BYTES: usize = 64 << 20;
 +    let requested = ((maximum_size_high as u64) << 32 | maximum_size_low as u64)
@@ -5879,7 +6142,10 @@ index 0000000..88ce230
 +    let mut bytes = Vec::new();
 +    let mut kernel32 = crate::kernel32::lock();
 +    if let Some(crate::kernel32::Object::File(file)) = kernel32.objects.get_mut(hFile) {
++        let position = file.stream_position().unwrap_or(0);
++        let _ = file.seek(SeekFrom::Start(0));
 +        let _ = file.read_to_end(&mut bytes);
++        let _ = file.seek(SeekFrom::Start(position));
 +    }
 +    // A zero maximum size means "the current file length" for a file-backed
 +    // mapping. Anonymous callers still receive a bounded page, matching the
@@ -5985,7 +6251,9 @@ index 0000000..88ce230
 +        (size, mapping.bytes[offset as usize..offset as usize + size].to_vec())
 +    };
 +    let ptr = crate::kernel32::lock().process_heap.alloc(&mut ctx.memory, size as u32);
-+    if ptr != 0 { ctx.memory[ptr..][..size].copy_from_slice(&source); }
++    if ptr != 0 {
++        ctx.memory[ptr..][..size].copy_from_slice(&source);
++    }
 +    ptr
 +}
 +pub fn RaiseException_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
@@ -6049,7 +6317,7 @@ index da97218..0dad644 100644
 +++ b/win32/winapi/src/lib.rs
 @@ -3,14 +3,19 @@
  #![allow(non_upper_case_globals)]
-
+ 
  pub mod advapi32;
 +pub mod bass;
  pub mod bitmap_format;
@@ -6072,12 +6340,12 @@ index da97218..0dad644 100644
  pub mod user32;
  pub mod winmm;
 +pub mod ws2_32;
-
+ 
  /// Functions a program may resolve at runtime with LoadLibrary/GetProcAddress
  /// instead of importing statically. The translator reserves a callable address
 @@ -54,12 +60,15 @@ use runtime::{CPU, Context, EXEData, Mappings, Memory, Regs};
  pub(crate) use stub;
-
+ 
  pub fn load(exe: &EXEData) -> Context {
 +    load_with_capacity(exe, 256 << 20)
 +}
@@ -6087,12 +6355,12 @@ index da97218..0dad644 100644
 +    assert!((16 << 20..=256 << 20).contains(&memory_size) && memory_size % 65536 == 0, "invalid guest memory capacity");
      host::init();
      crate::trace::init(&host::trace_spec());
-
+ 
 -    // Room for the program's image, its heaps and the flat pool games of this
 -    // era carve out for themselves.
 -    let memory_size = 256 << 20;
      let mut memory = Memory::leak_new(memory_size);
-
+ 
      kernel32::init_state(exe.image_base, exe.resources.clone());
 diff --git a/win32/winapi/src/memory_metrics.rs b/win32/winapi/src/memory_metrics.rs
 new file mode 100644
@@ -6133,7 +6401,7 @@ index 134efb2..ff0d8f5 100644
 @@ -8,6 +8,11 @@ pub fn CoInitialize(_ctx: &mut Context, _pvReserved: u32) -> u32 /* HRESULT */ {
  #[win32_derive::dllexport]
  pub fn CoUninitialize(_ctx: &mut Context) {}
-
+ 
 +#[win32_derive::dllexport]
 +pub fn CLSIDFromString(ctx: &mut Context, _lpsz: u32, lpcguid: u32) -> u32 {
 +    if lpcguid != 0 { ctx.memory.bytes[lpcguid as usize..lpcguid as usize + 16].fill(0); 0 } else { 0x8000_4003 }
@@ -6243,7 +6511,7 @@ index fcb31c4..f2e0538 100644
 +++ b/win32/winapi/src/user32/message.rs
 @@ -180,6 +180,13 @@ pub fn WaitMessage(_ctx: &mut Context) -> bool {
  }
-
+ 
  impl MessageQueue {
 +    pub(super) fn detach_window(&mut self, hwnd: HWND) {
 +        self.messages.retain(|message| message.hwnd != hwnd);
@@ -6256,7 +6524,7 @@ index fcb31c4..f2e0538 100644
          let window = self.window.as_ref()?.borrow();
          if !window.dirty {
 @@ -318,14 +325,16 @@ pub fn DispatchMessageA(ctx: &mut Context, lpMsg: Ptr<MSG>) -> u32 {
-
+ 
  #[win32_derive::dllexport]
  pub fn DispatchMessageW(ctx: &mut Context, lpMsg: Ptr<MSG>) -> u32 {
 -    let wndproc = state().wndclass.borrow().as_ref().unwrap().wndproc.clone();
@@ -6272,7 +6540,7 @@ index fcb31c4..f2e0538 100644
 -    0
 +    ctx.cpu.regs.eax
  }
-
+ 
  #[win32_derive::dllexport]
 @@ -490,3 +499,24 @@ pub fn SendMessageW(
  ) -> u32 {
@@ -6313,7 +6581,7 @@ index c0ace47..7147370 100644
  mod misc;
 @@ -12,6 +15,7 @@ use std::{
  };
-
+ 
  pub use dialog::*;
 +pub use compat::*;
  pub use input::*;
@@ -6410,11 +6678,11 @@ index f3e64e4..37457c1 100644
 +    log::info!("WINDOW_CREATION_CALLBACKS hwnd={:#x}",hwnd.to_raw());
 +    hwnd
  }
-
+ 
  #[win32_derive::dllexport]
 @@ -179,8 +203,22 @@ pub fn CreateWindowExW(
  }
-
+ 
  #[win32_derive::dllexport]
 -pub fn DestroyWindow(_ctx: &mut Context, _hWnd: HWND) -> bool {
 -    stub!(true)
@@ -6435,10 +6703,10 @@ index f3e64e4..37457c1 100644
 +    log::info!("WINDOW_DESTRUCTION_CALLBACKS hwnd={:#x}", hWnd.to_raw());
 +    true
  }
-
+ 
  #[win32_derive::dllexport]
 @@ -239,12 +277,25 @@ pub fn DefWindowProcA(
-
+ 
  #[win32_derive::dllexport]
  pub fn DefWindowProcW(
 -    _ctx: &mut Context,
