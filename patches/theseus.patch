@@ -7184,3 +7184,318 @@ index e190688..cbe5ea5 100644
  }
 
  #[win32_derive::dllexport]
+--- a/win32/winapi/src/user32/window.rs
++++ b/win32/winapi/src/user32/window.rs
+@@ -1,4 +1,4 @@
+-use std::{cell::RefCell, rc::Rc};
++use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+ 
+ use runtime::Context;
+ 
+@@ -20,6 +20,9 @@
+     pub pixels: Option<u32>,
+     pub host: host::Window,
+     pub surface: Option<host::Surface>,
++    /// Per-window values exposed through Get/SetWindowLongA. Older games
++    /// commonly store their native object pointer at GWLP_USERDATA (-21).
++    pub(crate) longs: BTreeMap<i32, i32>,
+ }
+ 
+ impl Window {
+@@ -119,6 +122,7 @@
+             host: host::host().create_window(&args.name, width, height),
+             pixels: None,
+             surface: None,
++            longs: BTreeMap::new(),
+         }));
+         *self.window.borrow_mut() = Some(window.clone());
+         self.message_queue.borrow_mut().window = Some(window);
+--- a/win32/winapi/src/user32/compat.rs
++++ b/win32/winapi/src/user32/compat.rs
+@@ -26,10 +26,20 @@
+ }
+ 
+ #[win32_derive::dllexport]
+-pub fn SetWindowLongA(_ctx: &mut Context, _hWnd: HWND, _nIndex: i32, dwNewLong: i32) -> i32 { dwNewLong }
++pub fn SetWindowLongA(_ctx: &mut Context, hWnd: HWND, nIndex: i32, dwNewLong: i32) -> i32 {
++    let Some(window) = state().window.borrow().as_ref().cloned() else { return 0; };
++    let mut window = window.borrow_mut();
++    if window.hwnd != hWnd { return 0; }
++    window.longs.insert(nIndex, dwNewLong).unwrap_or(0)
++}
+ 
+ #[win32_derive::dllexport]
+-pub fn GetWindowLongA(_ctx: &mut Context, _hWnd: HWND, _nIndex: i32) -> i32 { 0 }
++pub fn GetWindowLongA(_ctx: &mut Context, hWnd: HWND, nIndex: i32) -> i32 {
++    let Some(window) = state().window.borrow().as_ref().cloned() else { return 0; };
++    let window = window.borrow();
++    if window.hwnd != hWnd { return 0; }
++    window.longs.get(&nIndex).copied().unwrap_or(0)
++}
+ 
+ #[win32_derive::dllexport]
+ pub fn GetDlgCtrlID(_ctx: &mut Context, _hWnd: HWND) -> i32 { 0 }
+diff --git a/host/src/wasm.rs b/host/src/wasm.rs
+index 189a294..e564465 100644
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -64,17 +64,20 @@ impl Window {
+     }
+ }
+ 
+-pub struct AudioStream {}
++pub struct AudioStream {
++    id: i32,
++}
+ impl AudioStream {
+-    /// Browser audio is optional for the compatibility runtime. Keep a live
+-    /// null sink when no Web Audio output has been attached yet so a guest
+-    /// that uses DirectSound can continue executing and rendering. The
+-    /// DirectSound mixer still advances its guest playback cursors; only the
+-    /// final audio delivery is discarded.
+     pub fn is_open(&self) -> bool { true }
+-    pub fn queued_bytes(&self) -> u32 { 0 }
+-    pub fn put_data(&self, _data: &[u8]) {}
+-    pub fn resume(&self) {}
++    pub fn queued_bytes(&self) -> u32 {
++        host::host().chan.lock().unwrap().audio_queued(self.id)
++    }
++    pub fn put_data(&self, data: &[u8]) {
++        host::host().chan.lock().unwrap().audio_write(self.id, data)
++    }
++    pub fn resume(&self) {
++        host::host().chan.lock().unwrap().audio_resume(self.id)
++    }
+ }
+ 
+ pub struct Host {
+@@ -102,7 +105,10 @@ impl Host {
+         Window::new(title, width, height)
+     }
+ 
+-    pub fn create_audio_stream(&self, _spec: host::AudioSpec) -> AudioStream { AudioStream {} }
++    pub fn create_audio_stream(&self, spec: host::AudioSpec) -> AudioStream {
++        let id = self.chan.lock().unwrap().audio_open(spec.sample_rate, spec.channels);
++        AudioStream { id }
++    }
+ 
+     pub fn time(&self) -> u32 {
+         js_sys::global()
+@@ -161,6 +167,11 @@ export interface WasmHost {
+ 
+     write_file(path: string, ptr: number, len: number): number;
+ 
++    audio_open(sample_rate: number, channels: number): number;
++    audio_queued(stream_id: number): number;
++    audio_resume(stream_id: number): void;
++    audio_write(stream_id: number, ptr: number, len: number): void;
++
+     poll_message(): number[];
+     wait_message(): Promise<number[]>;
+ }
+@@ -229,6 +240,33 @@ impl WebHostSendChannel {
+         self.send_sync("set_pixels", args);
+     }
+ 
++    pub fn audio_open(&mut self, sample_rate: u32, channels: u32) -> i32 {
++        let args = js_sys::Array::new();
++        args.push(&JsValue::from(sample_rate));
++        args.push(&JsValue::from(channels));
++        self.send_sync("audio_open", args)
++    }
++
++    pub fn audio_queued(&mut self, stream_id: i32) -> u32 {
++        let args = js_sys::Array::new();
++        args.push(&JsValue::from(stream_id));
++        self.send_sync("audio_queued", args) as u32
++    }
++
++    pub fn audio_resume(&mut self, stream_id: i32) {
++        let args = js_sys::Array::new();
++        args.push(&JsValue::from(stream_id));
++        self.send_async("audio_resume", args);
++    }
++
++    pub fn audio_write(&mut self, stream_id: i32, data: &[u8]) {
++        let args = js_sys::Array::new();
++        args.push(&JsValue::from(stream_id));
++        args.push(&JsValue::from(data.as_ptr() as u32));
++        args.push(&JsValue::from(data.len()));
++        self.send_async("audio_write", args);
++    }
++
+     fn parse_message(buf: &[i32; 4]) -> Option<host::Message> {
+         // TOOD: some sort of structured encoding
+         Some(match buf[0] {
+diff --git a/win32/winapi/src/d3d8.rs b/win32/winapi/src/d3d8.rs
+index 3ca1797..8025ab8 100644
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -56,7 +56,7 @@ pub mod IDirect3D8{
+  pub(super) fn mode(ctx:&mut Context,out:u32)->u32{if !valid(ctx,out,16){return D3DERR_INVALIDCALL}for(i,v)in[1280u32,720,0,22].into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v)}D3D_OK}
+  #[win32_derive::dllexport] pub fn EnumAdapterModes(ctx:&mut Context,_this:u32,index:u32,mode_index:u32,out:u32)->u32{if index!=0||mode_index!=0{return D3DERR_INVALIDCALL}mode(ctx,out)}
+  #[win32_derive::dllexport] pub fn GetAdapterDisplayMode(ctx:&mut Context,_this:u32,index:u32,out:u32)->u32{if index!=0{return D3DERR_INVALIDCALL}mode(ctx,out)}
+- #[win32_derive::dllexport] pub fn CheckDeviceType(_ctx:&mut Context,_this:u32,index:u32,kind:u32,display:u32,back:u32,_windowed:u32)->u32{if index==0&&kind==1&&display==22&&[21,22,23,24,25,26].contains(&back){D3D_OK}else{D3DERR_NOTAVAILABLE}}
++ #[win32_derive::dllexport] pub fn CheckDeviceType(_ctx:&mut Context,_this:u32,index:u32,kind:u32,display:u32,back:u32,_windowed:u32)->u32{if index==0&&kind==1&&display==22&&[20,21,22,23,24,25,26,28,29].contains(&back){D3D_OK}else{D3DERR_NOTAVAILABLE}}
+  #[win32_derive::dllexport] pub fn CheckDeviceFormat(ctx:&mut Context,this:u32,index:u32,kind:u32,adapter:u32,usage:u32,rtype:u32,format:u32)->u32{d3d9::IDirect3D9::CheckDeviceFormat(ctx,this,index,kind,adapter,usage,rtype,format)}
+  #[win32_derive::dllexport] pub fn CheckDeviceMultiSampleType(_ctx:&mut Context,_this:u32,index:u32,kind:u32,format:u32,_windowed:u32,multi:u32)->u32{if index==0&&kind==1&&[21,22,75].contains(&format)&&multi==0{D3D_OK}else{D3DERR_NOTAVAILABLE}}
+  #[win32_derive::dllexport] pub fn CheckDepthStencilMatch(_ctx:&mut Context,_this:u32,index:u32,kind:u32,adapter:u32,target:u32,depth:u32)->u32{if index==0&&kind==1&&adapter==22&&[21,22,23,24,25,26].contains(&target)&&depth==75{D3D_OK}else{D3DERR_NOTAVAILABLE}}
+diff --git a/win32/winapi/src/d3d9/texture.rs b/win32/winapi/src/d3d9/texture.rs
+index 9ccb4e4..d723548 100644
+--- a/win32/winapi/src/d3d9/texture.rs
++++ b/win32/winapi/src/d3d9/texture.rs
+@@ -63,8 +63,10 @@ fn layout(width: u32, height: u32, levels: u32, format: u32) -> Option<Vec<Mip>>
+         return None;
+     }
+     let (block, bytes) = match format {
++        20 => (1, 3),
+         21 | 22 => (1, 4),
+-        50 => (1, 1),
++        23 | 24 | 25 | 26 | 29 => (1, 2),
++        28 | 50 => (1, 1),
+         0x31545844 => (4, 8),
+         0x33545844 | 0x35545844 => (4, 16),
+         _ => return None,
+@@ -320,8 +322,10 @@ fn lockable(t: &Texture, level: u32, flags: u32) -> bool {
+ fn rectangle_offset(m: &Mip, format: u32, r: [u32; 4]) -> Option<u32> {
+     let [left, top, right, bottom] = r;
+     let (block, bytes) = match format {
++        20 => (1, 3),
+         21 | 22 => (1, 4),
+-        50 => (1, 1),
++        23 | 24 | 25 | 26 | 29 => (1, 2),
++        28 | 50 => (1, 1),
+         0x31545844 => (4, 8),
+         _ => (4, 16),
+     };
+@@ -581,8 +585,10 @@ pub(crate) fn copy_region(
+         return D3DERR_INVALIDCALL;
+     }
+     let (block, bytes) = match src.format {
++        20 => (1, 3),
+         21 | 22 => (1, 4),
+-        50 => (1, 1),
++        23 | 24 | 25 | 26 | 29 => (1, 2),
++        28 | 50 => (1, 1),
+         _ => return D3DERR_INVALIDCALL,
+     };
+     if left % block != 0 || top % block != 0 || dest_left % block != 0 || dest_top % block != 0 {
+diff --git a/host/src/wasm.rs b/host/src/wasm.rs
+index e564465..b740fe0 100644
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -1,4 +1,4 @@
+-use std::{arch::wasm32, sync::Mutex};
++use std::{arch::wasm32, cell::Cell, sync::Mutex};
+ 
+ use web_sys::wasm_bindgen::prelude::*;
+ 
+@@ -66,13 +66,34 @@ impl Window {
+ 
+ pub struct AudioStream {
+     id: i32,
++    sample_rate: u32,
++    channels: u32,
++    queued_bytes: Cell<u32>,
++    last_time_ms: Cell<u32>,
+ }
+ impl AudioStream {
+     pub fn is_open(&self) -> bool { true }
++    fn advance_queue(&self) {
++        let now = host::host().time();
++        let elapsed = now.wrapping_sub(self.last_time_ms.get()) as u64;
++        let consumed = elapsed
++            .saturating_mul(self.sample_rate as u64)
++            .saturating_mul(self.channels as u64)
++            .saturating_mul(2)
++            / 1000;
++        self.queued_bytes
++            .set(self.queued_bytes.get().saturating_sub(consumed as u32));
++        self.last_time_ms.set(now);
++    }
+     pub fn queued_bytes(&self) -> u32 {
+-        host::host().chan.lock().unwrap().audio_queued(self.id)
++        self.advance_queue();
++        self.queued_bytes.get()
+     }
+     pub fn put_data(&self, data: &[u8]) {
++        self.advance_queue();
++        let queued = self.queued_bytes.get().saturating_add(data.len() as u32);
++        let limit = self.sample_rate.saturating_mul(self.channels).saturating_mul(2).saturating_mul(2);
++        self.queued_bytes.set(queued.min(limit));
+         host::host().chan.lock().unwrap().audio_write(self.id, data)
+     }
+     pub fn resume(&self) {
+@@ -107,7 +128,13 @@ impl Host {
+ 
+     pub fn create_audio_stream(&self, spec: host::AudioSpec) -> AudioStream {
+         let id = self.chan.lock().unwrap().audio_open(spec.sample_rate, spec.channels);
+-        AudioStream { id }
++        AudioStream {
++            id,
++            sample_rate: spec.sample_rate,
++            channels: spec.channels,
++            queued_bytes: Cell::new(0),
++            last_time_ms: Cell::new(self.time()),
++        }
+     }
+ 
+     pub fn time(&self) -> u32 {
+diff --git a/host/src/wasm.rs b/host/src/wasm.rs
+index b740fe0..fa63528 100644
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -1,4 +1,4 @@
+-use std::{arch::wasm32, cell::Cell, sync::Mutex};
++use std::{arch::wasm32, cell::{Cell, RefCell}, sync::Mutex};
+ 
+ use web_sys::wasm_bindgen::prelude::*;
+ 
+@@ -70,6 +70,8 @@ pub struct AudioStream {
+     channels: u32,
+     queued_bytes: Cell<u32>,
+     last_time_ms: Cell<u32>,
++    pending: RefCell<Vec<u8>>,
++    last_flush_ms: Cell<u32>,
+ }
+ impl AudioStream {
+     pub fn is_open(&self) -> bool { true }
+@@ -89,14 +91,28 @@ impl AudioStream {
+         self.advance_queue();
+         self.queued_bytes.get()
+     }
++    fn flush_pending(&self) {
++        let mut pending = self.pending.borrow_mut();
++        if pending.is_empty() { return; }
++        let data = std::mem::take(&mut *pending);
++        drop(pending);
++        host::host().chan.lock().unwrap().audio_write(self.id, &data);
++        self.last_flush_ms.set(host::host().time());
++    }
+     pub fn put_data(&self, data: &[u8]) {
+         self.advance_queue();
+         let queued = self.queued_bytes.get().saturating_add(data.len() as u32);
+         let limit = self.sample_rate.saturating_mul(self.channels).saturating_mul(2).saturating_mul(2);
+         self.queued_bytes.set(queued.min(limit));
+-        host::host().chan.lock().unwrap().audio_write(self.id, data)
++        let now = host::host().time();
++        let mut pending = self.pending.borrow_mut();
++        pending.extend_from_slice(data);
++        let flush = pending.len() >= 16 * 1024 || now.wrapping_sub(self.last_flush_ms.get()) >= 50;
++        drop(pending);
++        if flush { self.flush_pending(); }
+     }
+     pub fn resume(&self) {
++        self.flush_pending();
+         host::host().chan.lock().unwrap().audio_resume(self.id)
+     }
+ }
+@@ -134,6 +150,8 @@ impl Host {
+             channels: spec.channels,
+             queued_bytes: Cell::new(0),
+             last_time_ms: Cell::new(self.time()),
++            pending: RefCell::new(Vec::with_capacity(16 * 1024)),
++            last_flush_ms: Cell::new(self.time()),
+         }
+     }
+ 

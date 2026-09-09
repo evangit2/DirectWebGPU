@@ -15,7 +15,7 @@ export class SceneEquivalence {
   const depth=d.createTexture({size:[b.width,b.height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   this.reference={...b,color,depth,timer:null};this.renderer=new DrawRenderer(d,this.reference);this.clear(7,{r:0,g:0,b:0,a:0},1,0);
  }
- clear(flags,color,z,stencil){if(!this.reference||this.done)return;const d=this.device,b=this.reference,e=d.createCommandEncoder();const p=e.beginRenderPass({colorAttachments:[{view:b.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:color}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil}});p.end();d.queue.submit([e.finish()]);}
+ clear(flags,color,z,stencil){if(!this.reference||this.done)return;this.renderer?.flush();const d=this.device,b=this.reference,e=d.createCommandEncoder();const p=e.beginRenderPass({colorAttachments:[{view:b.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:color}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil}});p.end();d.queue.submit([e.finish()]);}
  async draw(packet){if(this.done)return;await this.ensure();const s=packet.state;
   if(s.get(RS.STENCILENABLE)&&s.get(RS.ALPHATESTENABLE)&&s.get(RS.COLORWRITEENABLE)===0){if(s.get(RS.ZWRITEENABLE))throw Error('equivalence mask unexpectedly writes depth');this.counts.maskDraws++;return;}
   let state=s;
@@ -23,7 +23,7 @@ export class SceneEquivalence {
   await this.renderer.draw({...packet,state});
  }
  async compare(present){if(this.done||![1,30,60].includes(present))return null;
-  const d=this.device,b=this.original,width=b.width,height=b.height,pitch=Math.ceil(width*4/256)*256;
+  this.renderer?.flush();const d=this.device,b=this.original,width=b.width,height=b.height,pitch=Math.ceil(width*4/256)*256;
   const reads=[0,1].map(()=>d.createBuffer({size:pitch*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}));
   try{const e=d.createCommandEncoder();[b.color,this.reference.color].forEach((texture,i)=>e.copyTextureToBuffer({texture},{buffer:reads[i],bytesPerRow:pitch},[width,height]));d.queue.submit([e.finish()]);await Promise.all(reads.map(r=>r.mapAsync(GPUMapMode.READ)));
    const bytes=reads.map(r=>new Uint8Array(r.getMappedRange()));const stats=compareSceneBytes(...bytes,width,height,pitch);const hashes=await Promise.all(bytes.map(async a=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',a)),v=>v.toString(16).padStart(2,'0')).join('')));

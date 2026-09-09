@@ -30,7 +30,7 @@ export class DrawBatch {
   this.commands=[];this.offset=4096;
  }
 }
-export async function executeDrawBatch(data,graphics) {
+export async function executeDrawBatch(data,graphics,fastDraw=null) {
  const {buffer,commands}=data;
  if(!(buffer instanceof SharedArrayBuffer)||buffer.byteLength!==BATCH_BYTES+4096)throw Error('invalid graphics batch storage');
  const control=new Int32Array(buffer,0,1);let result=2;
@@ -39,7 +39,8 @@ export async function executeDrawBatch(data,graphics) {
   let end=4096;
   for(const a of commands){const s=layout(a);if(a[s.pointer]!==end||end+a[s.length]>buffer.byteLength)throw Error('invalid graphics batch command');end+=Math.ceil(a[s.length]/4)*4;}
   for(const a of commands){
-   const result=await graphics(a[0],a.slice(1),buffer);
+   const pending=fastDraw&&a[0]===13?fastDraw(a.slice(1),buffer):graphics(a[0],a.slice(1),buffer);
+   const result=pending?.then?await pending:pending;
    if(result!==1)throw Error(`queued draw/upload rejected: op=${a[0]} result=0x${(result>>>0).toString(16)} args=${JSON.stringify(a.slice(1))}`);
   }
   result=1;
