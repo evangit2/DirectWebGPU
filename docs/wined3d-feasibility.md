@@ -1,6 +1,6 @@
 # WineD3D → WebGPU feasibility and migration decision
 
-Date: 2026-09-09. Status: architecture investigation; no WineD3D renderer or game acceptance is claimed by this report.
+Date: 2026-09-09. Status: architecture decision plus completed shader-compiler pilot; a complete WineD3D compatibility core or broad game acceptance is not claimed.
 
 **Recommendation: keep Theseus, the lightweight Win32 runtime, and the separate GPU worker. Build a new WineD3D-derived compatibility mode beside the deprecated custom D3D mode. Start with an isolated `vkd3d-shader` compiler pilot, then reuse selected state, declaration, fixed-function, and resource semantics through a common D3D8/D3D9 representation. Defer transplanting the whole WineD3D core until these smaller extractions demonstrate a benefit.**
 
@@ -12,15 +12,15 @@ The source audit uses Wine revision [`bd0f453b7bb4`](https://github.com/wine-mir
 
 DirectWebGPU's preserved public baseline is `2f14deb4313a38696ca3b97f35a037f561c247f0`. The original checkout also contains pending renderer experiments; they were inspected separately and were not imported into this report's development checkout. Its local Theseus checkout has additional changes outside the public patch. A build from that checkout is not automatically reproducible from the public revision.
 
-Existing [Humus evidence](../evidence/current-render-summary.json) records a working original-executable scene and scoped camera/lighting checks. [Full acceptance remains incomplete](../evidence/acceptance-audit.json). Those historical results do not validate the pending changes. Hamsterball still has reported missing/flickering textures, incorrect level rendering, slow startup and approximately 10 visibly changing frames per second despite a much higher harness rate. Neither game has passed a WineD3D mode: that mode does not exist at this checkpoint.
+Existing [Humus evidence](../evidence/current-render-summary.json) records a working original-executable scene and scoped camera/lighting checks. [Full acceptance remains incomplete](../evidence/acceptance-audit.json). The subsequent [`wined3d-webgpu` Humus run](../evidence/wined3d-humus-run.json) records the original executable rendering through `libvkd3d-shader`, Naga and WebGPU. Hamsterball still has reported missing/flickering textures, incorrect level rendering, slow startup and approximately 10 visibly changing frames per second despite a much higher harness rate; it has not passed this mode.
 
-This investigation inspected source and build metadata; it did **not** compile WineD3D or vkd3d to WASM. Future binary-size, memory and effort figures below are engineering estimates, not benchmark results.
+The initial investigation inspected source and build metadata. The implemented pilot now compiles standalone `libvkd3d-shader` 2.1 to WASM; estimates for a broader WineD3D core remain engineering estimates rather than measured results.
 
 ## Preserve two modes
 
 The existing implementation is the **deprecated legacy mode**, internally named `legacy-win32`. It already uses a lightweight Win32 implementation and custom D3D translation; the name does not mean it runs full Wine. Keep its entry point, compiler artifacts, protocol decoder, rebuild inputs and evidence recoverable. Do not overwrite them while developing the new mode.
 
-The primary development direction is **`wined3d-webgpu`**. A shader-only experiment should identify itself as such; swapping MojoShader for vkd3d is not sufficient to claim a WineD3D compatibility core.
+The primary development direction is **`wined3d-webgpu`**. Its current implementation is a shader-compiler milestone; swapping MojoShader for vkd3d is not sufficient to claim a complete WineD3D compatibility core.
 
 Implement selection explicitly at launch/build time. Use separate generated-artifact directories, mode-specific dependency/build manifests and versioned protocol handlers. Preserve the current URL as a legacy alias until the new mode passes acceptance. Once it does, make the new mode the normal launch path while retaining explicit legacy selection. An unavailable or failing new mode must report its error; silently falling back would invalidate testing. A Git branch alone preserves history but does not satisfy the final requirement for two selectable modes.
 
@@ -173,7 +173,7 @@ Startup currently visits cache/load/hash/mount work serially in [`web/worker.js`
 | **4. Gameplay and performance** | Profiled upload/cache/batching changes; startup work; input/audio integration | Actual visible gameplay is smooth near 60 FPS with reported frame-time/latency evidence, correct textures/geometry and audible synchronized output. Several cold/warm trials and sustained level play; instrumentation overhead separated. |
 | **5. Broaden and promote** | Additional permitted DX8/9 programs, reset/query/format cases, documented capability matrix; new mode becomes default | Both original EXEs pass through the new mode at exact committed artifact hashes. Legacy remains explicitly selectable. No “any game” claim from two programs. |
 
-These stages overlap in investigation but not in acceptance claims. The current report is the first documentation milestone, not completion of stage 0. A failed compiler bridge should produce a recorded failing shader/feature and a decision: fix the bridge, evaluate a WGSL backend, or keep that experiment unpromoted. A full C-core extraction is reconsidered only after module pilots quantify port-maintenance costs versus C-platform adaptation; options 3/4 should not begin as an unmeasured rewrite.
+These stages overlap in investigation but not in acceptance claims. The compiler bridge has passed its focused shader tests and the original Humus executable gate; common state, fixed-function/resource, Hamsterball and visible-gameplay gates remain open. A failed compiler case should produce a recorded shader/feature and a decision: fix the bridge, evaluate a WGSL backend, or keep that capability unpromoted. A full C-core extraction is reconsidered only after module pilots quantify port-maintenance costs versus C-platform adaptation; options 3/4 should not begin as an unmeasured rewrite.
 
 For each accepted renderer increment, launch the **unmodified Humus EXE**, verifying SHA-256 `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`, and retain source/artifact IDs, input sequence, captures, validation errors and timing scope. Standalone tests are necessary for narrow semantics but do not replace this gate. Use Wine's D3D8/9 tests and documentation to select behavioral cases; run against native Windows when available, and treat Wine results and marked expected failures as evidence rather than infallible specification. An independent native visual reference is still outstanding in this repository. [D3D8 visual tests](https://github.com/wine-mirror/wine/blob/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d8/tests/visual.c), [D3D9 visual tests](https://github.com/wine-mirror/wine/blob/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d9/tests/visual.c)
 
