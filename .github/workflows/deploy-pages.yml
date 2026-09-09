@@ -1,0 +1,41 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate build manifest for static deployment
+        run: |
+          python3 scripts/write_pages_manifest.py
+          mkdir -p web/assets
+          cp -r assets/original/package/. web/assets/
+          node scripts/validate_pages_build.mjs
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site (web/ including generated artifacts)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

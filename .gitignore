@@ -12,3 +12,5 @@ __pycache__/
 /runtime/shaders/target/
 deploy/public/
 deploy/.wrangler/
+web/assets/
+web/build-manifest.json
