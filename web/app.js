@@ -11,6 +11,7 @@ function stop(status='stopped'){clearTimeout(timer);worker?.terminate();worker=n
 const HAS_BACKEND=!!document.querySelector('script[data-evidence]')?.dataset?.evidence;
 async function start(){
  if(worker||!build||$('start').disabled)return;
+ if(!crossOriginIsolated){$('status').textContent='Cross-origin isolation not active yet — reload the page once (the service worker enables it on the second load).';return;}
  $('start').disabled=true;
  try{
   const measurementMs=benchmarkDuration();

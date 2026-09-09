@@ -11,12 +11,8 @@ if (typeof window === 'undefined') {
     const r = event.request;
     if (r.cache === 'only-if-cached' && r.mode !== 'same-origin') return;
 
-    const request = (r.mode === 'navigate' && r.method === 'GET')
-      ? new Request(r.url, { redirect: 'follow' }) // strip history-state navigation body quirks
-      : r;
-
     event.respondWith(
-      fetch(request)
+      fetch(r)
         .then((response) => {
           if (response.type !== 'basic' || !response.headers.get('content-type')?.includes('text/html')) {
             return response; // only rewrite same-origin documents
@@ -31,22 +27,28 @@ if (typeof window === 'undefined') {
     );
   });
 } else {
-  // Window context: register and reload once under control of the SW.
+  // Window context: register, wait for control, reload exactly once so the
+  // document is served through the worker (which adds the isolation headers).
   (async () => {
     if (window.crossOriginIsolated !== false) return; // already isolated (or API missing)
     if (!window.isSecureContext) return; // SW needs secure context
-    const sw = await navigator.serviceWorker.register(
-      new URL('coi-serviceworker.js', document.currentScript?.src ?? location.href)
-    );
-    if (!sw.active && !navigator.serviceWorker.controller) {
-      // First registration: the document must be reloaded through the SW.
+    if (!('serviceWorker' in navigator)) return;
+    const swUrl = new URL('coi-serviceworker.js', document.currentScript?.src ?? location.href).href;
+    try {
+      await navigator.serviceWorker.register(swUrl);
+      if (navigator.serviceWorker.controller) return; // already controlled
+      // Wait (bounded) until this page is controlled by the SW.
       await new Promise((resolve) => {
-        const channel = new MessageChannel();
-        channel.port1.onmessage = resolve;
-        sw.active?.postMessage({ type: 'claim' }, [channel.port2]);
-        setTimeout(resolve, 250);
+        navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+        setTimeout(resolve, 3000);
       });
-      location.reload();
+      // Reload once per tab so the document response carries COOP/COEP.
+      if (!sessionStorage.getItem('coi-reloaded')) {
+        sessionStorage.setItem('coi-reloaded', '1');
+        location.reload();
+      }
+    } catch (e) {
+      console.error('coi-serviceworker registration failed:', e);
     }
-  })().catch((e) => console.error('coi-serviceworker registration failed:', e));
+  })();
 }
