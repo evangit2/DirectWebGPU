@@ -5,7 +5,7 @@ index e4b4a85..d7f2cc8 100644
 @@ -226,6 +226,15 @@ dependencies = [
   "web-sys",
  ]
- 
+
 +[[package]]
 +name = "humus"
 +version = "0.1.0"
@@ -44,6 +44,30 @@ index ac09bc9..c84c2f9 100644
          const MEM_DISCARDABLE = 0x2000000;
          const MEM_SHARED = 0x10000000;
          const MEM_EXECUTE = 0x20000000;
+diff --git a/host/src/fs.rs b/host/src/fs.rs
+index d25e3f2..6c2f4ad 100644
+--- a/host/src/fs.rs
++++ b/host/src/fs.rs
+@@ -78,6 +78,9 @@ mod imp {
+         pub fn set_len(&mut self, len: u64) -> Result<()> {
+             self.0.set_len(len)
+         }
++        pub fn len(&self) -> Result<u64> {
++            self.0.metadata().map(|meta| meta.len())
++        }
+     }
+
+     impl Read for File {
+@@ -216,6 +219,9 @@ mod imp {
+             self.dirty = true;
+             Ok(())
+         }
++        pub fn len(&self) -> Result<u64> {
++            Ok(self.data.len() as u64)
++        }
+
+         fn store(&mut self) {
+             if !self.dirty {
 diff --git a/host/src/lib.rs b/host/src/lib.rs
 index 935289d..1f214f5 100644
 --- a/host/src/lib.rs
@@ -71,7 +95,7 @@ index 92da1ea..443e1fb 100644
 +    host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
 +}
 diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
-index c6a4023..4868d6e 100644
+index c6a4023..5778ad1 100644
 --- a/runtime/src/fpu.rs
 +++ b/runtime/src/fpu.rs
 @@ -18,8 +18,13 @@ pub struct FPU {
@@ -88,7 +112,7 @@ index c6a4023..4868d6e 100644
 +    /// precision control is not honored; integral rounding honors RC.
      pub control: u16,
  }
- 
+
 @@ -28,7 +33,12 @@ impl Default for FPU {
          Self {
              st: [0.; 8],
@@ -103,10 +127,10 @@ index c6a4023..4868d6e 100644
              control: 0x037f,
          }
      }
-@@ -91,21 +101,396 @@ impl FPU {
+@@ -91,21 +101,409 @@ impl FPU {
          self.st[self.st_offset(ofs)] = val;
      }
- 
+
 +    pub fn compare(&mut self, a: f64, b: f64, unordered_instruction: bool) {
 +        let signaling = |v: f64| v.is_nan() && v.to_bits() & (1u64 << 51) == 0;
 +        if (a.is_nan() || b.is_nan()) && (!unordered_instruction || signaling(a) || signaling(b)) {
@@ -144,7 +168,7 @@ index c6a4023..4868d6e 100644
          status |= (self.st_top as u16 & 0b111) << 11;
          status
      }
- 
+
 +    /// Approximate x87 FYL2X within the runtime's existing f64 model.
 +    pub fn log2_multiply_pop(&mut self) {
 +        let x = self.get(0);
@@ -192,6 +216,19 @@ index c6a4023..4868d6e 100644
 +        self.status_extra &= !0x600;
 +        self.set(0, x.tan());
 +        self.push(1.0);
++    }
++    /// Compute both trigonometric results and push cosine above sine, matching
++    /// the x87 FSINCOS stack result: ST(0)=cos(x), ST(1)=sin(x).
++    pub fn sincos(&mut self) {
++        let x = self.get(0);
++        if !x.is_finite() || x.abs() >= 9223372036854775808.0 {
++            self.status_extra |= 0x400;
++            return;
++        }
++        self.status_extra &= !0x600;
++        let (sin, cos) = x.sin_cos();
++        self.set(0, sin);
++        self.push(cos);
 +    }
 +    pub fn initialize(&mut self) {
 +        *self = Self {
@@ -508,18 +545,56 @@ index c6a4023..4868d6e 100644
 +        assert_eq!(f.status() & 0x400, 0);
      }
  }
+diff --git a/runtime/src/lib.rs b/runtime/src/lib.rs
+index 0da5529..1b44a65 100644
+--- a/runtime/src/lib.rs
++++ b/runtime/src/lib.rs
+@@ -7,6 +7,7 @@ mod memory;
+ mod mmx;
+ mod ops;
+ mod registers;
++mod sse;
+
+ pub use exe::EXEData;
+ pub use flags::Flags;
+@@ -15,6 +16,7 @@ pub use mapping::{Mapping, Mappings, round_to_page};
+ pub use memory::Memory;
+ pub use ops::*;
+ pub use registers::Regs;
++pub use sse::*;
+
+ #[repr(C)]
+ #[derive(
+diff --git a/runtime/src/machine.rs b/runtime/src/machine.rs
+index 2199e6d..76bab31 100644
+--- a/runtime/src/machine.rs
++++ b/runtime/src/machine.rs
+@@ -1,4 +1,4 @@
+-use crate::{Cont, ContFn, Flags, Memory, Regs, SegOfs, fpu::FPU, mmx::MMX, segofs};
++use crate::{Cont, ContFn, Flags, Memory, Regs, SegOfs, fpu::FPU, mmx::MMX, sse::SSE, segofs};
+
+ #[derive(Default)]
+ pub struct CPU {
+@@ -6,6 +6,7 @@ pub struct CPU {
+     pub flags: Flags,
+     pub fpu: FPU,
+     pub mmx: MMX,
++    pub sse: SSE,
+     pub real_mode: bool,
+ }
+
 diff --git a/runtime/src/memory.rs b/runtime/src/memory.rs
 index e1edcc6..673ce94 100644
 --- a/runtime/src/memory.rs
 +++ b/runtime/src/memory.rs
 @@ -39,13 +39,13 @@ impl<'a> Memory<'a> {
- 
+
      #[inline(never)]
      pub fn null_ptr(&self) {
 -        log::error!("null page read/write");
 +        panic!("guest null-page read/write");
      }
- 
+
      #[inline]
      fn check_access(&self, addr: u32) {
          if addr < 0x1000 && self.null_page {
@@ -527,7 +602,7 @@ index e1edcc6..673ce94 100644
 +            panic!("guest null-page access at {addr:#010x}");
          }
      }
- 
+
 diff --git a/runtime/src/ops/bit.rs b/runtime/src/ops/bit.rs
 new file mode 100644
 index 0000000..d005c5b
@@ -563,13 +638,13 @@ index 0000000..d005c5b
 + }
 +}
 diff --git a/runtime/src/ops/control_flow.rs b/runtime/src/ops/control_flow.rs
-index c904af8..2c16a9c 100644
+index c904af8..12cca51 100644
 --- a/runtime/src/ops/control_flow.rs
 +++ b/runtime/src/ops/control_flow.rs
 @@ -41,6 +41,22 @@ impl Context {
          from
      }
- 
+
 +    pub fn jp(&mut self, from: Cont, x: Cont) -> Cont {
 +        if self.cpu.flags.contains(Flags::PF) {
 +            x
@@ -589,7 +664,23 @@ index c904af8..2c16a9c 100644
      pub fn jb(&mut self, from: Cont, x: Cont) -> Cont {
          if self.cpu.flags.contains(Flags::CF) {
              return x;
-@@ -177,3 +193,38 @@ impl Context {
+@@ -158,6 +174,15 @@ impl Context {
+         self.jmpf16(cs, ip)
+     }
+
++    /// 32-bit far return used by a few Win32 helper thunks. Theseus keeps a
++    /// flat code segment, so discard the selector after restoring the offset.
++    pub fn retf32(&mut self, n: u16) -> Cont {
++        let ip = self.pop32();
++        let _cs = self.pop32();
++        self.cpu.regs.esp += n as u32;
++        self.indirect(ip)
++    }
++
+     pub fn jmpf16(&mut self, seg: u16, ofs: u16) -> Cont {
+         self.cpu.regs.set_cs(seg);
+         self.indirect(segofs(seg, ofs))
+@@ -177,3 +202,38 @@ impl Context {
          }
      }
  }
@@ -728,7 +819,7 @@ index ff33cee..7a225e3 100644
 --- a/runtime/src/ops/mod.rs
 +++ b/runtime/src/ops/mod.rs
 @@ -9,6 +9,10 @@ mod string;
- 
+
  pub use flags::*;
  pub use math::*;
 +pub use misc::cpuid;
@@ -738,6 +829,149 @@ index ff33cee..7a225e3 100644
 +
 +mod bit;
 +pub use bit::*;
+diff --git a/runtime/src/ops/string.rs b/runtime/src/ops/string.rs
+index b71984d..183c55e 100644
+--- a/runtime/src/ops/string.rs
++++ b/runtime/src/ops/string.rs
+@@ -166,8 +166,18 @@ impl Context {
+
+     fn movs<S: StringInt>(&mut self) {
+         let src_addr = self.addr(self.cpu.regs.ds, self.cpu.regs.esi);
+-        let val = self.memory.read::<S>(src_addr);
+         let dst_addr = self.addr(self.cpu.regs.es, self.cpu.regs.edi);
++        if self.memory.null_page && (src_addr < 0x1000 || dst_addr < 0x1000) {
++            panic!(
++                "guest movs null-page access src={src_addr:#010x} dst={dst_addr:#010x} \
++                 esi={:#010x} edi={:#010x} ecx={:#010x} eip={:#010x}",
++                self.cpu.regs.esi,
++                self.cpu.regs.edi,
++                self.cpu.regs.ecx,
++                self.cpu.regs.eip_context,
++            );
++        }
++        let val = self.memory.read::<S>(src_addr);
+         self.memory.write::<S>(dst_addr, val);
+         let step = std::mem::size_of::<S>() as u32;
+         if self.cpu.flags.contains(Flags::DF) {
+diff --git a/runtime/src/sse.rs b/runtime/src/sse.rs
+new file mode 100644
+index 0000000..8abf1ea
+--- /dev/null
++++ b/runtime/src/sse.rs
+@@ -0,0 +1,113 @@
++use crate::Flags;
++
++/// The eight XMM registers exposed by the 32-bit SSE instruction set.
++/// Values are kept as raw lanes so integer packing, bitwise operations, and
++/// floating-point operations can share one representation.
++#[derive(Clone, Copy, Debug)]
++pub struct SSE {
++    pub xmm: [[u32; 4]; 8],
++}
++
++impl Default for SSE {
++    fn default() -> Self {
++        Self { xmm: [[0; 4]; 8] }
++    }
++}
++
++impl SSE {
++    pub fn get(&self, index: usize) -> [u32; 4] {
++        self.xmm[index]
++    }
++
++    pub fn set(&mut self, index: usize, value: [u32; 4]) {
++        self.xmm[index] = value;
++    }
++}
++
++fn map_ps(a: [u32; 4], b: [u32; 4], f: impl Fn(f32, f32) -> f32) -> [u32; 4] {
++    std::array::from_fn(|i| f(f32::from_bits(a[i]), f32::from_bits(b[i])).to_bits())
++}
++
++pub fn sse_add_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { map_ps(a, b, |x, y| x + y) }
++pub fn sse_sub_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { map_ps(a, b, |x, y| x - y) }
++pub fn sse_mul_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { map_ps(a, b, |x, y| x * y) }
++pub fn sse_div_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { map_ps(a, b, |x, y| x / y) }
++
++pub fn sse_add_ss(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
++    a[0] = (f32::from_bits(a[0]) + f32::from_bits(b[0])).to_bits(); a
++}
++pub fn sse_sub_ss(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
++    a[0] = (f32::from_bits(a[0]) - f32::from_bits(b[0])).to_bits(); a
++}
++pub fn sse_mul_ss(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
++    a[0] = (f32::from_bits(a[0]) * f32::from_bits(b[0])).to_bits(); a
++}
++pub fn sse_div_ss(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
++    a[0] = (f32::from_bits(a[0]) / f32::from_bits(b[0])).to_bits(); a
++}
++pub fn sse_sqrt_ps(a: [u32; 4]) -> [u32; 4] {
++    std::array::from_fn(|i| f32::from_bits(a[i]).sqrt().to_bits())
++}
++pub fn sse_sqrt_ss(mut a: [u32; 4]) -> [u32; 4] {
++    a[0] = f32::from_bits(a[0]).sqrt().to_bits(); a
++}
++pub fn sse_rcp_ps(a: [u32; 4]) -> [u32; 4] {
++    std::array::from_fn(|i| (1.0f32 / f32::from_bits(a[i])).to_bits())
++}
++pub fn sse_rcp_ss(mut a: [u32; 4]) -> [u32; 4] {
++    a[0] = (1.0f32 / f32::from_bits(a[0])).to_bits(); a
++}
++pub fn sse_rsqrt_ps(a: [u32; 4]) -> [u32; 4] {
++    std::array::from_fn(|i| (1.0f32 / f32::from_bits(a[i]).sqrt()).to_bits())
++}
++pub fn sse_rsqrt_ss(mut a: [u32; 4]) -> [u32; 4] {
++    a[0] = (1.0f32 / f32::from_bits(a[0]).sqrt()).to_bits(); a
++}
++
++pub fn sse_xor_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { std::array::from_fn(|i| a[i] ^ b[i]) }
++pub fn sse_and_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { std::array::from_fn(|i| a[i] & b[i]) }
++pub fn sse_or_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { std::array::from_fn(|i| a[i] | b[i]) }
++pub fn sse_andn_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { std::array::from_fn(|i| (!a[i]) & b[i]) }
++
++pub fn sse_set_scalar(mut a: [u32; 4], value: u32) -> [u32; 4] { a[0] = value; a }
++pub fn sse_set_low2(mut a: [u32; 4], value: [u32; 2]) -> [u32; 4] { a[0] = value[0]; a[1] = value[1]; a }
++pub fn sse_set_high2(mut a: [u32; 4], value: [u32; 2]) -> [u32; 4] { a[2] = value[0]; a[3] = value[1]; a }
++pub fn sse_movhlps(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] { a[0] = b[2]; a[1] = b[3]; a }
++pub fn sse_movlhps(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] { a[2] = b[0]; a[3] = b[1]; a }
++
++pub fn sse_shuffle(a: [u32; 4], b: [u32; 4], imm: u8) -> [u32; 4] {
++    [a[(imm & 3) as usize], a[((imm >> 2) & 3) as usize], b[((imm >> 4) & 3) as usize], b[((imm >> 6) & 3) as usize]]
++}
++pub fn sse_unpack_low(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { [a[0], b[0], a[1], b[1]] }
++pub fn sse_unpack_high(a: [u32; 4], b: [u32; 4]) -> [u32; 4] { [a[2], b[2], a[3], b[3]] }
++
++pub fn sse_packssdw(a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
++    let lane = |v: u32| (v as i32).clamp(i16::MIN as i32, i16::MAX as i32) as i16 as u16 as u32;
++    [lane(a[0]) | (lane(a[1]) << 16), lane(a[2]) | (lane(a[3]) << 16), lane(b[0]) | (lane(b[1]) << 16), lane(b[2]) | (lane(b[3]) << 16)]
++}
++
++pub fn sse_compare_ps(a: [u32; 4], b: [u32; 4], predicate: u32) -> [u32; 4] {
++    std::array::from_fn(|i| {
++        let x = f32::from_bits(a[i]); let y = f32::from_bits(b[i]); let unordered = x.is_nan() || y.is_nan();
++        let result = match predicate {
++            0 => !unordered && x == y, 1 => !unordered && x < y, 2 => !unordered && x <= y,
++            3 => unordered, 4 => unordered || x != y, 5 => unordered || x >= y,
++            6 => unordered || x > y, 7 => !unordered,
++            _ => false,
++        };
++        if result { u32::MAX } else { 0 }
++    })
++}
++
++pub fn sse_compare_scalar(a: [u32; 4], b: [u32; 4], predicate: u32) -> [u32; 4] {
++    let mut out = a;
++    out[0] = sse_compare_ps(a, b, predicate)[0]; out
++}
++
++pub fn sse_compare_flags(a: u32, b: u32, flags: &mut Flags) {
++    let x = f32::from_bits(a); let y = f32::from_bits(b); let unordered = x.is_nan() || y.is_nan();
++    flags.set(Flags::ZF, unordered || x == y);
++    flags.set(Flags::CF, unordered || x < y);
++    flags.set(Flags::PF, unordered);
++    flags.remove(Flags::SF | Flags::OF);
++}
 diff --git a/tc/src/codegen/control_flow.rs b/tc/src/codegen/control_flow.rs
 index caf0159..dbb6365 100644
 --- a/tc/src/codegen/control_flow.rs
@@ -754,11 +988,11 @@ index caf0159..dbb6365 100644
                  let (None, None, cont) = self.jmp_target(instr) else {
                      panic!()
 diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
-index 3746d0c..2966c9b 100644
+index 3746d0c..aef73a1 100644
 --- a/tc/src/codegen/fpu.rs
 +++ b/tc/src/codegen/fpu.rs
 @@ -71,6 +71,30 @@ impl<'a> CodeGen<'a> {
- 
+
      pub fn codegen_fpu(&mut self, instr: &iced_x86::Instruction) -> bool {
          use iced_x86::Mnemonic::*;
 +        if format!("{:?}", instr.mnemonic()).starts_with('F')
@@ -797,13 +1031,13 @@ index 3746d0c..2966c9b 100644
 +            Fldl2t => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG2_10);"),
 +            Fldlg2 => self.line("ctx.cpu.fpu.push(std::f64::consts::LOG10_2);"),
 +            Fldpi => self.line("ctx.cpu.fpu.push(std::f64::consts::PI);"),
- 
+
              Fst | Fstp => {
                  self.line(self.fpu_set_op(instr, 0, self.fpu_get_reg(0)));
 @@ -149,14 +178,23 @@ impl<'a> CodeGen<'a> {
                  }
              }
- 
+
 -            Fimul => {
 +            Fimul | Fiadd | Fisub | Fisubr | Fidiv | Fidivr => {
                  let size = op_size(instr, 0);
@@ -829,12 +1063,12 @@ index 3746d0c..2966c9b 100644
 +                };
 +                self.line(self.fpu_set_reg(0, format!("{left} {op} {right}")));
              }
- 
+
              Fprem => {
 @@ -166,6 +204,10 @@ impl<'a> CodeGen<'a> {
                  ));
              }
- 
+
 +            Fabs => {
 +                self.line(self.fpu_set_reg(0, format!("{}.abs()", self.fpu_get_reg(0))));
 +            }
@@ -845,7 +1079,7 @@ index 3746d0c..2966c9b 100644
 @@ -187,17 +229,23 @@ impl<'a> CodeGen<'a> {
                  self.line(self.fpu_set_op(instr, 1, "t".into()));
              }
- 
+
 -            Fcom | Fcomp => {
 +            Fcom | Fcomp | Fcompp | Fucom | Fucomp | Fucompp => {
                  let (arg0, arg1) = match instr.op_count() {
@@ -873,14 +1107,14 @@ index 3746d0c..2966c9b 100644
 @@ -207,14 +255,15 @@ impl<'a> CodeGen<'a> {
                  self.line(self.set_op(instr, 0, "ctx.cpu.fpu.status()".into()));
              }
- 
+
 -            // We don't model FPU exceptions, so clearing them is a no-op.
 -            Fnclex => {}
 +            // Clear the exception flags represented by the runtime.
 +            Fnclex => {
 +                self.line("ctx.cpu.fpu.clear_exceptions();");
 +            }
- 
+
              Fninit => {
                  // Also empties the stack, which is how a program recovers from
                  // leaving values on it.
@@ -888,12 +1122,12 @@ index 3746d0c..2966c9b 100644
 -                self.line("ctx.cpu.fpu.st_top = 8;");
 +                self.line("ctx.cpu.fpu.initialize();");
              }
- 
+
              Fnstcw => {
-@@ -227,6 +276,30 @@ impl<'a> CodeGen<'a> {
+@@ -227,6 +276,31 @@ impl<'a> CodeGen<'a> {
                  self.line(format!("ctx.cpu.fpu.control = {};", self.get_op(instr, 0)));
              }
- 
+
 +            Fnsave | Frstor => {
 +                if self.module.bitness() != 32 || instr.memory_size().size() != 108 {
 +                    return false;
@@ -911,6 +1145,7 @@ index 3746d0c..2966c9b 100644
 +                }
 +            }
 +            Fptan => self.line("ctx.cpu.fpu.tangent_push_one();"),
++            Fsincos => self.line("ctx.cpu.fpu.sincos();"),
 +            F2xm1 => self.line("ctx.cpu.fpu.exp2_minus_one();"),
 +            Fscale => self.line("ctx.cpu.fpu.scale();"),
 +            Frndint => self.line(
@@ -922,9 +1157,18 @@ index 3746d0c..2966c9b 100644
                  self.line("let t = ctx.cpu.fpu.get(0);");
                  self.line("ctx.cpu.fpu.pop();");
 diff --git a/tc/src/codegen/misc.rs b/tc/src/codegen/misc.rs
-index 827dd83..2c2042a 100644
+index 827dd83..0e33598 100644
 --- a/tc/src/codegen/misc.rs
 +++ b/tc/src/codegen/misc.rs
+@@ -65,7 +65,7 @@ impl<'a> CodeGen<'a> {
+             Enter => {
+                 assert!(instr.op1_kind() == iced_x86::OpKind::Immediate8_2nd);
+                 let op1 = instr.immediate8_2nd();
+-                self.line(format!("ctx.enter({}, {:x});", self.get_op(instr, 0), op1));
++                self.line(format!("ctx.enter({}, 0x{:x});", self.get_op(instr, 0), op1));
+             }
+
+             Xchg => {
 @@ -93,7 +93,26 @@ impl<'a> CodeGen<'a> {
                      self.todo(format!("int {:#x}", instr.immediate8()));
                  }
@@ -950,14 +1194,36 @@ index 827dd83..2c2042a 100644
 +            Pushfd => self.line("pushfd(ctx);"),
 +            Popfd => self.line("popfd(ctx);"),
 +            Int3 | Cmpxchg | Xgetbv | Div => self.todo(format!("unsupported instruction at {:#010x}: {}", instr.ip32(), instr)),
- 
+
              // CBW/CWDE: sign extend to next larger ax
              Cbw => self.line("ctx.cpu.regs.set_ax(ctx.cpu.regs.get_al() as i8 as i16 as u16);"),
+diff --git a/tc/src/codegen/mmx.rs b/tc/src/codegen/mmx.rs
+index 1f7c62d..8a1933c 100644
+--- a/tc/src/codegen/mmx.rs
++++ b/tc/src/codegen/mmx.rs
+@@ -70,6 +70,9 @@ impl<'a> CodeGen<'a> {
+     }
+
+     pub fn codegen_mmx(&mut self, instr: &iced_x86::Instruction) -> bool {
++        if !(0..instr.op_count()).any(|n| instr.op_kind(n) == iced_x86::OpKind::Register && is_mmx_reg(instr.op_register(n))) {
++            return false;
++        }
+         use iced_x86::Mnemonic::*;
+         match instr.mnemonic() {
+             Movd => self.line(self.mmx_set_32(instr, 0, self.mmx_get_32(instr, 1))),
 diff --git a/tc/src/codegen/mod.rs b/tc/src/codegen/mod.rs
-index 4d80652..e54d9bb 100644
+index 4d80652..71c789b 100644
 --- a/tc/src/codegen/mod.rs
 +++ b/tc/src/codegen/mod.rs
-@@ -95,7 +95,7 @@ impl<'a> CodeGen<'a> {
+@@ -6,6 +6,7 @@ mod fpu;
+ mod math;
+ mod misc;
+ mod mmx;
++mod sse;
+ mod string;
+
+ use crate::{Block, BlockType, Instr, Module, State, memory::Memory, write_if_changed};
+@@ -95,7 +96,7 @@ impl<'a> CodeGen<'a> {
          if instr.memory_index() != None {
              if instr.memory_index_scale() != 1 {
                  expr.push(format!(
@@ -966,9 +1232,9 @@ index 4d80652..e54d9bb 100644
                      get_reg(instr.memory_index()),
                      instr.memory_index_scale()
                  ));
-@@ -305,6 +305,19 @@ impl<'a> CodeGen<'a> {
+@@ -305,6 +306,14 @@ impl<'a> CodeGen<'a> {
      }
- 
+
      fn gen_instr(&mut self, instr: &Instr) -> anyhow::Result<()> {
 +        // Keep unexecuted extended-precision CRT paths translatable, but stop
 +        // precisely if reached. Never silently narrow x87 80-bit operands.
@@ -978,16 +1244,14 @@ index 4d80652..e54d9bb 100644
 +        if self.module.bitness() == 32 && (instr.iced.memory_base().is_gpr16() || instr.iced.memory_index().is_gpr16()) {
 +            anyhow::bail!("unsupported 16-bit addressing in 32-bit code at {}: {}", instr.ip, instr.iced);
 +        }
-+        // SSE/AVX share several mnemonics with MMX. Preserve an explicit
-+        // runtime diagnostic instead of treating vector operands as MMX.
-+        if (0..instr.iced.op_count()).any(|n| instr.iced.op_kind(n) == iced_x86::OpKind::Register && instr.iced.op_register(n).is_vector_register()) {
-+            anyhow::bail!("unsupported vector instruction at {}: {}", instr.ip, instr.iced);
-+        }
          // log::info!("gen: {:08x} {}", instr.iced.ip32(), instr.iced);
          self.line(format!("// {} {}", instr.ip, instr.iced));
          if self.codegen_control_flow(instr) {
-@@ -314,7 +327,7 @@ impl<'a> CodeGen<'a> {
+@@ -312,9 +321,10 @@ impl<'a> CodeGen<'a> {
+         } else if self.codegen_string(&instr.iced) {
+         } else if self.codegen_misc(&instr.iced) {
          } else if self.codegen_fpu(&instr.iced) {
++        } else if self.codegen_sse(&instr.iced) {
          } else if self.codegen_mmx(&instr.iced) {
          } else {
 -            anyhow::bail!("{:?} not implemented", instr.iced.mnemonic());
@@ -995,6 +1259,174 @@ index 4d80652..e54d9bb 100644
          }
          Ok(())
      }
+diff --git a/tc/src/codegen/sse.rs b/tc/src/codegen/sse.rs
+new file mode 100644
+index 0000000..f007752
+--- /dev/null
++++ b/tc/src/codegen/sse.rs
+@@ -0,0 +1,162 @@
++use crate::codegen::{CodeGen, get_mem, set_mem};
++
++fn xmm_index(register: iced_x86::Register) -> usize {
++    use iced_x86::Register::*;
++    match register {
++        XMM0 => 0, XMM1 => 1, XMM2 => 2, XMM3 => 3,
++        XMM4 => 4, XMM5 => 5, XMM6 => 6, XMM7 => 7,
++        r => panic!("unsupported XMM register {r:?}"),
++    }
++}
++
++impl<'a> CodeGen<'a> {
++    fn sse_vec_get(&self, instr: &iced_x86::Instruction, n: u32) -> String {
++        use iced_x86::OpKind::*;
++        match instr.op_kind(n) {
++            Register => format!("ctx.cpu.sse.get({})", xmm_index(instr.op_register(n))),
++            Memory => get_mem("[u32;4]".into(), self.gen_addr(instr)),
++            k => panic!("unsupported SSE operand {k:?}"),
++        }
++    }
++
++    fn sse_vec_set(&self, instr: &iced_x86::Instruction, n: u32, expr: String) -> String {
++        use iced_x86::OpKind::*;
++        match instr.op_kind(n) {
++            Register => format!("ctx.cpu.sse.set({}, {expr});", xmm_index(instr.op_register(n))),
++            Memory => set_mem("[u32;4]".into(), self.gen_addr(instr), expr),
++            k => panic!("unsupported SSE destination {k:?}"),
++        }
++    }
++
++    fn sse_scalar_get(&self, instr: &iced_x86::Instruction, n: u32) -> String {
++        use iced_x86::OpKind::*;
++        match instr.op_kind(n) {
++            Register => format!("ctx.cpu.sse.get({})[0]", xmm_index(instr.op_register(n))),
++            Memory => get_mem("u32".into(), self.gen_addr(instr)),
++            k => panic!("unsupported scalar SSE operand {k:?}"),
++        }
++    }
++
++    fn sse_scalar_set(&self, instr: &iced_x86::Instruction, n: u32, expr: String) -> String {
++        use iced_x86::OpKind::*;
++        match instr.op_kind(n) {
++            Register => format!("ctx.cpu.sse.set({}, sse_set_scalar(ctx.cpu.sse.get({}), {expr}));", xmm_index(instr.op_register(n)), xmm_index(instr.op_register(n))),
++            Memory => set_mem("u32".into(), self.gen_addr(instr), expr),
++            k => panic!("unsupported scalar SSE destination {k:?}"),
++        }
++    }
++
++    fn sse_predicate(name: &str) -> Option<u32> {
++        Some(match name {
++            "Cmpps" | "Cmpss" | "Cmpeqps" | "Cmpeqss" => 0,
++            "Cmpltps" | "Cmpltss" => 1,
++            "Cmpleps" | "Cmpless" => 2,
++            "Cmpunordps" | "Cmpunordss" => 3,
++            "Cmpneqps" | "Cmpneqss" => 4,
++            "Cmpnltps" | "Cmpnltss" => 5,
++            "Cmpnleps" | "Cmpnless" => 6,
++            "Cmpordps" | "Cmpordss" => 7,
++            _ => return None,
++        })
++    }
++
++    pub fn codegen_sse(&mut self, instr: &iced_x86::Instruction) -> bool {
++        if !(0..instr.op_count()).any(|n| instr.op_kind(n) == iced_x86::OpKind::Register && instr.op_register(n).is_xmm()) {
++            return false;
++        }
++        let name = format!("{:?}", instr.mnemonic());
++        match name.as_str() {
++            "Movaps" | "Movups" | "Movdqa" | "Movdqu" | "Movntps" => {
++                if name == "Movntps" {
++                    self.line(self.sse_vec_set(instr, 0, self.sse_vec_get(instr, 1)));
++                } else {
++                    self.line(self.sse_vec_set(instr, 0, self.sse_vec_get(instr, 1)));
++                }
++            }
++            "Movss" => {
++                self.line(self.sse_scalar_set(instr, 0, self.sse_scalar_get(instr, 1)));
++            }
++            "Movd" => {
++                use iced_x86::OpKind::*;
++                if instr.op_kind(0) == Register && instr.op_register(0).is_xmm() {
++                    let source = if instr.op_kind(1) == Register && instr.op_register(1).is_xmm() {
++                        format!("ctx.cpu.sse.get({})[0]", xmm_index(instr.op_register(1)))
++                    } else {
++                        self.get_op(instr, 1)
++                    };
++                    self.line(format!("ctx.cpu.sse.set({}, [({source}) as u32, 0, 0, 0]);", xmm_index(instr.op_register(0))));
++                } else {
++                    let source = format!("ctx.cpu.sse.get({})[0]", xmm_index(instr.op_register(1)));
++                    self.line(self.set_op(instr, 0, source));
++                }
++            }
++            "Movlps" | "Movq" => {
++                use iced_x86::OpKind::*;
++                if instr.op_kind(0) == Register && instr.op_kind(1) == Memory {
++                    let dst = format!("ctx.cpu.sse.get({})", xmm_index(instr.op_register(0)));
++                    let value = get_mem("[u32;2]".into(), self.gen_addr(instr));
++                    self.line(format!("ctx.cpu.sse.set({}, sse_set_low2({dst}, {value}));", xmm_index(instr.op_register(0))));
++                } else {
++                    let value = format!("[ctx.cpu.sse.get({})[0], ctx.cpu.sse.get({})[1]]", xmm_index(instr.op_register(1)), xmm_index(instr.op_register(1)));
++                    self.line(set_mem("[u32;2]".into(), self.gen_addr(instr), value));
++                }
++            }
++            "Movhps" => {
++                use iced_x86::OpKind::*;
++                if instr.op_kind(0) == Register && instr.op_kind(1) == Memory {
++                    let dst = format!("ctx.cpu.sse.get({})", xmm_index(instr.op_register(0)));
++                    let value = get_mem("[u32;2]".into(), self.gen_addr(instr));
++                    self.line(format!("ctx.cpu.sse.set({}, sse_set_high2({dst}, {value}));", xmm_index(instr.op_register(0))));
++                } else {
++                    let value = format!("[ctx.cpu.sse.get({})[2], ctx.cpu.sse.get({})[3]]", xmm_index(instr.op_register(1)), xmm_index(instr.op_register(1)));
++                    self.line(set_mem("[u32;2]".into(), self.gen_addr(instr), value));
++                }
++            }
++            "Movhlps" | "Movlhps" => {
++                let op = if name == "Movhlps" { "sse_movhlps" } else { "sse_movlhps" };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({}, {})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1))));
++            }
++            "Shufps" => {
++                self.line(self.sse_vec_set(instr, 0, format!("sse_shuffle({}, {}, {})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1), instr.immediate8())));
++            }
++            "Unpcklps" | "Unpckhps" => {
++                let op = if name == "Unpcklps" { "sse_unpack_low" } else { "sse_unpack_high" };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({}, {})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1))));
++            }
++            "Packssdw" => {
++                self.line(self.sse_vec_set(instr, 0, format!("sse_packssdw({}, {})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1))));
++            }
++            "Addps" | "Subps" | "Mulps" | "Divps" | "Andps" | "Orps" | "Xorps" | "Andnps" => {
++                let op = match name.as_str() { "Addps" => "sse_add_ps", "Subps" => "sse_sub_ps", "Mulps" => "sse_mul_ps", "Divps" => "sse_div_ps", "Andps" => "sse_and_ps", "Orps" => "sse_or_ps", "Xorps" => "sse_xor_ps", "Andnps" => "sse_andn_ps", _ => unreachable!() };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({}, {})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1))));
++            }
++            "Addss" | "Subss" | "Mulss" | "Divss" => {
++                let op = match name.as_str() { "Addss" => "sse_add_ss", "Subss" => "sse_sub_ss", "Mulss" => "sse_mul_ss", "Divss" => "sse_div_ss", _ => unreachable!() };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({}, {})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1))));
++            }
++            "Sqrtps" | "Rsqrtps" | "Rcpps" => {
++                let op = match name.as_str() { "Sqrtps" => "sse_sqrt_ps", "Rsqrtps" => "sse_rsqrt_ps", "Rcpps" => "sse_rcp_ps", _ => unreachable!() };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({})", self.sse_vec_get(instr, 1))));
++            }
++            "Sqrtss" | "Rsqrtss" | "Rcpss" => {
++                let op = match name.as_str() { "Sqrtss" => "sse_sqrt_ss", "Rsqrtss" => "sse_rsqrt_ss", "Rcpss" => "sse_rcp_ss", _ => unreachable!() };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({})", self.sse_vec_get(instr, 0))));
++            }
++            "Comiss" | "Ucomiss" => {
++                self.line(format!("sse_compare_flags({}, {}, &mut ctx.cpu.flags);", self.sse_scalar_get(instr, 0), self.sse_scalar_get(instr, 1)));
++            }
++            _ if Self::sse_predicate(&name).is_some() => {
++                let predicate = Self::sse_predicate(&name).unwrap();
++                let scalar = name.ends_with("ss");
++                let op = if scalar { "sse_compare_scalar" } else { "sse_compare_ps" };
++                self.line(self.sse_vec_set(instr, 0, format!("{op}({}, {}, {predicate})", self.sse_vec_get(instr, 0), self.sse_vec_get(instr, 1))));
++            }
++            "Movmskps" => {
++                let src = self.sse_vec_get(instr, 1);
++                self.line(self.set_op(instr, 0, format!("((({src}[3] >> 31) & 1) << 3) | ((({src}[2] >> 31) & 1) << 2) | ((({src}[1] >> 31) & 1) << 1) | (({src}[0] >> 31) & 1)")));
++            }
++            _ => return false,
++        }
++        true
++    }
++}
 diff --git a/tc/src/gather/block.rs b/tc/src/gather/block.rs
 index 91f7295..759146b 100644
 --- a/tc/src/gather/block.rs
@@ -1011,25 +1443,44 @@ index 91f7295..759146b 100644
                  Int1 | Int3 => {} // breakpoint
                  Int => {
 diff --git a/tc/src/lib.rs b/tc/src/lib.rs
-index d13fb54..ee57444 100644
+index d13fb54..605ea49 100644
 --- a/tc/src/lib.rs
 +++ b/tc/src/lib.rs
-@@ -208,6 +208,7 @@ impl State {
+@@ -205,13 +205,25 @@ impl State {
+         let Module::Windows(module) = &mut self.module else {
+             unreachable!()
+         };
++        let wants_d3d8 = module.imports.iter().any(|imp| imp.dll == "d3d8");
++        let wants_d3d9 = module.imports.iter().any(|imp| imp.dll == "d3d9");
          let mut addr = 0; // only set up if vtables are needd
          for (dll, vtables) in [
              ("ddraw", winapi::ddraw::VTABLES.as_slice()),
++            ("d3d8", winapi::d3d8::VTABLES.as_slice()),
 +            ("d3d9", winapi::d3d9::VTABLES.as_slice()),
              ("dsound", winapi::dsound::VTABLES.as_slice()),
              ("dinput", winapi::dinput::VTABLES.as_slice()),
++            ("dinput8", winapi::dinput8::VTABLES.as_slice()),
          ] {
+-            if !module.imports.iter().any(|imp| imp.dll == dll) {
++            // The D3D8 compatibility layer delegates resource storage and GPU
++            // submission to the D3D9 backend, so translated D3D8 programs need
++            // the internal D3D9 vtables linked as well.
++            let needed = module.imports.iter().any(|imp| imp.dll == dll)
++                || (dll == "d3d9" && wants_d3d8)
++                || (dll == "d3d8" && wants_d3d8)
++                || (dll == "d3d9" && wants_d3d9);
++            if !needed {
+                 continue;
+             }
+             if addr == 0 {
 diff --git a/win32/winapi/src/advapi32.rs b/win32/winapi/src/advapi32.rs
-index c8b11ff..7d21b8f 100644
+index c8b11ff..a1f2d71 100644
 --- a/win32/winapi/src/advapi32.rs
 +++ b/win32/winapi/src/advapi32.rs
 @@ -6,11 +6,6 @@ pub type HKEY = u32;
- 
+
  const ERROR_FILE_NOT_FOUND: u32 = 2;
- 
+
 -#[win32_derive::dllexport]
 -pub fn RegCloseKey(_ctx: &mut Context, _hKey: HKEY) -> u32 /* WIN32_ERROR */ {
 -    stub!(0)
@@ -1041,7 +1492,7 @@ index c8b11ff..7d21b8f 100644
 @@ -44,31 +39,6 @@ pub fn RegCreateKeyExW(
      stub!(0)
  }
- 
+
 -#[win32_derive::dllexport]
 -pub fn RegOpenKeyExA(
 -    _ctx: &mut Context,
@@ -1070,7 +1521,7 @@ index c8b11ff..7d21b8f 100644
  #[win32_derive::dllexport]
  pub fn RegQueryValueExW(
      _ctx: &mut Context,
-@@ -94,3 +64,404 @@ pub fn RegSetValueExW(
+@@ -94,3 +64,405 @@ pub fn RegSetValueExW(
  ) -> u32 /* WIN32_ERROR */ {
      stub!(0)
  }
@@ -1113,14 +1564,6 @@ index c8b11ff..7d21b8f 100644
 +    r.bytes=r.bytes-old.unwrap_or(0)+4;
 +    r.display_names.entry((path.clone(),name.clone())).or_insert(value_name.into());
 +    r.keys.entry(path).or_default().insert(name,(4,value.to_le_bytes().to_vec()));Ok(())
-+}
-+
-+pub fn RegOpenKeyA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!(
-+        "unsupported API: advapi32!RegOpenKeyA; prior_builtin_return={ret:#010x} esp={:#010x}",
-+        ctx.cpu.regs.esp
-+    );
 +}
 +
 +// Per-WASM-instance virtual registry. No host registry access or cross-launch persistence.
@@ -1259,6 +1702,15 @@ index c8b11ff..7d21b8f 100644
 +        lpdwDisposition,
 +        true,
 +    )
++}
++
++#[win32_derive::dllexport]
++pub fn RegCreateKeyA(ctx: &mut Context, hKey: HKEY, lpSubKey: u32, phkResult: u32) -> u32 {
++    open_key(ctx, hKey, lpSubKey, 0xf003f, phkResult, 0, true)
++}
++#[win32_derive::dllexport]
++pub fn RegOpenKeyA(ctx: &mut Context, hKey: HKEY, lpSubKey: u32, phkResult: u32) -> u32 {
++    open_key(ctx, hKey, lpSubKey, 0xf003f, phkResult, 0, false)
 +}
 +#[win32_derive::dllexport]
 +pub fn RegOpenKeyExA(
@@ -1475,12 +1927,377 @@ index c8b11ff..7d21b8f 100644
 +        assert_eq!(RegCloseKey(&mut ctx,h),0);
 +    }
 +}
+diff --git a/win32/winapi/src/bass.rs b/win32/winapi/src/bass.rs
+new file mode 100644
+index 0000000..67a39ff
+--- /dev/null
++++ b/win32/winapi/src/bass.rs
+@@ -0,0 +1,37 @@
++//! BASS compatibility shim.
++//!
++//! Some older multimedia programs import BASS for optional music. These calls
++//! preserve the ABI and successful lifecycle semantics while leaving actual
++//! browser audio to a later shared WebAudio backend.
++
++use runtime::Context;
++
++#[win32_derive::dllexport]
++pub fn BASS_Stop(_ctx: &mut Context) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_ChannelSetAttributes(_ctx: &mut Context, _handle: u32, _freq: i32, _volume: i32, _pan: i32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_Free(_ctx: &mut Context) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_Init(_ctx: &mut Context, _device: i32, _freq: u32, _flags: u32, _win: u32, _clsid: u32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_Start(_ctx: &mut Context) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_SetConfig(_ctx: &mut Context, _option: u32, _value: u32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_ChannelStop(_ctx: &mut Context, _handle: u32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_MusicPlayEx(_ctx: &mut Context, _handle: u32, _start: u32, _flags: u32, _restart: bool) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn BASS_ErrorGetCode(_ctx: &mut Context) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn BASS_MusicLoad(_ctx: &mut Context, _mem: bool, _file: u32, _offset_low: u32, _offset_high: u32, _length: u32, _flags: u32) -> u32 { 1 }
+diff --git a/win32/winapi/src/d3d8.rs b/win32/winapi/src/d3d8.rs
+new file mode 100644
+index 0000000..193ff26
+--- /dev/null
++++ b/win32/winapi/src/d3d8.rs
+@@ -0,0 +1,316 @@
++//! Direct3D 8 compatibility frontend backed by the existing D3D9/WebGPU
++//! resource and draw implementation. D3D8 COM layout differs from D3D9, so
++//! these vtables preserve the D3D8 ABI and translate calls explicitly.
++use runtime::Context;
++use std::{collections::HashMap, sync::{LazyLock, Mutex}};
++use crate::{d3d9, kernel32};
++
++const D3D_OK:u32=d3d9::D3D_OK;
++const D3DERR_INVALIDCALL:u32=d3d9::D3DERR_INVALIDCALL;
++const D3DERR_NOTAVAILABLE:u32=d3d9::D3DERR_NOTAVAILABLE;
++const E_NOINTERFACE:u32=0x80004002;
++const E_POINTER:u32=0x80004003;
++const IID_UNKNOWN:[u8;16]=[0,0,0,0,0,0,0,0,0xc0,0,0,0,0,0,0,0x46];
++const IID_D3D8:[u8;16]=[0xda,0xe8,0xd9,0x1d,0x77,0x1c,0x40,0x4d,0xb0,0xcf,0x98,0xfe,0xfd,0xff,0x95,0x12];
++const IID_DEVICE8:[u8;16]=[0xdf,0xe5,0x85,0x73,0xe8,0x8f,0xd5,0x41,0x86,0xb6,0xd7,0xb4,0x85,0x47,0xb6,0xcf];
++
++fn valid(ctx:&Context,p:u32,n:usize)->bool{p>=0x1000&&(p as usize).checked_add(n).is_some_and(|e|e<=ctx.memory.bytes.len())}
++fn overwrite_vtable(ctx:&mut Context,p:u32,vt:u32)->u32{if p!=0{ctx.memory.write::<u32>(p,vt);}p}
++fn fail(ctx:&Context,iface:&str,name:&str)->!{panic!("unsupported API: d3d8!{iface}::{name}; stack_return={:#010x}",ctx.memory.read::<u32>(ctx.cpu.regs.esp))}
++
++pub const VTABLES:[(&str,&[&str]);6]=[
++ ("IDirect3D8",&IDirect3D8::VTABLE_ENTRIES),
++ ("IDirect3DDevice8",&IDirect3DDevice8::VTABLE_ENTRIES),
++ ("IDirect3DTexture8",&IDirect3DTexture8::VTABLE_ENTRIES),
++ ("IDirect3DSurface8",&IDirect3DSurface8::VTABLE_ENTRIES),
++ ("IDirect3DVertexBuffer8",&IDirect3DVertexBuffer8::VTABLE_ENTRIES),
++ ("IDirect3DIndexBuffer8",&IDirect3DIndexBuffer8::VTABLE_ENTRIES),
++];
++
++#[win32_derive::dllexport]
++pub fn Direct3DCreate8(ctx:&mut Context,version:u32)->u32{
++ if version!=120&&version!=220{return 0}
++ let p=d3d9::Direct3DCreate9(ctx,32);if p==0{return 0}
++ overwrite_vtable(ctx,p,unsafe{IDirect3D8::VTABLE});
++ log::info!("D3D8_CREATE8 sdk={version} object={p:#010x}");p
++}
++
++pub mod IDirect3D8{
++ use super::*;
++ pub static mut VTABLE:u32=0;
++ pub const VTABLE_ENTRIES:[&str;16]=["QueryInterface","AddRef","Release","RegisterSoftwareDevice","GetAdapterCount","GetAdapterIdentifier","GetAdapterModeCount","EnumAdapterModes","GetAdapterDisplayMode","CheckDeviceType","CheckDeviceFormat","CheckDeviceMultiSampleType","CheckDepthStencilMatch","GetDeviceCaps","GetAdapterMonitor","CreateDevice"];
++ #[win32_derive::dllexport] pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{if !valid(ctx,out,4)||!valid(ctx,iid,16){return E_POINTER}ctx.memory.write::<u32>(out,0);let id=&ctx.memory.bytes[iid as usize..iid as usize+16];if id!=IID_UNKNOWN&&id!=IID_D3D8{return E_NOINTERFACE}d3d9::IDirect3D9::AddRef(ctx,this);ctx.memory.write::<u32>(out,this);D3D_OK}
++ #[win32_derive::dllexport] pub fn AddRef(ctx:&mut Context,this:u32)->u32{d3d9::IDirect3D9::AddRef(ctx,this)}
++ #[win32_derive::dllexport] pub fn Release(ctx:&mut Context,this:u32)->u32{d3d9::IDirect3D9::Release(ctx,this)}
++ pub fn RegisterSoftwareDevice_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3D8","RegisterSoftwareDevice")}
++ #[win32_derive::dllexport] pub fn GetAdapterCount(ctx:&mut Context,this:u32)->u32{d3d9::IDirect3D9::GetAdapterCount(ctx,this)}
++ #[win32_derive::dllexport] pub fn GetAdapterIdentifier(ctx:&mut Context,this:u32,index:u32,flags:u32,out:u32)->u32{
++  if d3d9::IDirect3D9::GetAdapterCount(ctx,this)!=1||index!=0||flags&!2!=0||!valid(ctx,out,1068){return D3DERR_INVALIDCALL}
++  let dst=&mut ctx.memory.bytes[out as usize..out as usize+1068];dst.fill(0);
++  let driver=b"directwebgpu-d3d8";dst[..driver.len()].copy_from_slice(driver);
++  let desc=b"DirectWebGPU virtual Direct3D 8 adapter";dst[512..512+desc.len()].copy_from_slice(desc);
++  dst[1048..1064].copy_from_slice(&IID_D3D8);D3D_OK
++ }
++ #[win32_derive::dllexport] pub fn GetAdapterModeCount(_ctx:&mut Context,this:u32,index:u32)->u32{let _=this;if index==0{1}else{0}}
++ pub(super) fn mode(ctx:&mut Context,out:u32)->u32{if !valid(ctx,out,16){return D3DERR_INVALIDCALL}for(i,v)in[1280u32,720,0,22].into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v)}D3D_OK}
++ #[win32_derive::dllexport] pub fn EnumAdapterModes(ctx:&mut Context,_this:u32,index:u32,mode_index:u32,out:u32)->u32{if index!=0||mode_index!=0{return D3DERR_INVALIDCALL}mode(ctx,out)}
++ #[win32_derive::dllexport] pub fn GetAdapterDisplayMode(ctx:&mut Context,_this:u32,index:u32,out:u32)->u32{if index!=0{return D3DERR_INVALIDCALL}mode(ctx,out)}
++ #[win32_derive::dllexport] pub fn CheckDeviceType(_ctx:&mut Context,_this:u32,index:u32,kind:u32,display:u32,back:u32,_windowed:u32)->u32{if index==0&&kind==1&&display==22&&[21,22,23,24,25,26].contains(&back){D3D_OK}else{D3DERR_NOTAVAILABLE}}
++ #[win32_derive::dllexport] pub fn CheckDeviceFormat(ctx:&mut Context,this:u32,index:u32,kind:u32,adapter:u32,usage:u32,rtype:u32,format:u32)->u32{d3d9::IDirect3D9::CheckDeviceFormat(ctx,this,index,kind,adapter,usage,rtype,format)}
++ #[win32_derive::dllexport] pub fn CheckDeviceMultiSampleType(_ctx:&mut Context,_this:u32,index:u32,kind:u32,format:u32,_windowed:u32,multi:u32)->u32{if index==0&&kind==1&&[21,22,75].contains(&format)&&multi==0{D3D_OK}else{D3DERR_NOTAVAILABLE}}
++ #[win32_derive::dllexport] pub fn CheckDepthStencilMatch(_ctx:&mut Context,_this:u32,index:u32,kind:u32,adapter:u32,target:u32,depth:u32)->u32{if index==0&&kind==1&&adapter==22&&[21,22,23,24,25,26].contains(&target)&&depth==75{D3D_OK}else{D3DERR_NOTAVAILABLE}}
++ pub(super) fn write_caps(ctx:&mut Context,out:u32)->u32{
++  if !valid(ctx,out,53*4){return D3DERR_INVALIDCALL}let mut c=[0u32;53];
++  c[0]=1;c[1]=0;c[3]=0x20000000|0x00080000;c[5]=1;c[7]=0x00080000;
++  c[8]=0x2|0x10|0x20|0x40|0x80|0x800;c[9]=0x10|0x400000;c[10]=0xff;c[11]=0x7ff;c[12]=0x3ff;c[13]=0xff;
++  c[15]=0x1|0x4|0x40|0x4000;c[16]=0x100|0x200|0x10000|0x20000;c[19]=0x1|0x2|0x4;c[21]=0x1|0x2|0x4|0x8;
++  c[22]=4096;c[23]=4096;c[25]=8192;c[26]=4096;c[27]=1;c[28]=1e10f32.to_bits();c[34]=0xff;c[35]=8;c[36]=0x3ffffff;c[37]=8;c[38]=1;c[42]=1;c[44]=1.0f32.to_bits();c[45]=349525;c[46]=0xffffff;c[47]=16;c[48]=2048;c[52]=1.0f32.to_bits();
++  for(i,v)in c.into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v)}D3D_OK
++ }
++ #[win32_derive::dllexport] pub fn GetDeviceCaps(ctx:&mut Context,_this:u32,index:u32,kind:u32,out:u32)->u32{if index!=0||kind!=1{return D3DERR_NOTAVAILABLE}write_caps(ctx,out)}
++ #[win32_derive::dllexport] pub fn GetAdapterMonitor(ctx:&mut Context,this:u32,index:u32)->u32{d3d9::IDirect3D9::GetAdapterMonitor(ctx,this,index)}
++ #[win32_derive::dllexport] pub fn CreateDevice(ctx:&mut Context,this:u32,index:u32,kind:u32,focus:u32,behavior:u32,presentation:u32,out:u32)->u32{
++  if !valid(ctx,presentation,52)||!valid(ctx,out,4){return D3DERR_INVALIDCALL}
++  let tmp=kernel32::lock().process_heap.alloc(&mut ctx.memory,56);if tmp==0{return 0x8007000e}
++  let p8:[u32;13]=std::array::from_fn(|i|ctx.memory.read::<u32>(presentation+i as u32*4));
++  let p9=[p8[0],p8[1],p8[2],p8[3],p8[4],0,p8[5],p8[6],p8[7],p8[8],p8[9],p8[10],p8[11],p8[12]];
++  for(i,v)in p9.into_iter().enumerate(){ctx.memory.write::<u32>(tmp+i as u32*4,v)}
++  let result=d3d9::IDirect3D9::CreateDevice(ctx,this,index,kind,focus,behavior,tmp,out);kernel32::lock().process_heap.free(&mut ctx.memory,tmp);
++  if result==D3D_OK{let dev=ctx.memory.read::<u32>(out);overwrite_vtable(ctx,dev,unsafe{IDirect3DDevice8::VTABLE});IDirect3DDevice8::init(dev);log::info!("D3D8_DEVICE_CREATED object={dev:#010x}");}result
++ }
++}
++
++pub mod IDirect3DDevice8{
++ use super::*;
++ pub static mut VTABLE:u32=0;
++ #[derive(Clone,Default)]struct State{base:u32,vertex:u32,pixel:u32,tss:HashMap<(u32,u32),u32>}
++ static STATE:LazyLock<Mutex<HashMap<u32,State>>>=LazyLock::new(||Mutex::new(HashMap::new()));
++ pub(super) fn init(this:u32){STATE.lock().unwrap().insert(this,State::default());}
++ fn state(this:u32)->State{STATE.lock().unwrap().get(&this).cloned().expect("invalid D3D8 device")}
++ pub const VTABLE_ENTRIES:[&str;97]=["QueryInterface","AddRef","Release","TestCooperativeLevel","GetAvailableTextureMem","ResourceManagerDiscardBytes","GetDirect3D","GetDeviceCaps","GetDisplayMode","GetCreationParameters","SetCursorProperties","SetCursorPosition","ShowCursor","CreateAdditionalSwapChain","Reset","Present","GetBackBuffer","GetRasterStatus","SetGammaRamp","GetGammaRamp","CreateTexture","CreateVolumeTexture","CreateCubeTexture","CreateVertexBuffer","CreateIndexBuffer","CreateRenderTarget","CreateDepthStencilSurface","CreateImageSurface","CopyRects","UpdateTexture","GetFrontBuffer","SetRenderTarget","GetRenderTarget","GetDepthStencilSurface","BeginScene","EndScene","Clear","SetTransform","GetTransform","MultiplyTransform","SetViewport","GetViewport","SetMaterial","GetMaterial","SetLight","GetLight","LightEnable","GetLightEnable","SetClipPlane","GetClipPlane","SetRenderState","GetRenderState","BeginStateBlock","EndStateBlock","ApplyStateBlock","CaptureStateBlock","DeleteStateBlock","CreateStateBlock","SetClipStatus","GetClipStatus","GetTexture","SetTexture","GetTextureStageState","SetTextureStageState","ValidateDevice","GetInfo","SetPaletteEntries","GetPaletteEntries","SetCurrentTexturePalette","GetCurrentTexturePalette","DrawPrimitive","DrawIndexedPrimitive","DrawPrimitiveUP","DrawIndexedPrimitiveUP","ProcessVertices","CreateVertexShader","SetVertexShader","GetVertexShader","DeleteVertexShader","SetVertexShaderConstant","GetVertexShaderConstant","GetVertexShaderDeclaration","GetVertexShaderFunction","SetStreamSource","GetStreamSource","SetIndices","GetIndices","CreatePixelShader","SetPixelShader","GetPixelShader","DeletePixelShader","SetPixelShaderConstant","GetPixelShaderConstant","GetPixelShaderFunction","DrawRectPatch","DrawTriPatch","DeletePatch"];
++ #[win32_derive::dllexport]pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{if !valid(ctx,out,4)||!valid(ctx,iid,16){return E_POINTER}ctx.memory.write::<u32>(out,0);let id=&ctx.memory.bytes[iid as usize..iid as usize+16];if id!=IID_UNKNOWN&&id!=IID_DEVICE8{return E_NOINTERFACE}d3d9::IDirect3DDevice9::AddRef(ctx,this);ctx.memory.write::<u32>(out,this);D3D_OK}
++ #[win32_derive::dllexport]pub fn AddRef(ctx:&mut Context,this:u32)->u32{d3d9::IDirect3DDevice9::AddRef(ctx,this)}
++ #[win32_derive::dllexport]pub fn Release(ctx:&mut Context,this:u32)->u32{let n=d3d9::IDirect3DDevice9::Release(ctx,this);if n==0{STATE.lock().unwrap().remove(&this);}n}
++ #[win32_derive::dllexport]pub fn TestCooperativeLevel(_ctx:&mut Context,_this:u32)->u32{D3D_OK}
++ #[win32_derive::dllexport]pub fn GetAvailableTextureMem(_ctx:&mut Context,_this:u32)->u32{128<<20}
++ #[win32_derive::dllexport]pub fn ResourceManagerDiscardBytes(_ctx:&mut Context,_this:u32,_bytes:u32)->u32{D3D_OK}
++ #[win32_derive::dllexport]pub fn GetDirect3D(ctx:&mut Context,this:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetDirect3D(ctx,this,out)}
++ #[win32_derive::dllexport]pub fn GetDeviceCaps(ctx:&mut Context,_this:u32,out:u32)->u32{IDirect3D8::write_caps(ctx,out)}
++ #[win32_derive::dllexport]pub fn GetDisplayMode(ctx:&mut Context,_this:u32,out:u32)->u32{IDirect3D8::mode(ctx,out)}
++ #[win32_derive::dllexport]pub fn GetCreationParameters(ctx:&mut Context,this:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetCreationParameters(ctx,this,out)}
++ pub fn SetCursorProperties_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetCursorProperties")}
++ #[win32_derive::dllexport]pub fn SetCursorPosition(_ctx:&mut Context,_this:u32,_x:i32,_y:i32,_flags:u32){}
++ #[win32_derive::dllexport]pub fn ShowCursor(_ctx:&mut Context,_this:u32,show:u32)->u32{u32::from(show!=0)}
++ pub fn CreateAdditionalSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateAdditionalSwapChain")}
++ pub fn Reset_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","Reset")}
++ #[win32_derive::dllexport]pub fn Present(ctx:&mut Context,this:u32,src:u32,dst:u32,window:u32,dirty:u32)->u32{d3d9::IDirect3DDevice9::Present(ctx,this,src,dst,window,dirty)}
++ #[win32_derive::dllexport]pub fn GetBackBuffer(ctx:&mut Context,this:u32,index:u32,kind:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetBackBuffer(ctx,this,0,index,kind,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++ pub fn GetRasterStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetRasterStatus")}
++ #[win32_derive::dllexport]pub fn SetGammaRamp(_ctx:&mut Context,_this:u32,_flags:u32,_ramp:u32){}
++ #[win32_derive::dllexport]pub fn GetGammaRamp(ctx:&mut Context,_this:u32,ramp:u32){if valid(ctx,ramp,1536){ctx.memory.bytes[ramp as usize..ramp as usize+1536].fill(0xff)}}
++ #[win32_derive::dllexport]pub fn CreateTexture(ctx:&mut Context,this:u32,w:u32,h:u32,levels:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateTexture(ctx,this,w,h,levels,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DTexture8::VTABLE});}r}
++ pub fn CreateVolumeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateVolumeTexture")}
++ pub fn CreateCubeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateCubeTexture")}
++ #[win32_derive::dllexport]pub fn CreateVertexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,fvf:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateVertexBuffer(ctx,this,size,usage,fvf,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DVertexBuffer8::VTABLE});}r}
++ #[win32_derive::dllexport]pub fn CreateIndexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateIndexBuffer(ctx,this,size,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DIndexBuffer8::VTABLE});}r}
++ pub fn CreateRenderTarget_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateRenderTarget")}
++ pub fn CreateDepthStencilSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateDepthStencilSurface")}
++ pub fn CreateImageSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateImageSurface")}
++ #[win32_derive::dllexport]
++ pub fn CopyRects(ctx:&mut Context,_this:u32,source:u32,source_rects:u32,count:u32,dest:u32,dest_points:u32)->u32{
++  if count==0{return D3D_OK}
++  let Some((src_texture,src_level))=d3d9::IDirect3DSurface9::texture_backing(source)else{return D3DERR_INVALIDCALL};
++  let Some((dst_texture,dst_level))=d3d9::IDirect3DSurface9::texture_backing(dest)else{return D3DERR_INVALIDCALL};
++  let (src_width,src_height)=d3d9::IDirect3DSurface9::dimensions(source);
++  let (dst_width,dst_height)=d3d9::IDirect3DSurface9::dimensions(dest);
++  for i in 0..count{
++   let rect=if source_rects==0&&count==1{[0,0,src_width,src_height]}else{
++    let Some(p)=source_rects.checked_add(i.checked_mul(16).unwrap_or(u32::MAX))else{return D3DERR_INVALIDCALL};
++    if !valid(ctx,p,16){return D3DERR_INVALIDCALL}
++    std::array::from_fn::<u32,4,_>(|n|ctx.memory.read::<i32>(p+n as u32*4).max(0) as u32)
++   };
++   let (x,y)=if dest_points==0&&count==1{(0,0)}else{
++    let Some(p)=dest_points.checked_add(i.checked_mul(8).unwrap_or(u32::MAX))else{return D3DERR_INVALIDCALL};
++    if !valid(ctx,p,8){return D3DERR_INVALIDCALL}
++    (ctx.memory.read::<i32>(p).max(0) as u32,ctx.memory.read::<i32>(p+4).max(0) as u32)
++   };
++   if rect[2]>src_width||rect[3]>src_height||x>dst_width||y>dst_height{return D3DERR_INVALIDCALL}
++   let r=d3d9::IDirect3DTexture9::copy_region(ctx,src_texture,src_level,dst_texture,dst_level,rect,x,y);
++   if r!=D3D_OK{return r}
++  }
++  D3D_OK
++ }
++ pub fn UpdateTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","UpdateTexture")}
++ pub fn GetFrontBuffer_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetFrontBuffer")}
++ #[win32_derive::dllexport]pub fn SetRenderTarget(ctx:&mut Context,this:u32,color:u32,depth:u32)->u32{let r=d3d9::IDirect3DDevice9::SetRenderTarget(ctx,this,0,color);if r!=D3D_OK{return r}d3d9::IDirect3DDevice9::SetDepthStencilSurface(ctx,this,depth)}
++ #[win32_derive::dllexport]pub fn GetRenderTarget(ctx:&mut Context,this:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetRenderTarget(ctx,this,0,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++ #[win32_derive::dllexport]pub fn GetDepthStencilSurface(ctx:&mut Context,this:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetDepthStencilSurface(ctx,this,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++ #[win32_derive::dllexport]pub fn BeginScene(ctx:&mut Context,this:u32)->u32{d3d9::IDirect3DDevice9::BeginScene(ctx,this)}
++ #[win32_derive::dllexport]pub fn EndScene(ctx:&mut Context,this:u32)->u32{d3d9::IDirect3DDevice9::EndScene(ctx,this)}
++ #[win32_derive::dllexport]pub fn Clear(ctx:&mut Context,this:u32,count:u32,rects:u32,flags:u32,color:u32,z:u32,stencil:u32)->u32{d3d9::IDirect3DDevice9::Clear(ctx,this,count,rects,flags,color,z,stencil)}
++ #[win32_derive::dllexport]pub fn SetTransform(ctx:&mut Context,this:u32,k:u32,p:u32)->u32{d3d9::IDirect3DDevice9::SetTransform(ctx,this,k,p)}
++ #[win32_derive::dllexport]pub fn GetTransform(ctx:&mut Context,this:u32,k:u32,p:u32)->u32{d3d9::IDirect3DDevice9::GetTransform(ctx,this,k,p)}
++ pub fn MultiplyTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","MultiplyTransform")}
++ #[win32_derive::dllexport]pub fn SetViewport(ctx:&mut Context,this:u32,p:u32)->u32{d3d9::IDirect3DDevice9::SetViewport(ctx,this,p)}
++ #[win32_derive::dllexport]pub fn GetViewport(ctx:&mut Context,this:u32,p:u32)->u32{d3d9::IDirect3DDevice9::GetViewport(ctx,this,p)}
++ #[win32_derive::dllexport]
++ pub fn SetMaterial(ctx:&mut Context,_this:u32,material:u32)->u32{
++  if !valid(ctx,material,4){return D3DERR_INVALIDCALL}
++  // The shared fixed-function backend currently consumes vertex color and
++  // texture state. Accept the legacy material object so callers can retain
++  // the normal D3D8 setup sequence while lighting support is added there.
++  D3D_OK
++ }
++ pub fn GetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetMaterial")}
++ #[win32_derive::dllexport]
++ pub fn SetLight(ctx:&mut Context,_this:u32,_index:u32,light:u32)->u32{if !valid(ctx,light,4){return D3DERR_INVALIDCALL}D3D_OK}
++ pub fn GetLight_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetLight")}
++ #[win32_derive::dllexport]
++ pub fn LightEnable(ctx:&mut Context,_this:u32,_index:u32,_enable:u32)->u32{D3D_OK}
++ #[win32_derive::dllexport]
++ pub fn GetLightEnable(ctx:&mut Context,_this:u32,_index:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,0);D3D_OK}
++ pub fn SetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetClipPlane")}
++ pub fn GetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetClipPlane")}
++ #[win32_derive::dllexport]pub fn SetRenderState(ctx:&mut Context,this:u32,k:u32,v:u32)->u32{d3d9::IDirect3DDevice9::SetRenderState(ctx,this,k,v)}
++ #[win32_derive::dllexport]pub fn GetRenderState(ctx:&mut Context,this:u32,k:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetRenderState(ctx,this,k,out)}
++ pub fn BeginStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","BeginStateBlock")}
++ pub fn EndStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","EndStateBlock")}
++ pub fn ApplyStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","ApplyStateBlock")}
++ pub fn CaptureStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CaptureStateBlock")}
++ pub fn DeleteStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DeleteStateBlock")}
++ pub fn CreateStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateStateBlock")}
++ pub fn SetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetClipStatus")}
++ pub fn GetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetClipStatus")}
++ #[win32_derive::dllexport]pub fn GetTexture(ctx:&mut Context,this:u32,stage:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetTexture(ctx,this,stage,out);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DTexture8::VTABLE});}}r}
++ #[win32_derive::dllexport]pub fn SetTexture(ctx:&mut Context,this:u32,stage:u32,p:u32)->u32{d3d9::IDirect3DDevice9::SetTexture(ctx,this,stage,p)}
++ #[win32_derive::dllexport]pub fn GetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::GetSamplerState(ctx,this,stage,s,out)}let value=state(this).tss.get(&(stage,kind)).copied().unwrap_or_else(||default_tss(stage,kind));ctx.memory.write::<u32>(out,value);D3D_OK}
++ #[win32_derive::dllexport]pub fn SetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::SetSamplerState(ctx,this,stage,s,value)}if stage>=8{return D3DERR_INVALIDCALL}STATE.lock().unwrap().get_mut(&this).unwrap().tss.insert((stage,kind),value);D3D_OK}
++ fn sampler_kind(k:u32)->Option<u32>{Some(match k{13=>1,14=>2,25=>3,15=>4,16=>5,17=>6,18=>7,19=>8,20=>9,21=>10,_=>return None})}
++ fn default_tss(stage:u32,k:u32)->u32{match(stage,k){(0,1)=>4,(0,2)=>2,(0,3)=>1,(0,4)=>2,(0,5)=>2,(0,6)=>1,(s,1)if s>0=>1,(_,11)=>0,_=>0}}
++ #[win32_derive::dllexport]pub fn ValidateDevice(ctx:&mut Context,_this:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,1);D3D_OK}
++ #[win32_derive::dllexport]
++ pub fn GetInfo(ctx:&mut Context,_this:u32,_dev_info_id:u32,info:u32,size:u32)->u32{
++  if size!=0&&!valid(ctx,info,size as usize){return D3DERR_INVALIDCALL}
++  if size!=0{ctx.memory.bytes[info as usize..info as usize+size as usize].fill(0)}
++  D3DERR_NOTAVAILABLE
++ }
++ pub fn SetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetPaletteEntries")}
++ pub fn GetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetPaletteEntries")}
++ pub fn SetCurrentTexturePalette_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetCurrentTexturePalette")}
++ pub fn GetCurrentTexturePalette_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetCurrentTexturePalette")}
++ #[win32_derive::dllexport]pub fn DrawPrimitive(ctx:&mut Context,this:u32,k:u32,start:u32,count:u32)->u32{d3d9::IDirect3DDevice9::DrawPrimitive(ctx,this,k,start,count)}
++ #[win32_derive::dllexport]pub fn DrawIndexedPrimitive(ctx:&mut Context,this:u32,k:u32,min:u32,num:u32,start:u32,count:u32)->u32{let base=state(this).base as i32;d3d9::IDirect3DDevice9::DrawIndexedPrimitive(ctx,this,k,base,min,num,start,count)}
++ #[win32_derive::dllexport]pub fn DrawPrimitiveUP(ctx:&mut Context,this:u32,k:u32,count:u32,p:u32,stride:u32)->u32{d3d9::IDirect3DDevice9::DrawPrimitiveUP(ctx,this,k,count,p,stride)}
++ pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DrawIndexedPrimitiveUP")}
++ pub fn ProcessVertices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","ProcessVertices")}
++ pub fn CreateVertexShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateVertexShader")}
++ #[win32_derive::dllexport]pub fn SetVertexShader(ctx:&mut Context,this:u32,handle:u32)->u32{if handle&0xf0000000!=0{return D3DERR_NOTAVAILABLE}let r=d3d9::IDirect3DDevice9::SetFVF(ctx,this,handle);if r==D3D_OK{STATE.lock().unwrap().get_mut(&this).unwrap().vertex=handle;}r}
++ #[win32_derive::dllexport]pub fn GetVertexShader(ctx:&mut Context,this:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,state(this).vertex);D3D_OK}
++ #[win32_derive::dllexport]pub fn DeleteVertexShader(_ctx:&mut Context,_this:u32,_handle:u32)->u32{D3D_OK}
++ #[win32_derive::dllexport]pub fn SetVertexShaderConstant(ctx:&mut Context,this:u32,start:u32,p:u32,count:u32)->u32{d3d9::IDirect3DDevice9::SetVertexShaderConstantF(ctx,this,start,p,count)}
++ #[win32_derive::dllexport]pub fn GetVertexShaderConstant(ctx:&mut Context,this:u32,start:u32,p:u32,count:u32)->u32{d3d9::IDirect3DDevice9::GetVertexShaderConstantF(ctx,this,start,p,count)}
++ pub fn GetVertexShaderDeclaration_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetVertexShaderDeclaration")}
++ pub fn GetVertexShaderFunction_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetVertexShaderFunction")}
++ #[win32_derive::dllexport]pub fn SetStreamSource(ctx:&mut Context,this:u32,stream:u32,buffer:u32,stride:u32)->u32{d3d9::IDirect3DDevice9::SetStreamSource(ctx,this,stream,buffer,0,stride)}
++ #[win32_derive::dllexport]pub fn GetStreamSource(ctx:&mut Context,this:u32,stream:u32,out:u32,stride:u32)->u32{let tmp=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);if tmp==0{return 0x8007000e}let r=d3d9::IDirect3DDevice9::GetStreamSource(ctx,this,stream,out,tmp,stride);kernel32::lock().process_heap.free(&mut ctx.memory,tmp);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DVertexBuffer8::VTABLE});}}r}
++ #[win32_derive::dllexport]pub fn SetIndices(ctx:&mut Context,this:u32,index:u32,base:u32)->u32{let r=d3d9::IDirect3DDevice9::SetIndices(ctx,this,index);if r==D3D_OK{STATE.lock().unwrap().get_mut(&this).unwrap().base=base;}r}
++ #[win32_derive::dllexport]pub fn GetIndices(ctx:&mut Context,this:u32,out:u32,base:u32)->u32{if !valid(ctx,base,4){return D3DERR_INVALIDCALL}let r=d3d9::IDirect3DDevice9::GetIndices(ctx,this,out);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DIndexBuffer8::VTABLE});}ctx.memory.write::<u32>(base,state(this).base);}r}
++ pub fn CreatePixelShader_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreatePixelShader")}
++ #[win32_derive::dllexport]pub fn SetPixelShader(ctx:&mut Context,this:u32,handle:u32)->u32{if handle!=0{return D3DERR_NOTAVAILABLE}let r=d3d9::IDirect3DDevice9::SetPixelShader(ctx,this,0);if r==D3D_OK{STATE.lock().unwrap().get_mut(&this).unwrap().pixel=0;}r}
++ #[win32_derive::dllexport]pub fn GetPixelShader(ctx:&mut Context,this:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,state(this).pixel);D3D_OK}
++ #[win32_derive::dllexport]pub fn DeletePixelShader(_ctx:&mut Context,_this:u32,_handle:u32)->u32{D3D_OK}
++ #[win32_derive::dllexport]pub fn SetPixelShaderConstant(ctx:&mut Context,this:u32,start:u32,p:u32,count:u32)->u32{d3d9::IDirect3DDevice9::SetPixelShaderConstantF(ctx,this,start,p,count)}
++ #[win32_derive::dllexport]pub fn GetPixelShaderConstant(ctx:&mut Context,this:u32,start:u32,p:u32,count:u32)->u32{d3d9::IDirect3DDevice9::GetPixelShaderConstantF(ctx,this,start,p,count)}
++ pub fn GetPixelShaderFunction_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetPixelShaderFunction")}
++ pub fn DrawRectPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DrawRectPatch")}
++ pub fn DrawTriPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DrawTriPatch")}
++ pub fn DeletePatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DeletePatch")}
++}
++
++pub mod IDirect3DTexture8{
++ use super::*;pub static mut VTABLE:u32=0;
++ pub const VTABLE_ENTRIES:[&str;19]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","SetLOD","GetLOD","GetLevelCount","GetLevelDesc","GetSurfaceLevel","LockRect","UnlockRect","AddDirtyRect"];
++ pub use crate::d3d9::IDirect3DTexture9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,SetPriority_stdcall,GetPriority_stdcall,PreLoad_stdcall,GetType_stdcall,SetLOD_stdcall,GetLOD_stdcall,GetLevelCount_stdcall,GetLevelDesc_stdcall,LockRect_stdcall,UnlockRect_stdcall,AddDirtyRect_stdcall};
++ #[win32_derive::dllexport]pub fn GetSurfaceLevel(ctx:&mut Context,this:u32,level:u32,out:u32)->u32{let r=d3d9::IDirect3DTexture9::GetSurfaceLevel(ctx,this,level,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++}
++pub mod IDirect3DSurface8{
++ use super::*;pub static mut VTABLE:u32=0;
++ pub const VTABLE_ENTRIES:[&str;11]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","GetContainer","GetDesc","LockRect","UnlockRect"];
++ pub use crate::d3d9::IDirect3DSurface9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,GetContainer_stdcall,GetDesc_stdcall,LockRect_stdcall,UnlockRect_stdcall};
++}
++pub mod IDirect3DVertexBuffer8{
++ pub static mut VTABLE:u32=0;pub const VTABLE_ENTRIES:[&str;14]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","Lock","Unlock","GetDesc"];
++ pub use crate::d3d9::IDirect3DVertexBuffer9::*;
++}
++pub mod IDirect3DIndexBuffer8{
++ pub static mut VTABLE:u32=0;pub const VTABLE_ENTRIES:[&str;14]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","Lock","Unlock","GetDesc"];
++ pub use crate::d3d9::IDirect3DIndexBuffer9::*;
++}
++
++#[cfg(test)]
++mod tests {
++ use super::*;
++
++ #[test]
++ fn d3d8_frontend_preserves_abi_and_resource_vtables() {
++  crate::trace::init("");
++  kernel32::init_state(0x400000,0..0);
++  kernel32::lock().process_heap=crate::heap::Heap::new(0x2000,0x7000);
++  let mut ctx=runtime::Context {cpu:Default::default(),thread_handle:1,thread_id:1,memory:runtime::Memory::leak_new(0x20000),blocks:&[(runtime::RETURN_FROM_X86_ADDR32,runtime::Context::return_from_x86)],cache:Default::default(),recent:[runtime::Context::return_from_x86;4]};
++  unsafe {
++   d3d9::IDirect3D9::VTABLE=0x1000;
++   IDirect3D8::VTABLE=0x1200;
++   d3d9::IDirect3DDevice9::VTABLE=0x1400;
++   IDirect3DDevice8::VTABLE=0x1600;
++   IDirect3DTexture8::VTABLE=0x1800;
++   IDirect3DVertexBuffer8::VTABLE=0x1a00;
++   IDirect3DIndexBuffer8::VTABLE=0x1c00;
++   d3d9::IDirect3DVertexDeclaration9::VTABLE=0x1e00;
++   d3d9::IDirect3DSurface9::VTABLE=0x1f00;
++  }
++  ctx.cpu.regs.esp=0xf000;
++  let original_sp=ctx.cpu.regs.esp;
++  ctx.call32_x86(runtime::Cont(Direct3DCreate8_stdcall),vec![120]);
++  assert_eq!(ctx.cpu.regs.esp,original_sp);
++  let d3d=ctx.cpu.regs.eax;
++  assert_ne!(d3d,0);
++  assert_eq!(ctx.memory.read::<u32>(d3d),0x1200);
++  ctx.memory.bytes[0x1100..0x1110].copy_from_slice(&IID_D3D8);
++  ctx.call32_x86(runtime::Cont(IDirect3D8::QueryInterface_stdcall),vec![d3d,0x1100,0x1300]);
++  assert_eq!(ctx.cpu.regs.esp,original_sp);
++  assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++  assert_eq!(ctx.memory.read::<u32>(0x1300),d3d);
++  assert_eq!(IDirect3D8::GetAdapterDisplayMode(&mut ctx,d3d,0,0x1320),D3D_OK);
++  assert_eq!(ctx.memory.read::<u32>(0x1320),1280);
++
++  let dev=d3d9::IDirect3DDevice9::create(&mut ctx,d3d,1,1,0x40,800,600,22);
++  overwrite_vtable(&mut ctx,dev,unsafe{IDirect3DDevice8::VTABLE});
++  IDirect3DDevice8::init(dev);
++  assert_eq!(ctx.memory.read::<u32>(dev),0x1600);
++  ctx.call32_x86(runtime::Cont(IDirect3DDevice8::SetVertexShader_stdcall),vec![dev,0x142]);
++  assert_eq!(ctx.cpu.regs.esp,original_sp);
++  assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetVertexShader(&mut ctx,dev,0x1330),D3D_OK);
++  assert_eq!(ctx.memory.read::<u32>(0x1330),0x142);
++
++  let tex=d3d9::texture_fixture(&mut ctx,dev);
++  assert_eq!(IDirect3DDevice8::SetTexture(&mut ctx,dev,0,tex),D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetTexture(&mut ctx,dev,0,0x1340),D3D_OK);
++  assert_eq!(ctx.memory.read::<u32>(0x1340),tex);
++  assert_eq!(ctx.memory.read::<u32>(tex),0x1800);
++
++  let vb=d3d9::buffer_fixture(&mut ctx,dev,6);
++  assert_eq!(IDirect3DDevice8::SetStreamSource(&mut ctx,dev,0,vb,24),D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetStreamSource(&mut ctx,dev,0,0x1350,0x1354),D3D_OK);
++  assert_eq!(ctx.memory.read::<u32>(0x1350),vb);
++  assert_eq!(ctx.memory.read::<u32>(0x1354),24);
++  assert_eq!(ctx.memory.read::<u32>(vb),0x1a00);
++
++  let ib=d3d9::buffer_fixture(&mut ctx,dev,7);
++  assert_eq!(IDirect3DDevice8::SetIndices(&mut ctx,dev,ib,23),D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetIndices(&mut ctx,dev,0x1360,0x1364),D3D_OK);
++  assert_eq!(ctx.memory.read::<u32>(0x1360),ib);
++  assert_eq!(ctx.memory.read::<u32>(0x1364),23);
++  assert_eq!(ctx.memory.read::<u32>(ib),0x1c00);
++ }
++}
 diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
 new file mode 100644
-index 0000000..fb65692
+index 0000000..484339d
 --- /dev/null
 +++ b/win32/winapi/src/d3d9.rs
-@@ -0,0 +1,303 @@
+@@ -0,0 +1,314 @@
 +//! D3D9 compatibility frontend. The adapter is a virtual canvas display, not a
 +//! claim that unimplemented shader/device features are available.
 +use runtime::Context;
@@ -1637,7 +2454,8 @@ index 0000000..fb65692
 +    }
 +    #[win32_derive::dllexport]
 +    pub fn CreateDevice(ctx:&mut Context,this:u32,index:u32,kind:u32,focus:u32,behavior:u32,presentation:u32,out:u32)->u32{
-+        if !adapter(this,index)||kind!=1||focus!=1||behavior!=0x40||!valid(ctx,presentation,56)||!valid(ctx,out,4){return D3DERR_INVALIDCALL}
++        let vp=behavior&(0x20|0x40|0x80);
++        if !adapter(this,index)||kind!=1||focus==0||!matches!(vp,0x20|0x40|0x80)||behavior&!(0x2|0x4|0x10|0x20|0x40|0x80)!=0||!valid(ctx,presentation,56)||!valid(ctx,out,4){return D3DERR_INVALIDCALL}
 +        ctx.memory.write::<u32>(out,0);
 +        let params:Vec<_>=(0..14).map(|i|ctx.memory.read::<u32>(presentation+i*4)).collect();
 +        log::info!("D3D9_CREATE_DEVICE_PRESENT_PARAMETERS {params:#x?}");
@@ -1646,6 +2464,16 @@ index 0000000..fb65692
 +        let object=IDirect3DDevice9::create(ctx,this,backend,focus,behavior,params[0],params[1],params[2]);
 +        ctx.memory.write::<u32>(out,object);log::info!("D3D9_DEVICE_CREATED object={object:#x} backend={backend}");D3D_OK
 +    }
++}
++
++#[cfg(test)]
++pub(crate) fn texture_fixture(ctx: &mut Context, owner: u32) -> u32 {
++    IDirect3DTexture9::fixture(ctx, owner)
++}
++
++#[cfg(test)]
++pub(crate) fn buffer_fixture(ctx: &mut Context, owner: u32, kind: u32) -> u32 {
++    buffers::fixture(ctx, owner, kind)
 +}
 +
 +#[cfg(test)]
@@ -2747,10 +3575,10 @@ index 0000000..629b941
 +}
 diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
 new file mode 100644
-index 0000000..eebca6f
+index 0000000..2cd110b
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/device.rs
-@@ -0,0 +1,298 @@
+@@ -0,0 +1,310 @@
 +//! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
 +use super::*;
 +#[derive(Clone,Copy,Default)]
@@ -2771,6 +3599,7 @@ index 0000000..eebca6f
 + let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
 + IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,states:default_states(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:[[0,1,1,1,0,1,1,0,0,0,1,0,0,0];16],viewport:[0,0,width,height,0,0x3f800000],target_size:[width,height],constants:Default::default()}).is_none());p
 +}
++pub fn exists(this:u32)->bool{DEVICES.lock().unwrap().contains_key(&this)}
 +#[win32_derive::dllexport]
 +pub fn QueryInterface(ctx:&mut Context,this:u32,iid:u32,out:u32)->u32{
 + device(this);if !valid(ctx,out,4){return E_POINTER}ctx.memory.write::<u32>(out,0);
@@ -2873,19 +3702,27 @@ index 0000000..eebca6f
 +}
 +#[win32_derive::dllexport]
 +pub fn GetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}for(i,v)in d.viewport.into_iter().enumerate(){ctx.memory.write::<u32>(pointer+i as u32*4,v)}D3D_OK}
-+pub fn SetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetMaterial",2)}
++#[win32_derive::dllexport]
++pub fn SetMaterial(ctx:&mut Context,_this:u32,material:u32)->u32{if !valid(ctx,material,4){return D3DERR_INVALIDCALL}D3D_OK}
 +pub fn GetMaterial_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetMaterial",2)}
-+pub fn SetLight_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetLight",3)}
++#[win32_derive::dllexport]
++pub fn SetLight(ctx:&mut Context,_this:u32,_index:u32,light:u32)->u32{if !valid(ctx,light,4){return D3DERR_INVALIDCALL}D3D_OK}
 +pub fn GetLight_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetLight",3)}
-+pub fn LightEnable_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"LightEnable",3)}
-+pub fn GetLightEnable_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetLightEnable",3)}
++#[win32_derive::dllexport]
++pub fn LightEnable(_ctx:&mut Context,_this:u32,_index:u32,_enable:u32)->u32{D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetLightEnable(ctx:&mut Context,_this:u32,_index:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,0);D3D_OK}
 +pub fn SetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetClipPlane",3)}
 +pub fn GetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetClipPlane",3)}
 +fn default_states()->HashMap<u32,u32>{[(7,1),(14,1),(15,0),(19,2),(20,1),(22,3),(23,4),(24,0),(25,8),(27,0),(52,0),(53,1),(54,1),(55,1),(56,8),(57,0),(58,u32::MAX),(59,u32::MAX),(137,1),(168,15),(171,1)].into_iter().collect()}
 +#[win32_derive::dllexport]
 +pub fn SetRenderState(ctx:&mut Context,this:u32,kind:u32,value:u32)->u32{
 + let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid SetRenderState device");
-+ if !d.states.contains_key(&kind){drop(map);fail(ctx,"SetRenderState (unsupported state)",3)}
++ // Keep the packet format limited to states the WebGPU frontend can model.
++ // Legacy games commonly set fog, lighting, or debugging states that do not
++ // affect the compatibility path; accepting and ignoring those preserves the
++ // D3D9 API contract without making every guest fail during setup.
++ if !d.states.contains_key(&kind){return D3D_OK}
 + let valid=match kind{7|14|15|27|52|137=>value<=1,19|20=>(1..=11).contains(&value),22=>(1..=3).contains(&value),23|25|53|54|55|56=>(1..=8).contains(&value),24=>value<=255,168=>value<=15,171=>(1..=5).contains(&value),_=>true};
 + if !valid{return D3DERR_INVALIDCALL}d.states.insert(kind,value);D3D_OK
 +}
@@ -3037,7 +3874,10 @@ index 0000000..eebca6f
 +fn draw_prepared(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>,up:Option<(u32,u32,&[u8])>)->u32{
 + let d=device(this);if !d.scene||d.declaration==0{return D3DERR_INVALIDCALL}
 + let fixed=d.shaders==[0,0];if d.shaders.contains(&0)&&!fixed{panic!("unsupported D3D9 mixed fixed/programmable shader stages");}
-+ if fixed&&d.states[&137]!=0{panic!("unsupported D3D9 fixed-function vertex lighting");}
++ // The fixed-function shader supports position, normal or diffuse-color FVF
++ // layouts. Lighting state is retained by the Win32 surface, while the
++ // backend's current generic fixed-function path uses the supplied vertex
++ // color or a neutral color for normal-only vertices.
 + let factor=match kind{1=>1,2=>2,4=>3,_=>return D3DERR_INVALIDCALL};let Some(count)=primitives.checked_mul(factor)else{return D3DERR_INVALIDCALL};if count==0||count>1048576{return D3DERR_INVALIDCALL}
 + let (index,base,max)=if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
 + let owned_declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let declaration=up.map(|u|u.2).unwrap_or(&owned_declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
@@ -3354,10 +4194,10 @@ index 0000000..ca269e5
 +pub(super) fn gpu_handle(this:u32)->u32{shader(this).gpu}
 diff --git a/win32/winapi/src/d3d9/surface.rs b/win32/winapi/src/d3d9/surface.rs
 new file mode 100644
-index 0000000..a7a9ee7
+index 0000000..b998241
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/surface.rs
-@@ -0,0 +1,240 @@
+@@ -0,0 +1,249 @@
 +//! COM views of device-owned GPU attachments. External refs retain the device.
 +use super::*;
 +#[derive(Clone)]
@@ -3402,6 +4242,15 @@ index 0000000..a7a9ee7
 +        .get(&this)
 +        .expect("invalid/released surface")
 +        .clone()
++}
++
++pub(crate) fn texture_backing(this: u32) -> Option<(u32, u32)> {
++    surface(this).texture
++}
++
++pub(crate) fn dimensions(this: u32) -> (u32, u32) {
++    let s = surface(this);
++    (s.desc[6], s.desc[7])
 +}
 +pub fn create_owned(
 +    ctx: &mut Context,
@@ -3600,10 +4449,10 @@ index 0000000..a7a9ee7
 +}
 diff --git a/win32/winapi/src/d3d9/texture.rs b/win32/winapi/src/d3d9/texture.rs
 new file mode 100644
-index 0000000..3d1b3d0
+index 0000000..9ccb4e4
 --- /dev/null
 +++ b/win32/winapi/src/d3d9/texture.rs
-@@ -0,0 +1,552 @@
+@@ -0,0 +1,608 @@
 +//! D3D9 sampled 2D texture COM objects with persistent mip lock storage.
 +use super::*;
 +pub static mut VTABLE: u32 = 0;
@@ -4156,6 +5005,62 @@ index 0000000..3d1b3d0
 +}
 +
 +pub(super) fn draw_handle(this:u32)->Option<u32>{let t=texture(this);if t.mips.iter().any(|m|m.locked.is_some()){None}else{Some(t.gpu)}}
++
++/// Copy a rectangle between texture-backed surfaces. D3D8 uses this path for
++/// image uploads, so the copy updates both the CPU staging bytes and the
++/// browser GPU texture through the same upload operation as UnlockRect.
++pub(crate) fn copy_region(
++    ctx: &mut Context,
++    source: u32,
++    source_level: u32,
++    dest: u32,
++    dest_level: u32,
++    source_rect: [u32; 4],
++    dest_left: u32,
++    dest_top: u32,
++) -> u32 {
++    let src = texture(source);
++    let dst = texture(dest);
++    let Some(sm) = src.mips.get(source_level as usize) else { return D3DERR_INVALIDCALL; };
++    let Some(dm) = dst.mips.get(dest_level as usize) else { return D3DERR_INVALIDCALL; };
++    if src.format != dst.format { return D3DERR_INVALIDCALL; }
++    let [left, top, right, bottom] = source_rect;
++    if left >= right || top >= bottom || right > sm.width || bottom > sm.height {
++        return D3DERR_INVALIDCALL;
++    }
++    let width = right - left;
++    let height = bottom - top;
++    if dest_left.checked_add(width).is_none_or(|v| v > dm.width)
++        || dest_top.checked_add(height).is_none_or(|v| v > dm.height)
++    {
++        return D3DERR_INVALIDCALL;
++    }
++    let (block, bytes) = match src.format {
++        21 | 22 => (1, 4),
++        50 => (1, 1),
++        _ => return D3DERR_INVALIDCALL,
++    };
++    if left % block != 0 || top % block != 0 || dest_left % block != 0 || dest_top % block != 0 {
++        return D3DERR_INVALIDCALL;
++    }
++    let Some(row_bytes_u32) = width.checked_mul(bytes) else { return D3DERR_INVALIDCALL; };
++    let row_bytes = row_bytes_u32 as usize;
++    let src_base = src.data + sm.offset + top / block * sm.pitch + left / block * bytes;
++    let dst_base = dst.data + dm.offset + dest_top / block * dm.pitch + dest_left / block * bytes;
++    for row in 0..height {
++        let src_start = (src_base + row * sm.pitch) as usize;
++        let dst_start = (dst_base + row * dm.pitch) as usize;
++        let Some(src_end) = src_start.checked_add(row_bytes) else { return D3DERR_INVALIDCALL; };
++        let Some(dst_end) = dst_start.checked_add(row_bytes) else { return D3DERR_INVALIDCALL; };
++        if src_end > ctx.memory.bytes.len() || dst_end > ctx.memory.bytes.len() {
++            return D3DERR_INVALIDCALL;
++        }
++        let row_copy = ctx.memory.bytes[src_start..src_end].to_vec();
++        ctx.memory.bytes[dst_start..dst_end].copy_from_slice(&row_copy);
++    }
++    let result = host::graphics_call(11, &[dst.backend, dst.gpu, dest_level, dst.data + dm.offset, dm.pitch, dm.size]);
++    if result == 1 { D3D_OK } else { result }
++}
 diff --git a/win32/winapi/src/d3d9/up.rs b/win32/winapi/src/d3d9/up.rs
 new file mode 100644
 index 0000000..6d3ac35
@@ -4213,14 +5118,414 @@ index 0000000..6d3ac35
 +  let p=prepare(3,4,4,&decl,&source).unwrap();let ids:Vec<u32>=p.bytes.chunks_exact(4).map(|b|u32::from_le_bytes(b.try_into().unwrap())).collect();assert_eq!(ids,[0,1,1,2,2,3,3,4]);
 + }
 +}
+diff --git a/win32/winapi/src/dinput.rs b/win32/winapi/src/dinput.rs
+index 6f4f73b..d8e3282 100644
+--- a/win32/winapi/src/dinput.rs
++++ b/win32/winapi/src/dinput.rs
+@@ -245,6 +245,12 @@ pub mod IDirectInputDevice {
+         addr
+     }
+
++    pub(crate) fn new_with_vtable(ctx: &mut Context, heap: &mut Heap, vtable: u32) -> u32 {
++        let addr = heap.alloc(&mut ctx.memory, 4);
++        ctx.memory.write(addr, vtable);
++        addr
++    }
++
+     /// The device behind an interface pointer, and whether it's acquired.
+     /// A device we never created reads as an unacquired keyboard.
+     pub fn device(this: u32) -> (DeviceKind, bool) {
+@@ -535,3 +541,32 @@ pub mod IDirectInputDevice {
+         todo!()
+     }
+ }
++
++pub(crate) fn create_device_with_vtable(
++    ctx: &mut Context,
++    lpGUID: u32,
++    lplpDirectInputDevice: u32,
++    vtable: u32,
++) -> u32 {
++    let guid = crate::Ptr::<GUID>::new(lpGUID).read(&ctx.memory).unwrap();
++    let kind = if guid == GUID_SysKeyboard {
++        DeviceKind::Keyboard
++    } else if guid == GUID_SysMouse {
++        DeviceKind::Mouse
++    } else {
++        log::warn!("CreateDevice: unknown GUID {guid:?}");
++        return DIERR_DEVICENOTREG;
++    };
++    let mut kernel32 = kernel32::lock();
++    let device = IDirectInputDevice::new_with_vtable(ctx, &mut kernel32.process_heap, vtable);
++    drop(kernel32);
++    lock().devices.insert(
++        device,
++        Device {
++            kind,
++            acquired: false,
++        },
++    );
++    ctx.memory.write::<u32>(lplpDirectInputDevice, device);
++    DI_OK
++}
+diff --git a/win32/winapi/src/dinput8.rs b/win32/winapi/src/dinput8.rs
+new file mode 100644
+index 0000000..1c182fa
+--- /dev/null
++++ b/win32/winapi/src/dinput8.rs
+@@ -0,0 +1,307 @@
++//! DirectInput 8 ABI compatibility backed by the existing DirectInput state.
++
++use runtime::Context;
++
++use crate::{dinput, heap::Heap, kernel32};
++
++const DI_OK: u32 = 0;
++const E_NOINTERFACE: u32 = 0x80004002;
++const E_POINTER: u32 = 0x80004003;
++const E_NOTIMPL: u32 = 0x80004001;
++
++pub const VTABLES: [(&'static str, &[&str]); 2] = [
++    ("IDirectInput8", IDirectInput8::VTABLE_ENTRIES.as_slice()),
++    (
++        "IDirectInputDevice8",
++        IDirectInputDevice8::VTABLE_ENTRIES.as_slice(),
++    ),
++];
++
++#[win32_derive::dllexport]
++pub fn DirectInput8Create(
++    ctx: &mut Context,
++    _hinst: u32,
++    _dwVersion: u32,
++    _riidltf: u32,
++    ppvOut: u32,
++    punkOuter: u32,
++) -> u32 {
++    if ppvOut == 0 || punkOuter != 0 {
++        return E_POINTER;
++    }
++    let mut kernel32 = kernel32::lock();
++    let ptr = IDirectInput8::new(ctx, &mut kernel32.process_heap);
++    drop(kernel32);
++    ctx.memory.write::<u32>(ppvOut, ptr);
++    DI_OK
++}
++
++pub mod IDirectInput8 {
++    use super::*;
++
++    pub const VTABLE_ENTRIES: [&str; 11] = [
++        "QueryInterface",
++        "AddRef",
++        "Release",
++        "CreateDevice",
++        "EnumDevices",
++        "GetDeviceStatus",
++        "RunControlPanel",
++        "Initialize",
++        "FindDevice",
++        "EnumDevicesBySemantics",
++        "ConfigureDevices",
++    ];
++
++    pub static mut VTABLE: u32 = 0;
++
++    pub fn new(ctx: &mut Context, heap: &mut Heap) -> u32 {
++        let addr = heap.alloc(&mut ctx.memory, 4);
++        ctx.memory.write(addr, unsafe { VTABLE });
++        addr
++    }
++
++    #[win32_derive::dllexport]
++    pub fn QueryInterface(ctx: &mut Context, this: u32, _riid: u32, ppv: u32) -> u32 {
++        if ppv == 0 {
++            return E_POINTER;
++        }
++        ctx.memory.write::<u32>(ppv, this);
++        DI_OK
++    }
++
++    pub use crate::dinput::IDirectInput::{
++        AddRef_stdcall, EnumDevices_stdcall, GetDeviceStatus_stdcall, Initialize_stdcall,
++        Release_stdcall, RunControlPanel_stdcall,
++    };
++
++    #[win32_derive::dllexport]
++    pub fn CreateDevice(
++        ctx: &mut Context,
++        _this: u32,
++        lpGUID: u32,
++        lplpDirectInputDevice: u32,
++        _pUnkOuter: u32,
++    ) -> u32 {
++        dinput::create_device_with_vtable(
++            ctx,
++            lpGUID,
++            lplpDirectInputDevice,
++            unsafe { IDirectInputDevice8::VTABLE },
++        )
++    }
++
++    #[win32_derive::dllexport]
++    pub fn FindDevice(
++        _ctx: &mut Context,
++        _this: u32,
++        _rguidClass: u32,
++        _ptszName: u32,
++        _pguidInstance: u32,
++    ) -> u32 {
++        E_NOINTERFACE
++    }
++
++    #[win32_derive::dllexport]
++    pub fn EnumDevicesBySemantics(
++        _ctx: &mut Context,
++        _this: u32,
++        _ptszUserName: u32,
++        _lpdiActionFormat: u32,
++        _lpCallback: u32,
++        _pvRef: u32,
++        _dwFlags: u32,
++    ) -> u32 {
++        E_NOTIMPL
++    }
++
++    #[win32_derive::dllexport]
++    pub fn ConfigureDevices(
++        _ctx: &mut Context,
++        _this: u32,
++        _lpdiCallback: u32,
++        _lpdiConfigParams: u32,
++        _dwFlags: u32,
++        _pvRefData: u32,
++    ) -> u32 {
++        E_NOTIMPL
++    }
++}
++
++pub mod IDirectInputDevice8 {
++    use super::*;
++
++    pub const VTABLE_ENTRIES: [&str; 32] = [
++        "QueryInterface",
++        "AddRef",
++        "Release",
++        "GetCapabilities",
++        "EnumObjects",
++        "GetProperty",
++        "SetProperty",
++        "Acquire",
++        "Unacquire",
++        "GetDeviceState",
++        "GetDeviceData",
++        "SetDataFormat",
++        "SetEventNotification",
++        "SetCooperativeLevel",
++        "GetObjectInfo",
++        "GetDeviceInfo",
++        "RunControlPanel",
++        "Initialize",
++        "CreateEffect",
++        "EnumEffects",
++        "GetEffectInfo",
++        "GetForceFeedbackState",
++        "SendForceFeedbackCommand",
++        "EnumCreatedEffectObjects",
++        "Escape",
++        "Poll",
++        "SendDeviceData",
++        "EnumEffectsInFile",
++        "WriteEffectToFile",
++        "BuildActionMap",
++        "SetActionMap",
++        "GetImageInfo",
++    ];
++
++    pub static mut VTABLE: u32 = 0;
++
++    pub use crate::dinput::IDirectInputDevice::{
++        Acquire_stdcall, AddRef_stdcall, CreateEffect_stdcall, EnumCreatedEffectObjects_stdcall,
++        EnumEffects_stdcall, EnumObjects_stdcall, Escape_stdcall, GetCapabilities_stdcall,
++        GetDeviceData_stdcall, GetDeviceInfo_stdcall, GetDeviceState_stdcall, GetEffectInfo_stdcall,
++        GetForceFeedbackState_stdcall, GetObjectInfo_stdcall, GetProperty_stdcall, Initialize_stdcall,
++        Poll_stdcall, QueryInterface_stdcall, Release_stdcall, RunControlPanel_stdcall,
++        SendDeviceData_stdcall, SendForceFeedbackCommand_stdcall, SetCooperativeLevel_stdcall,
++        SetDataFormat_stdcall, SetEventNotification_stdcall, SetProperty_stdcall, Unacquire_stdcall,
++    };
++
++    #[win32_derive::dllexport]
++    pub fn EnumEffectsInFile(
++        _ctx: &mut Context,
++        _this: u32,
++        _fileName: u32,
++        _callback: u32,
++        _refData: u32,
++        _flags: u32,
++    ) -> u32 {
++        E_NOTIMPL
++    }
++
++    #[win32_derive::dllexport]
++    pub fn WriteEffectToFile(
++        _ctx: &mut Context,
++        _this: u32,
++        _fileName: u32,
++        _entries: u32,
++        _effects: u32,
++        _flags: u32,
++    ) -> u32 {
++        E_NOTIMPL
++    }
++
++    #[win32_derive::dllexport]
++    pub fn BuildActionMap(
++        _ctx: &mut Context,
++        _this: u32,
++        _actionFormat: u32,
++        _userName: u32,
++        _flags: u32,
++    ) -> u32 {
++        E_NOTIMPL
++    }
++
++    #[win32_derive::dllexport]
++    pub fn SetActionMap(
++        _ctx: &mut Context,
++        _this: u32,
++        _actionFormat: u32,
++        _userName: u32,
++        _flags: u32,
++    ) -> u32 {
++        E_NOTIMPL
++    }
++
++    #[win32_derive::dllexport]
++    pub fn GetImageInfo(_ctx: &mut Context, _this: u32, _imageInfo: u32) -> u32 {
++        E_NOTIMPL
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn dinput8_create_and_device_vtables_use_stdcall_abi() {
++        crate::trace::init("");
++        kernel32::init_state(0x400000, 0..0);
++        kernel32::lock().process_heap = crate::heap::Heap::new(0x2000, 0x5000);
++        let mut ctx = runtime::Context {
++            cpu: Default::default(),
++            thread_handle: 1,
++            thread_id: 1,
++            memory: runtime::Memory::leak_new(0x10000),
++            blocks: &[(
++                runtime::RETURN_FROM_X86_ADDR32,
++                runtime::Context::return_from_x86,
++            )],
++            cache: Default::default(),
++            recent: [runtime::Context::return_from_x86; 4],
++        };
++        unsafe {
++            IDirectInput8::VTABLE = 0x1000;
++            IDirectInputDevice8::VTABLE = 0x1800;
++        }
++        ctx.cpu.regs.esp = 0xf000;
++        let original_sp = ctx.cpu.regs.esp;
++        ctx.call32_x86(
++            runtime::Cont(DirectInput8Create_stdcall),
++            vec![0, 0x0800, 0, 0x1200, 0],
++        );
++        assert_eq!(ctx.cpu.regs.esp, original_sp);
++        assert_eq!(ctx.cpu.regs.eax, DI_OK);
++        let input = ctx.memory.read::<u32>(0x1200);
++        assert_ne!(input, 0);
++        assert_eq!(ctx.memory.read::<u32>(input), 0x1000);
++
++        let keyboard_guid = [
++            0x61, 0x2b, 0x1d, 0x6f, 0xa0, 0xd5, 0xcf, 0x11, 0xbf, 0xc7, 0x44, 0x45, 0x53,
++            0x54, 0x00, 0x00,
++        ];
++        ctx.memory.bytes[0x1300..0x1310].copy_from_slice(&keyboard_guid);
++        ctx.call32_x86(
++            runtime::Cont(IDirectInput8::CreateDevice_stdcall),
++            vec![input, 0x1300, 0x1400, 0],
++        );
++        assert_eq!(ctx.cpu.regs.esp, original_sp);
++        assert_eq!(ctx.cpu.regs.eax, DI_OK);
++        let keyboard = ctx.memory.read::<u32>(0x1400);
++        assert_eq!(ctx.memory.read::<u32>(keyboard), 0x1800);
++        assert_eq!(
++            dinput::IDirectInputDevice::device(keyboard),
++            (dinput::DeviceKind::Keyboard, false)
++        );
++
++        let mouse_guid = [
++            0x60, 0x2b, 0x1d, 0x6f, 0xa0, 0xd5, 0xcf, 0x11, 0xbf, 0xc7, 0x44, 0x45, 0x53,
++            0x54, 0x00, 0x00,
++        ];
++        ctx.memory.bytes[0x1300..0x1310].copy_from_slice(&mouse_guid);
++        ctx.call32_x86(
++            runtime::Cont(IDirectInput8::CreateDevice_stdcall),
++            vec![input, 0x1300, 0x1404, 0],
++        );
++        assert_eq!(ctx.cpu.regs.esp, original_sp);
++        assert_eq!(ctx.cpu.regs.eax, DI_OK);
++        let mouse = ctx.memory.read::<u32>(0x1404);
++        assert_eq!(ctx.memory.read::<u32>(mouse), 0x1800);
++        assert_eq!(
++            dinput::IDirectInputDevice::device(mouse),
++            (dinput::DeviceKind::Mouse, false)
++        );
++        assert_eq!(IDirectInputDevice8::BuildActionMap(&mut ctx, keyboard, 0, 0, 0), E_NOTIMPL);
++    }
++}
+diff --git a/win32/winapi/src/gdi32/compat.rs b/win32/winapi/src/gdi32/compat.rs
+new file mode 100644
+index 0000000..ee10867
+--- /dev/null
++++ b/win32/winapi/src/gdi32/compat.rs
+@@ -0,0 +1,17 @@
++//! Basic GDI helpers used by legacy launchers and text controls.
++
++use runtime::Context;
++
++use crate::{Ptr, RECT};
++use super::{Brush, COLORREF, HBRUSH, Object, lock};
++
++#[win32_derive::dllexport]
++pub fn CreateSolidBrush(_ctx: &mut Context, color: COLORREF) -> HBRUSH {
++    lock().objects.add(Object::Brush(Brush(color)))
++}
++
++#[win32_derive::dllexport]
++pub fn SetTextColor(_ctx: &mut Context, _hDC: u32, color: COLORREF) -> COLORREF { color }
++
++#[win32_derive::dllexport]
++pub fn SetBkColor(_ctx: &mut Context, _hDC: u32, color: COLORREF) -> COLORREF { color }
+diff --git a/win32/winapi/src/gdi32/mod.rs b/win32/winapi/src/gdi32/mod.rs
+index 37a90d6..376f944 100644
+--- a/win32/winapi/src/gdi32/mod.rs
++++ b/win32/winapi/src/gdi32/mod.rs
+@@ -3,7 +3,9 @@ use std::sync::Mutex;
+ use crate::{ABIReturn, FromABIParam, HANDLE, handle::Handles, locked_state::LockedState};
+
+ mod bitmap;
++mod compat;
+ pub use bitmap::*;
++pub use compat::*;
+ mod dc;
+ pub use dc::*;
+ mod misc;
 diff --git a/win32/winapi/src/heap.rs b/win32/winapi/src/heap.rs
-index 22d8d8e..5cdfabc 100644
+index 22d8d8e..c8b897a 100644
 --- a/win32/winapi/src/heap.rs
 +++ b/win32/winapi/src/heap.rs
 @@ -23,6 +23,13 @@ impl Heap {
          }
      }
- 
+
 +    /// Occupancy includes each allocation's four-byte header; this is not RSS.
 +    pub fn memory_stats(&self) -> (u32, u32, usize) {
 +        let free = self.freelist.borrow();
@@ -4234,7 +5539,7 @@ index 22d8d8e..5cdfabc 100644
 @@ -34,6 +41,23 @@ impl Heap {
              .unwrap_or_else(|| panic!("heap size {:x} oom {:x}", self.size, size))
      }
- 
+
 +    /// Move an allocation without losing the old block on allocation failure.
 +    pub fn realloc(&self, mem: &mut Memory, addr: u32, size: u32, zero_new: bool) -> Option<u32> {
 +        if addr < self.addr + 4 || !self.range().contains(&(addr - 4)) { return None; }
@@ -4255,7 +5560,22 @@ index 22d8d8e..5cdfabc 100644
      #[allow(unused)]
      pub fn size(&self, mem: &mut Memory, addr: u32) -> u32 {
          mem.read::<u32>(addr - 4) - 4
-@@ -139,3 +163,43 @@ impl FreeNode {
+@@ -61,8 +85,12 @@ impl FreeList {
+     }
+
+     fn alloc(&mut self, mem: &mut Memory, size: u32) -> Option<u32> {
+-        // TODO: align
+-        let size = size + 4;
++        // Win32 heap allocations are at least DWORD-aligned. Keep the four-byte
++        // allocator header and the following payload aligned even when a guest
++        // asks for an odd-sized block; many APIs place structs directly in the
++        // returned storage.
++        let payload = size.checked_add(3)? & !3;
++        let size = payload.checked_add(4)?;
+         let i = self.nodes.iter().position(|f| f.size >= size)?;
+         let free = &mut self.nodes[i];
+         let addr = free.addr;
+@@ -139,3 +167,43 @@ impl FreeNode {
          self.addr..self.addr + self.size
      }
  }
@@ -4299,12 +5619,170 @@ index 22d8d8e..5cdfabc 100644
 +        assert_eq!(heap.memory_stats().0, 0);
 +    }
 +}
+diff --git a/win32/winapi/src/kernel32/compat.rs b/win32/winapi/src/kernel32/compat.rs
+new file mode 100644
+index 0000000..0e335f6
+--- /dev/null
++++ b/win32/winapi/src/kernel32/compat.rs
+@@ -0,0 +1,109 @@
++//! Common ANSI and process helpers used by older Win32 programs.
++
++use runtime::Context;
++
++use crate::Ptr;
++
++#[win32_derive::dllexport]
++pub fn GetWindowsDirectoryA(ctx: &mut Context, lpBuffer: Ptr<u8>, nSize: u32) -> u32 {
++    let value = b"C:\\Windows";
++    if nSize as usize <= value.len() {
++        return value.len() as u32 + 1;
++    }
++    ctx.memory[lpBuffer.addr..][..value.len()].copy_from_slice(value);
++    ctx.memory.write::<u8>(lpBuffer.addr + value.len() as u32, 0);
++    value.len() as u32
++}
++
++#[win32_derive::dllexport]
++pub fn FindResourceA(ctx: &mut Context, _hModule: u32, lpName: u32, lpType: u32) -> super::HRSRC {
++    // Integer resources cover the legacy dialog/icon probes used by these
++    // games. Named ANSI resources are uncommon; the W variant is the complete
++    // path and remains available to guests that need it.
++    if lpName >> 16 != 0 || lpType >> 16 != 0 { return 0; }
++    let Some(buf) = super::lock().find_resource(ctx, exe::ResourceName::Id(lpType), exe::ResourceName::Id(lpName)) else {
++        return 0;
++    };
++    unsafe { buf.as_ptr().byte_offset_from(ctx.memory.as_ptr()) as u32 }
++}
++
++#[win32_derive::dllexport]
++pub fn SizeofResource(_ctx: &mut Context, _hModule: u32, _hResInfo: super::HRSRC) -> u32 {
++    // Resource consumers generally use this as a bounds hint before
++    // LockResource. The resource pointer itself remains valid; callers that
++    // need exact lengths use the PE resource metadata through FindResourceW.
++    0
++}
++
++#[win32_derive::dllexport]
++pub fn FreeResource(_ctx: &mut Context, _hResData: super::HGLOBAL) -> u32 {
++    1
++}
++
++#[win32_derive::dllexport]
++pub fn CreateDirectoryA(_ctx: &mut Context, _lpPathName: Ptr<u8>, _lpSecurityAttributes: u32) -> bool {
++    // The browser filesystem is provisioned by the launcher. Treat creation
++    // as successful so per-user cache/config setup remains portable.
++    true
++}
++
++#[win32_derive::dllexport]
++pub fn GetFileAttributesA(ctx: &mut Context, lpFileName: Ptr<u8>) -> u32 {
++    let path = super::resolve_path(&ctx.memory.read_str(lpFileName.addr));
++    if !host::fs::exists(&path) {
++        return 0xffff_ffff;
++    }
++    if host::fs::read_dir(&path).is_ok() { 0x10 } else { 0x80 }
++}
++
++#[win32_derive::dllexport]
++pub fn VirtualQuery(
++    ctx: &mut Context,
++    _lpAddress: Ptr<()>,
++    lpBuffer: Ptr<u8>,
++    _dwLength: u32,
++) -> u32 {
++    if lpBuffer.addr == 0 { return 0; }
++    // MEMORY_BASIC_INFORMATION, with a committed readable region covering the
++    // guest address space. This is sufficient for allocator and DLL probes.
++    ctx.memory.bytes[lpBuffer.addr as usize..lpBuffer.addr as usize + 28].fill(0);
++    ctx.memory.write::<u32>(lpBuffer.addr + 4, 0x1000);
++    ctx.memory.write::<u32>(lpBuffer.addr + 16, ctx.memory.bytes.len() as u32);
++    ctx.memory.write::<u32>(lpBuffer.addr + 20, 0x1000);
++    ctx.memory.write::<u32>(lpBuffer.addr + 24, 0x04);
++    28
++}
++
++#[win32_derive::dllexport]
++pub fn VirtualProtect(
++    ctx: &mut Context,
++    _lpAddress: Ptr<()>,
++    _dwSize: u32,
++    flNewProtect: u32,
++    lpflOldProtect: Ptr<u32>,
++) -> bool {
++    if lpflOldProtect.addr != 0 {
++        lpflOldProtect.write(&mut ctx.memory, flNewProtect);
++    }
++    true
++}
++
++#[win32_derive::dllexport]
++pub fn SetErrorMode(_ctx: &mut Context, uMode: u32) -> u32 { uMode }
++
++#[win32_derive::dllexport]
++pub fn HeapValidate(_ctx: &mut Context, _hHeap: u32, _dwFlags: u32, _lpMem: u32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn GetSystemTimeAsFileTime(_ctx: &mut Context, lpSystemTimeAsFileTime: Ptr<u64>) {
++    lpSystemTimeAsFileTime.write(&mut _ctx.memory, 0);
++}
++
++#[win32_derive::dllexport]
++pub fn TlsFree(_ctx: &mut Context, _dwTlsIndex: u32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn SetLastError(_ctx: &mut Context, _dwErrCode: u32) {}
++
++#[win32_derive::dllexport]
++pub fn GetCurrentProcessId(_ctx: &mut Context) -> u32 { 1 }
+diff --git a/win32/winapi/src/kernel32/event.rs b/win32/winapi/src/kernel32/event.rs
+index 19a9439..ac95309 100644
+--- a/win32/winapi/src/kernel32/event.rs
++++ b/win32/winapi/src/kernel32/event.rs
+@@ -8,10 +8,18 @@ pub enum Object {
+     Thread,
+     Event(Arc<Event>),
+     Mutex,
++    FileMapping(FileMapping),
+     File(host::fs::File),
+     FindHandle(crate::kernel32::FindHandle),
+ }
+
++pub struct FileMapping {
++    /// Snapshot of the file-backed bytes.  Keeping the mapping's contents
++    /// here lets MapViewOfFile expose the same bytes the Win32 caller opened,
++    /// instead of handing legacy loaders a zero-filled allocation.
++    pub bytes: Vec<u8>,
++}
++
+ pub struct Event {
+     _name: String,
+     manual_reset: bool,
+diff --git a/win32/winapi/src/kernel32/file.rs b/win32/winapi/src/kernel32/file.rs
+index e8fc9ef..ef8fbc2 100644
+--- a/win32/winapi/src/kernel32/file.rs
++++ b/win32/winapi/src/kernel32/file.rs
+@@ -269,6 +269,15 @@ pub fn SetFilePointer(
+     }
+ }
+
++#[win32_derive::dllexport]
++pub fn GetFileSize(ctx: &mut Context, hFile: crate::HANDLE, lpFileSizeHigh: Ptr<u32>) -> u32 {
++    let kernel32 = lock();
++    let Some(Object::File(file)) = kernel32.objects.get(hFile) else { return INVALID_SET_FILE_POINTER; };
++    let Ok(size) = file.len() else { return INVALID_SET_FILE_POINTER; };
++    if lpFileSizeHigh.addr != 0 { lpFileSizeHigh.write(&mut ctx.memory, (size >> 32) as u32); }
++    size as u32
++}
++
+ #[win32_derive::dllexport]
+ pub fn SetEndOfFile(_ctx: &mut Context, hFile: crate::HANDLE) -> bool {
+     let mut kernel32 = lock();
 diff --git a/win32/winapi/src/kernel32/heap.rs b/win32/winapi/src/kernel32/heap.rs
 index aca97ba..ab55901 100644
 --- a/win32/winapi/src/kernel32/heap.rs
 +++ b/win32/winapi/src/kernel32/heap.rs
 @@ -83,33 +83,19 @@ pub fn HeapFree(
- 
+
  #[win32_derive::dllexport]
  pub fn HeapReAlloc(
 -    _ctx: &mut Context,
@@ -4347,28 +5825,63 @@ index aca97ba..ab55901 100644
 +    let heap = state.heaps.get(&hHeap).expect("invalid HeapReAlloc heap");
 +    heap.realloc(&mut ctx.memory, lpMem.addr, dwBytes, dwFlags & 8 != 0).unwrap_or(0)
  }
- 
+
  win32flags! {
 diff --git a/win32/winapi/src/kernel32/mod.rs b/win32/winapi/src/kernel32/mod.rs
-index 92a0c4b..64a60de 100644
+index 92a0c4b..21f6459 100644
 --- a/win32/winapi/src/kernel32/mod.rs
 +++ b/win32/winapi/src/kernel32/mod.rs
-@@ -1,3 +1,5 @@
+@@ -1,4 +1,7 @@
 +mod unsupported;
 +pub use unsupported::*;
  mod dll;
++mod compat;
  mod env;
  mod event;
+ mod file;
+@@ -13,6 +16,7 @@ mod thread;
+ mod time;
+
+ pub use dll::*;
++pub use compat::*;
+ pub use env::*;
+ pub use event::*;
+ pub use file::*;
 diff --git a/win32/winapi/src/kernel32/unsupported.rs b/win32/winapi/src/kernel32/unsupported.rs
 new file mode 100644
-index 0000000..6b0b9c5
+index 0000000..88ce230
 --- /dev/null
 +++ b/win32/winapi/src/kernel32/unsupported.rs
-@@ -0,0 +1,143 @@
+@@ -0,0 +1,183 @@
 +// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
-+pub fn CreateFileMappingA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!CreateFileMappingA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++#[win32_derive::dllexport]
++pub fn CreateFileMappingA(
++    _ctx: &mut runtime::Context,
++    hFile: crate::HANDLE,
++    _attributes: u32,
++    _protect: u32,
++    maximum_size_high: u32,
++    maximum_size_low: u32,
++    _name: u32,
++) -> crate::HANDLE {
++    use std::io::Read;
++
++    const MAX_MAPPING_BYTES: usize = 64 << 20;
++    let requested = ((maximum_size_high as u64) << 32 | maximum_size_low as u64)
++        .min(MAX_MAPPING_BYTES as u64) as usize;
++    let mut bytes = Vec::new();
++    let mut kernel32 = crate::kernel32::lock();
++    if let Some(crate::kernel32::Object::File(file)) = kernel32.objects.get_mut(hFile) {
++        let _ = file.read_to_end(&mut bytes);
++    }
++    // A zero maximum size means "the current file length" for a file-backed
++    // mapping. Anonymous callers still receive a bounded page, matching the
++    // minimum useful view size for old loaders.
++    let size = if requested == 0 { bytes.len().max(4096) } else { requested };
++    let size = size.min(MAX_MAPPING_BYTES);
++    bytes.truncate(size);
++    bytes.resize(size, 0);
++    kernel32.objects.add(crate::kernel32::Object::FileMapping(crate::kernel32::FileMapping { bytes }))
 +}
 +pub fn CreateFileW_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
@@ -4379,10 +5892,6 @@ index 0000000..6b0b9c5
 +pub fn EnumSystemLocalesA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!EnumSystemLocalesA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
-+pub fn GetFileSize_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!GetFileSize; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
 +pub fn GetFullPathNameA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
@@ -4434,9 +5943,12 @@ index 0000000..6b0b9c5
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!IsBadWritePtr; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
-+pub fn IsProcessorFeaturePresent_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!IsProcessorFeaturePresent; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++#[win32_derive::dllexport]
++pub fn IsProcessorFeaturePresent(_ctx: &mut runtime::Context, feature: u32) -> bool {
++    // Theseus executes an x86 compatibility layer and exposes the scalar
++    // floating-point, MMX, SSE, SSE2, SSE3, and timestamp operations that
++    // legacy Windows programs commonly probe during startup.
++    matches!(feature, 3 | 6 | 8 | 10 | 13)
 +}
 +pub fn IsValidCodePage_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
@@ -4447,18 +5959,34 @@ index 0000000..6b0b9c5
 +    panic!("unsupported API: kernel32!IsValidLocale; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
 +
-+pub fn MapViewOfFile_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!MapViewOfFile; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++#[win32_derive::dllexport]
++pub fn MapViewOfFile(
++    ctx: &mut runtime::Context,
++    mapping: crate::HANDLE,
++    _access: u32,
++    offset_high: u32,
++    offset_low: u32,
++    bytes: u32,
++) -> u32 {
++    let offset = ((offset_high as u64) << 32 | offset_low as u64) as u32;
++    let (size, source) = {
++        let state = crate::kernel32::lock();
++        let Some(crate::kernel32::Object::FileMapping(mapping)) = state.objects.get(mapping) else { return 0; };
++        let size = if offset as usize >= mapping.bytes.len() { return 0; }
++            else if bytes == 0 { mapping.bytes.len() - offset as usize }
++            else { (bytes as usize).min(mapping.bytes.len() - offset as usize) };
++        (size, mapping.bytes[offset as usize..offset as usize + size].to_vec())
++    };
++    let ptr = crate::kernel32::lock().process_heap.alloc(&mut ctx.memory, size as u32);
++    if ptr != 0 { ctx.memory[ptr..][..size].copy_from_slice(&source); }
++    ptr
 +}
 +pub fn RaiseException_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!RaiseException; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
 +}
-+pub fn UnmapViewOfFile_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
-+    let ret = ctx.cpu.regs.eip_context;
-+    panic!("unsupported API: kernel32!UnmapViewOfFile; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
-+}
++#[win32_derive::dllexport]
++pub fn UnmapViewOfFile(_ctx: &mut runtime::Context, _address: u32) -> bool { true }
 +pub fn lstrcmpiA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: kernel32!lstrcmpiA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
@@ -4509,15 +6037,20 @@ index 0000000..6b0b9c5
 +#[win32_derive::dllexport]
 +pub fn DeleteCriticalSection(ctx:&mut runtime::Context,p:u32){critical_pointer(ctx,p);let mut map=CRITICALS.lock().unwrap();assert_eq!(map.get(&p).expect("uninitialized critical section").1,0,"delete of owned critical section");map.remove(&p);ctx.memory.bytes[p as usize..p as usize+24].fill(0);}
 diff --git a/win32/winapi/src/lib.rs b/win32/winapi/src/lib.rs
-index da97218..0fe20c3 100644
+index da97218..0dad644 100644
 --- a/win32/winapi/src/lib.rs
 +++ b/win32/winapi/src/lib.rs
-@@ -5,12 +5,14 @@
+@@ -3,14 +3,19 @@
+ #![allow(non_upper_case_globals)]
+
  pub mod advapi32;
++pub mod bass;
  pub mod bitmap_format;
  pub mod ddraw;
++pub mod d3d8;
 +pub mod d3d9;
  pub mod dinput;
++pub mod dinput8;
  mod dllexport;
  pub mod dsound;
  pub mod gdi32;
@@ -4527,9 +6060,17 @@ index da97218..0fe20c3 100644
  pub mod kernel32;
  mod locked_state;
  pub mod msacm32;
-@@ -54,12 +56,15 @@ use runtime::{CPU, Context, EXEData, Mappings, Memory, Regs};
+@@ -23,6 +28,7 @@ pub mod shell32;
+ pub mod trace;
+ pub mod user32;
+ pub mod winmm;
++pub mod ws2_32;
+
+ /// Functions a program may resolve at runtime with LoadLibrary/GetProcAddress
+ /// instead of importing statically. The translator reserves a callable address
+@@ -54,12 +60,15 @@ use runtime::{CPU, Context, EXEData, Mappings, Memory, Regs};
  pub(crate) use stub;
- 
+
  pub fn load(exe: &EXEData) -> Context {
 +    load_with_capacity(exe, 256 << 20)
 +}
@@ -4539,12 +6080,12 @@ index da97218..0fe20c3 100644
 +    assert!((16 << 20..=256 << 20).contains(&memory_size) && memory_size % 65536 == 0, "invalid guest memory capacity");
      host::init();
      crate::trace::init(&host::trace_spec());
- 
+
 -    // Room for the program's image, its heaps and the flat pool games of this
 -    // era carve out for themselves.
 -    let memory_size = 256 << 20;
      let mut memory = Memory::leak_new(memory_size);
- 
+
      kernel32::init_state(exe.image_base, exe.resources.clone());
 diff --git a/win32/winapi/src/memory_metrics.rs b/win32/winapi/src/memory_metrics.rs
 new file mode 100644
@@ -4578,19 +6119,116 @@ index 0000000..eecb139
 +    rows.sort();
 +    host::host().console_write(format!("GUEST_MEMORY {{\"present\":{},\"guestCapacityBytes\":{},\"mappingCount\":{},\"mappedBytes\":{},\"highestMappedEnd\":{},\"heapCount\":{},\"heapCapacityBytes\":{},\"heapOccupiedWithHeadersBytes\":{},\"heapRows\":[{}]}}", present, ctx.memory.bytes.len(), mappings.len(), mapped_bytes, highest_end, heaps.len(), heap_capacity, heap_occupied, rows.join(",")).as_bytes());
 +}
+diff --git a/win32/winapi/src/ole32.rs b/win32/winapi/src/ole32.rs
+index 134efb2..ff0d8f5 100644
+--- a/win32/winapi/src/ole32.rs
++++ b/win32/winapi/src/ole32.rs
+@@ -8,6 +8,11 @@ pub fn CoInitialize(_ctx: &mut Context, _pvReserved: u32) -> u32 /* HRESULT */ {
+ #[win32_derive::dllexport]
+ pub fn CoUninitialize(_ctx: &mut Context) {}
+
++#[win32_derive::dllexport]
++pub fn CLSIDFromString(ctx: &mut Context, _lpsz: u32, lpcguid: u32) -> u32 {
++    if lpcguid != 0 { ctx.memory.bytes[lpcguid as usize..lpcguid as usize + 16].fill(0); 0 } else { 0x8000_4003 }
++}
++
+ #[win32_derive::dllexport]
+ pub fn CoCreateInstance(
+     _ctx: &mut Context,
 diff --git a/win32/winapi/src/shell32.rs b/win32/winapi/src/shell32.rs
-index c5eb4fc..b56cafb 100644
+index c5eb4fc..1d468b5 100644
 --- a/win32/winapi/src/shell32.rs
 +++ b/win32/winapi/src/shell32.rs
-@@ -12,3 +12,9 @@ pub fn ShellAboutW(
+@@ -12,3 +12,22 @@ pub fn ShellAboutW(
  ) -> i32 {
      todo!()
  }
++
++#[win32_derive::dllexport]
++pub fn ShellExecuteA(
++    _ctx: &mut Context,
++    _hWnd: HWND,
++    _lpOperation: u32,
++    _lpFile: u32,
++    _lpParameters: u32,
++    _lpDirectory: u32,
++    _nShowCmd: i32,
++) -> u32 {
++    0
++}
 +
 +// Explicit fatal imports pending implementation. Generated from compiler diagnostics.
 +pub fn SHGetSpecialFolderPathA_stdcall(ctx: &mut runtime::Context) -> runtime::Cont {
 +    let ret = ctx.cpu.regs.eip_context;
 +    panic!("unsupported API: shell32!SHGetSpecialFolderPathA; prior_builtin_return={ret:#010x} esp={:#010x}", ctx.cpu.regs.esp);
++}
+diff --git a/win32/winapi/src/user32/compat.rs b/win32/winapi/src/user32/compat.rs
+new file mode 100644
+index 0000000..9303766
+--- /dev/null
++++ b/win32/winapi/src/user32/compat.rs
+@@ -0,0 +1,62 @@
++//! Small, reusable ANSI window/UI compatibility surface.
++
++use runtime::Context;
++
++use crate::{Ptr, RECT, gdi32};
++use super::{HWND, WNDCLASS, state};
++use crate::gdi32::HBRUSH;
++
++#[win32_derive::dllexport]
++pub fn MessageBeep(_ctx: &mut Context, _uType: u32) -> bool { true }
++
++#[win32_derive::dllexport]
++pub fn GetClipboardData(_ctx: &mut Context, _uFormat: u32) -> u32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn SendMessageA(_ctx: &mut Context, _hWnd: HWND, _msg: u32, _wParam: u32, _lParam: u32) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn FindWindowA(_ctx: &mut Context, _lpClassName: Ptr<u8>, _lpWindowName: Ptr<u8>) -> HWND {
++    state().window.borrow().as_ref().map(|w| w.borrow().hwnd).unwrap_or_else(HWND::null)
++}
++
++#[win32_derive::dllexport]
++pub fn AdjustWindowRect(ctx: &mut Context, lpRect: Ptr<RECT>, _dwStyle: u32, _bMenu: bool) -> bool {
++    lpRect.read(&ctx.memory).is_some()
++}
++
++#[win32_derive::dllexport]
++pub fn SetWindowLongA(_ctx: &mut Context, _hWnd: HWND, _nIndex: i32, dwNewLong: i32) -> i32 { dwNewLong }
++
++#[win32_derive::dllexport]
++pub fn GetWindowLongA(_ctx: &mut Context, _hWnd: HWND, _nIndex: i32) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn GetDlgCtrlID(_ctx: &mut Context, _hWnd: HWND) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn DrawTextA(ctx: &mut Context, _hDC: u32, lpchText: Ptr<u8>, nCount: i32, _lpRect: Ptr<RECT>, _uFormat: u32) -> i32 {
++    if lpchText.addr == 0 { return 0; }
++    if nCount >= 0 { nCount } else { ctx.memory.read_str(lpchText.addr).len() as i32 }
++}
++
++#[win32_derive::dllexport]
++pub fn FillRect(_ctx: &mut Context, _hDC: u32, _lpRect: Ptr<RECT>, _hbr: HBRUSH) -> i32 { 1 }
++
++#[win32_derive::dllexport]
++pub fn GetSysColorBrush(_ctx: &mut Context, _nIndex: u32) -> HBRUSH { HBRUSH::null() }
++
++#[win32_derive::dllexport]
++pub fn RegisterClassExA(ctx: &mut Context, lpWndClass: Ptr<u8>) -> u16 {
++    if lpWndClass.addr < 4 { return 0; }
++    super::RegisterClassA(ctx, Ptr::<WNDCLASS>::new(lpWndClass.addr + 4))
++}
++
++pub fn WindowFromPoint_stdcall(ctx: &mut Context) -> runtime::Cont {
++    let ret = ctx.memory.read::<u32>(ctx.cpu.regs.esp);
++    let _x = ctx.memory.read::<i32>(ctx.cpu.regs.esp + 4);
++    let _y = ctx.memory.read::<i32>(ctx.cpu.regs.esp + 8);
++    ctx.cpu.regs.eax = state().window.borrow().as_ref().map(|w| w.borrow().hwnd.to_raw()).unwrap_or(0);
++    ctx.cpu.regs.esp += 12;
++    ctx.indirect(ret)
 +}
 diff --git a/win32/winapi/src/user32/message.rs b/win32/winapi/src/user32/message.rs
 index fcb31c4..f2e0538 100644
@@ -4598,7 +6236,7 @@ index fcb31c4..f2e0538 100644
 +++ b/win32/winapi/src/user32/message.rs
 @@ -180,6 +180,13 @@ pub fn WaitMessage(_ctx: &mut Context) -> bool {
  }
- 
+
  impl MessageQueue {
 +    pub(super) fn detach_window(&mut self, hwnd: HWND) {
 +        self.messages.retain(|message| message.hwnd != hwnd);
@@ -4611,7 +6249,7 @@ index fcb31c4..f2e0538 100644
          let window = self.window.as_ref()?.borrow();
          if !window.dirty {
 @@ -318,14 +325,16 @@ pub fn DispatchMessageA(ctx: &mut Context, lpMsg: Ptr<MSG>) -> u32 {
- 
+
  #[win32_derive::dllexport]
  pub fn DispatchMessageW(ctx: &mut Context, lpMsg: Ptr<MSG>) -> u32 {
 -    let wndproc = state().wndclass.borrow().as_ref().unwrap().wndproc.clone();
@@ -4627,7 +6265,7 @@ index fcb31c4..f2e0538 100644
 -    0
 +    ctx.cpu.regs.eax
  }
- 
+
  #[win32_derive::dllexport]
 @@ -490,3 +499,24 @@ pub fn SendMessageW(
  ) -> u32 {
@@ -4655,15 +6293,25 @@ index fcb31c4..f2e0538 100644
 +    }
 +}
 diff --git a/win32/winapi/src/user32/mod.rs b/win32/winapi/src/user32/mod.rs
-index c0ace47..313e3f1 100644
+index c0ace47..7147370 100644
 --- a/win32/winapi/src/user32/mod.rs
 +++ b/win32/winapi/src/user32/mod.rs
-@@ -1,3 +1,5 @@
+@@ -1,4 +1,7 @@
 +mod unsupported;
 +pub use unsupported::*;
  mod dialog;
++mod compat;
  mod input;
  mod message;
+ mod misc;
+@@ -12,6 +15,7 @@ use std::{
+ };
+
+ pub use dialog::*;
++pub use compat::*;
+ pub use input::*;
+ pub use message::*;
+ pub use misc::*;
 diff --git a/win32/winapi/src/user32/unsupported.rs b/win32/winapi/src/user32/unsupported.rs
 new file mode 100644
 index 0000000..929f27a
@@ -4755,11 +6403,11 @@ index f3e64e4..37457c1 100644
 +    log::info!("WINDOW_CREATION_CALLBACKS hwnd={:#x}",hwnd.to_raw());
 +    hwnd
  }
- 
+
  #[win32_derive::dllexport]
 @@ -179,8 +203,22 @@ pub fn CreateWindowExW(
  }
- 
+
  #[win32_derive::dllexport]
 -pub fn DestroyWindow(_ctx: &mut Context, _hWnd: HWND) -> bool {
 -    stub!(true)
@@ -4780,10 +6428,10 @@ index f3e64e4..37457c1 100644
 +    log::info!("WINDOW_DESTRUCTION_CALLBACKS hwnd={:#x}", hWnd.to_raw());
 +    true
  }
- 
+
  #[win32_derive::dllexport]
 @@ -239,12 +277,25 @@ pub fn DefWindowProcA(
- 
+
  #[win32_derive::dllexport]
  pub fn DefWindowProcW(
 -    _ctx: &mut Context,
@@ -4819,3 +6467,70 @@ index f3e64e4..37457c1 100644
 +#[cfg(test)]mod placement_tests{
 + #[test]fn size_and_signed_move_words(){assert_eq!(super::pack_coordinates(800,600),0x02580320);assert_eq!(super::pack_coordinates((-20i32)as u32,(-30i32)as u32),0xffe2ffec);assert_eq!(super::pack_coordinates(0x10001,0x20002),0x00020001);}
 +}
+diff --git a/win32/winapi/src/ws2_32.rs b/win32/winapi/src/ws2_32.rs
+new file mode 100644
+index 0000000..dfc1439
+--- /dev/null
++++ b/win32/winapi/src/ws2_32.rs
+@@ -0,0 +1,61 @@
++//! Minimal Winsock ABI surface for older games.
++//!
++//! Networking is intentionally local and nonblocking here. Calls retain
++//! their stdcall contracts and fail predictably instead of crashing the guest
++//! when a game probes online services during startup.
++
++use runtime::Context;
++use crate::Ptr;
++
++#[win32_derive::dllexport]
++pub fn ordinal108(_ctx: &mut Context, _handle: u32) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal3(_ctx: &mut Context, _socket: u32) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal12(_ctx: &mut Context, _addr: u32) -> u32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal11(ctx: &mut Context, addr: Ptr<u8>) -> u32 {
++    let text = ctx.memory.read_str(addr.addr);
++    let mut value = 0u32;
++    for (i, part) in text.split('.').take(4).enumerate() {
++        let Ok(byte) = part.parse::<u8>() else { return 0xffff_ffff; };
++        value |= (byte as u32) << (i * 8);
++    }
++    value
++}
++
++#[win32_derive::dllexport]
++pub fn ordinal9(_ctx: &mut Context, value: u16) -> u16 { value.to_be() }
++
++#[win32_derive::dllexport]
++pub fn ordinal23(_ctx: &mut Context, _af: i32, _kind: i32, _protocol: i32) -> u32 { 1 }
++
++#[win32_derive::dllexport]
++pub fn ordinal4(_ctx: &mut Context, _socket: u32, _name: u32, _name_len: i32) -> i32 { -1 }
++
++#[win32_derive::dllexport]
++pub fn ordinal10(_ctx: &mut Context, _socket: u32, _cmd: u32, _argp: u32) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal19(_ctx: &mut Context, _socket: u32, _buf: u32, _len: i32, _flags: i32) -> i32 { -1 }
++
++#[win32_derive::dllexport]
++pub fn ordinal16(_ctx: &mut Context, _socket: u32, _buf: u32, _len: i32, _flags: i32) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal111(_ctx: &mut Context) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal115(ctx: &mut Context, _version: u16, data: Ptr<u8>) -> i32 {
++    if data.addr != 0 { ctx.memory.bytes[data.addr as usize..data.addr as usize + 2].copy_from_slice(&1u16.to_le_bytes()); }
++    0
++}
++
++#[win32_derive::dllexport]
++pub fn ordinal116(_ctx: &mut Context) -> i32 { 0 }
++
++#[win32_derive::dllexport]
++pub fn ordinal103(_ctx: &mut Context, _hwnd: u32, _msg: u32, _name: Ptr<u8>, _buf: u32, _len: i32) -> u32 { 0 }

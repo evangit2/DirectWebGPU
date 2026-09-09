@@ -1,7 +1,7 @@
 import {resourceMetrics} from './resource-metrics.js';
 import {DrawBatch} from './draw-batch.js';
 import {AssetCache} from './asset-cache.js';
-let memory, device, lastPanic, gpuPort, drawBatch, logCount=0;
+let memory, device, lastPanic, gpuPort, drawBatch, logCount=0, persistedFiles=new Map();
 const send=(type,data={})=>{if(type==='log'&&String(data.message).startsWith('GUEST_MEMORY ')){postMessage({type:'guest-memory',sample:JSON.parse(String(data.message).slice(13))});return;}if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
@@ -31,6 +31,13 @@ self.send_to_host=(func,args,retAddr)=>{
   if(!Number.isInteger(ptr)||!Number.isInteger(len)||ptr<0||len<0||ptr+len>memory.buffer.byteLength)throw Error('host console pointer out of bounds');
   send('log',{message:new TextDecoder().decode(new Uint8Array(memory.buffer,ptr,Math.min(len,8192)).slice())});return;
  }
+ if(func==='write_file'){
+  const [path,ptr,len]=args;
+  if(typeof path!=='string'||!Number.isInteger(ptr)||!Number.isInteger(len)||ptr<0||len<0||ptr+len>memory.buffer.byteLength)throw Error('invalid persisted file');
+  persistedFiles.set(path,new Uint8Array(memory.buffer.slice(ptr,ptr+len)));
+  if(Number.isInteger(retAddr)&&retAddr>=4&&retAddr%4===0&&retAddr+4<=memory.buffer.byteLength){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);Atomics.notify(new Int32Array(memory.buffer),retAddr/4,1);}
+  return;
+ }
  if(['create_window','graphics_call','poll_message','wait_message'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
   const values=Array.from(args);
@@ -51,33 +58,40 @@ self.onmessage=async({data})=>{
   gpuPort=data.gpuPort;drawBatch=new DrawBatch(message=>gpuPort.postMessage(message));
   await new Promise((resolve,reject)=>{gpuPort.onmessage=({data})=>{if(data.ready)resolve(data.result);else reject(Error(data.error??'GPU initialization failed'))};gpuPort.start();});
   const build=data.build;
+  const guest=build.guest??build.runtimeBuild?.guest;
+  if(!guest?.id||!build.runtimeBuild?.moduleUrl||!build.runtimeBuild?.wasmUrl)throw Error('guest runtime manifest is incomplete');
   const exeFile=build.files.find(f=>f.path===build.dependencies.executable.path);
   if(!exeFile)throw Error('original executable missing from asset manifest');
-  const wasmEntry=build.runtimeBuild.artifacts['humus_bg.wasm'];
-  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:'assets/'+f.path})),{...wasmEntry,url:'generated/humus_bg.wasm'}],caches,fetch.bind(globalThis),location.origin);await cache.open(wasmEntry.sha256);
-  const bytes=await cache.load('assets/'+exeFile.path);
+  const cleanUrl=(value)=>String(value).replace(/^\/+/, '');
+  const assetUrl=(path)=>`assets/${path}`;
+  const wasmUrl=cleanUrl(build.runtimeBuild.wasmUrl);
+  const moduleUrl=cleanUrl(build.runtimeBuild.moduleUrl);
+  const wasmEntry=build.runtimeBuild.artifacts[build.runtimeBuild.wasmArtifact];
+  const cache=new AssetCache(data.assetCache??'warm',[...build.files.map(f=>({...f,url:assetUrl(f.path)})),{...wasmEntry,url:wasmUrl}],caches,fetch.bind(globalThis),location.origin);await cache.open(wasmEntry.sha256);
+  const bytes=await cache.load(assetUrl(exeFile.path));
   const actual=await hash(bytes);
   if(actual!==build.dependencies.executable.sha256)throw Error(`original executable hash mismatch: ${actual}`);
   send('identity',{sha256:actual});
-  if(!build.wasm_available)throw Error('Humus WASM build missing; run scripts/build_wasm.sh');
-  const exe=await import(new URL('./generated/humus.js',import.meta.url).href);
+  if(!build.wasm_available)throw Error(`${guest.title} WASM build missing; run scripts/build_wasm.sh [profile] ${guest.id}`);
+  const exe=await import(new URL(`./${moduleUrl}`,import.meta.url));
   // Initial memory is only 16 MiB; WASM allocations grow it as needed.
   memory=new WebAssembly.Memory({initial:256,maximum:8192,shared:true});
-  const wasmBytes=await cache.load('generated/humus_bg.wasm');
-  if(await hash(wasmBytes)!==build.runtimeBuild.artifacts['humus_bg.wasm'].sha256)throw Error('WASM artifact hash mismatch');
+  const wasmBytes=await cache.load(wasmUrl);
+  if(await hash(wasmBytes)!==wasmEntry.sha256)throw Error('WASM artifact hash mismatch');
   if(build.runtimeBuild.executableSha256!==actual)throw Error('WASM was built for a different EXE');
   await exe.default({memory,module_or_path:wasmBytes});
-  for(const f of build.files){const fileBytes=f.path===exeFile.path?bytes:await cache.load('assets/'+f.path);
+  for(const f of build.files){
+   const fileBytes=f.path===exeFile.path?bytes:await cache.load(assetUrl(f.path));
    if(await hash(fileBytes)!==f.sha256)throw Error('asset integrity mismatch: '+f.path);
    exe.mount_file('/'+f.path,new Uint8Array(fileBytes));
   }
-  exe.set_current_dir('/DynamicBranching');
+  exe.set_current_dir(guest.workingDirectory);
   if(data.resolution==='1280x720'){
-   for(const [name,value] of Object.entries({WindowedLeft:0,WindowedTop:0,WindowedRight:1280,WindowedBottom:720,Fullscreen:0}))exe.seed_registry_dword(0x80000002,'SOFTWARE\\Humus',name,value);
-   send('launch-settings',{source:'virtual HKLM\\SOFTWARE\\Humus',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
+   for(const [root,subkey,name,value] of guest.registryDwords??[])exe.seed_registry_dword(root,subkey,name,value);
+   if(guest.registryDwords?.length)send('launch-settings',{source:'guest manifest registry seed',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
   }
   exe.configure_guest_memory_metrics(data.guestMemory===true);
-  exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d9');
+  exe.set_trace(data.benchmark?'':'kernel32,user32,advapi32,d3d8,d3d9');
   send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});
   send('realm-resources',{sample:resourceMetrics(performance,'cpuWorker','before EXE execution')});

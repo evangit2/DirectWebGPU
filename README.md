@@ -1,8 +1,10 @@
-# Humus original-binary browser runtime
+# DirectWebGPU original-binary browser runtime
 
 **Current milestone:** the original EXE renders the textured scene at 800×600 and 1280×720 through hardware WebGPU. Camera movement, bounded draw/upload batching, sampled lighting equivalence and three-minute stability are verified within their documented scopes. Full acceptance remains incomplete: see `evidence/acceptance-audit.json` and `MEASURED-RESULTS.json`. The detailed development notes below include historical checkpoints.
 
 This repository contains the browser runtime, the original Humus demo package, generated WASM artifacts, and the translated program output needed to run the demo locally. It is not a source port of the demo. The input EXE SHA-256 is `7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5`.
+
+The long-term target is a reusable DirectX compatibility layer: an unmodified 32-bit Windows executable is translated to WebAssembly, its Win32 and Direct3D calls are handled by shared runtime code, and actual graphics are submitted to WebGPU. This is an early DirectX 8/9 implementation, not a Wine distribution and not a recreation of one game's scene. The bundled Humus executable is the reproducible public demo; other user-owned executables can use the same guest build and server flow while compatibility work continues.
 
 ## Reproduce
 
@@ -23,6 +25,16 @@ Open http://127.0.0.1:8765/humus-runtime and click **Start Humus**. The server b
 The repository includes the translated Humus output and generated browser artifacts required to run the demo. The build-only Theseus, Emscripten, and MojoShader checkouts remain excluded from the runnable release; their pinned revisions and fetch instructions are recorded in `dependencies.json` and `scripts/restore.sh`. Theseus does not declare a license in the inspected revision; review that upstream status before redistributing generated artifacts beyond the intended project context.
 
 The checked-in generated artifacts make the normal run self-contained. `restore.sh` remains the full developer rebuild path: it fetches the pinned translator/toolchain, verifies the bundled archive/EXE, applies our patch, generates Rust from x86, and builds WASM. It does not delete or reset an existing checkout. Translation inputs include the recovered original window callback in `evidence/entry-points.txt`. No generated function is replaced by hand.
+
+To try another permitted 32-bit DirectX executable from a local asset directory, keep its original files together and use the generic guest id throughout:
+
+```sh
+scripts/translate.sh mygame /path/to/assets/Game.exe vendor/theseus/out/mygame
+scripts/build_wasm.sh release mygame /path/to/assets Game.exe / "My Game"
+python3 scripts/serve.py 8766 mygame /path/to/assets
+```
+
+Then open `http://127.0.0.1:8766/mygame-runtime`. The executable and its assets remain outside this public repository unless their redistribution terms permit bundling them.
 
 ## Development and checks
 

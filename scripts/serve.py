@@ -1,5 +1,5 @@
 """Loopback-only static runtime server and bounded session evidence receiver."""
-import http.server,pathlib,json,secrets,time,urllib.parse,hashlib,subprocess,sys
+import http.server,pathlib,json,secrets,time,urllib.parse,hashlib,subprocess,sys,os
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 WEB=ROOT/'web'; SESSIONS={}; MAX_BODY=262144
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -11,15 +11,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
  def do_GET(self):
   path=urllib.parse.unquote(urllib.parse.urlparse(self.path).path)
   if path=='/api/build':
-   deps=json.loads((ROOT/'dependencies.json').read_text())
+   asset_root=self.server.asset_root
+   guest=self.server.guest
+   runtime_path=WEB/'generated'/('runtime-build.json' if guest=='humus' else f'{guest}/runtime-build.json')
+   runtime=json.loads(runtime_path.read_text())
+   executable_path=runtime['guest']['executablePath']
+   executable=(asset_root/executable_path).resolve()
+   if not executable.is_relative_to(asset_root) or not executable.is_file(): return self.reply(500,{'error':'guest executable missing','path':executable_path})
+   deps={'executable':{'path':executable_path,'sha256':hashlib.sha256(executable.read_bytes()).hexdigest()},'guest':runtime['guest']}
    revision=subprocess.run(['git','rev-parse','--verify','HEAD'],cwd=ROOT,capture_output=True,text=True).stdout.strip() or 'uncommitted'
    dirty=bool(subprocess.run(['git','status','--porcelain'],cwd=ROOT,capture_output=True,text=True).stdout)
-   files=[{'path':str(p.relative_to(ROOT/'assets/original/package')),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted((ROOT/'assets/original/package').rglob('*')) if p.is_file()]
-   return self.reply(200,{'revision':revision,'dirty':dirty,'dependencies':deps,'files':files,'wasm_available':(WEB/'generated/runtime-build.json').exists(),'runtimeBuild':json.loads((WEB/'generated/runtime-build.json').read_text()) if (WEB/'generated/runtime-build.json').exists() else None})
+   files=[{'path':p.relative_to(asset_root).as_posix(),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(asset_root.rglob('*')) if p.is_file()]
+   return self.reply(200,{'revision':revision,'dirty':dirty,'guest':runtime['guest'],'dependencies':deps,'files':files,'wasm_available':runtime_path.exists() and runtime['wasmArtifact'] in runtime['artifacts'],'runtimeBuild':runtime})
   if path.startswith('/assets/'):
-   base=ROOT/'assets/original/package'; p=(base/path.removeprefix('/assets/')).resolve()
+   base=self.server.asset_root; p=(base/path.removeprefix('/assets/')).resolve()
   else:
-   base=WEB; p=(base/('index.html' if path in ['/','/humus-runtime','/humus-runtime/'] else path.lstrip('/'))).resolve()
+   base=WEB; p=(base/('index.html' if path=='/' or path.endswith('-runtime') or path.endswith('-runtime/') else path.lstrip('/'))).resolve()
   if not p.is_relative_to(base.resolve()) or not p.is_file(): return self.reply(404,{'error':'not found'})
   import mimetypes
   self.reply(200,p.read_bytes(),mimetypes.guess_type(p.name)[0] or 'application/octet-stream')
@@ -52,5 +59,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
  def log_message(self,fmt,*args): pass
 if __name__=='__main__':
  port=int(sys.argv[1]) if len(sys.argv)>1 else 8765
- print(f'http://127.0.0.1:{port}/humus-runtime',flush=True)
- http.server.ThreadingHTTPServer(('127.0.0.1',port),Handler).serve_forever()
+ guest=sys.argv[2] if len(sys.argv)>2 else os.environ.get('DIRECTWEBGPU_GUEST','humus')
+ root_arg=sys.argv[3] if len(sys.argv)>3 else os.environ.get('DIRECTWEBGPU_ASSET_ROOT')
+ asset_root=pathlib.Path(root_arg).expanduser().resolve() if root_arg else ROOT/'assets/original/package'
+ if not asset_root.is_dir():raise SystemExit(f'asset root does not exist: {asset_root}')
+ server=http.server.ThreadingHTTPServer(('127.0.0.1',port),Handler);server.asset_root=asset_root;server.guest=guest
+ print(f'http://127.0.0.1:{port}/{guest}-runtime',flush=True)
+ server.serve_forever()

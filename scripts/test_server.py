@@ -2,6 +2,7 @@ import importlib.util,pathlib,threading,http.client,json,tempfile
 r=pathlib.Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('local_server',r/'scripts/serve.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 server=m.http.server.ThreadingHTTPServer(('127.0.0.1',0),m.Handler)
+server.asset_root=r/'assets/original/package';server.guest='humus'
 t=threading.Thread(target=server.serve_forever,daemon=True);t.start()
 port=server.server_port
 conn=http.client.HTTPConnection('127.0.0.1',port)
@@ -9,7 +10,7 @@ def request(method,path,body=None,headers=None):
  conn.request(method,path,body=body,headers=headers or {});response=conn.getresponse();data=response.read();return response,data
 try:
  response,body=request('GET','/humus-runtime')
- assert response.status==200 and b'Start Humus' in body
+ assert response.status==200 and b'Start executable' in body
  assert response.getheader('Cross-Origin-Opener-Policy')=='same-origin'
  assert response.getheader('Cross-Origin-Embedder-Policy')=='require-corp'
  assert request('GET','/assets/../../dependencies.json')[0].status==404

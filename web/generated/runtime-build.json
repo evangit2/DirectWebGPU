@@ -1,25 +1,66 @@
 {
-  "wasmProfile": "release",
+  "guest": {
+    "id": "humus",
+    "title": "Humus",
+    "executablePath": "DynamicBranching/DynamicBranching.exe",
+    "workingDirectory": "/DynamicBranching",
+    "registryDwords": [
+      [
+        2147483650,
+        "SOFTWARE\\Humus",
+        "WindowedLeft",
+        0
+      ],
+      [
+        2147483650,
+        "SOFTWARE\\Humus",
+        "WindowedTop",
+        0
+      ],
+      [
+        2147483650,
+        "SOFTWARE\\Humus",
+        "WindowedRight",
+        1280
+      ],
+      [
+        2147483650,
+        "SOFTWARE\\Humus",
+        "WindowedBottom",
+        720
+      ],
+      [
+        2147483650,
+        "SOFTWARE\\Humus",
+        "Fullscreen",
+        0
+      ]
+    ]
+  },
+  "wasmProfile": "debug",
   "translatedTreeSha256": "ed4bacff4ad1b28714e96472b5deb69618e920feee69510e4519859089f4a47e",
-  "cargoLockSha256": "24215033192b929757a22b70df1f78fef7875e1c8da2d98e93df453940c98667",
-  "builtAt": "2026-09-08T21:16:50.480257+00:00",
-  "revision": "d2d8875a13ff97c8237a9905a0d54b39f7796fbd",
-  "workingTreeDirty": false,
-  "sourceSha256": "80f497d392f98fc6c1a8fb457035052933590453f56f1ada9afe1e57be3dca5d",
+  "cargoLockSha256": "968c5d084c3a8ffaae74c4436735dad977229fbde0141ec4279b7d8a134164fd",
+  "builtAt": "2026-09-09T00:49:49.963425+00:00",
+  "revision": "4486e9013320cd98300f4a4ac2860816e06091c8",
+  "workingTreeDirty": true,
+  "sourceSha256": "ac6a0f406c127bb4f369ae47e4bb712ccd31ba8b950e4d0bf811b7bed6e13880",
   "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
   "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
   "translationEntryPoints": [
     "409a00",
     "004233f4"
   ],
+  "moduleUrl": "/generated/humus.js",
+  "wasmUrl": "/generated/humus_bg.wasm",
+  "wasmArtifact": "humus_bg.wasm",
   "artifacts": {
     "humus.js": {
-      "sha256": "87ac3583c2cf9f7f349f68631ebb71fb53624356a5f56e6ff01203995636920e",
+      "sha256": "1ef5e19ea84082e828c5b8576dc81e8c09436c6d2c8edb1b58b642346e99c7b8",
       "bytes": 12952
     },
     "humus_bg.wasm": {
-      "sha256": "cdf909e2c54bd6f26782db3ccbb832972b04a42e840660a6806eb313fda16eca",
-      "bytes": 22653880
+      "sha256": "b1fcf6a2c9ca3a9e145cbe7e30394aab4f3bff9803884f095754253997e9a8b4",
+      "bytes": 18537983
     }
   }
 }

@@ -38,7 +38,10 @@ export async function executeDrawBatch(data,graphics) {
   if(!Array.isArray(commands)||!commands.length||commands.length>BATCH_COMMANDS)throw Error('invalid graphics batch count');
   let end=4096;
   for(const a of commands){const s=layout(a);if(a[s.pointer]!==end||end+a[s.length]>buffer.byteLength)throw Error('invalid graphics batch command');end+=Math.ceil(a[s.length]/4)*4;}
-  for(const a of commands)if(await graphics(a[0],a.slice(1),buffer)!==1)throw Error('queued draw/upload rejected; remaining batch aborted');
+  for(const a of commands){
+   const result=await graphics(a[0],a.slice(1),buffer);
+   if(result!==1)throw Error(`queued draw/upload rejected: op=${a[0]} result=0x${(result>>>0).toString(16)} args=${JSON.stringify(a.slice(1))}`);
+  }
   result=1;
  } finally {Atomics.store(control,0,result);Atomics.notify(control,0,1);}
 }

@@ -1,25 +1,26 @@
 import {resourceMetrics,memoryProbe} from './resource-metrics.js';
 function boundedPayload(){const copy={...report,events:[...report.events]};let data=JSON.stringify({token,report:copy});while(new TextEncoder().encode(data).length>240000&&copy.events.length){copy.events.shift();copy.droppedEvents++;data=JSON.stringify({token,report:copy})}return data}
 const $=id=>document.getElementById(id);
-let build,worker,gpuWorker,token,timer,probeWorker;
+let build,worker,gpuWorker,token,timer,probeWorker,HAS_BACKEND=false;
 function benchmarkDuration(){const value=new URL(location.href).searchParams.get('benchmarkSeconds')??'60';if(!/^\d+$/.test(value)||Number(value)<60||Number(value)>600)throw Error('benchmarkSeconds must be an integer from 60 through 600');return Number(value)*1000;}
 let report={runId:null,status:'idle',events:[],droppedEvents:0,applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'}};
 function log(type,data={}){report.events.push({timeMs:Math.round(performance.now()),type,...data});if(report.events.length>250){report.events.shift();report.droppedEvents++}$('logs').textContent=report.events.map(e=>`${e.timeMs} ${e.type}: ${e.message??JSON.stringify(e.result??e)}`).join('\n');$('logs').scrollTop=$('logs').scrollHeight;}
 async function upload(){if(!token)return;try{const r=await fetch('/api/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:boundedPayload()});if(!r.ok)throw Error('evidence upload '+r.status)}catch(e){log('upload-error',{message:e.message})}}
-function stop(status='stopped'){clearTimeout(timer);worker?.terminate();worker=null;gpuWorker?.terminate();gpuWorker=null;report.status=status;report.endedAt=new Date().toISOString();report.diagnosticAttemptMs=performance.now()-report.startTimeMs;$('status').textContent=status;$('start').disabled=false;$('stop').disabled=true;void upload()}
-// Live static deployment: no evidence backend is available.
-const HAS_BACKEND=!!document.querySelector('script[data-evidence]')?.dataset?.evidence;
-async function start(){
+function stop(status='stopped'){clearTimeout(timer);worker?.terminate();worker=null;gpuWorker?.terminate();gpuWorker=null;report.status=status;report.endedAt=new Date().toISOString();report.diagnosticAttemptMs=performance.now()-report.startTimeMs;$('status').textContent=status;$('start').disabled=false;$('long').disabled=false;$('stop').disabled=true;void upload()}
+async function start(long=false){
  if(worker||!build||$('start').disabled)return;
- if(!crossOriginIsolated){$('status').textContent='Cross-origin isolation not active yet — reload the page once (the service worker enables it on the second load).';return;}
- $('start').disabled=true;
+ $('start').disabled=true;$('long').disabled=true;
+ if(!crossOriginIsolated){$('status').textContent='Cross-origin isolation not active yet — reload the page once (the service worker enables it on the second load).';$('start').disabled=false;$('long').disabled=false;return;}
  try{
   const measurementMs=benchmarkDuration();
   probeWorker?.terminate();probeWorker=null;
-  report={applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'},runId:crypto.randomUUID(),status:'starting',events:[],droppedEvents:0,build,startTimeMs:performance.now(),startedAt:new Date().toISOString(),requestedDurationMs:new URL(location.href).searchParams.has('benchmark')?measurementMs:null,visibility:document.visibilityState};
+  report={applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'},runId:crypto.randomUUID(),status:'starting',events:[],droppedEvents:0,build,startTimeMs:performance.now(),startedAt:new Date().toISOString(),requestedDurationMs:long?14400000:new URL(location.href).searchParams.has('benchmark')?measurementMs:null,visibility:document.visibilityState};
   if(HAS_BACKEND){const response=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok)throw Error('session creation '+response.status);token=(await response.json()).token;}
-  $('stop').disabled=false;$('status').textContent='Executing original Humus binary…';
-  worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});
+  $('start').disabled=true;$('long').disabled=true;$('stop').disabled=false;$('status').textContent=`Executing original ${build.guest.title} binary…`;
+  // Keep runtime query parameters in the worker URL so a changed runtime mode
+  // cannot reuse a browser-cached worker module from another run.
+  const workerVersion=encodeURIComponent(`${build.runtimeBuild?.sourceSha256??build.runtimeBuild?.builtAt??build.revision}:${location.search}`);
+  worker=new Worker(new URL(`./worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
    if(!worker||report.runId!==activeRunId)return;
@@ -36,7 +37,7 @@ async function start(){
    if(type==='resource-metrics')report.resourceMetrics=rest;
    if(type==='asset-cache-metrics')report.assetCacheMetrics=rest;
    if(rest.wasmLinearMemoryBytes)report.performance.wasmLinearMemoryBytes=rest.wasmLinearMemoryBytes;
-   if(type==='failed'){report.blocker=rest.message;stop('failed: '+(rest.message.split('\n').find(line=>line.startsWith('unsupported API:'))??rest.message.split('\n')[0]));}
+   if(type==='failed'){report.blocker=rest.message;const detail=rest.message.replace(/\s+/g,' ').slice(0,1200);stop('failed: '+detail);}
    if(type==='returned')stop('executable returned without verified scene');
    if(type==='gpu-error'||type==='gpu-lost'){report.blocker=rest;stop(type+': '+rest.message)}
   };
@@ -44,26 +45,31 @@ async function start(){
   const oldCanvas=$('scene');const canvas=oldCanvas.cloneNode();oldCanvas.replaceWith(canvas);
   canvas.tabIndex=0;bindInput(canvas);
   const offscreen=canvas.transferControlToOffscreen();
-  const channel=new MessageChannel();gpuWorker=new Worker(new URL('./gpu-worker.js',import.meta.url),{type:'module'});
+  const channel=new MessageChannel();gpuWorker=new Worker(new URL(`./gpu-worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;
   gpuWorker.postMessage({type:'init',gpuTiming:new URL(location.href).searchParams.has('gpuTiming'),sceneEquivalenceControl:new URL(location.href).searchParams.get('sceneEquivalenceControl'),sceneEquivalence:new URL(location.href).searchParams.has('sceneEquivalence'),canvas:offscreen,port:channel.port1,startEpoch:performance.timeOrigin+report.startTimeMs,drawDiagnostics:new URL(location.href).searchParams.has('drawDiagnostics'),captureFrames:new URL(location.href).searchParams.has('captureFrames'),cameraTest:new URL(location.href).searchParams.has('cameraTest')},[offscreen,channel.port1]);
   worker.postMessage({type:'start',guestMemory:new URL(location.href).searchParams.get('guestMemory')==='1',resolution:new URL(location.href).searchParams.get('resolution'),build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),gpuPort:channel.port2},[channel.port2]);
-  timer=setTimeout(()=>stop('startup watchdog: no completion within 60 seconds'),new URL(location.href).searchParams.has('benchmark')?120000:60000);
+  // Single attempts have a watchdog; long sessions are user-started and stoppable.
+  timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no completion within 60 seconds'),long?14400000:new URL(location.href).searchParams.has('benchmark')?120000:60000);
  }catch(e){log('failed',{message:e.message});stop('failed: '+e.message)}
 }
-$('start').onclick=()=>start();$('stop').onclick=()=>stop();
-$('download').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));a.download=`humus-${report.runId??'probe'}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('start').onclick=()=>start();$('long').onclick=()=>start(true);$('stop').onclick=()=>stop();
+$('download').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));a.download=`${build?.guest?.id??'directwebgpu'}-${report.runId??'probe'}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 document.addEventListener('visibilitychange',()=>log('visibility',{message:document.visibilityState}));
 try{
- // Static deployment: build manifest is a sibling file (no /api/build backend).
- const response=await fetch('./build-manifest.json');if(!response.ok)throw Error('build manifest '+response.status);
- build=await response.json();if(!Array.isArray(build.files)||!build.dependencies?.executable)throw Error('invalid build manifest');report.build=build;
- $('start').disabled=false;
- $('revision').textContent=`Revision ${build.runtimeBuild?.revision??build.revision}${build.dirty?' (working tree modified)':''} · EXE ${build.dependencies.executable.sha256}`;
- probeWorker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});
+ let response=await fetch('./build-manifest.json',{cache:'no-store'});
+ if(response.ok){HAS_BACKEND=false;}else{response=await fetch('/api/build',{cache:'no-store'});if(!response.ok)throw Error('build manifest '+response.status);HAS_BACKEND=true;}
+ build=await response.json();if(!Array.isArray(build.files)||!build.dependencies?.executable||!build.guest?.title)throw Error('invalid build manifest');report.build=build;
+ document.title=`${build.guest.title} · DirectWebGPU`;$('title').textContent=`${build.guest.title} binary runtime`;$('start').textContent=`Start ${build.guest.title}`;$('revision').textContent=`Loading ${build.guest.title} runtime…`;
+ $('start').disabled=false;$('long').disabled=false;
+ const dirty=build.dirty??build.workingTreeDirty;
+ $('revision').textContent=`${build.guest.title} · revision ${build.runtimeBuild?.revision??build.revision}${dirty?' (working tree modified)':''} · EXE ${build.dependencies.executable.sha256}`;
+ const workerUrl=`./worker.js?guest=${encodeURIComponent(build.guest.id)}`;
+ probeWorker=new Worker(new URL(workerUrl,import.meta.url),{type:'module'});
  probeWorker.onmessage=({data})=>{log(data.type,data);if(data.type==='probe'){report.browser=data.result;$('status').textContent=data.result.deviceCreated?'GPU device available. Ready for executable launch.':'GPU unavailable. CPU execution tests remain available.'}};
  probeWorker.onerror=e=>{log('probe-error',{message:e.message});$('status').textContent='GPU probe failed: '+e.message};
  probeWorker.postMessage({type:'probe'});
+ if(new URL(location.href).searchParams.has('autostart'))void start();
 }catch(e){log('initialization-error',{message:e.message});$('status').textContent=e.message}
 
 function bindInput(canvas){
