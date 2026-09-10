@@ -46,7 +46,6 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
  const cursorUpdate=()=>onVirtualCursor({x:virtualX,y:virtualY,visible:guestCursorVisible&&document.pointerLockElement===canvas});
  const mappedCode=code=>directionalCode(code,profile,guestCursorVisible);
- const keyMessage=(type,code,repeat=false)=>keyboardMessage(type,mappedCode(code),repeat);
  const releaseKeys=()=>{for(const code of pressed.values()){const message=keyboardMessage('keyup',code);if(message)emit(message);}pressed.clear();};
  const onKey=event=>{
   if(!isRunning()||!focused())return;

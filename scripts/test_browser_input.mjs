@@ -18,6 +18,15 @@ assert.equal(directionalCode('Enter',inverted,false),'Enter');
 const documentListeners=new Map();
 const windowListeners=new Map();
 const canvasListeners=new Map();
+const touchElement=(dataset={})=>{
+ const listeners=new Map();
+ return{dataset,style:{},listeners,addEventListener:(type,listener)=>listeners.set(type,listener),removeEventListener:()=>{},setPointerCapture:()=>{},getBoundingClientRect:()=>({left:0,top:0,width:160,height:160})};
+};
+const escapeButton=touchElement({touchKey:'Escape'}),enterButton=touchElement({touchKey:'Enter'}),joystick=touchElement(),knob=touchElement();
+const touchRoot={
+ querySelectorAll:selector=>selector==='[data-touch-key]'?[escapeButton,enterButton]:[],
+ querySelector:selector=>selector==='[data-touch-joystick]'?joystick:selector==='[data-touch-knob]'?knob:null,
+};
 const canvas={
  width:800,height:600,
  addEventListener:(type,listener)=>canvasListeners.set(type,listener),
@@ -38,7 +47,7 @@ globalThis.window={
 };
 const sent=[];
 const cursors=[];
-const input=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>sent.push(message),profile:inverted,onVirtualCursor:state=>cursors.push(state)});
+const input=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>sent.push(message),profile:inverted,touchRoot,onVirtualCursor:state=>cursors.push(state)});
 input.warp(400,300);
 canvasListeners.get('pointermove')({type:'pointermove',movementX:7,movementY:-4,buttons:0,button:-1});
 assert.deepEqual(sent.at(-1),[4,407,296,0]);
@@ -54,6 +63,17 @@ assert.deepEqual(sent.slice(-2),[[5,0x50,0x28,1],[6,0x50,0x28,1]]);
 assert.equal(cursors.at(-1).visible,false);
 input.setCursorVisible(true);
 assert.equal(cursors.at(-1).visible,true);
+let prevented=false;
+enterButton.listeners.get('pointerdown')({pointerId:1,preventDefault(){prevented=true;}});
+enterButton.listeners.get('pointerup')({pointerId:1,preventDefault(){}});
+assert.equal(prevented,true);
+assert.deepEqual(sent.slice(-2),[[5,0x1c,0x0d,0],[6,0x1c,0x0d,0]]);
+joystick.listeners.get('pointerdown')({pointerId:2,clientX:150,clientY:80,preventDefault(){}});
+assert.deepEqual(sent.at(-1),[5,0x4d,0x27,1]);
+assert.match(knob.style.transform,/translate\(/);
+joystick.listeners.get('pointerup')({pointerId:2,preventDefault(){}});
+assert.deepEqual(sent.at(-1),[6,0x4d,0x27,1]);
+assert.equal(knob.style.transform,'translate(0px,0px)');
 input.destroy();
 
 console.log('Browser input preserves Windows directions and guest cursor warps');

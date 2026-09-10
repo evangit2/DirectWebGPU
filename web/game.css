@@ -170,7 +170,7 @@ footer #metrics {
     display: none;
   }
 }
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 760px) {
   main {
     grid-template-rows: auto auto minmax(210px, 1fr) auto;
   }
@@ -193,6 +193,9 @@ footer #metrics {
     background: #080d14;
     touch-action: none;
     user-select: none;
+  }
+  #capture, #debug-toggle {
+    display: none;
   }
   .touch-actions {
     display: flex;
@@ -238,7 +241,7 @@ footer #metrics {
     padding-bottom: max(9px, env(safe-area-inset-bottom));
   }
 }
-@media (pointer: coarse) and (max-width: 430px) {
+@media (max-width: 430px) {
   .touch-controls { min-height: 180px; gap: 12px; padding-inline: 14px; }
   .touch-actions { gap: 9px; }
   .touch-actions button { width: 58px; height: 58px; }
