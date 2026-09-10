@@ -81,6 +81,9 @@ main {
   outline: 0;
   cursor: crosshair;
 }
+.guest-cursor-hidden .stage canvas {
+  cursor: none;
+}
 .stage:fullscreen {
   width: 100vw;
   height: 100vh;
