@@ -102,6 +102,14 @@ main {
 .start-card button {
   background: #24549a;
 }
+.start-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+#crash-details {
+  background: #6c302e;
+}
 .running .start-card {
   display: none;
 }
@@ -148,6 +156,44 @@ footer #metrics {
   font-size: 12px;
   margin: 8px 0;
 }
+.crash-dialog {
+  width: min(680px, calc(100vw - 24px));
+  max-height: min(76vh, 720px);
+  padding: 16px;
+  color: #e7edf5;
+  background: #111a27;
+  border: 1px solid #3c506c;
+  border-radius: 10px;
+  box-shadow: 0 18px 70px #000c;
+}
+.crash-dialog::backdrop {
+  background: #000a;
+}
+.crash-heading,
+.crash-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.crash-dialog p {
+  color: #a9bad0;
+  font-size: 13px;
+}
+.crash-dialog pre {
+  max-height: 48vh;
+  overflow: auto;
+  padding: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #070b11;
+  border: 1px solid #26364b;
+  border-radius: 6px;
+  font-size: 11px;
+}
+.crash-actions {
+  justify-content: flex-end;
+}
 @media (max-width: 760px) {
   .playbar {
     align-items: flex-start;
@@ -168,6 +214,14 @@ footer #metrics {
   }
   footer #metrics {
     display: none;
+  }
+  .crash-dialog {
+    width: 100%;
+    max-width: none;
+    max-height: 78dvh;
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: 14px 14px 0 0;
   }
 }
 @media (pointer: coarse), (max-width: 760px) {
