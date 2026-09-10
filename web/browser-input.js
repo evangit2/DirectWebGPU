@@ -27,8 +27,9 @@ function browserButtons(buttons){return(buttons&1)|((buttons&4)>>1)|((buttons&2)
 function changedButton(button){return({0:1,1:2,2:4})[button]??0;}
 const OPPOSITE_DIRECTION=Object.freeze({ArrowLeft:'ArrowRight',ArrowRight:'ArrowLeft',ArrowUp:'ArrowDown',ArrowDown:'ArrowUp'});
 
-export function directionalCode(code,profile={},cursorVisible=true){
- const axes=cursorVisible?null:profile?.cursorHidden;
+export function directionalCode(code,profile={},cursorVisible=true,source='desktop'){
+ const sourceProfile=source==='desktop'?null:profile?.[source];
+ const axes=cursorVisible?(sourceProfile?.cursorVisible??null):(sourceProfile?.cursorHidden??profile?.cursorHidden);
  if(!axes)return code;
  if(axes.horizontalSign===-1&&['ArrowLeft','ArrowRight'].includes(code))return OPPOSITE_DIRECTION[code];
  if(axes.verticalSign===-1&&['ArrowUp','ArrowDown'].includes(code))return OPPOSITE_DIRECTION[code];
@@ -82,7 +83,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const onLock=()=>{const locked=document.pointerLockElement===canvas;if(!locked)releaseKeys();onCaptureChange(locked,captureSupported);cursorUpdate();};
  const releaseTouchDirections=()=>{for(const code of joystickDirections){const message=keyboardMessage('keyup',code);if(message)emit(message);}joystickDirections=[];};
  const setTouchDirections=codes=>{
-  const next=[...new Set(codes.map(mappedCode))];
+  const next=[...new Set(codes.map(code=>directionalCode(code,profile,guestCursorVisible,'touchJoystick')))];
   for(const code of joystickDirections)if(!next.includes(code)){const message=keyboardMessage('keyup',code);if(message)emit(message);}
   for(const code of next)if(!joystickDirections.includes(code)){const message=keyboardMessage('keydown',code);if(message)emit(message);}
   joystickDirections=next;
