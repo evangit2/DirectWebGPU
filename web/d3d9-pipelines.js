@@ -4,7 +4,7 @@ import {RS} from './d3d9-state.js';
 // Called by the serial graphics queue. Cache keys exclude dynamic stencil refs,
 // resources and constants, which do not change the render pipeline itself.
 export class PipelineCache{
- constructor(device,objects){this.device=device;this.objects=objects;this.items=new Map();this.bytes=0;this.compilations=0;}
+ constructor(device,objects){this.device=device;this.objects=objects;this.items=new Map();this.bytes=0;this.compilations=0;this.hits=0;}
  setShaderObjects(objects){
   if(!objects?.translator)throw TypeError('shader objects require a translator');
   if(this.objects&&this.objects!==objects)throw Error('pipeline cache shader objects cannot be replaced');
@@ -13,14 +13,16 @@ export class PipelineCache{
  get(vertex,pixel,declaration,streams,state,{colorFormat='bgra8unorm',depthFormat='depth24plus-stencil8',topology='triangle-list',fixed=false,textured=false,textureStages=null,lighting=null,viewportSize=null}={}){
   if(!fixed){this.objects.get(vertex,0);this.objects.get(pixel,1);}else if(vertex!==0||pixel!==0)throw Error("invalid fixed shader handles");
   if(!['rgba8unorm','bgra8unorm'].includes(colorFormat)||![null,'depth24plus-stencil8'].includes(depthFormat)||!['triangle-list','line-list','point-list'].includes(topology))throw RangeError('unsupported pipeline attachment or topology');
- const clipTransformed=state.get(RS.CLIPPING)!==0,depthEnabled=state.get(RS.ZENABLE)!==0,pair=fixed?fixedFunctionPair(declaration,textured,viewportSize,textureStages,lighting,clipTransformed,depthEnabled):this.objects.pair(vertex,pixel,declaration),layout=vertexLayout(declaration,pair.vertex.inputs,streams);
-  const primitive=state.primitive(topology),target=state.colorTarget(colorFormat),depthStencil=depthFormat?state.depthStencil(depthFormat):undefined;
-  const alpha=[state.get(15),state.get(25),state.get(24)];if(!alpha[0])alpha[1]=alpha[2]=0;
-  const key=JSON.stringify([vertex,pixel,fixed,textured,!!lighting&&lighting[0]!==0,textureStages,layout,primitive,target,depthStencil,alpha,viewportSize,clipTransformed,depthEnabled]);
-  let entry=this.items.get(key);if(entry){this.items.delete(key);this.items.set(key,entry);return entry;}
- return this.compile(key,{vertex,pixel,declaration,streams,state,colorFormat,depthFormat,topology,fixed,textured,textureStages,lighting,viewportSize,pair,layout,primitive,target,depthStencil,alpha});
+  // Build a complete but cheap key from the serialized D3D state. Generating
+  // fixed-function WGSL and reflected vertex layouts before this lookup made
+  // every cache hit allocate a fresh shader pair and descriptor graph.
+  const pipelineStates=[7,14,15,19,20,22,23,24,25,27,52,53,54,55,56,58,59,136,168,171].map(type=>state.get(type));
+  const key=JSON.stringify([vertex,pixel,fixed,textured,!!lighting&&lighting[0]!==0,textureStages,declaration,streams.map(stream=>stream.stride),topology,colorFormat,depthFormat,pipelineStates,viewportSize]);
+  let entry=this.items.get(key);if(entry){this.items.delete(key);this.items.set(key,entry);this.hits++;return entry;}
+ return this.compile(key,{vertex,pixel,declaration,streams,state,colorFormat,depthFormat,topology,fixed,textured,textureStages,lighting,viewportSize});
  }
- async compile(key,{vertex,pixel,declaration,streams,state,colorFormat,depthFormat,topology,fixed,textured,viewportSize,pair,layout,primitive,target,depthStencil,alpha}){
+ async compile(key,{vertex,pixel,declaration,streams,state,colorFormat,depthFormat,topology,fixed,textured,textureStages,lighting,viewportSize,pair=null,layout=null,primitive=null,target=null,depthStencil=undefined,alpha=null}){
+  if(!pair){const clipTransformed=state.get(RS.CLIPPING)!==0,depthEnabled=state.get(RS.ZENABLE)!==0;pair=fixed?fixedFunctionPair(declaration,textured,viewportSize,textureStages,lighting,clipTransformed,depthEnabled):this.objects.pair(vertex,pixel,declaration);layout=vertexLayout(declaration,pair.vertex.inputs,streams);primitive=state.primitive(topology);target=state.colorTarget(colorFormat);depthStencil=depthFormat?state.depthStencil(depthFormat):undefined;alpha=[state.get(15),state.get(25),state.get(24)];if(!alpha[0])alpha[1]=alpha[2]=0;}
  const translator=this.objects?.translator;
  if(!fixed&&!translator)throw Error('programmable pipeline requires a shader translator');
  if(alpha[0]&&!translator)throw Error('alpha-tested pipeline requires a shader translator');

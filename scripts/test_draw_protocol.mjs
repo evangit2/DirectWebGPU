@@ -22,6 +22,7 @@ function packet(compact,clipping=null){
 
 const compact=packet(true),decoded=decodeDraw(compact.memory,4096,compact.length);
 assert.equal(compact.length,2228);
+assert.equal(decoded.declaration.buffer,compact.memory);assert.equal(decoded.fixed.buffer,compact.memory);assert.equal(decoded.registers[0][0].buffer,compact.memory);
 assert.equal(decoded.fixed.length,48);assert.equal(decoded.lighting.length,96);assert.equal(decoded.textureStages[0][0],4);
 assert.equal(decoded.state.get(136),1);
 assert.equal(decoded.registers[0][0][0],0x3f800000);assert(decoded.registers[1].every(words=>words.every(value=>value===0)));
