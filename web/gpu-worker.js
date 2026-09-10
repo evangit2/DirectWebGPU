@@ -50,6 +50,9 @@ async function dispatch(data){
   if(func==='create_window'){
    const [title,width,height]=args;if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>4096||height>4096)throw Error('invalid window size');
    canvas.width=width;canvas.height=height;windowSize=[width,height];emit('window-created',{title,width,height});result=1;
+  }else if(func==='cursor_warp'){
+   const [x,y]=args;if(!Number.isInteger(x)||!Number.isInteger(y))throw Error('invalid cursor warp');
+   emit('cursor-warp',{x,y});result=1;
   }else if(func==='audio_open'){
    const [sampleRate,channels]=args;
    if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000||!Number.isInteger(channels)||channels<1||channels>8)throw Error('invalid audio format');

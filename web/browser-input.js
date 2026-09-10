@@ -70,6 +70,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const contextMenu=event=>event.preventDefault();canvas.addEventListener('contextmenu',contextMenu);
  onCaptureChange(false,captureSupported);
  return{
+  warp(x,y){if(Number.isInteger(x)&&Number.isInteger(y)){virtualX=x;virtualY=y;}},
   capture(){if(!isRunning())return;unlock();canvas.focus({preventScroll:true});if(captureSupported)void canvas.requestPointerLock().catch?.(()=>{});else onCaptureChange(false,false);},
   release(){if(document.pointerLockElement===canvas)void document.exitPointerLock?.();releaseKeys();},
   destroy(){releaseKeys();document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onKey);document.removeEventListener('pointerlockchange',onLock);window.removeEventListener('blur',releaseKeys);for(const type of ['pointerdown','pointerup','pointermove'])canvas.removeEventListener(type,onPointer);canvas.removeEventListener('contextmenu',contextMenu);},

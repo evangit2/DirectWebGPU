@@ -70,6 +70,7 @@ async function start(long=false){
   worker=new Worker(new URL(`./worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
+   if(data.type==='cursor-warp'){inputBinding?.warp(data.x,data.y);report.cursorWarps=(report.cursorWarps??0)+1;if(report.cursorWarps<=3)(report.cursorWarpSamples??=[]).push({x:data.x,y:data.y,timeMs:performance.now()-report.startTimeMs});return;}
    if(data.type==='audio-open'){browserAudio.open(data.streamId,data.sampleRate,data.channels);audioDiagnostic('audio-open',{sampleRate:data.sampleRate,channels:data.channels});return;}
    if(data.type==='audio-write'){browserAudio.write(data.streamId,data.data);audioDiagnostic('audio-write');return;}
    if(data.type==='audio-resume'){browserAudio.unlock();audioDiagnostic('audio-resume');return;}

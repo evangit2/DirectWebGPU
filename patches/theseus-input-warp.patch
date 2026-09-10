@@ -1,0 +1,51 @@
+diff --git a/host/src/wasm.rs b/host/src/wasm.rs
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -175,6 +175,13 @@
+         self.chan.lock().unwrap().console_write(text);
+     }
+ 
++    /// Keep the browser's virtual pointer position synchronized with a guest
++    /// cursor warp. Pointer lock cannot move the operating-system cursor, but
++    /// games commonly recenter it every frame to read relative motion.
++    pub fn set_cursor_pos(&self, x: i32, y: i32) {
++        self.chan.lock().unwrap().cursor_warp(x, y);
++    }
++
+     /// Hand a written file to the page, which keeps it across reloads.
+     pub fn persist_file(&self, path: &str, data: &[u8]) {
+         self.chan.lock().unwrap().write_file(path, data);
+@@ -215,6 +222,7 @@
+     create_window(title: string, width: number, height: number): number;
+     resize_window(window_id: number, width: number, height: number): void;
+     render(window_id: number, surface_id: number): void;
++    cursor_warp(x: number, y: number): void;
+ 
+     set_pixels(surface_id: number, ptr: number, len: number): void;
+ 
+@@ -280,6 +288,13 @@
+         self.send_async("render", args);
+     }
+ 
++    pub fn cursor_warp(&mut self, x: i32, y: i32) {
++        let args = js_sys::Array::new();
++        args.push(&JsValue::from(x));
++        args.push(&JsValue::from(y));
++        self.send_async("cursor_warp", args);
++    }
++
+     pub fn write_file(&mut self, path: &str, data: &[u8]) {
+         let args = js_sys::Array::new();
+         args.push(&JsValue::from(path));
+diff --git a/win32/winapi/src/user32/window.rs b/win32/winapi/src/user32/window.rs
+--- a/win32/winapi/src/user32/window.rs
++++ b/win32/winapi/src/user32/window.rs
+@@ -565,6 +565,8 @@
+     // We can't warp the host's cursor, but tracking where the app put it keeps
+     // GetCursorPos and DirectInput's relative motion consistent with each other.
+     state().input.borrow_mut().mouse.warp(X, Y);
++    #[cfg(target_family = "wasm")]
++    host::host().set_cursor_pos(X, Y);
+     true
+ }
+ 
