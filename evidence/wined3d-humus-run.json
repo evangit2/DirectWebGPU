@@ -1,0 +1,135 @@
+{
+  "status": "60-second frame-delivery measurement completed",
+  "runtime": {
+    "mode": "wined3d-webgpu",
+    "deprecated": false,
+    "shaderCompiler": "vkd3d-shader",
+    "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+  },
+  "revision": "e82395f91329e6408a2ce6357e7f086627192fcf",
+  "runtimeBuildRevision": "e82395f91329e6408a2ce6357e7f086627192fcf",
+  "runtimeBuildWasClean": true,
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "secureContext": true,
+    "crossOriginIsolated": true,
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    }
+  },
+  "firstPresentObservedMs": 3163.8799998760223,
+  "requestedDurationMs": 60000,
+  "applicationPresents": 4486,
+  "submittedFrames": 4486,
+  "gpuSubmissions": 207121,
+  "presentationMetrics": {
+    "warmupMs": 5000,
+    "totalSteadyIntervals": 4046,
+    "steadyDurationMs": 54445.4599609375,
+    "submissionFPS": 74.31289960453724,
+    "frameTimeMs": {
+      "p50": 12.5048828125,
+      "p95": 22.64501953125,
+      "p99": 31.5048828125,
+      "min": 6.9150390625,
+      "max": 177.6298828125
+    },
+    "drawBridge": {
+      "drawBatches": 54009,
+      "batchedDraws": 178313,
+      "batchedUploads": 31874,
+      "uploadedBytes": 10949041,
+      "maxBatchCommands": 10,
+      "stagingBytes": 1052672
+    },
+    "pipelineCacheEntries": 5,
+    "shaderObjects": 6,
+    "captureEnabled": true,
+    "limitations": "Present submission intervals after 5-second warmup; percentiles use last 8192 intervals; queue-completion latency includes queued work and is not GPU shader duration or scan-out."
+  },
+  "assetCacheMetrics": {
+    "mode": "warm",
+    "hits": 19,
+    "misses": 0,
+    "cacheBytes": 26004414,
+    "networkBodyBytes": 0,
+    "verifiedBytes": 26004414,
+    "repairedEntries": 0,
+    "limitBytes": 536870912,
+    "scope": "guest assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+  },
+  "frameCaptures": [
+    {
+      "present": 1,
+      "readbackCompletedMs": 3133.8447265625,
+      "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+      "width": 1280,
+      "height": 720,
+      "evidenceWidth": 320,
+      "evidenceHeight": 180,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839364,
+        "pixels": 839680,
+        "meanRgb": [
+          37,
+          22,
+          12
+        ]
+      }
+    },
+    {
+      "present": 30,
+      "readbackCompletedMs": 3559.48486328125,
+      "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+      "width": 1280,
+      "height": 720,
+      "evidenceWidth": 320,
+      "evidenceHeight": 180,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839408,
+        "pixels": 839680,
+        "meanRgb": [
+          34,
+          24,
+          13
+        ]
+      }
+    },
+    {
+      "present": 60,
+      "readbackCompletedMs": 3934.15478515625,
+      "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+      "width": 1280,
+      "height": 720,
+      "evidenceWidth": 320,
+      "evidenceHeight": 180,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839160,
+        "pixels": 839680,
+        "meanRgb": [
+          32,
+          21,
+          12
+        ]
+      }
+    }
+  ],
+  "droppedEvents": 0
+}

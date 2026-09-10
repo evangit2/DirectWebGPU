@@ -1,0 +1,9 @@
+diff --git a/libs/vkd3d-shader/spirv.c b/libs/vkd3d-shader/spirv.c
+index 5dc7ff8..defbd6c 100644
+--- a/libs/vkd3d-shader/spirv.c
++++ b/libs/vkd3d-shader/spirv.c
+@@ -3181,3 +3181,3 @@ static struct spirv_compiler *spirv_compiler_create(const struct vsir_program *
+     if (compiler->shader_type == VKD3D_SHADER_TYPE_VERTEX)
+-        compiler->emit_point_size = true;
++        compiler->emit_point_size = compiler->compile_info.write_tess_geom_point_size;
+     else if (compiler->shader_type != VKD3D_SHADER_TYPE_GEOMETRY)

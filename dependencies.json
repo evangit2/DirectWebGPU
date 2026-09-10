@@ -25,5 +25,25 @@
     "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
     "version": "4.0.7"
   },
+  "vkd3d": {
+    "url": "https://dl.winehq.org/vkd3d/source/vkd3d-2.1.tar.xz",
+    "version": "2.1",
+    "sha256": "7510146aff2adfb4ae07ab890701a607e5ff7c66e57100cfc9f630ec92eeda6a",
+    "license": "LGPL-2.1-or-later; adapter links libvkd3d-shader as WASM, patch recorded in patches/vkd3d.patch"
+  },
+  "spirv_headers": {
+    "url": "https://github.com/KhronosGroup/SPIRV-Headers.git",
+    "revision": "04fd3caa1e8267e4d95c806cad901181728e1006"
+  },
+  "vulkan_headers": {
+    "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
+    "revision": "ee2ec5fd83dafce291024683b50dc89219333076"
+  },
+  "libopenmpt": {
+    "url": "https://lib.openmpt.org/files/libopenmpt/dev/libopenmpt-0.8.9+release.dev.js.tar.gz",
+    "version": "0.8.9",
+    "sha256": "b2c31cd9c99830997b7a337706509556fd1f5dd27da4b7db62e5a24ec95a2758",
+    "license": "BSD-3-Clause; bundled decoder and codec notices retained in web/third_party/libopenmpt"
+  },
   "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
 }

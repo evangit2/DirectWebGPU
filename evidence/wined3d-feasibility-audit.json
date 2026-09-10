@@ -1,0 +1,562 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-09",
+  "status": "source audit and architecture report; no new renderer acceptance",
+  "preservedPublicRevision": "2f14deb4313a38696ca3b97f35a037f561c247f0",
+  "report": "docs/wined3d-feasibility.md",
+  "upstream": [
+    {
+      "project": "Wine",
+      "revision": "bd0f453b7bb4e16c3b4ef271b3df499c34fbe848",
+      "inspectedFileCount": 58,
+      "files": [
+        {
+          "path": "COPYING.LIB",
+          "bytes": 26434,
+          "sha256": "e237fa56668030e928551ddd60f05df5fe957f75eab874bbd017e085ed722e7c",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/COPYING.LIB"
+        },
+        {
+          "path": "LICENSE",
+          "bytes": 824,
+          "sha256": "ae025f125a5d639f0f7abe5146efa1e3d7453cc10b744b2910806fa3f46626ef",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/LICENSE"
+        },
+        {
+          "path": "README.md",
+          "bytes": 5271,
+          "sha256": "794d12d0a6c70e13f5430f7f159aeb3802465b45075ecaa77276f839773c4088",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/README.md"
+        },
+        {
+          "path": "dlls/d3d8/Makefile.in",
+          "bytes": 300,
+          "sha256": "8d3cb663161731b2d18ea1c52ed9f7eddce3923f20bc859254e0d6a5d2a7a7f5",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d8/Makefile.in"
+        },
+        {
+          "path": "dlls/d3d8/d3d8_private.h",
+          "bytes": 13267,
+          "sha256": "c6c65db8b240399853b214482da81ffab870736028ece1204bda0b6c1f96737a",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d8/d3d8_private.h"
+        },
+        {
+          "path": "dlls/d3d8/device.c",
+          "bytes": 138856,
+          "sha256": "b6a0622d9d2bce1f00d8cb4d70fd38d462d068dfe85cc768806b9c1d20e50593",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d8/device.c"
+        },
+        {
+          "path": "dlls/d3d8/tests/device.c",
+          "bytes": 487199,
+          "sha256": "af8255d74bd2144128819ecd6336baf292f0ce87985d91ebc44f03dc3cf0df77",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d8/tests/device.c"
+        },
+        {
+          "path": "dlls/d3d8/tests/visual.c",
+          "bytes": 563081,
+          "sha256": "b709e7e8b56fd89b853800e64f5b85519ee1db1779736a6969db0f6ad07e684e",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d8/tests/visual.c"
+        },
+        {
+          "path": "dlls/d3d9/Makefile.in",
+          "bytes": 327,
+          "sha256": "b5617b9fe0a3800a50b187ef9856885647199552507fa5ba5f686b5ba7c63897",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d9/Makefile.in"
+        },
+        {
+          "path": "dlls/d3d9/device.c",
+          "bytes": 180111,
+          "sha256": "b70a5ed02fdd3e72f030d492770b13a16e8cd73b51c2ac8684e08f921af6fd58",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d9/device.c"
+        },
+        {
+          "path": "dlls/d3d9/tests/device.c",
+          "bytes": 681899,
+          "sha256": "78c0925be01fba6e2b3ce54a7f6f9f32e2a3c3d0680b48eabb102b00d50c89eb",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d9/tests/device.c"
+        },
+        {
+          "path": "dlls/d3d9/tests/visual.c",
+          "bytes": 1336514,
+          "sha256": "67c715a3ab98e362c0a82ffecb95adda19c4166b630264676a347490bacfad4e",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d9/tests/visual.c"
+        },
+        {
+          "path": "dlls/d3d9/texture.c",
+          "bytes": 47849,
+          "sha256": "b7eb4a3cda567d225e542a207de5cd9916a845579d9ef35d59102b4891a0a784",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/d3d9/texture.c"
+        },
+        {
+          "path": "dlls/wined3d/Makefile.in",
+          "bytes": 735,
+          "sha256": "74172795d3c52ee56b8280daed422e3889293088e03c7f9fd1ea42f8377e285c",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/Makefile.in"
+        },
+        {
+          "path": "dlls/wined3d/adapter_gl.c",
+          "bytes": 246534,
+          "sha256": "b5589dacdea1ce42b46f174ef842b1c364d33260dab66aadc844de6603b2fdd2",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/adapter_gl.c"
+        },
+        {
+          "path": "dlls/wined3d/adapter_vk.c",
+          "bytes": 106125,
+          "sha256": "8e47f50691fa578d27bdb8a94f416477b9d44f0ec7c5e43d16b697a003e76998",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/adapter_vk.c"
+        },
+        {
+          "path": "dlls/wined3d/buffer.c",
+          "bytes": 51798,
+          "sha256": "2b5fc42b3fa5078632533889cd2d9f94459687d556594abd19e3728656d6bdb6",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/buffer.c"
+        },
+        {
+          "path": "dlls/wined3d/context.c",
+          "bytes": 12492,
+          "sha256": "0d9c41c73098c5bfd6ede49732f40b77bb544903e9358caa5d87f6a13ad1476a",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/context.c"
+        },
+        {
+          "path": "dlls/wined3d/context_gl.c",
+          "bytes": 194621,
+          "sha256": "25b852086ed524fed9b9be49f49af146491b7ec1eee37211ff1dd45ee85c1263",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/context_gl.c"
+        },
+        {
+          "path": "dlls/wined3d/context_vk.c",
+          "bytes": 179945,
+          "sha256": "5f664a4e584df6936bbe9678f40fbcb3b68755d1f753550ced9471afcf0ee52b",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/context_vk.c"
+        },
+        {
+          "path": "dlls/wined3d/cs.c",
+          "bytes": 166480,
+          "sha256": "3d94fff2e03afaa94bae641b396a320c6ade2246a68d8b3459bfd23b2b96946e",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/cs.c"
+        },
+        {
+          "path": "dlls/wined3d/device.c",
+          "bytes": 215034,
+          "sha256": "d5296f1cefad2dbc8a9a59a88dc065c8d4e19a9cf761809946587884a05ff019",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/device.c"
+        },
+        {
+          "path": "dlls/wined3d/directx.c",
+          "bytes": 168097,
+          "sha256": "d5985baa9006c3a3020d6fd21f517a8ab9667b0291e5a6a465376abe5fad8841",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/directx.c"
+        },
+        {
+          "path": "dlls/wined3d/ffp_gl.c",
+          "bytes": 71914,
+          "sha256": "edde7686a5599c66bc4e5943eb5dd0931b22553370551067cce03bab32435c7f",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/ffp_gl.c"
+        },
+        {
+          "path": "dlls/wined3d/ffp_hlsl.c",
+          "bytes": 39047,
+          "sha256": "a41a7f1b601c093ab04348b7c579bd276b155f19196bcef32b62d6797ea00fa5",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/ffp_hlsl.c"
+        },
+        {
+          "path": "dlls/wined3d/glsl_shader.c",
+          "bytes": 544990,
+          "sha256": "7c5ce38743e176b35f3eafef429efaf6912df060a2700e9f605a54ba77bbbae6",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/glsl_shader.c"
+        },
+        {
+          "path": "dlls/wined3d/query.c",
+          "bytes": 71566,
+          "sha256": "1c973d1865cb499fcbd4f9a17eaca17c63f819f9117fadf0d179ce7026e14173",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/query.c"
+        },
+        {
+          "path": "dlls/wined3d/resource.c",
+          "bytes": 25431,
+          "sha256": "614f8d82e68f80175c4726c48bc71563f7efd8f660cfdff12af00783c756f285",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/resource.c"
+        },
+        {
+          "path": "dlls/wined3d/sampler.c",
+          "bytes": 15690,
+          "sha256": "68764af928ea198ac13d4ae97f2fa1bb16f767aafdfa8ca5a6deb48eee679322",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/sampler.c"
+        },
+        {
+          "path": "dlls/wined3d/shader.c",
+          "bytes": 131933,
+          "sha256": "a3902ad97c8488370bfa98d0f7874166209d392fa3c7cf25a3e2e410e303c37f",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/shader.c"
+        },
+        {
+          "path": "dlls/wined3d/shader_sm1.c",
+          "bytes": 41388,
+          "sha256": "64ea3ee9a0138f178cc33b60bae21e4d96106808f05e7fc095c3fe8c51fa9151",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/shader_sm1.c"
+        },
+        {
+          "path": "dlls/wined3d/shader_spirv.c",
+          "bytes": 55663,
+          "sha256": "7f4674070c25de4339f7cf756fb634ed381dc025174651faf261f04bf52995ef",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/shader_spirv.c"
+        },
+        {
+          "path": "dlls/wined3d/stateblock.c",
+          "bytes": 160831,
+          "sha256": "7c39748755c071180113f806ee50dc931f974e1de437731bb5aad952031f4cbc",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/stateblock.c"
+        },
+        {
+          "path": "dlls/wined3d/surface.c",
+          "bytes": 69356,
+          "sha256": "6d8259a30dba22e744211b9a6d0fc4506df1b4cc7ae70bc0f2fda3d7525e1827",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/surface.c"
+        },
+        {
+          "path": "dlls/wined3d/swapchain.c",
+          "bytes": 96403,
+          "sha256": "3547e1f184ddb796cc235858b94bdc1b1c783d8a344853a3994d4e4101059d0c",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/swapchain.c"
+        },
+        {
+          "path": "dlls/wined3d/texture.c",
+          "bytes": 86215,
+          "sha256": "2952415fa9f09b80e1cd64d3d771f001fb8b56da0584cc738f348fd84a92a07c",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/texture.c"
+        },
+        {
+          "path": "dlls/wined3d/texture_gl.c",
+          "bytes": 126085,
+          "sha256": "4e728baed8c55e7e5f6ac57c96cbb22ba360556b2393564b8bf5451ba313e13f",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/texture_gl.c"
+        },
+        {
+          "path": "dlls/wined3d/texture_vk.c",
+          "bytes": 90040,
+          "sha256": "82d2ceffc7a640e72c317d025189c405d84e6370b42aced57d3c0fbaace49754",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/texture_vk.c"
+        },
+        {
+          "path": "dlls/wined3d/utils.c",
+          "bytes": 312172,
+          "sha256": "d532e394d3676303a42c8aad763a67db5fc95b2dcc88c0a7f762193a14c06669",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/utils.c"
+        },
+        {
+          "path": "dlls/wined3d/vertexdeclaration.c",
+          "bytes": 17626,
+          "sha256": "5b2778f512fdae431ec03557ad010f26d5dcddcc030f2fac84f46a9f97dc6845",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/vertexdeclaration.c"
+        },
+        {
+          "path": "dlls/wined3d/wined3d_main.c",
+          "bytes": 31646,
+          "sha256": "aed36f4934d4bef4255ce6afc548a9e70d04d13062eac832e7330eb5c7effcbd",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/wined3d_main.c"
+        },
+        {
+          "path": "dlls/wined3d/wined3d_private.h",
+          "bytes": 187189,
+          "sha256": "ab5526b9edde4c6149dbf6d8b042e51120f682968a8bf9a0bd420fc358309d9e",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/dlls/wined3d/wined3d_private.h"
+        },
+        {
+          "path": "include/wine/wined3d.h",
+          "bytes": 153216,
+          "sha256": "f335eec84e33325cec585748857c9ea1ed90de5efdc43e300d71ade8bfccc3e4",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/include/wine/wined3d.h"
+        },
+        {
+          "path": "libs/vkd3d/AUTHORS",
+          "bytes": 699,
+          "sha256": "0ce4d5c704e7c3261735a39e6ce8879cc4806c97953e5de61d99b48180b29243",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/AUTHORS"
+        },
+        {
+          "path": "libs/vkd3d/COPYING",
+          "bytes": 786,
+          "sha256": "1f69abfaeee0131bba28ad72d87683a223743d8c9ee1da113fde10cb082f3c91",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/COPYING"
+        },
+        {
+          "path": "libs/vkd3d/Makefile.in",
+          "bytes": 1234,
+          "sha256": "a6e03ff5d6772920a196005b07f631fd0dc369945791311b88d3e36402d662b7",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/Makefile.in"
+        },
+        {
+          "path": "libs/vkd3d/config.h",
+          "bytes": 181,
+          "sha256": "5fd1c2d055eb18dd2a2efbaec9536de11a0531d196faeb7ce97396a261dfaa7b",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/config.h"
+        },
+        {
+          "path": "libs/vkd3d/include/private/vkd3d_common.h",
+          "bytes": 25211,
+          "sha256": "f1e726ab3836b0514eee86e1dcadd047635e9dcdd373d13156a8ccb283b1c9b9",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/include/private/vkd3d_common.h"
+        },
+        {
+          "path": "libs/vkd3d/include/private/vkd3d_memory.h",
+          "bytes": 2028,
+          "sha256": "da59a05c9be041d21e754f2cea84fd0d4015dffef7eb14ba0fa3b0a305616652",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/include/private/vkd3d_memory.h"
+        },
+        {
+          "path": "libs/vkd3d/include/private/vkd3d_shader_utils.h",
+          "bytes": 3095,
+          "sha256": "7bb1eaf8bf6ac95fda151e51d9e972e60fbafc2ee103be7e7ef950c6c48f1163",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/include/private/vkd3d_shader_utils.h"
+        },
+        {
+          "path": "libs/vkd3d/include/vkd3d_shader.h",
+          "bytes": 137398,
+          "sha256": "27bb621f86f2d4b2bd0aa1efe169c88551dc3a0f2914196617d74acc3798c89c",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/include/vkd3d_shader.h"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/d3dbc.c",
+          "bytes": 101087,
+          "sha256": "13105ac4f7cbdcb6d67179e5d827cd5674c90fb1a96444b0e1c32cb6197410d0",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/d3dbc.c"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/glsl.c",
+          "bytes": 115115,
+          "sha256": "5f81c3dcd74415bba2562551b785a1b4646e6ad709c05e68154cb91bc39b69a1",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/glsl.c"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/ir.c",
+          "bytes": 673347,
+          "sha256": "1d26bc986b523609e62b456fcf2641f6a5b0a79cf153f8b2c5aa6c98f6fd2b1d",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/ir.c"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/msl.c",
+          "bytes": 97366,
+          "sha256": "30e9e52eaf5bf57d8a8bb2ce4ebf296a6dbce4ba75dd9e9aa2a0bbe54572f4f9",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/msl.c"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/spirv.c",
+          "bytes": 440601,
+          "sha256": "48515a0465028f7aafb78ba4af1b6018d820d413e14b7aadf78f04655a3d815e",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/spirv.c"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/vkd3d_shader_main.c",
+          "bytes": 83726,
+          "sha256": "7cb33f12549f22f20717575aa0fe11bd363231df8351b5cf3942b90df9f1be24",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/vkd3d_shader_main.c"
+        },
+        {
+          "path": "libs/vkd3d/libs/vkd3d-shader/vkd3d_shader_private.h",
+          "bytes": 83024,
+          "sha256": "45adbc8f5599d890f46dafb7b56af8ffbfedc9e8e35b3ef9fe906adf55c949aa",
+          "url": "https://raw.githubusercontent.com/wine-mirror/wine/bd0f453b7bb4e16c3b4ef271b3df499c34fbe848/libs/vkd3d/libs/vkd3d-shader/vkd3d_shader_private.h"
+        }
+      ]
+    },
+    {
+      "project": "vkd3d standalone",
+      "revision": "84a77b438f0b7a45441db20d390a240a8580f3bc",
+      "inspectedFileCount": 5,
+      "files": [
+        {
+          "path": "COPYING",
+          "bytes": 786,
+          "sha256": "1f69abfaeee0131bba28ad72d87683a223743d8c9ee1da113fde10cb082f3c91",
+          "url": "https://gitlab.winehq.org/wine/vkd3d/-/raw/84a77b438f0b7a45441db20d390a240a8580f3bc/COPYING"
+        },
+        {
+          "path": "Makefile.am",
+          "bytes": 30357,
+          "sha256": "611bd9b8864dd7885cf1e5ef4d7f28e9ca5218f1a6f43e0288f6874cf1ee3bd1",
+          "url": "https://gitlab.winehq.org/wine/vkd3d/-/raw/84a77b438f0b7a45441db20d390a240a8580f3bc/Makefile.am"
+        },
+        {
+          "path": "README",
+          "bytes": 13449,
+          "sha256": "61704f2ae1db7e42889c63e60cb8e0a6e4b1d922d99364cfa3b09dfa1c182930",
+          "url": "https://gitlab.winehq.org/wine/vkd3d/-/raw/84a77b438f0b7a45441db20d390a240a8580f3bc/README"
+        },
+        {
+          "path": "configure.ac",
+          "bytes": 11126,
+          "sha256": "42322ba6ad10f6d461ffa62ccfbd651e5b0ce7f28ff245d8eaebf3fb81343b11",
+          "url": "https://gitlab.winehq.org/wine/vkd3d/-/raw/84a77b438f0b7a45441db20d390a240a8580f3bc/configure.ac"
+        },
+        {
+          "path": "include/vkd3d_shader.h",
+          "bytes": 140813,
+          "sha256": "c67f540291c7b23a650a8ea2809133e327e4fe4c2a2a93b513eb29089f81c8b6",
+          "url": "https://gitlab.winehq.org/wine/vkd3d/-/raw/84a77b438f0b7a45441db20d390a240a8580f3bc/include/vkd3d_shader.h"
+        }
+      ]
+    }
+  ],
+  "currentLocalArtifacts": [
+    {
+      "path": "web/generated/humus_bg.wasm",
+      "rawBytes": 23951828,
+      "computedGzip9Bytes": 3808320,
+      "sha256": "e0ec40944be8b7c6bc201162dd2a58abbf152d1009ac17154b6779813b04bab4",
+      "sameAsPreservedPublicBaseline": true
+    },
+    {
+      "path": "web/generated/mojoshader.wasm",
+      "rawBytes": 113759,
+      "computedGzip9Bytes": 43416,
+      "sha256": "5920161b7260a5a9b6c66b19406f537d94c4e1fdc77a1c913c9e91a704fdea02",
+      "sameAsPreservedPublicBaseline": true
+    },
+    {
+      "path": "web/generated/shader_translation_bg.wasm",
+      "rawBytes": 2127618,
+      "computedGzip9Bytes": 591240,
+      "sha256": "e736f7886245eee242b855761e318534e15cc94a4cd4995d78a104e5cb268af2",
+      "sameAsPreservedPublicBaseline": true
+    }
+  ],
+  "artifactMeasurementNotes": [
+    "Raw bytes and gzip-9 are local file calculations, not measured HTTP transfer.",
+    "No WineD3D/vkd3d WASM was built during this investigation.",
+    "Estimated sizes and memory budgets in the report remain unmeasured."
+  ],
+  "inspectedLocalSources": [
+    {
+      "path": "web/worker.js",
+      "sha256": "31d51ce1e1c13dd3a43f63a72fcecaf00b964775e53c5b1301ee4f1f59e20509",
+      "pendingChange": false
+    },
+    {
+      "path": "web/gpu-worker.js",
+      "sha256": "1c3226fa6de32bd767304e9435cbb6f4113aa1561dfb101528ba3b0794a09aef",
+      "pendingChange": true
+    },
+    {
+      "path": "web/d3d9-draw.js",
+      "sha256": "c1f71f5ee7510371d3cabae0b3d8f3f9933bbf1763f0f34cac5e3b8cd044f516",
+      "pendingChange": true
+    },
+    {
+      "path": "web/d3d9-pipelines.js",
+      "sha256": "d36bc1e3b3a81f2c81ceb618fa3ef5c86e43b1f5eec4273f0f652d10eebdebbb",
+      "pendingChange": true
+    },
+    {
+      "path": "web/draw-batch.js",
+      "sha256": "ed39b0e74f9baef0fbff3f1f9dc1797564abf181a44c0f47e675005cd7aa857f",
+      "pendingChange": true
+    },
+    {
+      "path": "web/d3d9-state.js",
+      "sha256": "06b379de3d33d1291a24996247a6e641721acc71f6da594af1d22ae492b60a1f",
+      "pendingChange": false
+    },
+    {
+      "path": "web/d3d9-samplers.js",
+      "sha256": "9c02f2f657e716162310273258cb727169f569a72ecd0911cf2ca35dd0008b63",
+      "pendingChange": false
+    },
+    {
+      "path": "web/d3d9-caps.js",
+      "sha256": "561885217b1fe37af689e446f8965068f8c5d391d5059a4228f9b2f2e1cb7551",
+      "pendingChange": false
+    },
+    {
+      "path": "web/vertex-layout.js",
+      "sha256": "c132e9975a3f3d21071290bcffd912c84b174e0a4db618fdf65eb73ed248c92f",
+      "pendingChange": false
+    },
+    {
+      "path": "web/gpu-textures.js",
+      "sha256": "2c18ad6b9336f4ea645446ad7ac391c0bd7ff377bb331a2a8db4804665fca71c",
+      "pendingChange": false
+    },
+    {
+      "path": "web/gpu-buffers.js",
+      "sha256": "f97f1e9124ec79c14fd39643266ba2ac584d17094f09d30e4affa320d92ae84c",
+      "pendingChange": false
+    },
+    {
+      "path": "web/shaders.js",
+      "sha256": "532de2ce71317bed42eee4c38ece51824a1001449f71157df1aa67199af66e67",
+      "pendingChange": false
+    },
+    {
+      "path": "web/fixed-function.js",
+      "sha256": "cee465afc1c1d5df25b071a05cf03beaadcd2a248e997765f790f50b064daf16",
+      "pendingChange": true
+    },
+    {
+      "path": "web/performance-metrics.js",
+      "sha256": "663ea47d7720baa9493528acfcd270ba2949348411975acc140f1f8b702b3b61",
+      "pendingChange": false
+    },
+    {
+      "path": "runtime/shaders/src/lib.rs",
+      "sha256": "1c4a2998f045159a5a6b30b34ae755fcfd68a39d7d5f1382564322f7702e4065",
+      "pendingChange": false
+    },
+    {
+      "path": "runtime/shaders/Cargo.toml",
+      "sha256": "12b0f46ac398de0cb283f0c425026cf0da6f442eba00b3e83f920163fa8d5f0e",
+      "pendingChange": false
+    },
+    {
+      "path": "patches/theseus.patch",
+      "sha256": "e61a9427840087e219d2fee7f808790eb6fdb02524ee0334eb5433a85c3056b2",
+      "pendingChange": true
+    }
+  ],
+  "pendingChangesPreserved": [
+    {
+      "path": "patches/theseus.patch",
+      "sha256": "e61a9427840087e219d2fee7f808790eb6fdb02524ee0334eb5433a85c3056b2"
+    },
+    {
+      "path": "scripts/test_draw_batch.mjs",
+      "sha256": "4d37e2e29e74baac92e8dbcb2fba2846e20705f3a333fad083f3f92041fe4ad0"
+    },
+    {
+      "path": "web/d3d9-draw.js",
+      "sha256": "c1f71f5ee7510371d3cabae0b3d8f3f9933bbf1763f0f34cac5e3b8cd044f516"
+    },
+    {
+      "path": "web/d3d9-pipelines.js",
+      "sha256": "d36bc1e3b3a81f2c81ceb618fa3ef5c86e43b1f5eec4273f0f652d10eebdebbb"
+    },
+    {
+      "path": "web/draw-batch.js",
+      "sha256": "ed39b0e74f9baef0fbff3f1f9dc1797564abf181a44c0f47e675005cd7aa857f"
+    },
+    {
+      "path": "web/draw-test.js",
+      "sha256": "03037d741c1f68c871eeabb6f44b3205f80ca90f334aa5f646504f9496c4220f"
+    },
+    {
+      "path": "web/fixed-function.js",
+      "sha256": "cee465afc1c1d5df25b071a05cf03beaadcd2a248e997765f790f50b064daf16"
+    },
+    {
+      "path": "web/gpu-worker.js",
+      "sha256": "1c3226fa6de32bd767304e9435cbb6f4113aa1561dfb101528ba3b0794a09aef"
+    }
+  ],
+  "acceptance": {
+    "legacyHumus": "historical scoped evidence; full acceptance incomplete",
+    "legacyHamsterball": "visual and visible-framerate defects unresolved",
+    "wined3dHumus": "not implemented or tested",
+    "wined3dHamsterball": "not implemented or tested",
+    "displayFPS": "not established by Present submission rates"
+  },
+  "limits": [
+    "Source selection is an architectural sample, not a complete dependency or license audit.",
+    "Wine bundled vkd3d and standalone vkd3d snapshots are distinct.",
+    "Pending local source hashes are provenance only; their code is not imported by this report."
+  ]
+}

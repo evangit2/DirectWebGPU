@@ -6,7 +6,7 @@ const FORMATS=new Map([
  [0x31545844,['bc1-rgba-unorm',4,8,false]],[0x33545844,['bc2-rgba-unorm',4,16,false]],[0x35545844,['bc3-rgba-unorm',4,16,false]]
 ]);
 export class TextureStorage {
- constructor(device){this.device=device;this.items=new Map();this.bytes=0;this.nextId=1;}
+ constructor(device,{traceUploads=false}={}){this.device=device;this.traceUploads=traceUploads;this.items=new Map();this.bytes=0;this.nextId=1;}
  async create(width,height,levels,format){
   const f=FORMATS.get(format);
   if(!f||![width,height,levels].every(Number.isInteger)||width<1||height<1||width>4096||height>4096||levels<0||levels>1+Math.floor(Math.log2(Math.max(width,height))))throw RangeError('unsupported texture description');
@@ -19,7 +19,7 @@ export class TextureStorage {
   const d=this.device;d.pushErrorScope('validation');d.pushErrorScope('out-of-memory');let texture;
   try{texture=d.createTexture({label:'D3D9 sampled texture',size:[width,height],mipLevelCount:levels,format:gpuFormat,usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.COPY_SRC});}
   finally{const oom=await d.popErrorScope(),error=await d.popErrorScope();if(oom||error){texture?.destroy();throw Error((oom??error).message)}}
-  const id=this.nextId++;this.items.set(id,{texture,view:texture.createView(),width,height,levels,format,gpuFormat,block,blockBytes,conversion,mips,bytes});this.bytes+=bytes;return id;
+  const id=this.nextId++;this.items.set(id,{texture,view:texture.createView(),width,height,levels,format,gpuFormat,block,blockBytes,conversion,mips,bytes,...(this.traceUploads?{uploads:[]}:{})});this.bytes+=bytes;return id;
  }
  get(id){const item=this.items.get(id);if(!item)throw RangeError('invalid or released texture handle');return item;}
  async upload(id,level,memory,pointer,pitch,length){
@@ -41,9 +41,11 @@ export class TextureStorage {
    }
    data=expanded;pitch=m.width*4;
   }
-  this.device.pushErrorScope('validation');
-  try{this.device.queue.writeTexture({texture:t.texture,mipLevel:level},data,{bytesPerRow:pitch,rowsPerImage:m.rows},[m.physicalWidth,m.physicalHeight]);}
-  finally{const error=await this.device.popErrorScope();if(error)throw Error(error.message)}
+  if(this.traceUploads){const sampleCount=Math.min(1024,m.width*m.height),step=Math.max(1,Math.floor(m.width*m.height/sampleCount)),channelSums=[0,0,0,0];let sampled=0;
+   if(t.block===1&&data.byteLength>=m.width*m.height*4){for(let pixel=0;pixel<m.width*m.height&&sampled<sampleCount;pixel+=step){const y=Math.floor(pixel/m.width),x=pixel-y*m.width,at=y*pitch+x*4;for(let channel=0;channel<4;channel++)channelSums[channel]+=data[at+channel];sampled++;}}
+   t.uploads[level]={length:data.byteLength,pitch,sampledPixels:sampled,meanChannels:sampled?channelSums.map(value=>Math.round(value/sampled)):null,firstBytes:Array.from(data.slice(0,16))};
+  }
+  this.device.queue.writeTexture({texture:t.texture,mipLevel:level},data,{bytesPerRow:pitch,rowsPerImage:m.rows},[m.physicalWidth,m.physicalHeight]);
  }
  destroy(id){const t=this.get(id);t.texture.destroy();this.items.delete(id);this.bytes-=t.bytes;}
  dispose(){for(const id of this.items.keys())this.destroy(id);}
