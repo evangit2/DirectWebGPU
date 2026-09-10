@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-09-10T02:42:15Z",
+  "mode": "wined3d-webgpu",
+  "applicationApi": "Direct3D 8",
+  "initialBackbuffer": {
+    "width": 800,
+    "height": 600
+  },
+  "requestedBackbuffer": {
+    "width": 640,
+    "height": 480
+  },
+  "observedEvents": [
+    {
+      "type": "window-resized",
+      "width": 640,
+      "height": 480,
+      "source": "IDirect3DDevice Reset"
+    },
+    {
+      "type": "d3d9-device-reset",
+      "width": 640,
+      "height": 480,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed"
+    }
+  ],
+  "result": "Rendering continued after the in-application resolution change. The browser canvas adopted the new dimensions and retained the 4:3 aspect ratio.",
+  "scope": "Manual browser verification of the shared Direct3D 8-to-9 reset path. The private test executable and assets are not included."
+}

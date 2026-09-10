@@ -1,6 +1,6 @@
 /** Streams tracker modules decoded by libopenmpt into the page AudioContext. */
 export class BrowserTrackerMusic {
- constructor(contextProvider,onDiagnostic=()=>{}){this.contextProvider=contextProvider;this.onDiagnostic=onDiagnostic;this.decoder=null;this.tracks=new Map();}
+ constructor(contextProvider,onDiagnostic=()=>{},outputProvider=null){this.contextProvider=contextProvider;this.onDiagnostic=onDiagnostic;this.outputProvider=outputProvider;this.decoder=null;this.tracks=new Map();}
  ensureDecoder(){
   if(this.decoder)return this.decoder;
   const worker=new Worker(new URL('./tracker-worker.js',import.meta.url));
@@ -30,8 +30,9 @@ export class BrowserTrackerMusic {
  ensureNodes(track){
   const context=this.contextProvider();if(!context)return;
   if(!track.gain){track.gain=context.createGain();track.gain.gain.value=track.volume;
-   if(context.createStereoPanner){track.panner=context.createStereoPanner();track.panner.pan.value=track.pan;track.gain.connect(track.panner);track.panner.connect(context.destination);}
-   else track.gain.connect(context.destination);
+   const output=this.outputProvider?.()??context.destination;
+   if(context.createStereoPanner){track.panner=context.createStereoPanner();track.panner.pan.value=track.pan;track.gain.connect(track.panner);track.panner.connect(output);}
+   else track.gain.connect(output);
   }
  }
  message(data){

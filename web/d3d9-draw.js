@@ -21,7 +21,7 @@ export function decodeDraw(memory,pointer,length){
  return{fixed,lighting,vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,textureStages,viewport};
 }
 export class DrawRenderer{
- constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:UNIFORM_STRIDE*UNIFORM_SLOTS,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic upload staging',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});this.stagingCursor=0;this.bindingCaches=new WeakMap();this.uniformCursor=0;this.encoder=null;this.pass=null;}
+ constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.pendingUniformBytes=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic upload staging',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.bindingCaches=new WeakMap();this.uniformCursor=0;this.encoder=null;this.pass=null;this.writeMetrics={sourceGeometryWrites:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0};}
  draw(packet){
   const timingStart=performance.now();
   const d=this.device,b=this.backend,topology=({1:'point-list',2:'line-list',4:'triangle-list'})[packet.kind];
@@ -38,9 +38,13 @@ export class DrawRenderer{
   if(length>this.stagingSize)throw RangeError('geometry upload exceeds staging capacity');
   if(this.stagingCursor+length>this.stagingSize)this.flush();
   this.prepareBufferUpload();
-  this.device.queue.writeBuffer(this.staging,this.stagingCursor,data);
+  this.stagingShadow.set(data,this.stagingCursor);this.writeMetrics.sourceGeometryWrites++;
   this.encoder.copyBufferToBuffer(this.staging,this.stagingCursor,buffer,offset,length);
   this.stagingCursor+=length;
+ }
+ stageUniform(stage,offset,data){
+  if(![0,1].includes(stage)||!Number.isInteger(offset)||offset<0||offset%4||!(ArrayBuffer.isView(data))||offset+data.byteLength>this.uniformBytes)throw RangeError('invalid uniform staging range');
+  this.uniformShadow[stage].set(new Uint8Array(data.buffer,data.byteOffset,data.byteLength),offset);this.pendingUniformBytes[stage]=Math.max(this.pendingUniformBytes[stage],offset+data.byteLength);this.writeMetrics.sourceUniformWrites++;
  }
  drawWithEntry(packet,entry,timingStart){
   const d=this.device,b=this.backend,[x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=new Float32Array(new Uint32Array([minBits]).buffer)[0],maxDepth=new Float32Array(new Uint32Array([maxBits]).buffer)[0];
@@ -64,7 +68,7 @@ export class DrawRenderer{
   for(let group=0;group<=last;group++){
    const stage=group===1?0:group===3?1:-1;
    if(stage>=0&&packed[stage].length){
-   const buffer=this.uniforms[stage],offset=uniformSlot*UNIFORM_STRIDE;d.queue.writeBuffer(buffer,offset,packed[stage]);
+   const buffer=this.uniforms[stage],offset=uniformSlot*UNIFORM_STRIDE;this.stageUniform(stage,offset,packed[stage]);
     const key=`${stage}:${uniformSlot}:${packed[stage].byteLength}`;let bindGroup=bindingCache.uniform.get(key);
     const reflected=entry.shaders[stage?'pixel':'vertex'].uniformBindings;
     const entries=reflected?.length?reflected.map(binding=>({binding:binding.binding,resource:{buffer,offset:offset+binding.offsetBytes,size:binding.sizeBytes}})):[{binding:0,resource:{buffer,offset,size:packed[stage].byteLength}}];
@@ -91,6 +95,7 @@ export class DrawRenderer{
   const pass=this.pass;pass.setViewport(x,y,width,height,minDepth,maxDepth);pass.setPipeline(entry.pipeline);packet.state.applyDynamic(pass);bindings.forEach((s,i)=>pass.setVertexBuffer(i,s.buffer,s.offset,s.size));groups.forEach((g,i)=>pass.setBindGroup(i,g));
   if(index){pass.setIndexBuffer(index.buffer,index.format===101?'uint16':'uint32');pass.drawIndexed(packet.count,1,packet.first,packet.base,0)}else pass.draw(packet.count,1,packet.first,0);if(timestampWrites){this.flush();b.timer.cpuWallMs+=performance.now()-timingStart;}
  }
- flush(){if(this.pass){this.pass.end();this.pass=null;}if(!this.encoder)return;this.device.queue.submit([this.encoder.finish()]);this.encoder=null;this.stagingCursor=0;this.uniformCursor=0;}
+ flush(){if(this.pass){this.pass.end();this.pass=null;}if(!this.encoder)return;const queue=this.device.queue;if(this.stagingCursor){queue.writeBuffer(this.staging,0,this.stagingShadow.subarray(0,this.stagingCursor));this.writeMetrics.queueWriteCalls++;this.writeMetrics.queueWriteBytes+=this.stagingCursor;}for(let stage=0;stage<2;stage++){const bytes=this.pendingUniformBytes[stage];if(!bytes)continue;queue.writeBuffer(this.uniforms[stage],0,this.uniformShadow[stage].subarray(0,bytes));this.writeMetrics.queueWriteCalls++;this.writeMetrics.queueWriteBytes+=bytes;}queue.submit([this.encoder.finish()]);this.writeMetrics.rendererSubmissions++;this.encoder=null;this.stagingCursor=0;this.uniformCursor=0;this.pendingUniformBytes.fill(0);}
+ snapshotMetrics(){return{...this.writeMetrics,pendingGeometryBytes:this.stagingCursor,pendingUniformBytes:[...this.pendingUniformBytes]};}
  dispose(){this.flush();this.cache.dispose();this.samplers.dispose();for(const buffer of this.uniforms)buffer.destroy();this.staging.destroy();}
 }

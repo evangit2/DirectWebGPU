@@ -11,6 +11,7 @@ import {TextureStorage} from './gpu-textures.js';
 import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
 import {RUNTIME_MODES,runtimeModeInfo} from './runtime-mode.js';
+import {presentationParametersValid} from './d3d9-presentation.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
@@ -116,7 +117,7 @@ async function graphics(op,a,memory){
  if(op===1){
   if(backend)throw Error('second D3D9 device unsupported');
   const [width,height,format,count,multi,quality,swap,hwnd,windowed,autoDepth,depthFormat,flags,refresh,interval]=a;
-  const deviceParamsValid=a.length===14&&!!windowSize&&width===windowSize[0]&&height===windowSize[1]&&[21,22,23,24,25,26].includes(format)&&count===1&&multi===0&&quality===0&&[1,2,3].includes(swap)&&hwnd<=1&&[0,1].includes(windowed)&&autoDepth===1&&[0,71,75].includes(depthFormat)&&flags===0&&refresh===0&&[0,1,0x80000000].includes(interval);
+  const deviceParamsValid=presentationParametersValid(a,{windowSize});
   if(!deviceParamsValid){emit('d3d9-device-rejected',{params:a,windowSize,reason:'unsupported device parameters'});return UNAVAILABLE;}
   device.pushErrorScope('validation');device.pushErrorScope('out-of-memory');
   context=canvas.getContext('webgpu');if(!context)throw Error('WebGPU canvas context unavailable');
@@ -131,6 +132,18 @@ async function graphics(op,a,memory){
  }
  if(!backend||a[0]!==backend.id)return INVALID;
  if(op===2){backend.timer?.dispose();backend.equivalence?.dispose();backend.draws?.dispose();backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
+ if(op===16){
+  const [,width,height,format,count,multi,quality,swap,hwnd,windowed,autoDepth,depthFormat,flags,refresh,interval]=a;
+  const resetParamsValid=presentationParametersValid(a.slice(1),{resize:true});
+  if(!resetParamsValid){emit('d3d9-device-reset-rejected',{params:a.slice(1),reason:'unsupported presentation parameters'});return UNAVAILABLE;}
+  backend.draws?.flush();await device.queue.onSubmittedWorkDone();
+  device.pushErrorScope('validation');device.pushErrorScope('out-of-memory');
+  const color=device.createTexture({label:'D3D9 reset backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
+  const depth=device.createTexture({label:'D3D9 reset D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
+  const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();emit('d3d9-device-reset-rejected',{params:a.slice(1),reason:(oom??validation).message});return UNAVAILABLE;}
+  backend.equivalence?.dispose();backend.equivalence=null;backend.color.destroy();backend.depth.destroy();backend.color=color;backend.depth=depth;backend.width=width;backend.height=height;backend.state=new D3D9RenderState();windowSize=[width,height];canvas.width=width;canvas.height=height;context.configure({device,format:'bgra8unorm',alphaMode:'opaque',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_DST});
+  emit('window-resized',{width,height,source:'IDirect3DDevice Reset'});emit('d3d9-device-reset',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed'});return 1;
+ }
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
   backend.draws?.flush();
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
@@ -145,7 +158,7 @@ async function graphics(op,a,memory){
   backend.draws?.flush();
   if(backend.timer){const sample=await backend.timer.finish(backend.presents+1);if(sample)emit('gpu-timing',{sample});}
   if(backend.equivalence){const sample=await backend.equivalence.compare(backend.presents+1);if(sample)emit('scene-equivalence',{sample});}
-  const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);backend.presents++;if(backend.presents===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first Present submission')});backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+  const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);backend.presents++;if(backend.presents===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first Present submission')});backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},rendererWrites:backend.draws?.snapshotMetrics()??null,wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
  }
  if(op>=5&&op<=7){
   try{

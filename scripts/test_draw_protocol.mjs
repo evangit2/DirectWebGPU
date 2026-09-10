@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import {decodeDraw} from '../web/d3d9-draw.js';
 import {fixedFunctionPair} from '../web/fixed-function.js';
+globalThis.GPUBufferUsage={COPY_SRC:4,COPY_DST:8,UNIFORM:64};
+const {decodeDraw,DrawRenderer}=await import('../web/d3d9-draw.js');
 
 const states=[[7,1],[14,1],[15,0],[19,2],[20,1],[22,3],[23,4],[24,0],[25,8],[27,0],[52,0],[53,1],[54,1],[55,1],[56,8],[57,0],[58,0xffffffff],[59,0xffffffff],[168,15],[171,1]];
 const identity=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1].map(Math.fround).map(value=>new Uint32Array(new Float32Array([value]).buffer)[0]);
@@ -32,4 +33,18 @@ assert.doesNotMatch(fixedFunctionPair(positionT,false,[800,600],null,null,true).
 assert.match(fixedFunctionPair(positionT,false,[800,600],null,null,true,false).vertex.wgsl,/,0\.0,1\.0\)/);
 assert.doesNotMatch(fixedFunctionPair(positionT,false,[800,600],null,null,true,false).vertex.wgsl,/position\.z,1\.0/);
 new Uint32Array(compact.memory,4096,1)[0]=0x39445246;assert.throws(()=>decodeDraw(compact.memory,4096,compact.length),/truncated/);
-console.log('Compact fixed-function, clipping state, and legacy full-register draw packets decoded with strict versioning');
+
+const writes=[],copies=[],submissions=[],buffers=[];
+const device={
+ createBuffer(descriptor){const buffer={descriptor,destroy(){}};buffers.push(buffer);return buffer;},
+ createCommandEncoder(){return{copyBufferToBuffer(...args){copies.push(args)},finish(){return{commands:copies.length}}};},
+ queue:{writeBuffer(buffer,offset,data){writes.push({buffer,offset,data:new Uint8Array(data.buffer,data.byteOffset,data.byteLength).slice()});},submit(commandBuffers){submissions.push(commandBuffers);}}
+};
+const renderer=new DrawRenderer(device,{shaders:null});
+const geometry={};renderer.uploadBuffer(geometry,0,new Uint8Array([1,2,3,4]));renderer.uploadBuffer(geometry,4,new Uint8Array([5,6,7,8]));
+renderer.stageUniform(0,0,new Uint32Array([0x11223344]));renderer.stageUniform(0,16,new Uint32Array([0x55667788]));renderer.stageUniform(1,0,new Uint32Array([0x99aabbcc]));renderer.flush();
+assert.equal(copies.length,2);assert.equal(submissions.length,1);assert.equal(writes.length,3);assert.deepEqual(writes.map(write=>write.data.byteLength),[8,20,4]);
+assert.deepEqual([...writes[0].data],[1,2,3,4,5,6,7,8]);assert.equal(new DataView(writes[1].data.buffer).getUint32(16,true),0x55667788);assert.equal(new DataView(writes[2].data.buffer).getUint32(0,true),0x99aabbcc);
+assert.deepEqual(renderer.snapshotMetrics(),{sourceGeometryWrites:2,sourceUniformWrites:3,queueWriteCalls:3,queueWriteBytes:32,rendererSubmissions:1,pendingGeometryBytes:0,pendingUniformBytes:[0,0]});
+renderer.dispose();
+console.log('Compact fixed-function, clipping state, legacy packets, and coalesced renderer writes passed');
