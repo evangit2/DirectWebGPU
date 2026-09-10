@@ -54,7 +54,6 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   event.preventDefault();
   if(event.type==='keydown'){unlock();pressed.set(event.code,code);}else pressed.delete(event.code);
   emit(message);
-  if(event.type==='keydown'&&event.code==='Enter'&&document.pointerLockElement!==canvas)void canvas.requestPointerLock?.().catch?.(()=>{});
  };
  const absolutePosition=event=>{const rect=canvas.getBoundingClientRect();return[
   Math.floor((event.clientX-rect.left)*canvas.width/rect.width),
