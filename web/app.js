@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 let build,worker,gpuWorker,token,timer,probeWorker,HAS_BACKEND=false;
 const selectedMode=runtimeMode(),selectedModeInfo=runtimeModeInfo(selectedMode);
 class BrowserAudio {
- constructor(){this.context=null;this.streams=new Map();this.pending=[];this.bytes=0;this.buffers=0;}
+ constructor(){this.context=null;this.streams=new Map();this.pending=[];this.bytes=0;this.buffers=0;this.writesReceived=0;this.droppedPending=0;this.underruns=0;this.clippedSamples=0;this.peak=0;this.maxQueueAheadMs=0;}
  ensure(){
   if(this.context)return this.context;
   const C=globalThis.AudioContext??globalThis.webkitAudioContext;if(!C)return null;
@@ -16,19 +16,26 @@ class BrowserAudio {
  unlock(){const c=this.ensure();if(!c)return;void c.resume().then(()=>{const pending=this.pending.splice(0);for(const item of pending)this.write(item.id,item.data);browserMusic.unlock();audioDiagnostic('audio-unlocked');}).catch(()=>audioDiagnostic('audio-unlock-failed'));}
  write(id,data){
   const c=this.ensure(),s=this.streams.get(id);if(!c||!s)return;
-  if(c.state!=='running'){if(this.pending.length<32)this.pending.push({id,data});return;}
   if(!(data instanceof ArrayBuffer)||data.byteLength<2||data.byteLength%2)return;
+  this.writesReceived++;
+  if(c.state!=='running'){this.pending.push({id,data});while(this.pending.length>1){this.pending.shift();this.droppedPending++;}return;}
   const sourceBytes=new Int16Array(data),frames=Math.floor(sourceBytes.length/s.channels);if(!frames)return;
   const buffer=c.createBuffer(s.channels,frames,s.sampleRate);
-  for(let channel=0;channel<s.channels;channel++){const out=buffer.getChannelData(channel);for(let frame=0;frame<frames;frame++)out[frame]=sourceBytes[frame*s.channels+channel]/32768;}
-  const source=c.createBufferSource();source.buffer=buffer;source.connect(c.destination);const now=c.currentTime;s.nextTime=Math.max(s.nextTime,now+0.01);source.start(s.nextTime);s.nextTime+=buffer.duration;this.bytes+=data.byteLength;this.buffers++;
+  for(let channel=0;channel<s.channels;channel++){const out=buffer.getChannelData(channel);for(let frame=0;frame<frames;frame++){const sample=sourceBytes[frame*s.channels+channel];out[frame]=sample/32768;this.peak=Math.max(this.peak,Math.abs(sample));if(sample===-32768||sample===32767)this.clippedSamples++;}}
+  const source=c.createBufferSource();source.buffer=buffer;source.connect(c.destination);const now=c.currentTime;
+  if(s.nextTime&&s.nextTime<now)this.underruns++;
+  // Audio messages share the busy page thread with diagnostics and input.
+  // Maintain enough lead for ordinary scheduling jitter while keeping effects responsive.
+  s.nextTime=Math.max(s.nextTime,now+0.06);source.start(s.nextTime);s.nextTime+=buffer.duration;
+  this.maxQueueAheadMs=Math.max(this.maxQueueAheadMs,(s.nextTime-now)*1000);this.bytes+=data.byteLength;this.buffers++;
  }
 }
 const browserAudio=new BrowserAudio();
 const browserMusic=new BrowserTrackerMusic(()=>browserAudio.ensure(),musicDiagnostic);
 function audioDiagnostic(type,data={}){
- report.audio={contextState:browserAudio.context?.state??'unavailable',streams:browserAudio.streams.size,bytesScheduled:browserAudio.bytes,buffersScheduled:browserAudio.buffers,pendingChunks:browserAudio.pending.length,...data};
- if(new URL(location.href).searchParams.has('debugDiagnostics'))log(type,{message:JSON.stringify(report.audio)});
+ report.audio={contextState:browserAudio.context?.state??'unavailable',streams:browserAudio.streams.size,writesReceived:browserAudio.writesReceived,bytesScheduled:browserAudio.bytes,buffersScheduled:browserAudio.buffers,pendingChunks:browserAudio.pending.length,droppedPending:browserAudio.droppedPending,underruns:browserAudio.underruns,clippedSamples:browserAudio.clippedSamples,peak:browserAudio.peak,maxQueueAheadMs:Math.round(browserAudio.maxQueueAheadMs),...data};
+ const debug=new URL(location.href).searchParams.has('debugDiagnostics');
+ if(debug&&(type!=='audio-write'||browserAudio.writesReceived===1||browserAudio.writesReceived%64===0))log(type,{message:JSON.stringify(report.audio)});
 }
 function musicDiagnostic(type,data={}){
  const previous=report.music??{},buffers=type==='music-buffer'?(previous.buffers??0)+1:(previous.buffers??0);
