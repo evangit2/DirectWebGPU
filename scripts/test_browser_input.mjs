@@ -150,6 +150,8 @@ assert.equal(pointerLockRequests,2);
 document.pointerLockElement=canvas;
 documentListeners.get('pointerlockchange')();
 assert.equal(captureCursors.at(-1).visible,false);
+captureInput.warp(120,90);
+assert.equal(captureCursors.at(-1).visible,true);
 captureInput.destroy();
 
 console.log('Browser input preserves Windows directions and guest cursor warps');

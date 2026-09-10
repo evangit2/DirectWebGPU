@@ -48,7 +48,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const centerWarpActive=()=>hasRelativeProfile&&centerWarpCount>=3&&now()-lastCenterWarpMs<500;
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
- const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas&&!relativeCaptureLatched});
+ const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas&&!(relativeCaptureLatched&&centerWarpActive())});
  const requestCapture=(relative=false)=>{
   if(!captureSupported||captureRequestPending||document.pointerLockElement===canvas)return;
   captureRequestPending=true;
