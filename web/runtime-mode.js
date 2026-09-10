@@ -5,7 +5,7 @@ export const RUNTIME_MODES = Object.freeze({
 
 export function runtimeMode(search = globalThis.location?.search ?? '') {
   const requested = new URLSearchParams(search).get('mode');
-  if (requested === null || requested === '') return RUNTIME_MODES.LEGACY;
+  if (requested === null || requested === '') return RUNTIME_MODES.WINED3D;
   if (requested === RUNTIME_MODES.LEGACY || requested === RUNTIME_MODES.WINED3D) return requested;
   throw new RangeError(`unsupported DirectWebGPU mode: ${requested}`);
 }

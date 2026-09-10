@@ -39,5 +39,11 @@
     "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
     "revision": "ee2ec5fd83dafce291024683b50dc89219333076"
   },
+  "libopenmpt": {
+    "url": "https://lib.openmpt.org/files/libopenmpt/dev/libopenmpt-0.8.9+release.dev.js.tar.gz",
+    "version": "0.8.9",
+    "sha256": "b2c31cd9c99830997b7a337706509556fd1f5dd27da4b7db62e5a24ec95a2758",
+    "license": "BSD-3-Clause; bundled decoder and codec notices retained in web/third_party/libopenmpt"
+  },
   "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
 }

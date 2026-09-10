@@ -38,7 +38,7 @@ self.send_to_host=(func,args,retAddr)=>{
   if(Number.isInteger(retAddr)&&retAddr>=4&&retAddr%4===0&&retAddr+4<=memory.buffer.byteLength){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);Atomics.notify(new Int32Array(memory.buffer),retAddr/4,1);}
   return;
  }
- if(['create_window','graphics_call','poll_message','wait_message','audio_open','audio_queued','audio_resume','audio_write'].includes(func)){
+ if(['create_window','graphics_call','poll_message','wait_message','audio_open','audio_queued','audio_resume','audio_write','music_load','music_command'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
   const values=Array.from(args);
   if(func==='audio_write'){
@@ -46,7 +46,12 @@ self.send_to_host=(func,args,retAddr)=>{
    const copy=new Uint8Array(values[2]);copy.set(new Uint8Array(memory.buffer,values[1],values[2]));
    gpuPort.postMessage({func,args:[values[0],values[2]],payload:copy.buffer,retAddr:0},[copy.buffer]);return;
   }
-  if(func==='graphics_call'&&[6,11,13].includes(values[0])){
+  if(func==='music_load'){
+   if(values.length!==3||!values.every(Number.isInteger)||values[0]<4096||values[1]<1||values[0]+values[1]>memory.buffer.byteLength)throw Error('invalid music load range');
+   const copy=new Uint8Array(values[1]);copy.set(new Uint8Array(memory.buffer,values[0],values[1]));
+   gpuPort.postMessage({func,args:[values[1],values[2]],payload:copy.buffer,buffer:memory.buffer,retAddr},[copy.buffer]);return;
+  }
+  if(func==='graphics_call'&&[3,6,11,13].includes(values[0])){
    if(!Number.isInteger(retAddr)||retAddr<4||retAddr%4||retAddr+4>memory.buffer.byteLength)throw Error('invalid queued draw reply pointer');
    if(drawBatch.enqueue(values,memory.buffer)){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;}
   }
@@ -96,7 +101,7 @@ self.onmessage=async({data})=>{
    if(guest.registryDwords?.length)send('launch-settings',{source:'guest manifest registry seed',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
   }
   exe.configure_guest_memory_metrics(data.guestMemory===true);
-  exe.set_trace(data.trace??(data.benchmark?'':'kernel32,user32,advapi32,d3d8,d3d9'));
+  exe.set_trace(data.trace??'');
   send('asset-cache-metrics',{...cache.stats});
   const resources=performance.getEntriesByType('resource');send('resource-metrics',{resourceCount:resources.length,transferSize:resources.reduce((n,r)=>n+r.transferSize,0),encodedBodySize:resources.reduce((n,r)=>n+r.encodedBodySize,0),decodedBodySize:resources.reduce((n,r)=>n+r.decodedBodySize,0),scope:'CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded',cachePolicy:'loopback server Cache-Control: no-store'});
   send('realm-resources',{sample:resourceMetrics(performance,'cpuWorker','before EXE execution')});

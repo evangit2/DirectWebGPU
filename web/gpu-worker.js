@@ -10,21 +10,22 @@ import {DrawRenderer,decodeDraw} from './d3d9-draw.js';
 import {TextureStorage} from './gpu-textures.js';
 import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
-import {runtimeModeInfo} from './runtime-mode.js';
+import {RUNTIME_MODES,runtimeModeInfo} from './runtime-mode.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
 let gpuTiming=false;
-let shaderMode='legacy-win32';
+let shaderMode=RUNTIME_MODES.WINED3D;
 let sceneEquivalence=false,omitDiagnosticLighting=false;
-let diagnosticDraws=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:1052672};
+let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
 let nextAudioId=1;const audioStreams=new Map();
+let nextMusicId=1;const musicTracks=new Set();
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 async function init(data){
- canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;shaderMode=runtimeModeInfo(data.runtimeMode??'legacy-win32').mode;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
+ canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;shaderMode=runtimeModeInfo(data.runtimeMode??RUNTIME_MODES.WINED3D).mode;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;diagnosticAfterPresent=Number.isInteger(data.diagnosticAfterPresent)?Math.max(0,data.diagnosticAfterPresent):0;diagnosticSkip=Number.isInteger(data.diagnosticSkip)?Math.max(0,Math.min(4096,data.diagnosticSkip)):0;drawStateTrace=Number.isInteger(data.drawStateTrace)?Math.max(0,Math.min(256,data.drawStateTrace)):0;drawStateFingerprints.clear();captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent,runtime:runtimeModeInfo(shaderMode)};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
@@ -37,7 +38,7 @@ async function init(data){
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}
 async function dispatch(data){
  const {func,args,buffer,retAddr,payload}=data;
- if(func==='draw_batch'){await executeDrawBatch(data,graphics,drawPacket);bridgeMetrics.drawBatches++;bridgeMetrics.batchedDraws+=data.commands.filter(a=>a[0]===13).length;for(const a of data.commands)if(a[0]!==13){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
+ if(func==='draw_batch'){await executeDrawBatch(data,graphics,drawPacket);bridgeMetrics.drawBatches++;for(const a of data.commands){if(a[0]===3)bridgeMetrics.batchedClears++;else if(a[0]===13)bridgeMetrics.batchedDraws++;else if(a[0]===6||a[0]===11){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
@@ -64,6 +65,18 @@ async function dispatch(data){
    if(!stream||!(payload instanceof ArrayBuffer)||!Number.isInteger(args[1])||args[1]!==payload.byteLength)return INVALID;
    const now=performance.now();stream.queuedBytes=Math.max(0,stream.queuedBytes-(now-stream.lastUpdate)*stream.sampleRate/1000*stream.channels*2);stream.lastUpdate=now;stream.queuedBytes=Math.min(stream.queuedBytes+payload.byteLength,stream.sampleRate*stream.channels*2*2);
    postMessage({type:'audio-write',streamId:args[0],data:payload},[payload]);result=1;
+  }else if(func==='music_load'){
+   if(args.length!==2||!Number.isInteger(args[0])||args[0]<1||!Number.isInteger(args[1])||!(payload instanceof ArrayBuffer)||payload.byteLength!==args[0])return INVALID;
+   const id=nextMusicId++;musicTracks.add(id);postMessage({type:'music-load',handle:id,flags:args[1]>>>0,data:payload},[payload]);result=id;
+  }else if(func==='music_command'){
+   if(args.length!==5||args.some(value=>!Number.isInteger(value)))return INVALID;
+   const [op,handle,a,b,c]=args;
+   if(op===1){if(!musicTracks.has(handle))return INVALID;emit('music-play',{handle,start:a>>>0,flags:b>>>0,restart:!!c});}
+   else if(op===2){if(handle&&!musicTracks.has(handle))return INVALID;emit('music-stop',{handle});}
+   else if(op===3){if(!musicTracks.has(handle))return INVALID;emit('music-attributes',{handle,frequency:a,volume:b,pan:c});}
+   else if(op===4){musicTracks.clear();emit('music-free-all');}
+   else return INVALID;
+   result=1;
   }else if(func==='graphics_call'){
    const [op,...values]=args;if(values.some(v=>!Number.isInteger(v)||v<0||v>0xffffffff))throw Error('invalid graphics argument');
    result=await graphics(op,values,buffer);
@@ -76,6 +89,13 @@ function drawPacket(a,memory){
  let packet;
  try{
   packet=decodeDraw(memory,a[1],a[2]);
+  if(drawStateTrace>0){
+   const textureStages=packet.textureStages.map(stage=>Array.from(stage)),textures=Array.from(packet.textures.slice(0,8));
+   const textureInfo=textures.map(id=>{if(!id)return null;const texture=backend.textures.get(id);return{id,width:texture.width,height:texture.height,levels:texture.levels,format:texture.format,gpuFormat:texture.gpuFormat,uploads:texture.uploads};});
+   const sample={present:backend.presents+1,fixed:Boolean(packet.fixed),vertex:packet.vertex,pixel:packet.pixel,kind:packet.kind,count:packet.count,textures,textureInfo,sampler0:Array.from(packet.samplers[0]),textureStages,lightingHeader:packet.lighting?Array.from(packet.lighting.slice(0,4)):null,state:packet.state.values,declaration:Array.from(packet.declaration)};
+   const fingerprint=JSON.stringify([sample.fixed,sample.vertex,sample.pixel,sample.kind,textures,textureStages,sample.lightingHeader,sample.state,sample.declaration]);
+   if(!drawStateFingerprints.has(fingerprint)){drawStateFingerprints.add(fingerprint);drawStateTrace--;emit('draw-state',{sample});}
+  }
   if(cameraTest&&[0,29,59].includes(backend.presents)&&!cameraSamples.has(backend.presents)){cameraSamples.add(backend.presents);emit('camera-sample',{present:backend.presents+1,matrixWords:Array.from(packet.registers[0][0].slice(0,16))});}
   if(cameraTest&&backend.presents===0){backend.traceCount??=0;if(backend.traceCount++<128)emit('render-state-sample',{draw:backend.traceCount,vertex:packet.vertex,pixel:packet.pixel,state:packet.state.values});}
   backend.draws??=new DrawRenderer(device,backend);
@@ -85,7 +105,7 @@ function drawPacket(a,memory){
    const equivalent=backend.equivalence?.draw(packet);
    return equivalent?.then?equivalent.then(()=>{backend.submissions++;return 1;}):(backend.submissions++,1);
   };
-  if(diagnosticDraws>0){diagnosticDraws--;return captureDraw(device,backend,packet).then(sample=>{emit('draw-diagnostic',{sample});return submit();});}
+  if(diagnosticDraws>0&&backend.presents>=diagnosticAfterPresent){if(diagnosticSkip>0){diagnosticSkip--;}else{diagnosticDraws--;backend.draws.flush();return captureDraw(device,backend,packet).then(sample=>{emit('draw-diagnostic',{sample});return submit();});}}
   return submit();
  }catch(e){const message=String(e.stack??e);emit('draw-rejected',{message:`${message} declaration=${JSON.stringify(packet?Array.from(packet.declaration):null)}`});return INVALID;}
 }
@@ -104,7 +124,7 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device),shaders:null,presents:0,submissions:0};
+  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,submissions:0};
   if(gpuTiming&&device.features.has('timestamp-query'))backend.timer=new GpuTiming(device);
   if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend,omitDiagnosticLighting);
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
@@ -116,10 +136,10 @@ async function graphics(op,a,memory){
   const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
   const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
   const colorValue={r:((argb>>>16)&255)/255,g:((argb>>>8)&255)/255,b:(argb&255)/255,a:(argb>>>24)/255};
-  device.pushErrorScope('validation');const enc=device.createCommandEncoder();
+  const enc=device.createCommandEncoder();
   const pass=enc.beginRenderPass({colorAttachments:[{view:backend.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:colorValue}],depthStencilAttachment:{view:backend.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil&255}});pass.end();device.queue.submit([enc.finish()]);
   backend.equivalence?.clear(flags,colorValue,z,stencil&255);
-  const err=await device.popErrorScope();if(err)throw Error(err.message);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
+  emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
  }
  if(op===4){ // Ordinary presentation is GPU-to-GPU; opt-in diagnostic samples separately.
   backend.draws?.flush();
