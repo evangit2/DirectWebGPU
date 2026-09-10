@@ -27,8 +27,10 @@ if not vendor.exists():
  run('git','clone',deps['theseus']['url'],str(vendor));run('git','-C',str(vendor),'checkout','--detach',deps['theseus']['revision'])
 actual=subprocess.check_output(['git','-C',str(vendor),'rev-parse','HEAD'],text=True).strip()
 if actual!=deps['theseus']['revision']:raise RuntimeError(f'Unexpected Theseus revision {actual}; preserve it and restore in a fresh folder')
-patch=ROOT/'patches/theseus.patch'
-if patch.exists():
+theseus_patches=[ROOT/'patches/theseus.patch',*sorted((ROOT/'patches').glob('theseus-*.patch'))]
+for patch in theseus_patches:
+ if not patch.exists():continue
+ if patch.name=='theseus.patch' and (vendor/'win32/winapi/src/d3d9.rs').exists():continue
  applied=subprocess.run(['git','-C',str(vendor),'apply','--reverse','--check',str(patch)],capture_output=True).returncode==0
  if not applied:
   run('git','-C',str(vendor),'apply','--check',str(patch));run('git','-C',str(vendor),'apply',str(patch))

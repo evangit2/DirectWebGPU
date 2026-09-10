@@ -1,0 +1,160 @@
+:root {
+  background: #05070a;
+}
+body {
+  min-height: 100vh;
+  background: #05070a;
+}
+main {
+  max-width: none;
+  padding: 0;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.playbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #101722;
+  border-bottom: 1px solid #26364b;
+}
+.playbar > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.playbar strong {
+  white-space: nowrap;
+}
+.playbar #status {
+  font-size: 13px;
+  font-weight: 500;
+  color: #a9bad0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.play-controls {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.play-controls button {
+  padding: 7px 10px;
+  background: #1b2b40;
+}
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+.stage canvas {
+  width: min(100%, calc((100vh - 116px) * var(--game-aspect, 1.7777778)));
+  height: auto;
+  max-height: 100%;
+  border: 0;
+  outline: 0;
+  cursor: crosshair;
+}
+.stage:fullscreen {
+  width: 100vw;
+  height: 100vh;
+}
+.stage:fullscreen canvas {
+  width: min(100vw, calc(100vh * var(--game-aspect, 1.7777778)));
+  height: min(100vh, calc(100vw / var(--game-aspect, 1.7777778)));
+  max-width: 100%;
+  max-height: 100%;
+}
+.mouse-captured .stage canvas {
+  cursor: none;
+}
+.start-card {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #05070acc;
+  place-content: center;
+  text-align: center;
+}
+.start-card button {
+  background: #24549a;
+}
+.running .start-card {
+  display: none;
+}
+body:not(.running) .start-card {
+  display: grid;
+}
+footer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  background: #101722;
+  border-top: 1px solid #26364b;
+  font-size: 13px;
+}
+footer input {
+  width: 120px;
+}
+footer #metrics {
+  margin-left: auto;
+  color: #a9bad0;
+}
+#debug-panel {
+  position: fixed;
+  z-index: 5;
+  right: 12px;
+  top: 62px;
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100vh - 90px);
+  overflow: auto;
+  padding: 12px;
+  background: #111a27f5;
+  border: 1px solid #3c506c;
+  border-radius: 7px;
+  box-shadow: 0 16px 60px #000b;
+}
+#debug-panel:not([open]) {
+  display: none;
+}
+#debug-panel pre {
+  max-height: 45vh;
+}
+#debug-panel p {
+  font-size: 12px;
+  margin: 8px 0;
+}
+@media (max-width: 760px) {
+  .playbar {
+    align-items: flex-start;
+  }
+  .playbar > div:first-child {
+    display: none;
+  }
+  .play-controls {
+    width: 100%;
+    justify-content: center;
+  }
+  .play-controls button {
+    font-size: 13px;
+    padding: 7px;
+  }
+  .stage canvas {
+    width: 100%;
+  }
+  footer #metrics {
+    display: none;
+  }
+}

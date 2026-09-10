@@ -30,7 +30,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
   if path.startswith('/assets/'):
    base=self.server.asset_root; p=(base/path.removeprefix('/assets/')).resolve()
   else:
-   base=WEB; p=(base/('index.html' if path=='/' or path.endswith('-runtime') or path.endswith('-runtime/') else path.lstrip('/'))).resolve()
+   base=WEB
+   if path.rstrip('/')==f'/{self.server.guest}':
+    relative='game.html'
+   elif path=='/' or path.endswith('-runtime') or path.endswith('-runtime/'):
+    relative='index.html'
+   else:
+    relative=path.lstrip('/')
+   p=(base/relative).resolve()
   if not p.is_relative_to(base.resolve()) or not p.is_file(): return self.reply(404,{'error':'not found'})
   import mimetypes
   self.reply(200,p.read_bytes(),mimetypes.guess_type(p.name)[0] or 'application/octet-stream')
