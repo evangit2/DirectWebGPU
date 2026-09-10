@@ -27,8 +27,9 @@ function browserButtons(buttons){return(buttons&1)|((buttons&4)>>1)|((buttons&2)
 function changedButton(button){return({0:1,1:2,2:4})[button]??0;}
 const OPPOSITE_DIRECTION=Object.freeze({ArrowLeft:'ArrowRight',ArrowRight:'ArrowLeft',ArrowUp:'ArrowDown',ArrowDown:'ArrowUp'});
 
-export function directionalCode(code,profile={},cursorVisible=true){
- const axes=cursorVisible?null:profile?.cursorHidden;
+export function directionalCode(code,profile={},cursorVisible=true,source='desktop'){
+ const sourceProfile=source==='desktop'?null:profile?.[source];
+ const axes=cursorVisible?(sourceProfile?.cursorVisible??null):(sourceProfile?.cursorHidden??profile?.cursorHidden);
  if(!axes)return code;
  if(axes.horizontalSign===-1&&['ArrowLeft','ArrowRight'].includes(code))return OPPOSITE_DIRECTION[code];
  if(axes.verticalSign===-1&&['ArrowUp','ArrowDown'].includes(code))return OPPOSITE_DIRECTION[code];
@@ -41,7 +42,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const pressed=new Map();
  const captureSupported=typeof canvas.requestPointerLock==='function';
  const touchListeners=[],touchKeys=new Map();
- let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,captureWarpPending=false,joystickPointer=null,joystickDirections=[];
+ let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,captureWarpPending=false,ignoreLockedMovement=false,joystickPointer=null,joystickDirections=[];
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
  const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas});
@@ -66,6 +67,10 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
    try{canvas.setPointerCapture(event.pointerId);}catch(_){}
   }
   if(document.pointerLockElement===canvas&&event.type==='pointermove'){
+   // Entering pointer lock can synthesize one large movement as the browser
+   // recenters its hidden host cursor.  It is not user input and must not move
+   // either the guest pointer or the visible in-game menu cursor.
+   if(ignoreLockedMovement){ignoreLockedMovement=false;cursorUpdate();return;}
    const rect=canvas.getBoundingClientRect();
    const axes=guestCursorVisible?null:profile?.cursorHidden;
    virtualX=(virtualX+Math.round(event.movementX*canvas.width/rect.width*axisSign(axes?.horizontalSign)))|0;
@@ -84,10 +89,10 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   if(event.type==='pointerup'&&document.pointerLockElement!==canvas){captureWarpPending=guestCursorVisible;void canvas.requestPointerLock?.().catch?.(()=>{});}
   cursorUpdate();
  };
- const onLock=()=>{const locked=document.pointerLockElement===canvas;if(!locked){releaseKeys();captureWarpPending=false;}onCaptureChange(locked,captureSupported);cursorUpdate();};
+ const onLock=()=>{const locked=document.pointerLockElement===canvas;ignoreLockedMovement=locked;if(!locked){releaseKeys();captureWarpPending=false;}onCaptureChange(locked,captureSupported);cursorUpdate();};
  const releaseTouchDirections=()=>{for(const code of joystickDirections){const message=keyboardMessage('keyup',code);if(message)emit(message);}joystickDirections=[];};
  const setTouchDirections=codes=>{
-  const next=[...new Set(codes.map(mappedCode))];
+  const next=[...new Set(codes.map(code=>directionalCode(code,profile,guestCursorVisible,'touchJoystick')))];
   for(const code of joystickDirections)if(!next.includes(code)){const message=keyboardMessage('keyup',code);if(message)emit(message);}
   for(const code of next)if(!joystickDirections.includes(code)){const message=keyboardMessage('keydown',code);if(message)emit(message);}
   joystickDirections=next;
@@ -118,10 +123,10 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  onCursorVisibilityChange(guestCursorVisible);
  cursorUpdate();
  return{
-  warp(x,y){if(Number.isInteger(x)&&Number.isInteger(y)){virtualX=Math.max(0,Math.min(canvas.width-1,x));virtualY=Math.max(0,Math.min(canvas.height-1,y));if(captureWarpPending&&guestCursorVisible){captureWarpPending=false;}else{displayX=virtualX;displayY=virtualY;}cursorUpdate();}},
+  warp(x,y){if(Number.isInteger(x)&&Number.isInteger(y)){virtualX=Math.max(0,Math.min(canvas.width-1,x));virtualY=Math.max(0,Math.min(canvas.height-1,y));const captured=document.pointerLockElement===canvas;if((captured&&guestCursorVisible)||captureWarpPending){captureWarpPending=false;}else{displayX=virtualX;displayY=virtualY;}cursorUpdate();}},
   setCursorVisible(visible){
    if(typeof visible!=='boolean'||visible===guestCursorVisible)return;
-   releaseTouchDirections();guestCursorVisible=visible;captureWarpPending=false;if(visible){displayX=virtualX;displayY=virtualY;}onCursorVisibilityChange(visible);cursorUpdate();
+   releaseTouchDirections();guestCursorVisible=visible;captureWarpPending=false;if(visible&&document.pointerLockElement!==canvas){displayX=virtualX;displayY=virtualY;}onCursorVisibilityChange(visible);cursorUpdate();
   },
   capture(){if(!isRunning())return;unlock();canvas.focus({preventScroll:true});if(captureSupported)void canvas.requestPointerLock().catch?.(()=>{});else onCaptureChange(false,false);},
   release(){if(document.pointerLockElement===canvas)void document.exitPointerLock?.();releaseKeys();releaseTouchDirections();},

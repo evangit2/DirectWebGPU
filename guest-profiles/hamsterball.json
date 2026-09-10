@@ -1,0 +1,18 @@
+{
+  "inputProfile": {
+    "cursorHidden": {
+      "horizontalSign": -1,
+      "verticalSign": -1
+    },
+    "touchJoystick": {
+      "cursorVisible": {
+        "horizontalSign": -1,
+        "verticalSign": -1
+      },
+      "cursorHidden": {
+        "horizontalSign": -1,
+        "verticalSign": -1
+      }
+    }
+  }
+}
