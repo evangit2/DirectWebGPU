@@ -36,15 +36,13 @@ export function directionalCode(code,profile={},cursorVisible=true,source='deskt
  return code;
 }
 
-function axisSign(value){return value===-1?-1:1;}
-
 export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureChange=()=>{},onCursorVisibilityChange=()=>{},onVirtualCursor=()=>{},debug=()=>{},profile={},touchRoot=null}){
  const pressed=new Map();
  const captureSupported=typeof canvas.requestPointerLock==='function';
  const touchListeners=[],touchKeys=new Map();
  let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,ignoreLockedMovement=false,captureRequestPending=false,lastGuestWarpMs=-Infinity,joystickPointer=null,joystickDirections=[];
  const now=()=>globalThis.performance?.now?.()??Date.now();
- const relativePointerActive=()=>!!(profile?.pointer?.relativePointer||profile?.touchJoystick?.relativePointer)&&now()-lastGuestWarpMs<250;
+ const relativePointerActive=()=>now()-lastGuestWarpMs<250;
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
  const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas});
@@ -69,25 +67,26 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  ];};
  const onPointer=event=>{
   if(!isRunning())return;
-  const enteringRelativeCapture=event.type==='pointerdown'&&(!guestCursorVisible||relativePointerActive());
+  const enteringRelativeCapture=event.type==='pointerdown'&&!guestCursorVisible;
   if(event.type==='pointerdown'){
    unlock();canvas.focus({preventScroll:true});
    if(enteringRelativeCapture)requestCapture();
    else try{canvas.setPointerCapture(event.pointerId);}catch(_){}
   }
   const locked=document.pointerLockElement===canvas;
+  let relativeDelta=null;
   if(locked&&event.type==='pointermove'){
    // Entering pointer lock can synthesize one large movement as the browser
    // recenters its hidden host cursor.  It is not user input and must not move
    // either the guest pointer or the visible in-game menu cursor.
    if(ignoreLockedMovement){ignoreLockedMovement=false;cursorUpdate();return;}
-   const axes=relativePointerActive()?profile?.pointer?.relativePointer:guestCursorVisible?null:profile?.pointer?.cursorHidden;
    // Pointer-lock movement is already an OS-level mouse delta. Scaling it by
    // the canvas layout makes sensitivity change with window size and aspect.
-   const dx=Math.round(event.movementX*axisSign(axes?.horizontalSign));
-   const dy=Math.round(event.movementY*axisSign(axes?.verticalSign));
+   const dx=Math.round(event.movementX),dy=Math.round(event.movementY),beforeX=virtualX,beforeY=virtualY;
    virtualX=(virtualX+dx)|0;virtualY=(virtualY+dy)|0;
    displayX=(displayX+dx)|0;displayY=(displayY+dy)|0;
+   virtualX=Math.max(0,Math.min(canvas.width-1,virtualX));virtualY=Math.max(0,Math.min(canvas.height-1,virtualY));
+   relativeDelta=[virtualX-beforeX,virtualY-beforeY];
   }else if(!locked&&!enteringRelativeCapture){
    [virtualX,virtualY]=absolutePosition(event);
    displayX=virtualX;displayY=virtualY;
@@ -95,7 +94,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   virtualX=Math.max(0,Math.min(canvas.width-1,virtualX));virtualY=Math.max(0,Math.min(canvas.height-1,virtualY));
   displayX=Math.max(0,Math.min(canvas.width-1,displayX));displayY=Math.max(0,Math.min(canvas.height-1,displayY));
   const buttons=browserButtons(event.buttons),changed=event.type==='pointermove'?0:changedButton(event.button);
-  emit([event.type==='pointerdown'?2:event.type==='pointerup'?3:4,virtualX,virtualY,changed|(buttons<<16)]);
+  emit(relativeDelta?[7,...relativeDelta,buttons<<16]:[event.type==='pointerdown'?2:event.type==='pointerup'?3:4,virtualX,virtualY,changed|(buttons<<16)]);
   cursorUpdate();
  };
  const onLock=()=>{captureRequestPending=false;const locked=document.pointerLockElement===canvas;ignoreLockedMovement=locked;if(!locked)releaseKeys();onCaptureChange(locked,captureSupported);cursorUpdate();};

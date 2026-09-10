@@ -12,6 +12,7 @@ import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
 import {RUNTIME_MODES,runtimeModeInfo} from './runtime-mode.js';
 import {presentationParametersValid} from './d3d9-presentation.js';
+import {enqueueInput} from './input-queue.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
@@ -213,10 +214,8 @@ function inputReply(buffer,address,message){
  const words=new Int32Array(buffer);for(let i=1;i<4;i++)Atomics.store(words,address/4+i,message[i]);reply(buffer,address,message[0]);
 }
 function input(message){
- if(!Array.isArray(message)||message.length!==4||message.some(v=>!Number.isInteger(v))||![2,3,4,5,6].includes(message[0]))throw Error('invalid input message');
+ if(!Array.isArray(message)||message.length!==4||message.some(v=>!Number.isInteger(v))||![2,3,4,5,6,7].includes(message[0]))throw Error('invalid input message');
  if(waitingInput){const w=waitingInput;waitingInput=null;inputReply(w.buffer,w.retAddr,message);return}
- if(message[0]===4&&inputQueue.at(-1)?.[0]===4)inputQueue[inputQueue.length-1]=message;
- else if(inputQueue.length<256)inputQueue.push(message);
- else emit('gpu-error',{message:'input queue capacity exceeded'});
+ if(!enqueueInput(inputQueue,message))emit('gpu-error',{message:'input queue capacity exceeded'});
 }
 self.onmessage=({data})=>{if(data.type==='input'){try{input(data.message)}catch(e){emit('gpu-error',{message:String(e)})}return}if(data.type==='init')init(data).catch(e=>{port?.postMessage({ready:false,error:String(e)});emit('gpu-error',{message:String(e)})})};

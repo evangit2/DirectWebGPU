@@ -1,11 +1,7 @@
 {
   "inputProfile": {
-    "pointer": {
+    "keyboard": {
       "cursorHidden": {
-        "horizontalSign": -1,
-        "verticalSign": -1
-      },
-      "relativePointer": {
         "horizontalSign": -1,
         "verticalSign": -1
       }
