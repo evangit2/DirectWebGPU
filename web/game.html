@@ -2,7 +2,11 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>DirectWebGPU</title><link rel="stylesheet" href="./style.css"><link rel="stylesheet" href="./game.css"></head>
 <body data-harness="game"><main>
  <header class="playbar"><div><strong id="title">DirectWebGPU</strong><span id="status" role="status">Starting…</span></div><div class="play-controls"><button id="capture">Capture mouse</button><button id="fullscreen">Fullscreen</button><button id="restart" disabled>Restart</button><button id="stop" disabled>Force stop</button><button id="debug-toggle">Debug</button></div></header>
- <section id="stage" class="stage"><canvas id="scene" width="1280" height="720" tabindex="0" aria-label="DirectX game output"></canvas><div class="start-card"><p>Session stopped</p><button id="start" disabled>Start game</button></div></section>
+ <section id="stage" class="stage"><canvas id="scene" width="1280" height="720" tabindex="0" aria-label="DirectX game output"></canvas><i id="guest-cursor" class="guest-cursor" hidden aria-hidden="true"></i><div class="start-card"><p>Session stopped</p><button id="start" disabled>Start game</button></div></section>
+ <section id="touch-controls" class="touch-controls" aria-label="Touch game controls">
+  <div class="touch-actions"><button data-touch-key="Escape">Esc</button><button data-touch-key="Enter">Enter</button></div>
+  <div class="touch-joystick" data-touch-joystick aria-label="Direction joystick"><i data-touch-knob></i></div>
+ </section>
  <footer><label for="volume">Volume</label><input id="volume" type="range" min="0" max="100" value="100"><output id="volume-value">100%</output><span id="metrics">Waiting for frames…</span></footer>
  <details id="debug-panel"><summary>Runtime diagnostics</summary><p id="revision">Loading guest manifest…</p><p id="runtime">Runtime: DirectWebGPU</p><button id="download">Download diagnostics</button><pre id="logs"></pre></details>
  <button id="long" hidden disabled>Start 4-hour automated test session</button>

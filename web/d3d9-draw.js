@@ -22,6 +22,7 @@ export function decodeDraw(memory,pointer,length){
 }
 export class DrawRenderer{
  constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.pendingUniformBytes=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic upload staging',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.bindingCaches=new WeakMap();this.uniformCursor=0;this.encoder=null;this.pass=null;this.writeMetrics={sourceGeometryWrites:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0};}
+ setShaderObjects(objects){this.cache.setShaderObjects(objects);}
  draw(packet){
   const timingStart=performance.now();
   const d=this.device,b=this.backend,topology=({1:'point-list',2:'line-list',4:'triangle-list'})[packet.kind];

@@ -5,6 +5,11 @@ import {RS} from './d3d9-state.js';
 // resources and constants, which do not change the render pipeline itself.
 export class PipelineCache{
  constructor(device,objects){this.device=device;this.objects=objects;this.items=new Map();this.bytes=0;this.compilations=0;}
+ setShaderObjects(objects){
+  if(!objects?.translator)throw TypeError('shader objects require a translator');
+  if(this.objects&&this.objects!==objects)throw Error('pipeline cache shader objects cannot be replaced');
+  this.objects=objects;
+ }
  get(vertex,pixel,declaration,streams,state,{colorFormat='bgra8unorm',depthFormat='depth24plus-stencil8',topology='triangle-list',fixed=false,textured=false,textureStages=null,lighting=null,viewportSize=null}={}){
   if(!fixed){this.objects.get(vertex,0);this.objects.get(pixel,1);}else if(vertex!==0||pixel!==0)throw Error("invalid fixed shader handles");
   if(!['rgba8unorm','bgra8unorm'].includes(colorFormat)||![null,'depth24plus-stencil8'].includes(depthFormat)||!['triangle-list','line-list','point-list'].includes(topology))throw RangeError('unsupported pipeline attachment or topology');
@@ -17,6 +22,8 @@ export class PipelineCache{
  }
  async compile(key,{vertex,pixel,declaration,streams,state,colorFormat,depthFormat,topology,fixed,textured,viewportSize,pair,layout,primitive,target,depthStencil,alpha}){
  const translator=this.objects?.translator;
+ if(!fixed&&!translator)throw Error('programmable pipeline requires a shader translator');
+ if(alpha[0]&&!translator)throw Error('alpha-tested pipeline requires a shader translator');
  const expanded=fixed?pair.vertex.wgsl:translator.vertexInputs(pair.vertex.wgsl,vertexWidths(layout));
  const vertexSource=fixed?expanded:viewportSize?translator.vertexPosition(expanded,...viewportSize):expanded;
   const pixelSource=alpha[0]?translator.alphaTest(pair.pixel.wgsl,alpha[1],alpha[2]):pair.pixel.wgsl;

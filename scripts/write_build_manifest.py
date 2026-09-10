@@ -39,8 +39,14 @@ if entry_points_path.exists():
 registry=[]
 if guest=='humus':
  registry=[[0x80000002,'SOFTWARE\\Humus',name,value] for name,value in {'WindowedLeft':0,'WindowedTop':0,'WindowedRight':1280,'WindowedBottom':720,'Fullscreen':0}.items()]
+guest_manifest={'id':guest,'title':args.title or guest.title(),'executablePath':executable.replace('\\','/'),'workingDirectory':args.working_directory,'registryDwords':registry}
+guest_profile=r/'guest-profiles'/f'{guest}.json'
+if guest_profile.exists():
+ profile=json.loads(guest_profile.read_text())
+ if not isinstance(profile,dict):raise SystemExit(f'guest profile must contain an object: {guest_profile}')
+ guest_manifest.update(profile)
 manifest={
- 'guest':{'id':guest,'title':args.title or guest.title(),'executablePath':executable.replace('\\','/'),'workingDirectory':args.working_directory,'registryDwords':registry},
+ 'guest':guest_manifest,
  'wasmProfile':args.wasm_profile or previous.get('wasmProfile','debug'),
  'translatedTreeSha256':translated.hexdigest(),
  'cargoLockSha256':sha(r/'vendor/theseus/Cargo.lock'),

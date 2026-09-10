@@ -71,6 +71,7 @@ async function start(long=false){
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
    if(data.type==='cursor-warp'){inputBinding?.warp(data.x,data.y);report.cursorWarps=(report.cursorWarps??0)+1;if(report.cursorWarps<=3)(report.cursorWarpSamples??=[]).push({x:data.x,y:data.y,timeMs:performance.now()-report.startTimeMs});return;}
+   if(data.type==='cursor-visibility'){inputBinding?.setCursorVisible(data.visible);report.cursorVisible=data.visible;return;}
    if(data.type==='audio-open'){browserAudio.open(data.streamId,data.sampleRate,data.channels);audioDiagnostic('audio-open',{sampleRate:data.sampleRate,channels:data.channels});return;}
    if(data.type==='audio-write'){browserAudio.write(data.streamId,data.data);audioDiagnostic('audio-write');return;}
    if(data.type==='audio-resume'){browserAudio.unlock();audioDiagnostic('audio-resume');return;}
@@ -99,7 +100,8 @@ async function start(long=false){
   };
   worker.onerror=e=>{report.blocker=e.message;log('worker-error',{message:e.message});stop('failed: '+e.message)};
   const oldCanvas=$('scene');const canvas=oldCanvas.cloneNode();oldCanvas.replaceWith(canvas);
-  canvas.tabIndex=0;inputBinding=bindBrowserInput(canvas,{isRunning:()=>!!worker,send:message=>gpuWorker?.postMessage({type:'input',message}),unlock:()=>browserAudio.unlock(),debug:message=>{if(params.has('debugInput'))log('input',{message:message.join(',')})},onCaptureChange:(locked,supported)=>{if($('capture'))$('capture').textContent=locked?'Mouse captured':supported?'Capture mouse':'Focus game';document.body.classList.toggle('mouse-captured',locked);}});
+  const virtualCursor=({x,y,visible})=>{const marker=$('guest-cursor');if(!marker)return;const activeCanvas=$('scene');if(!visible||!activeCanvas){marker.hidden=true;return;}const canvasRect=activeCanvas.getBoundingClientRect(),stageRect=$('stage').getBoundingClientRect();marker.hidden=false;marker.style.transform=`translate(${canvasRect.left-stageRect.left+x*canvasRect.width/activeCanvas.width}px,${canvasRect.top-stageRect.top+y*canvasRect.height/activeCanvas.height}px)`;};
+  canvas.tabIndex=0;inputBinding=bindBrowserInput(canvas,{isRunning:()=>!!worker,send:message=>gpuWorker?.postMessage({type:'input',message}),unlock:()=>browserAudio.unlock(),profile:build.guest?.inputProfile??{},touchRoot:$('touch-controls'),onVirtualCursor:virtualCursor,debug:message=>{if(params.has('debugInput'))log('input',{message:message.join(',')})},onCaptureChange:(locked,supported)=>{if($('capture'))$('capture').textContent=locked?'Mouse captured':supported?'Capture mouse':'Focus game';document.body.classList.toggle('mouse-captured',locked);}});
   const offscreen=canvas.transferControlToOffscreen();
   const channel=new MessageChannel();gpuWorker=new Worker(new URL(`./gpu-worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   gpuWorker.onmessage=worker.onmessage;gpuWorker.onerror=worker.onerror;

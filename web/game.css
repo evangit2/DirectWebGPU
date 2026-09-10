@@ -12,6 +12,21 @@ main {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
+.guest-cursor {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 24px;
+  pointer-events: none;
+  background: #fff;
+  clip-path: polygon(0 0, 0 86%, 24% 66%, 40% 100%, 56% 92%, 40% 59%, 72% 57%);
+  filter: drop-shadow(0 0 1px #000) drop-shadow(1px 1px 0 #000);
+}
+.touch-controls {
+  display: none;
+}
 .playbar {
   position: relative;
   z-index: 3;
@@ -75,9 +90,6 @@ main {
   height: min(100vh, calc(100vw / var(--game-aspect, 1.7777778)));
   max-width: 100%;
   max-height: 100%;
-}
-.mouse-captured .stage canvas {
-  cursor: none;
 }
 .start-card {
   display: none;
@@ -157,4 +169,78 @@ footer #metrics {
   footer #metrics {
     display: none;
   }
+}
+@media (pointer: coarse) {
+  main {
+    grid-template-rows: auto auto minmax(210px, 1fr) auto;
+  }
+  .stage {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+  }
+  .stage canvas {
+    width: 100%;
+    max-height: 100%;
+  }
+  .touch-controls {
+    display: flex;
+    min-height: 210px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px max(22px, env(safe-area-inset-right)) 18px max(22px, env(safe-area-inset-left));
+    background: #080d14;
+    touch-action: none;
+    user-select: none;
+  }
+  .touch-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .touch-actions button {
+    width: 68px;
+    height: 68px;
+    padding: 0;
+    border: 2px solid #70839a;
+    border-radius: 50%;
+    background: #1a2635;
+    font-weight: 700;
+    touch-action: none;
+  }
+  .touch-actions button:active {
+    background: #31547d;
+  }
+  .touch-joystick {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    flex: 0 0 150px;
+    border: 2px solid #70839a;
+    border-radius: 50%;
+    background: radial-gradient(circle, #182536 0 23%, #0e1723 24% 100%);
+    touch-action: none;
+  }
+  .touch-joystick i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    margin: -30px;
+    border-radius: 50%;
+    background: #6e8eb2;
+    box-shadow: 0 3px 12px #0008;
+    pointer-events: none;
+  }
+  footer {
+    padding-bottom: max(9px, env(safe-area-inset-bottom));
+  }
+}
+@media (pointer: coarse) and (max-width: 430px) {
+  .touch-controls { min-height: 180px; gap: 12px; padding-inline: 14px; }
+  .touch-actions { gap: 9px; }
+  .touch-actions button { width: 58px; height: 58px; }
+  .touch-joystick { width: 130px; height: 130px; flex-basis: 130px; }
 }

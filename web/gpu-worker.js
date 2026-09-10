@@ -37,6 +37,12 @@ async function init(data){
  port.start();port.postMessage({ready:true,result});emit('probe',{result});
 }
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}
+async function ensureShaderObjects(){
+ if(!backend)throw Error('Direct3D device is not available');
+ backend.shaders??=new ShaderObjects(await createShaderTranslator(shaderMode));
+ backend.draws?.setShaderObjects(backend.shaders);
+ return backend.shaders;
+}
 async function dispatch(data){
  const {func,args,buffer,retAddr,payload}=data;
  if(func==='draw_batch'){await executeDrawBatch(data,graphics,drawPacket);bridgeMetrics.drawBatches++;for(const a of data.commands){if(a[0]===3)bridgeMetrics.batchedClears++;else if(a[0]===13)bridgeMetrics.batchedDraws++;else if(a[0]===6||a[0]===11){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
@@ -53,6 +59,9 @@ async function dispatch(data){
   }else if(func==='cursor_warp'){
    const [x,y]=args;if(!Number.isInteger(x)||!Number.isInteger(y))throw Error('invalid cursor warp');
    emit('cursor-warp',{x,y});result=1;
+  }else if(func==='cursor_visibility'){
+   const [visible]=args;if(typeof visible!=='boolean')throw Error('invalid cursor visibility');
+   emit('cursor-visibility',{visible});result=1;
   }else if(func==='audio_open'){
    const [sampleRate,channels]=args;
    if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000||!Number.isInteger(channels)||channels<1||channels>8)throw Error('invalid audio format');
@@ -109,8 +118,11 @@ function drawPacket(a,memory){
    const equivalent=backend.equivalence?.draw(packet);
    return equivalent?.then?equivalent.then(()=>{backend.submissions++;return 1;}):(backend.submissions++,1);
   };
-  if(diagnosticDraws>0&&backend.presents>=diagnosticAfterPresent){if(diagnosticSkip>0){diagnosticSkip--;}else{diagnosticDraws--;backend.draws.flush();return captureDraw(device,backend,packet).then(sample=>{emit('draw-diagnostic',{sample});return submit();});}}
-  return submit();
+  const submitReady=()=>{
+   if(diagnosticDraws>0&&backend.presents>=diagnosticAfterPresent){if(diagnosticSkip>0){diagnosticSkip--;}else{diagnosticDraws--;backend.draws.flush();return captureDraw(device,backend,packet).then(sample=>{emit('draw-diagnostic',{sample});return submit();});}}
+   return submit();
+  };
+  return packet.state.get(15)!==0&&!backend.draws.cache.objects?ensureShaderObjects().then(submitReady):submitReady();
  }catch(e){const message=String(e.stack??e);emit('draw-rejected',{message:`${message} declaration=${JSON.stringify(packet?Array.from(packet.declaration):null)}`});return INVALID;}
 }
 async function graphics(op,a,memory){
@@ -176,8 +188,8 @@ async function graphics(op,a,memory){
    if(op===8&&a.length===4){
     const [,stage,pointer,length]=a;
     if(!(memory instanceof SharedArrayBuffer)||pointer<4096||length<8||length>1048576||length%4||pointer+length>memory.byteLength)return INVALID;
-    backend.shaders??=new ShaderObjects(await createShaderTranslator(shaderMode));
-    return backend.shaders.create(stage,new Uint8Array(memory,pointer,length));
+    const shaders=await ensureShaderObjects();
+    return shaders.create(stage,new Uint8Array(memory,pointer,length));
    }
    if(op===9&&a.length===2){if(!backend.shaders)return INVALID;backend.draws?.flush();backend.shaders.destroy(a[1]);return 1;}
    return INVALID;

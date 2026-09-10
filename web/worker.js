@@ -38,7 +38,7 @@ self.send_to_host=(func,args,retAddr)=>{
   if(Number.isInteger(retAddr)&&retAddr>=4&&retAddr%4===0&&retAddr+4<=memory.buffer.byteLength){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);Atomics.notify(new Int32Array(memory.buffer),retAddr/4,1);}
   return;
  }
- if(['create_window','cursor_warp','graphics_call','poll_message','wait_message','audio_open','audio_queued','audio_resume','audio_write','music_load','music_command'].includes(func)){
+ if(['create_window','cursor_warp','cursor_visibility','graphics_call','poll_message','wait_message','audio_open','audio_queued','audio_resume','audio_write','music_load','music_command'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
   const values=Array.from(args);
   if(func==='audio_write'){
