@@ -1,14 +1,20 @@
 {
   "inputProfile": {
-    "relativePointer": {
-      "horizontalSign": -1,
-      "verticalSign": -1
-    },
-    "cursorHidden": {
-      "horizontalSign": -1,
-      "verticalSign": -1
+    "pointer": {
+      "cursorHidden": {
+        "horizontalSign": -1,
+        "verticalSign": -1
+      },
+      "relativePointer": {
+        "horizontalSign": -1,
+        "verticalSign": -1
+      }
     },
     "touchJoystick": {
+      "cursorHidden": {
+        "horizontalSign": -1,
+        "verticalSign": -1
+      },
       "relativePointer": {
         "horizontalSign": -1,
         "verticalSign": -1

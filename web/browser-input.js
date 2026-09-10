@@ -44,7 +44,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const touchListeners=[],touchKeys=new Map();
  let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,ignoreLockedMovement=false,captureRequestPending=false,lastGuestWarpMs=-Infinity,joystickPointer=null,joystickDirections=[];
  const now=()=>globalThis.performance?.now?.()??Date.now();
- const relativePointerActive=()=>!!profile?.relativePointer&&now()-lastGuestWarpMs<250;
+ const relativePointerActive=()=>!!(profile?.pointer?.relativePointer||profile?.touchJoystick?.relativePointer)&&now()-lastGuestWarpMs<250;
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
  const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas});
@@ -53,7 +53,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   captureRequestPending=true;
   try{void canvas.requestPointerLock().catch?.(()=>{captureRequestPending=false;});}catch(_){captureRequestPending=false;}
  };
- const mappedCode=code=>directionalCode(code,profile,guestCursorVisible,'desktop',relativePointerActive());
+ const mappedCode=code=>directionalCode(code,profile,guestCursorVisible,'keyboard');
  const releaseKeys=()=>{for(const code of pressed.values()){const message=keyboardMessage('keyup',code);if(message)emit(message);}pressed.clear();};
  const onKey=event=>{
   if(!isRunning()||!focused())return;
@@ -62,7 +62,6 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   event.preventDefault();
   if(event.type==='keydown'){unlock();pressed.set(event.code,code);}else pressed.delete(event.code);
   emit(message);
-  if(event.type==='keydown'&&relativePointerActive())requestCapture();
  };
  const absolutePosition=event=>{const rect=canvas.getBoundingClientRect();return[
   Math.floor((event.clientX-rect.left)*canvas.width/rect.width),
@@ -70,23 +69,26 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  ];};
  const onPointer=event=>{
   if(!isRunning())return;
+  const enteringRelativeCapture=event.type==='pointerdown'&&(!guestCursorVisible||relativePointerActive());
   if(event.type==='pointerdown'){
    unlock();canvas.focus({preventScroll:true});
-   try{canvas.setPointerCapture(event.pointerId);}catch(_){}
-   if(!guestCursorVisible||relativePointerActive())requestCapture();
+   if(enteringRelativeCapture)requestCapture();
+   else try{canvas.setPointerCapture(event.pointerId);}catch(_){}
   }
-  if(document.pointerLockElement===canvas&&event.type==='pointermove'){
+  const locked=document.pointerLockElement===canvas;
+  if(locked&&event.type==='pointermove'){
    // Entering pointer lock can synthesize one large movement as the browser
    // recenters its hidden host cursor.  It is not user input and must not move
    // either the guest pointer or the visible in-game menu cursor.
    if(ignoreLockedMovement){ignoreLockedMovement=false;cursorUpdate();return;}
-   const rect=canvas.getBoundingClientRect();
-   const axes=relativePointerActive()?(profile?.relativePointer??profile?.cursorHidden):guestCursorVisible?null:profile?.cursorHidden;
-   virtualX=(virtualX+Math.round(event.movementX*canvas.width/rect.width*axisSign(axes?.horizontalSign)))|0;
-   virtualY=(virtualY+Math.round(event.movementY*canvas.height/rect.height*axisSign(axes?.verticalSign)))|0;
-   displayX=(displayX+Math.round(event.movementX*canvas.width/rect.width*axisSign(axes?.horizontalSign)))|0;
-   displayY=(displayY+Math.round(event.movementY*canvas.height/rect.height*axisSign(axes?.verticalSign)))|0;
-  }else{
+   const axes=relativePointerActive()?profile?.pointer?.relativePointer:guestCursorVisible?null:profile?.pointer?.cursorHidden;
+   // Pointer-lock movement is already an OS-level mouse delta. Scaling it by
+   // the canvas layout makes sensitivity change with window size and aspect.
+   const dx=Math.round(event.movementX*axisSign(axes?.horizontalSign));
+   const dy=Math.round(event.movementY*axisSign(axes?.verticalSign));
+   virtualX=(virtualX+dx)|0;virtualY=(virtualY+dy)|0;
+   displayX=(displayX+dx)|0;displayY=(displayY+dy)|0;
+  }else if(!locked&&!enteringRelativeCapture){
    [virtualX,virtualY]=absolutePosition(event);
    displayX=virtualX;displayY=virtualY;
   }
