@@ -41,17 +41,19 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const pressed=new Map();
  const captureSupported=typeof canvas.requestPointerLock==='function';
  const touchListeners=[],touchKeys=new Map();
- let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,ignoreLockedMovement=false,captureRequestPending=false,lastGuestWarpMs=-Infinity,joystickPointer=null,joystickDirections=[];
+ let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,ignoreLockedMovement=false,captureRequestPending=false,relativeCapturePending=false,relativeCaptureLatched=false,lastGuestWarpMs=-Infinity,lastCenterWarpMs=-Infinity,centerWarpCount=0,pointerDownCenterWarpCount=0,joystickPointer=null,joystickDirections=[];
  const now=()=>globalThis.performance?.now?.()??Date.now();
  const hasRelativeProfile=!!(profile?.keyboard?.relativePointer||profile?.pointer?.relativePointer||profile?.touchJoystick?.relativePointer);
  const relativePointerActive=()=>hasRelativeProfile&&now()-lastGuestWarpMs<250;
+ const centerWarpActive=()=>hasRelativeProfile&&centerWarpCount>=3&&now()-lastCenterWarpMs<500;
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
- const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas});
- const requestCapture=()=>{
+ const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas&&!relativeCaptureLatched});
+ const requestCapture=(relative=false)=>{
   if(!captureSupported||captureRequestPending||document.pointerLockElement===canvas)return;
   captureRequestPending=true;
-  try{void canvas.requestPointerLock().catch?.(()=>{captureRequestPending=false;});}catch(_){captureRequestPending=false;}
+  relativeCapturePending=relative;
+  try{void canvas.requestPointerLock().catch?.(()=>{captureRequestPending=false;relativeCapturePending=false;});}catch(_){captureRequestPending=false;relativeCapturePending=false;}
  };
  const mappedCode=code=>directionalCode(code,profile,guestCursorVisible,'keyboard',relativePointerActive());
  const releaseKeys=()=>{for(const code of pressed.values()){const message=keyboardMessage('keyup',code);if(message)emit(message);}pressed.clear();};
@@ -62,6 +64,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   event.preventDefault();
   if(event.type==='keydown'){unlock();pressed.set(event.code,code);}else pressed.delete(event.code);
   emit(message);
+  if(event.type==='keydown'&&centerWarpActive())requestCapture(true);
  };
  const absolutePosition=event=>{const rect=canvas.getBoundingClientRect();return[
   Math.floor((event.clientX-rect.left)*canvas.width/rect.width),
@@ -69,10 +72,11 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  ];};
  const onPointer=event=>{
   if(!isRunning())return;
-  const enteringRelativeCapture=event.type==='pointerdown'&&!guestCursorVisible;
+  const enteringRelativeCapture=event.type==='pointerdown'&&(!guestCursorVisible||centerWarpActive());
   if(event.type==='pointerdown'){
    unlock();canvas.focus({preventScroll:true});
-   if(enteringRelativeCapture)requestCapture();
+   pointerDownCenterWarpCount=centerWarpCount;
+   if(enteringRelativeCapture)requestCapture(centerWarpActive());
    else try{canvas.setPointerCapture(event.pointerId);}catch(_){}
   }
   const locked=document.pointerLockElement===canvas;
@@ -107,10 +111,15 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   displayX=Math.max(0,Math.min(canvas.width-1,displayX));displayY=Math.max(0,Math.min(canvas.height-1,displayY));
   const buttons=browserButtons(event.buttons),changed=event.type==='pointermove'?0:changedButton(event.button);
   emit(relativeDelta?[7,...relativeDelta,buttons<<16]:[event.type==='pointerdown'?2:event.type==='pointerup'?3:4,virtualX,virtualY,changed|(buttons<<16)]);
+  // A menu click can be the action that enters relative-mouse gameplay. If
+  // the guest starts repeatedly recentering while that click is held, use the
+  // pointer-up activation to lock immediately. One-off menu warps do not pass
+  // the sustained-center test and remain ordinary absolute input.
+  if(event.type==='pointerup'&&document.pointerLockElement!==canvas&&centerWarpCount>pointerDownCenterWarpCount&&centerWarpActive())requestCapture(true);
   cursorUpdate();
  };
- const onLock=()=>{captureRequestPending=false;const locked=document.pointerLockElement===canvas;ignoreLockedMovement=locked;if(!locked)releaseKeys();onCaptureChange(locked,captureSupported);cursorUpdate();};
- const onLockError=()=>{captureRequestPending=false;onCaptureChange(false,captureSupported);cursorUpdate();};
+ const onLock=()=>{const locked=document.pointerLockElement===canvas;if(locked)relativeCaptureLatched=relativeCapturePending;else{relativeCaptureLatched=false;releaseKeys();}captureRequestPending=false;relativeCapturePending=false;ignoreLockedMovement=locked;onCaptureChange(locked,captureSupported);cursorUpdate();};
+ const onLockError=()=>{captureRequestPending=false;relativeCapturePending=false;onCaptureChange(false,captureSupported);cursorUpdate();};
  const releaseTouchDirections=()=>{for(const code of joystickDirections){const message=keyboardMessage('keyup',code);if(message)emit(message);}joystickDirections=[];};
  const setTouchDirections=codes=>{
   const next=[...new Set(codes.map(code=>directionalCode(code,profile,guestCursorVisible,'touchJoystick',relativePointerActive())))];
@@ -145,7 +154,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  onCursorVisibilityChange(guestCursorVisible);
  cursorUpdate();
  return{
-  warp(x,y){if(Number.isInteger(x)&&Number.isInteger(y)){lastGuestWarpMs=now();virtualX=Math.max(0,Math.min(canvas.width-1,x));virtualY=Math.max(0,Math.min(canvas.height-1,y));const captured=document.pointerLockElement===canvas;if(!(captured&&guestCursorVisible)){displayX=virtualX;displayY=virtualY;}cursorUpdate();}},
+  warp(x,y){if(Number.isInteger(x)&&Number.isInteger(y)){const time=now();lastGuestWarpMs=time;const centered=Math.abs(x-(canvas.width>>1))<=2&&Math.abs(y-(canvas.height>>1))<=2;if(centered){centerWarpCount=time-lastCenterWarpMs<=500?centerWarpCount+1:1;lastCenterWarpMs=time;}else centerWarpCount=0;virtualX=Math.max(0,Math.min(canvas.width-1,x));virtualY=Math.max(0,Math.min(canvas.height-1,y));const captured=document.pointerLockElement===canvas;if(!(captured&&guestCursorVisible)){displayX=virtualX;displayY=virtualY;}cursorUpdate();}},
   setCursorVisible(visible){
    if(typeof visible!=='boolean'||visible===guestCursorVisible)return;
    releaseTouchDirections();guestCursorVisible=visible;if(visible&&document.pointerLockElement!==canvas){displayX=virtualX;displayY=virtualY;}onCursorVisibilityChange(visible);cursorUpdate();

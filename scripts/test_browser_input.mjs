@@ -97,6 +97,7 @@ input.destroy();
 const recenteredSent=[];
 const recenteredInput=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>recenteredSent.push(message),profile:recentered,touchRoot,onVirtualCursor:state=>cursors.push(state)});
 recenteredInput.warp(400,300);
+recenteredInput.warp(400,300);
 joystick.listeners.get('pointerdown')({pointerId:6,clientX:150,clientY:80,preventDefault(){}});
 assert.deepEqual(recenteredSent.at(-1),[5,0x4b,0x25,1]);
 joystick.listeners.get('pointerup')({pointerId:6,preventDefault(){}});
@@ -131,5 +132,24 @@ canvasListeners.get('pointerup')({type:'pointerup',pointerId:5,clientX:80,client
 assert.deepEqual(recenteredSent.at(-1),[3,0,0,1]);
 document.pointerLockElement=null;
 recenteredInput.destroy();
+
+// A lone center warp is common in an absolute-position menu and must not lock
+// the host cursor. Repeated center warps identify Win32 relative-mouse input.
+const captureSent=[];
+const captureCursors=[];
+const captureInput=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>captureSent.push(message),profile:recentered,onVirtualCursor:state=>captureCursors.push(state)});
+captureInput.warp(400,300);
+canvasListeners.get('pointerdown')({type:'pointerdown',pointerId:7,clientX:120,clientY:90,buttons:1,button:0,preventDefault(){}});
+canvasListeners.get('pointerup')({type:'pointerup',pointerId:7,clientX:120,clientY:90,buttons:0,button:0,preventDefault(){}});
+assert.equal(pointerLockRequests,1);
+canvasListeners.get('pointerdown')({type:'pointerdown',pointerId:8,clientX:120,clientY:90,buttons:1,button:0,preventDefault(){}});
+captureInput.warp(400,300);
+captureInput.warp(400,300);
+canvasListeners.get('pointerup')({type:'pointerup',pointerId:8,clientX:120,clientY:90,buttons:0,button:0,preventDefault(){}});
+assert.equal(pointerLockRequests,2);
+document.pointerLockElement=canvas;
+documentListeners.get('pointerlockchange')();
+assert.equal(captureCursors.at(-1).visible,false);
+captureInput.destroy();
 
 console.log('Browser input preserves Windows directions and guest cursor warps');
