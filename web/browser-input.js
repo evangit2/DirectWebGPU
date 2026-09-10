@@ -26,6 +26,7 @@ export function keyboardMessage(type,code,repeat=false){
 function browserButtons(buttons){return(buttons&1)|((buttons&4)>>1)|((buttons&2)<<1);}
 function changedButton(button){return({0:1,1:2,2:4})[button]??0;}
 const OPPOSITE_DIRECTION=Object.freeze({ArrowLeft:'ArrowRight',ArrowRight:'ArrowLeft',ArrowUp:'ArrowDown',ArrowDown:'ArrowUp'});
+function axisSign(value){return value===-1?-1:1;}
 
 export function directionalCode(code,profile={},cursorVisible=true,source='desktop',relativePointer=false){
  const sourceProfile=source==='desktop'?profile:(profile?.[source]??{});
@@ -42,7 +43,8 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  const touchListeners=[],touchKeys=new Map();
  let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,ignoreLockedMovement=false,captureRequestPending=false,lastGuestWarpMs=-Infinity,joystickPointer=null,joystickDirections=[];
  const now=()=>globalThis.performance?.now?.()??Date.now();
- const relativePointerActive=()=>now()-lastGuestWarpMs<250;
+ const hasRelativeProfile=!!(profile?.keyboard?.relativePointer||profile?.pointer?.relativePointer||profile?.touchJoystick?.relativePointer);
+ const relativePointerActive=()=>hasRelativeProfile&&now()-lastGuestWarpMs<250;
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
  const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas});
@@ -51,7 +53,7 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
   captureRequestPending=true;
   try{void canvas.requestPointerLock().catch?.(()=>{captureRequestPending=false;});}catch(_){captureRequestPending=false;}
  };
- const mappedCode=code=>directionalCode(code,profile,guestCursorVisible,'keyboard');
+ const mappedCode=code=>directionalCode(code,profile,guestCursorVisible,'keyboard',relativePointerActive());
  const releaseKeys=()=>{for(const code of pressed.values()){const message=keyboardMessage('keyup',code);if(message)emit(message);}pressed.clear();};
  const onKey=event=>{
   if(!isRunning()||!focused())return;
@@ -79,14 +81,24 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
    // Entering pointer lock can synthesize one large movement as the browser
    // recenters its hidden host cursor.  It is not user input and must not move
    // either the guest pointer or the visible in-game menu cursor.
-   if(ignoreLockedMovement){ignoreLockedMovement=false;cursorUpdate();return;}
+   if(ignoreLockedMovement){
+    ignoreLockedMovement=false;
+    // A browser may report its pre-lock cursor displacement as the first
+    // movement. Keep an ordinary first hand movement and discard only a
+    // recenter-sized jump.
+    if(Math.abs(event.movementX)>canvas.width/4||Math.abs(event.movementY)>canvas.height/4){cursorUpdate();return;}
+   }
    // Pointer-lock movement is already an OS-level mouse delta. Scaling it by
    // the canvas layout makes sensitivity change with window size and aspect.
-   const dx=Math.round(event.movementX),dy=Math.round(event.movementY),beforeX=virtualX,beforeY=virtualY;
+   const axes=relativePointerActive()?profile?.pointer?.relativePointer:guestCursorVisible?null:profile?.pointer?.cursorHidden;
+   const dx=Math.round(event.movementX*axisSign(axes?.horizontalSign));
+   const dy=Math.round(event.movementY*axisSign(axes?.verticalSign));
    virtualX=(virtualX+dx)|0;virtualY=(virtualY+dy)|0;
    displayX=(displayX+dx)|0;displayY=(displayY+dy)|0;
    virtualX=Math.max(0,Math.min(canvas.width-1,virtualX));virtualY=Math.max(0,Math.min(canvas.height-1,virtualY));
-   relativeDelta=[virtualX-beforeX,virtualY-beforeY];
+   // Relative Win32 input is unbounded. Clamping this delta at the canvas
+   // edge made pointer-lock motion stall until a delayed guest warp arrived.
+   relativeDelta=[dx,dy];
   }else if(!locked&&!enteringRelativeCapture){
    [virtualX,virtualY]=absolutePosition(event);
    displayX=virtualX;displayY=virtualY;
