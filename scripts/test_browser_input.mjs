@@ -10,13 +10,10 @@ assert.deepEqual(keyboardMessage('keyup','ArrowDown'),[6,0x50,0x28,1]);
 assert.deepEqual(keyboardMessage('keydown','KeyW',true),[5,0x11,0x57,2]);
 assert.equal(keyboardMessage('keydown','Unidentified'),null);
 const inverted={cursorHidden:{horizontalSign:-1,verticalSign:-1}};
-const touchDirect={...inverted,touchJoystick:{cursorHidden:{horizontalSign:1,verticalSign:1}}};
 assert.equal(directionalCode('ArrowUp',inverted,false),'ArrowDown');
 assert.equal(directionalCode('ArrowLeft',inverted,false),'ArrowRight');
 assert.equal(directionalCode('ArrowUp',inverted,true),'ArrowUp');
 assert.equal(directionalCode('Enter',inverted,false),'Enter');
-assert.equal(directionalCode('ArrowUp',touchDirect,false,'touchJoystick'),'ArrowUp');
-assert.equal(directionalCode('ArrowLeft',touchDirect,false,'touchJoystick'),'ArrowLeft');
 
 const documentListeners=new Map();
 const windowListeners=new Map();
@@ -36,7 +33,7 @@ const canvas={
  removeEventListener:()=>{},
  getBoundingClientRect:()=>({left:0,top:0,width:800,height:600}),
  focus:()=>{},
- requestPointerLock:async()=>{},
+ requestPointerLock:async()=>{pointerLockRequests++;},
  setPointerCapture:()=>{},
 };
 globalThis.document={
@@ -50,7 +47,8 @@ globalThis.window={
 };
 const sent=[];
 const cursors=[];
-const input=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>sent.push(message),profile:touchDirect,touchRoot,onVirtualCursor:state=>cursors.push(state)});
+let pointerLockRequests=0;
+const input=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>sent.push(message),profile:inverted,touchRoot,onVirtualCursor:state=>cursors.push(state)});
 input.warp(400,300);
 canvasListeners.get('pointermove')({type:'pointermove',movementX:7,movementY:-4,buttons:0,button:-1});
 assert.deepEqual(sent.at(-1),[4,407,296,0]);
@@ -73,11 +71,18 @@ assert.equal(prevented,true);
 assert.deepEqual(sent.slice(-2),[[5,0x1c,0x0d,0],[6,0x1c,0x0d,0]]);
 input.setCursorVisible(false);
 joystick.listeners.get('pointerdown')({pointerId:2,clientX:150,clientY:80,preventDefault(){}});
-assert.deepEqual(sent.at(-1),[5,0x4d,0x27,1]);
+assert.deepEqual(sent.at(-1),[5,0x4b,0x25,1]);
 assert.match(knob.style.transform,/translate\(/);
 joystick.listeners.get('pointerup')({pointerId:2,preventDefault(){}});
-assert.deepEqual(sent.at(-1),[6,0x4d,0x27,1]);
+assert.deepEqual(sent.at(-1),[6,0x4b,0x25,1]);
 assert.equal(knob.style.transform,'translate(0px,0px)');
+document.pointerLockElement=null;
+input.setCursorVisible(true);
+canvasListeners.get('pointerdown')({type:'pointerdown',pointerId:3,clientX:80,clientY:80,buttons:1,button:0,preventDefault(){}});
+assert.equal(pointerLockRequests,0);
+input.setCursorVisible(false);
+canvasListeners.get('pointerdown')({type:'pointerdown',pointerId:4,clientX:80,clientY:80,buttons:1,button:0,preventDefault(){}});
+assert.equal(pointerLockRequests,1);
 input.destroy();
 
 console.log('Browser input preserves Windows directions and guest cursor warps');

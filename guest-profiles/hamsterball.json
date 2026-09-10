@@ -3,12 +3,6 @@
     "cursorHidden": {
       "horizontalSign": -1,
       "verticalSign": -1
-    },
-    "touchJoystick": {
-      "cursorHidden": {
-        "horizontalSign": 1,
-        "verticalSign": 1
-      }
     }
   }
 }

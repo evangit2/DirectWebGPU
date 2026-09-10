@@ -1,0 +1,84 @@
+--- a/win32/winapi/src/user32/misc.rs
++++ b/win32/winapi/src/user32/misc.rs
+@@ -18,13 +18,14 @@
+ 
+ #[win32_derive::dllexport]
+ pub fn ShowCursor(_ctx: &mut Context, bShow: bool) -> i32 {
+-    let (count,changed,visible)={
++    let (count,visible)={
+         let mut cursor=state().cursor.borrow_mut();
+-        let before=cursor.visible();
+         let count=cursor.show(bShow);
+-        (count,before!=cursor.visible(),cursor.visible())
++        (count,cursor.visible())
+     };
+-    if changed { notify_cursor_visibility(visible); }
++    // Synchronize even when the cursor handle is still null. Applications often
++    // hide the cursor before loading or assigning a handle.
++    notify_cursor_visibility(visible);
+     count
+ }
+ 
+--- a/win32/winapi/src/user32/window.rs
++++ b/win32/winapi/src/user32/window.rs
+@@ -557,13 +557,12 @@
+ 
+ #[win32_derive::dllexport]
+ pub fn SetCursor(_ctx: &mut Context, hCursor: u32) -> u32 {
+-    let (previous,changed,visible)={
++    let (previous,visible)={
+         let mut cursor=state().cursor.borrow_mut();
+-        let before=cursor.visible();
+         let previous=cursor.set(hCursor);
+-        (previous,before!=cursor.visible(),cursor.visible())
++        (previous,cursor.visible())
+     };
+-    if changed { notify_cursor_visibility(visible); }
++    notify_cursor_visibility(visible);
+     previous
+ }
+ 
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -140,7 +140,7 @@
+  #[win32_derive::dllexport]pub fn GetCreationParameters(ctx:&mut Context,this:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetCreationParameters(ctx,this,out)}
+  pub fn SetCursorProperties_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetCursorProperties")}
+  #[win32_derive::dllexport]pub fn SetCursorPosition(_ctx:&mut Context,_this:u32,_x:i32,_y:i32,_flags:u32){}
+- #[win32_derive::dllexport]pub fn ShowCursor(_ctx:&mut Context,_this:u32,show:u32)->u32{u32::from(show!=0)}
++ #[win32_derive::dllexport]pub fn ShowCursor(ctx:&mut Context,this:u32,show:u32)->u32{d3d9::IDirect3DDevice9::ShowCursor(ctx,this,show)}
+  pub fn CreateAdditionalSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateAdditionalSwapChain")}
+  #[win32_derive::dllexport]pub fn Reset(ctx:&mut Context,this:u32,presentation:u32)->u32{
+   if !valid(ctx,presentation,52){return D3DERR_INVALIDCALL}
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -3,7 +3,7 @@
+ #[derive(Clone,Copy,Default)]
+ struct Stream{buffer:u32,offset:u32,stride:u32}
+ #[derive(Clone)]
+-struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
+ static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+ pub static mut VTABLE:u32=0;
+ const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
+@@ -16,7 +16,7 @@
+  let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
+  let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
+  let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
+- IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,color,depth,up_buffer:0,up_offset:0,states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,color,depth,up_buffer:0,up_offset:0,states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
+ }
+ pub fn exists(this:u32)->bool{DEVICES.lock().unwrap().contains_key(&this)}
+ #[win32_derive::dllexport]
+@@ -66,7 +66,11 @@
+ pub fn GetDisplayMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetDisplayMode",3)}
+ pub fn SetCursorProperties_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetCursorProperties",4)}
+ pub fn SetCursorPosition_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetCursorPosition",4)}
+-pub fn ShowCursor_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ShowCursor",2)}
++#[win32_derive::dllexport]
++pub fn ShowCursor(_ctx:&mut Context,this:u32,show:u32)->u32{
++ let visible=show!=0;let previous={let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).expect("invalid ShowCursor device");std::mem::replace(&mut device.cursor_visible,visible)};
++ crate::user32::notify_cursor_visibility(visible);u32::from(previous)
++}
+ pub fn CreateAdditionalSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateAdditionalSwapChain",3)}
+ pub fn GetSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSwapChain",3)}
+ pub fn GetNumberOfSwapChains_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetNumberOfSwapChains",1)}
