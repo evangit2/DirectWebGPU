@@ -1,0 +1,1655 @@
+{
+  "summary": "60-second frame-delivery measurement completed",
+  "location": "http://127.0.0.1:8765/humus-runtime?mode=wined3d-webgpu&benchmark=1&assetCache=warm&captureFrames=1&resolution=1280x720&build=render-targets-1",
+  "report": {
+    "applicationPresents": 16221,
+    "submittedFrames": 16221,
+    "sceneFrames": 0,
+    "performance": {
+      "firstSceneMs": "not measured",
+      "fps": "not measured",
+      "jsHeapBytes": "not measured",
+      "gpuBytes": "not measured",
+      "wasmLinearMemoryBytes": 19202048
+    },
+    "runtime": {
+      "mode": "wined3d-webgpu",
+      "deprecated": false,
+      "shaderCompiler": "vkd3d-shader",
+      "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+    },
+    "registryPreset": null,
+    "runId": "a4904e1d-4cbf-4c23-8efe-3c1da23eee64",
+    "status": "60-second frame-delivery measurement completed",
+    "events": [
+      {
+        "timeMs": 6990,
+        "type": "probe",
+        "result": {
+          "secureContext": true,
+          "crossOriginIsolated": true,
+          "sharedArrayBuffer": true,
+          "webgpu": true,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "runtime": {
+            "mode": "wined3d-webgpu",
+            "deprecated": false,
+            "shaderCompiler": "vkd3d-shader",
+            "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+          },
+          "adapter": {
+            "vendor": "apple",
+            "architecture": "metal-3",
+            "device": "",
+            "description": "",
+            "isFallbackAdapter": false
+          },
+          "features": [
+            "depth32float-stencil8",
+            "rg11b10ufloat-renderable",
+            "texture-formats-tier1",
+            "bgra8unorm-storage",
+            "texture-compression-bc",
+            "dual-source-blending",
+            "core-features-and-limits",
+            "float32-filterable",
+            "indirect-first-instance",
+            "texture-compression-astc-sliced-3d",
+            "float32-blendable",
+            "subgroup-size-control",
+            "texture-compression-astc",
+            "texture-compression-etc2",
+            "depth-clip-control",
+            "texture-compression-bc-sliced-3d",
+            "timestamp-query",
+            "clip-distances",
+            "texture-formats-tier2",
+            "shader-f16",
+            "primitive-index",
+            "texture-component-swizzle",
+            "subgroups"
+          ],
+          "timestampQuery": {
+            "requested": false,
+            "available": true
+          },
+          "deviceCreated": true,
+          "hardwareAcceleration": "GPU device available; no Humus scene verified"
+        }
+      },
+      {
+        "timeMs": 7018,
+        "type": "identity",
+        "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+      },
+      {
+        "timeMs": 7266,
+        "type": "launch-settings",
+        "source": "guest manifest registry seed",
+        "resolution": "1280x720",
+        "mechanism": "original EXE enumerates saved window bounds"
+      },
+      {
+        "timeMs": 7267,
+        "type": "asset-cache-metrics",
+        "mode": "warm",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 25773799,
+        "verifiedBytes": 25773799,
+        "repairedEntries": 0,
+        "limitBytes": 536870912,
+        "scope": "guest assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      {
+        "timeMs": 7268,
+        "type": "resource-metrics",
+        "resourceCount": 20,
+        "transferSize": 25793612,
+        "encodedBodySize": 25787612,
+        "decodedBodySize": 25787612,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      {
+        "timeMs": 7268,
+        "type": "execution-start",
+        "wasmLinearMemoryBytes": 19202048
+      },
+      {
+        "timeMs": 7286,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/env.rs:32 stub: using 0"
+      },
+      {
+        "timeMs": 7286,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/env.rs:48 stub: using true"
+      },
+      {
+        "timeMs": 7287,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/dll.rs:121 stub: using 0"
+      },
+      {
+        "timeMs": 7288,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/dll.rs:170 GetProcAddress(0xd110000, IsProcessorFeaturePresent): not supported, returning null"
+      },
+      {
+        "timeMs": 7290,
+        "type": "log",
+        "message": "win32/winapi/src/user32/resource.rs:15 stub: using 0"
+      },
+      {
+        "timeMs": 7290,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:418 stub: using 1"
+      },
+      {
+        "timeMs": 7291,
+        "type": "log",
+        "message": "win32/winapi/src/advapi32.rs:211 VIRTUAL_REGISTRY_OPEN path=80000002\\software\\humus handle=0x10000 created=false"
+      },
+      {
+        "timeMs": 8046,
+        "type": "window-created",
+        "title": "Title",
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "timeMs": 8047,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:129 stub: using HANDLE(1)"
+      },
+      {
+        "timeMs": 8048,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:550 stub: using true"
+      },
+      {
+        "timeMs": 8048,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:179 WINDOW_CREATION_CALLBACKS hwnd=0x1"
+      },
+      {
+        "timeMs": 8049,
+        "type": "d3d9-created",
+        "message": "win32/winapi/src/d3d9.rs:62 D3D9_CREATE9 sdk=31 object=0x004e700c"
+      },
+      {
+        "timeMs": 8050,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:62 D3D9_CREATE9 sdk=31 object=0x004e700c"
+      },
+      {
+        "timeMs": 8050,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 8051,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:185 D3D9_CREATE_DEVICE_PRESENT_PARAMETERS [\n    0x500,\n    0x2d0,\n    0x15,\n    0x1,\n    0x0,\n    0x0,\n    0x1,\n    0x0,\n    0x1,\n    0x1,\n    0x4b,\n    0x0,\n    0x0,\n    0x80000000,\n]"
+      },
+      {
+        "timeMs": 8070,
+        "type": "d3d9-device-created",
+        "backendId": 1,
+        "width": 1280,
+        "height": 720,
+        "colorFormat": "bgra8unorm",
+        "depthFormat": "depth24plus-stencil8",
+        "validation": "passed",
+        "sceneFrames": 0
+      },
+      {
+        "timeMs": 8071,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:189 D3D9_DEVICE_CREATED object=0x4e7014 backend=1"
+      },
+      {
+        "timeMs": 8079,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 8152,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/dll.rs:170 GetProcAddress(0xd110004, Direct3DShaderValidatorCreate9): not supported, returning null"
+      },
+      {
+        "timeMs": 8183,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 8237,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 8248,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 8255,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 8264,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:177 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      }
+    ],
+    "droppedEvents": 0,
+    "build": {
+      "revision": "b23640412bb8935f0cc6c511c1b563575e1b292e",
+      "dirty": true,
+      "guest": {
+        "id": "humus",
+        "title": "Humus",
+        "executablePath": "DynamicBranching/DynamicBranching.exe",
+        "workingDirectory": "/DynamicBranching",
+        "registryDwords": [
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedLeft",
+            0
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedTop",
+            0
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedRight",
+            1280
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedBottom",
+            720
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "Fullscreen",
+            0
+          ]
+        ]
+      },
+      "dependencies": {
+        "executable": {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        "guest": {
+          "id": "humus",
+          "title": "Humus",
+          "executablePath": "DynamicBranching/DynamicBranching.exe",
+          "workingDirectory": "/DynamicBranching",
+          "registryDwords": [
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedLeft",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedTop",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedRight",
+              1280
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedBottom",
+              720
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "Fullscreen",
+              0
+            ]
+          ]
+        }
+      },
+      "files": [
+        {
+          "path": "DynamicBranching/DynamicBranching.dsp",
+          "bytes": 7163,
+          "sha256": "3c086ee7a6b8e32c2c0719e2510fb05d431a8dc96955bf2da574c625d52a2677"
+        },
+        {
+          "path": "DynamicBranching/DynamicBranching.dsw",
+          "bytes": 555,
+          "sha256": "1a9c43ec3187ada28cd6cd25101b6b9b7fd44b31f7e6c5fdcc7a9d5c396c786d"
+        },
+        {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "bytes": 925696,
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        {
+          "path": "DynamicBranching/Main.cpp",
+          "bytes": 8514,
+          "sha256": "88d32ac76ce4227fa8924572a3641877129819b5abe3d40667fc379431e680ef"
+        },
+        {
+          "path": "DynamicBranching/depthAmbient.shd",
+          "bytes": 435,
+          "sha256": "b5f89e989b1fb9e367b71fa57500340be28771654941b5bbf82b484f0a087e2e"
+        },
+        {
+          "path": "DynamicBranching/if.shd",
+          "bytes": 411,
+          "sha256": "481045950c8b579040a85208e755abb2251650d68ac0808708b7c9275dd44d1d"
+        },
+        {
+          "path": "DynamicBranching/lighting.shd",
+          "bytes": 1585,
+          "sha256": "865b3f054522da77a1cbd884044ec99ed3d8afdf53340825039c3c8200d8e6e8"
+        },
+        {
+          "path": "Models/PillarRoom/Map.hmdl",
+          "bytes": 57028,
+          "sha256": "bd881f835d4e52b93351194c992f59cbd7187ef8850c4c2f7d9ad72225c492d5"
+        },
+        {
+          "path": "Textures/Fonts/Future.dds",
+          "bytes": 349680,
+          "sha256": "9b7f4ea36194f5ab48e38b33dc8039a8aab0ce905d541aa6dee1ed5f30de2022"
+        },
+        {
+          "path": "Textures/Fonts/Future.font",
+          "bytes": 5124,
+          "sha256": "878c2b3e5fa5961d0f3eacb564901e0e91dc185c834e48e01e4803f8cda1a2e3"
+        },
+        {
+          "path": "Textures/Particle.png",
+          "bytes": 613,
+          "sha256": "3987c11a7d2798dc189cd9309910ddfeecfb0551decfd1238c7a59b2d186e24d"
+        },
+        {
+          "path": "Textures/brick01.dds",
+          "bytes": 174904,
+          "sha256": "0c94736d677faa0d962f9e7f6c7688076652faee93130167813e59cb125a27e4"
+        },
+        {
+          "path": "Textures/brick01Bump.png",
+          "bytes": 74397,
+          "sha256": "3e8ea48fdb25da97f55d3f4c939b8c0a8572e2ad6bbb6f1105d6fd340889c823"
+        },
+        {
+          "path": "Textures/laying_rock7.dds",
+          "bytes": 174904,
+          "sha256": "e8ea9d650264bba9b6267470db2cd0c603b08ca1112e719c4974358806188235"
+        },
+        {
+          "path": "Textures/laying_rock7Bump.png",
+          "bytes": 87309,
+          "sha256": "ecaa27e2311541d0882bd5c1b53a5e4818dc808a29a6081a53a540b318aeebf5"
+        },
+        {
+          "path": "Textures/parqfloor2.dds",
+          "bytes": 174904,
+          "sha256": "b120f827ed239af7919a6ae298463eb70adea325acf330bc69a181698adfb292"
+        },
+        {
+          "path": "Textures/parqfloor2Bump.png",
+          "bytes": 8263,
+          "sha256": "7a4762e961cfc7ccff1cbe6d4793374319257237d7463f49090c30e812102795"
+        },
+        {
+          "path": "readme.txt",
+          "bytes": 1101,
+          "sha256": "56dd528b14422b1bb9e1cfe27197aeb2330647f2181118bd864f8d436438204d"
+        }
+      ],
+      "wasm_available": true,
+      "runtimeBuild": {
+        "guest": {
+          "id": "humus",
+          "title": "Humus",
+          "executablePath": "DynamicBranching/DynamicBranching.exe",
+          "workingDirectory": "/DynamicBranching",
+          "registryDwords": [
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedLeft",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedTop",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedRight",
+              1280
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedBottom",
+              720
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "Fullscreen",
+              0
+            ]
+          ]
+        },
+        "wasmProfile": "release",
+        "translatedTreeSha256": "31168ef3b97559be14c426a40f0adcd8680cc6ee89a5a51aeda3d37f6c7cfa90",
+        "cargoLockSha256": "968c5d084c3a8ffaae74c4436735dad977229fbde0141ec4279b7d8a134164fd",
+        "builtAt": "2026-09-11T20:26:20.072400+00:00",
+        "revision": "b23640412bb8935f0cc6c511c1b563575e1b292e",
+        "workingTreeDirty": true,
+        "sourceSha256": "fd40ef0785393dc895fc2effa909b1904bb4d05f7c5195922b8a05aae561729b",
+        "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+        "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+        "translationEntryPoints": [
+          "409a00",
+          "004233f4"
+        ],
+        "moduleUrl": "/generated/humus.js",
+        "wasmUrl": "/generated/humus_bg.wasm",
+        "wasmArtifact": "humus_bg.wasm",
+        "artifacts": {
+          "humus.js": {
+            "sha256": "224beabc26d3ca5d7c28305990286745aa3801d9a8a3038f51eb9050951ebe6a",
+            "bytes": 13813
+          },
+          "humus_bg.wasm": {
+            "sha256": "bce9ecd7169fd9d28469a0de520c6851d0f8a0e5d768a90b4e2c4f8e7dd2d637",
+            "bytes": 23721213
+          }
+        }
+      }
+    },
+    "startTimeMs": 6851.594999998808,
+    "startedAt": "2026-09-11T20:26:51.290Z",
+    "requestedDurationMs": 60000,
+    "visibility": "visible",
+    "audio": {
+      "contextState": "running",
+      "streams": 0,
+      "writesReceived": 0,
+      "bytesScheduled": 0,
+      "buffersScheduled": 0,
+      "pendingChunks": 0,
+      "droppedPending": 0,
+      "underruns": 0,
+      "queueResets": 0,
+      "clippedSamples": 0,
+      "peak": 0,
+      "maxQueueAheadMs": 0
+    },
+    "browser": {
+      "secureContext": true,
+      "crossOriginIsolated": true,
+      "sharedArrayBuffer": true,
+      "webgpu": true,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "runtime": {
+        "mode": "wined3d-webgpu",
+        "deprecated": false,
+        "shaderCompiler": "vkd3d-shader",
+        "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+      },
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "device": "",
+        "description": "",
+        "isFallbackAdapter": false
+      },
+      "features": [
+        "depth32float-stencil8",
+        "rg11b10ufloat-renderable",
+        "texture-formats-tier1",
+        "bgra8unorm-storage",
+        "texture-compression-bc",
+        "dual-source-blending",
+        "core-features-and-limits",
+        "float32-filterable",
+        "indirect-first-instance",
+        "texture-compression-astc-sliced-3d",
+        "float32-blendable",
+        "subgroup-size-control",
+        "texture-compression-astc",
+        "texture-compression-etc2",
+        "depth-clip-control",
+        "texture-compression-bc-sliced-3d",
+        "timestamp-query",
+        "clip-distances",
+        "texture-formats-tier2",
+        "shader-f16",
+        "primitive-index",
+        "texture-component-swizzle",
+        "subgroups"
+      ],
+      "timestampQuery": {
+        "requested": false,
+        "available": true
+      },
+      "deviceCreated": true,
+      "hardwareAcceleration": "GPU device available; no Humus scene verified"
+    },
+    "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+    "inputTransportMode": "wasm-shared",
+    "assetCacheMetrics": {
+      "mode": "warm",
+      "hits": 0,
+      "misses": 19,
+      "cacheBytes": 0,
+      "networkBodyBytes": 25773799,
+      "verifiedBytes": 25773799,
+      "repairedEntries": 0,
+      "limitBytes": 536870912,
+      "scope": "guest assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    "resourceMetrics": {
+      "resourceCount": 20,
+      "transferSize": 25793612,
+      "encodedBodySize": 25787612,
+      "decodedBodySize": 25787612,
+      "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+      "cachePolicy": "loopback server Cache-Control: no-store"
+    },
+    "realmResources": {
+      "cpuWorker": {
+        "realm": "cpuWorker",
+        "phase": "before EXE execution",
+        "timeOrigin": 1789158411308.82,
+        "snapshotTime": 396.4650000035763,
+        "snapshotEpoch": 1789158411705.2852,
+        "navigation": [],
+        "resourceCount": 20,
+        "retainedEntries": 20,
+        "transferSize": 25793612,
+        "encodedBodySize": 25787612,
+        "decodedBodySize": 25787612,
+        "zeroSizeEntries": 0,
+        "entries": [
+          {
+            "path": "/assets/DynamicBranching/DynamicBranching.exe",
+            "initiatorType": "fetch",
+            "startTime": 131.40999999642372,
+            "responseEnd": 133.72499999403954,
+            "transferSize": 925996,
+            "encodedBodySize": 925696,
+            "decodedBodySize": 925696
+          },
+          {
+            "path": "/generated/humus.js",
+            "initiatorType": "script",
+            "startTime": 148.34000000357628,
+            "responseEnd": 150.97999998927116,
+            "transferSize": 14113,
+            "encodedBodySize": 13813,
+            "decodedBodySize": 13813
+          },
+          {
+            "path": "/generated/humus_bg.wasm",
+            "initiatorType": "fetch",
+            "startTime": 153.1550000011921,
+            "responseEnd": 173.875,
+            "transferSize": 23721513,
+            "encodedBodySize": 23721213,
+            "decodedBodySize": 23721213
+          },
+          {
+            "path": "/assets/DynamicBranching/DynamicBranching.dsp",
+            "initiatorType": "fetch",
+            "startTime": 307.3700000047684,
+            "responseEnd": 309.7150000035763,
+            "transferSize": 7463,
+            "encodedBodySize": 7163,
+            "decodedBodySize": 7163
+          },
+          {
+            "path": "/assets/DynamicBranching/DynamicBranching.dsw",
+            "initiatorType": "fetch",
+            "startTime": 313.89500001072884,
+            "responseEnd": 315.47999998927116,
+            "transferSize": 855,
+            "encodedBodySize": 555,
+            "decodedBodySize": 555
+          },
+          {
+            "path": "/assets/DynamicBranching/Main.cpp",
+            "initiatorType": "fetch",
+            "startTime": 318.7150000035763,
+            "responseEnd": 320.72499999403954,
+            "transferSize": 8814,
+            "encodedBodySize": 8514,
+            "decodedBodySize": 8514
+          },
+          {
+            "path": "/assets/DynamicBranching/depthAmbient.shd",
+            "initiatorType": "fetch",
+            "startTime": 323.6899999976158,
+            "responseEnd": 325.8799999952316,
+            "transferSize": 735,
+            "encodedBodySize": 435,
+            "decodedBodySize": 435
+          },
+          {
+            "path": "/assets/DynamicBranching/if.shd",
+            "initiatorType": "fetch",
+            "startTime": 328.99000000953674,
+            "responseEnd": 330.61500000953674,
+            "transferSize": 711,
+            "encodedBodySize": 411,
+            "decodedBodySize": 411
+          },
+          {
+            "path": "/assets/DynamicBranching/lighting.shd",
+            "initiatorType": "fetch",
+            "startTime": 332.47499999403954,
+            "responseEnd": 334.169999986887,
+            "transferSize": 1885,
+            "encodedBodySize": 1585,
+            "decodedBodySize": 1585
+          },
+          {
+            "path": "/assets/Models/PillarRoom/Map.hmdl",
+            "initiatorType": "fetch",
+            "startTime": 336.2549999952316,
+            "responseEnd": 338.24000000953674,
+            "transferSize": 57328,
+            "encodedBodySize": 57028,
+            "decodedBodySize": 57028
+          },
+          {
+            "path": "/assets/Textures/Fonts/Future.dds",
+            "initiatorType": "fetch",
+            "startTime": 342.11500000953674,
+            "responseEnd": 345.669999986887,
+            "transferSize": 349980,
+            "encodedBodySize": 349680,
+            "decodedBodySize": 349680
+          },
+          {
+            "path": "/assets/Textures/Fonts/Future.font",
+            "initiatorType": "fetch",
+            "startTime": 348.94999998807907,
+            "responseEnd": 350.5600000023842,
+            "transferSize": 5424,
+            "encodedBodySize": 5124,
+            "decodedBodySize": 5124
+          },
+          {
+            "path": "/assets/Textures/Particle.png",
+            "initiatorType": "fetch",
+            "startTime": 352.71000000834465,
+            "responseEnd": 354.6399999856949,
+            "transferSize": 913,
+            "encodedBodySize": 613,
+            "decodedBodySize": 613
+          },
+          {
+            "path": "/assets/Textures/brick01.dds",
+            "initiatorType": "fetch",
+            "startTime": 357.25999999046326,
+            "responseEnd": 360.6399999856949,
+            "transferSize": 175204,
+            "encodedBodySize": 174904,
+            "decodedBodySize": 174904
+          },
+          {
+            "path": "/assets/Textures/brick01Bump.png",
+            "initiatorType": "fetch",
+            "startTime": 364.00999999046326,
+            "responseEnd": 365.7349999845028,
+            "transferSize": 74697,
+            "encodedBodySize": 74397,
+            "decodedBodySize": 74397
+          },
+          {
+            "path": "/assets/Textures/laying_rock7.dds",
+            "initiatorType": "fetch",
+            "startTime": 368.69999998807907,
+            "responseEnd": 370.7649999856949,
+            "transferSize": 175204,
+            "encodedBodySize": 174904,
+            "decodedBodySize": 174904
+          },
+          {
+            "path": "/assets/Textures/laying_rock7Bump.png",
+            "initiatorType": "fetch",
+            "startTime": 374.19499999284744,
+            "responseEnd": 376.6550000011921,
+            "transferSize": 87609,
+            "encodedBodySize": 87309,
+            "decodedBodySize": 87309
+          },
+          {
+            "path": "/assets/Textures/parqfloor2.dds",
+            "initiatorType": "fetch",
+            "startTime": 380.52000001072884,
+            "responseEnd": 382.28999999165535,
+            "transferSize": 175204,
+            "encodedBodySize": 174904,
+            "decodedBodySize": 174904
+          },
+          {
+            "path": "/assets/Textures/parqfloor2Bump.png",
+            "initiatorType": "fetch",
+            "startTime": 384.86500000953674,
+            "responseEnd": 386.875,
+            "transferSize": 8563,
+            "encodedBodySize": 8263,
+            "decodedBodySize": 8263
+          },
+          {
+            "path": "/assets/readme.txt",
+            "initiatorType": "fetch",
+            "startTime": 389.3899999856949,
+            "responseEnd": 391.5600000023842,
+            "transferSize": 1401,
+            "encodedBodySize": 1101,
+            "decodedBodySize": 1101
+          }
+        ],
+        "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+      },
+      "gpuWorker": {
+        "realm": "gpuWorker",
+        "phase": "first completed Present",
+        "timeOrigin": 1789158411311.215,
+        "snapshotTime": 1914.344999998808,
+        "snapshotEpoch": 1789158413225.56,
+        "navigation": [],
+        "resourceCount": 2,
+        "retainedEntries": 2,
+        "transferSize": 3396528,
+        "encodedBodySize": 3395928,
+        "decodedBodySize": 3395928,
+        "zeroSizeEntries": 0,
+        "entries": [
+          {
+            "path": "/generated/vkd3d_shader.wasm",
+            "initiatorType": "fetch",
+            "startTime": 1295.8499999940395,
+            "responseEnd": 1300.7749999761581,
+            "transferSize": 1251290,
+            "encodedBodySize": 1250990,
+            "decodedBodySize": 1250990
+          },
+          {
+            "path": "/generated/shader_translation_bg.wasm",
+            "initiatorType": "fetch",
+            "startTime": 1296.119999974966,
+            "responseEnd": 1307.2249999940395,
+            "transferSize": 2145238,
+            "encodedBodySize": 2144938,
+            "decodedBodySize": 2144938
+          }
+        ],
+        "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+      },
+      "page": {
+        "realm": "page",
+        "phase": "first Present observed; includes page setup before Start",
+        "timeOrigin": 1789158404438.895,
+        "snapshotTime": 8819.625,
+        "snapshotEpoch": 1789158413258.52,
+        "navigation": [
+          {
+            "path": "/humus-runtime",
+            "initiatorType": "navigation",
+            "startTime": 0,
+            "responseEnd": 23.469999998807907,
+            "transferSize": 2076,
+            "encodedBodySize": 1776,
+            "decodedBodySize": 1776
+          }
+        ],
+        "resourceCount": 53,
+        "retainedEntries": 53,
+        "transferSize": 299537,
+        "encodedBodySize": 283637,
+        "decodedBodySize": 283637,
+        "zeroSizeEntries": 0,
+        "entries": [
+          {
+            "path": "/style.css",
+            "initiatorType": "link",
+            "startTime": 316.27499997615814,
+            "responseEnd": 337.38499999046326,
+            "transferSize": 1243,
+            "encodedBodySize": 943,
+            "decodedBodySize": 943
+          },
+          {
+            "path": "/coi-serviceworker.js",
+            "initiatorType": "script",
+            "startTime": 316.4249999821186,
+            "responseEnd": 338.22499999403954,
+            "transferSize": 2897,
+            "encodedBodySize": 2597,
+            "decodedBodySize": 2597
+          },
+          {
+            "path": "/app.js",
+            "initiatorType": "script",
+            "startTime": 316.44999998807907,
+            "responseEnd": 336.35499998927116,
+            "transferSize": 28474,
+            "encodedBodySize": 28174,
+            "decodedBodySize": 28174
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 358.125,
+            "responseEnd": 365.55999997258186,
+            "transferSize": 2609,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/runtime-mode.js",
+            "initiatorType": "script",
+            "startTime": 358.17999997735023,
+            "responseEnd": 365.97499999403954,
+            "transferSize": 1254,
+            "encodedBodySize": 954,
+            "decodedBodySize": 954
+          },
+          {
+            "path": "/tracker-music.js",
+            "initiatorType": "script",
+            "startTime": 358.2099999785423,
+            "responseEnd": 368.71499997377396,
+            "transferSize": 5629,
+            "encodedBodySize": 5329,
+            "decodedBodySize": 5329
+          },
+          {
+            "path": "/browser-input.js",
+            "initiatorType": "script",
+            "startTime": 358.22499999403954,
+            "responseEnd": 367.1599999964237,
+            "transferSize": 15392,
+            "encodedBodySize": 15092,
+            "decodedBodySize": 15092
+          },
+          {
+            "path": "/audio-scheduling.js",
+            "initiatorType": "script",
+            "startTime": 358.24499997496605,
+            "responseEnd": 368.0849999785423,
+            "transferSize": 661,
+            "encodedBodySize": 361,
+            "decodedBodySize": 361
+          },
+          {
+            "path": "/input-transport.js",
+            "initiatorType": "script",
+            "startTime": 358.2549999952316,
+            "responseEnd": 370.0799999833107,
+            "transferSize": 3516,
+            "encodedBodySize": 3216,
+            "decodedBodySize": 3216
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 466.8599999845028,
+            "responseEnd": 469.03999999165535,
+            "transferSize": 950,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/api/build",
+            "initiatorType": "fetch",
+            "startTime": 497.21499997377396,
+            "responseEnd": 546.3949999809265,
+            "transferSize": 5250,
+            "encodedBodySize": 4950,
+            "decodedBodySize": 4950
+          },
+          {
+            "path": "/worker.js",
+            "initiatorType": "other",
+            "startTime": 566.0999999940395,
+            "responseEnd": 556.7599999904633,
+            "transferSize": 10817,
+            "encodedBodySize": 10517,
+            "decodedBodySize": 10517
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 567.375,
+            "responseEnd": 573.6799999773502,
+            "transferSize": 2609,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/draw-batch.js",
+            "initiatorType": "script",
+            "startTime": 567.5599999725819,
+            "responseEnd": 572.2299999892712,
+            "transferSize": 6285,
+            "encodedBodySize": 5985,
+            "decodedBodySize": 5985
+          },
+          {
+            "path": "/asset-cache.js",
+            "initiatorType": "script",
+            "startTime": 567.6299999952316,
+            "responseEnd": 573.5,
+            "transferSize": 2974,
+            "encodedBodySize": 2674,
+            "decodedBodySize": 2674
+          },
+          {
+            "path": "/input-transport.js",
+            "initiatorType": "script",
+            "startTime": 567.6849999725819,
+            "responseEnd": 573.0299999713898,
+            "transferSize": 3516,
+            "encodedBodySize": 3216,
+            "decodedBodySize": 3216
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 575.5849999785423,
+            "responseEnd": 578.6099999845028,
+            "transferSize": 950,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/api/session",
+            "initiatorType": "fetch",
+            "startTime": 6855,
+            "responseEnd": 6861.184999972582,
+            "transferSize": 361,
+            "encodedBodySize": 61,
+            "decodedBodySize": 61
+          },
+          {
+            "path": "/worker.js",
+            "initiatorType": "other",
+            "startTime": 6873.314999997616,
+            "responseEnd": 6869.15499997139,
+            "transferSize": 10817,
+            "encodedBodySize": 10517,
+            "decodedBodySize": 10517
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 6875.069999992847,
+            "responseEnd": 6899.5999999940395,
+            "transferSize": 2609,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/draw-batch.js",
+            "initiatorType": "script",
+            "startTime": 6877.2699999809265,
+            "responseEnd": 6919.339999973774,
+            "transferSize": 6285,
+            "encodedBodySize": 5985,
+            "decodedBodySize": 5985
+          },
+          {
+            "path": "/asset-cache.js",
+            "initiatorType": "script",
+            "startTime": 6877.879999995232,
+            "responseEnd": 6915.439999997616,
+            "transferSize": 2974,
+            "encodedBodySize": 2674,
+            "decodedBodySize": 2674
+          },
+          {
+            "path": "/gpu-worker.js",
+            "initiatorType": "other",
+            "startTime": 6877.939999997616,
+            "responseEnd": 6870.914999991655,
+            "transferSize": 29012,
+            "encodedBodySize": 28712,
+            "decodedBodySize": 28712
+          },
+          {
+            "path": "/input-transport.js",
+            "initiatorType": "script",
+            "startTime": 6877.964999973774,
+            "responseEnd": 6917.5199999809265,
+            "transferSize": 3516,
+            "encodedBodySize": 3216,
+            "decodedBodySize": 3216
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 6882.234999984503,
+            "responseEnd": 6918.114999979734,
+            "transferSize": 2609,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/gpu-timing.js",
+            "initiatorType": "script",
+            "startTime": 6882.969999998808,
+            "responseEnd": 6920.5199999809265,
+            "transferSize": 2418,
+            "encodedBodySize": 2118,
+            "decodedBodySize": 2118
+          },
+          {
+            "path": "/scene-equivalence.js",
+            "initiatorType": "script",
+            "startTime": 6883.164999991655,
+            "responseEnd": 6921.049999982119,
+            "transferSize": 5162,
+            "encodedBodySize": 4862,
+            "decodedBodySize": 4862
+          },
+          {
+            "path": "/draw-batch.js",
+            "initiatorType": "script",
+            "startTime": 6883.2699999809265,
+            "responseEnd": 6945.0999999940395,
+            "transferSize": 6285,
+            "encodedBodySize": 5985,
+            "decodedBodySize": 5985
+          },
+          {
+            "path": "/performance-metrics.js",
+            "initiatorType": "script",
+            "startTime": 6883.319999992847,
+            "responseEnd": 6922.274999976158,
+            "transferSize": 2506,
+            "encodedBodySize": 2206,
+            "decodedBodySize": 2206
+          },
+          {
+            "path": "/frame-capture.js",
+            "initiatorType": "script",
+            "startTime": 6883.375,
+            "responseEnd": 6933.619999974966,
+            "transferSize": 2404,
+            "encodedBodySize": 2104,
+            "decodedBodySize": 2104
+          },
+          {
+            "path": "/draw-diagnostic.js",
+            "initiatorType": "script",
+            "startTime": 6883.569999992847,
+            "responseEnd": 6927.574999988079,
+            "transferSize": 2324,
+            "encodedBodySize": 2024,
+            "decodedBodySize": 2024
+          },
+          {
+            "path": "/d3d9-caps.js",
+            "initiatorType": "script",
+            "startTime": 6884.074999988079,
+            "responseEnd": 6929.199999988079,
+            "transferSize": 2254,
+            "encodedBodySize": 1954,
+            "decodedBodySize": 1954
+          },
+          {
+            "path": "/d3d9-draw.js",
+            "initiatorType": "script",
+            "startTime": 6884.424999982119,
+            "responseEnd": 6934.449999988079,
+            "transferSize": 20285,
+            "encodedBodySize": 19985,
+            "decodedBodySize": 19985
+          },
+          {
+            "path": "/gpu-textures.js",
+            "initiatorType": "script",
+            "startTime": 6884.934999972582,
+            "responseEnd": 6938.65499997139,
+            "transferSize": 8168,
+            "encodedBodySize": 7868,
+            "decodedBodySize": 7868
+          },
+          {
+            "path": "/shader-objects.js",
+            "initiatorType": "script",
+            "startTime": 6885.1449999809265,
+            "responseEnd": 6940.409999996424,
+            "transferSize": 2753,
+            "encodedBodySize": 2453,
+            "decodedBodySize": 2453
+          },
+          {
+            "path": "/shaders.js",
+            "initiatorType": "script",
+            "startTime": 6885.329999983311,
+            "responseEnd": 6942.90499997139,
+            "transferSize": 4421,
+            "encodedBodySize": 4121,
+            "decodedBodySize": 4121
+          },
+          {
+            "path": "/runtime-mode.js",
+            "initiatorType": "script",
+            "startTime": 6885.504999995232,
+            "responseEnd": 6941.064999997616,
+            "transferSize": 1254,
+            "encodedBodySize": 954,
+            "decodedBodySize": 954
+          },
+          {
+            "path": "/d3d9-presentation.js",
+            "initiatorType": "script",
+            "startTime": 6885.6449999809265,
+            "responseEnd": 6942.034999996424,
+            "transferSize": 1366,
+            "encodedBodySize": 1066,
+            "decodedBodySize": 1066
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 6885.754999995232,
+            "responseEnd": 6949.15499997139,
+            "transferSize": 950,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/gpu-buffers.js",
+            "initiatorType": "script",
+            "startTime": 6886.034999996424,
+            "responseEnd": 6952.05499997735,
+            "transferSize": 2371,
+            "encodedBodySize": 2071,
+            "decodedBodySize": 2071
+          },
+          {
+            "path": "/d3d9-state.js",
+            "initiatorType": "script",
+            "startTime": 6886.2249999940395,
+            "responseEnd": 6967.094999998808,
+            "transferSize": 3683,
+            "encodedBodySize": 3383,
+            "decodedBodySize": 3383
+          },
+          {
+            "path": "/gpu-command-scheduler.js",
+            "initiatorType": "script",
+            "startTime": 6886.484999984503,
+            "responseEnd": 6953.189999997616,
+            "transferSize": 2113,
+            "encodedBodySize": 1813,
+            "decodedBodySize": 1813
+          },
+          {
+            "path": "/event-query.js",
+            "initiatorType": "script",
+            "startTime": 6886.6449999809265,
+            "responseEnd": 6954.409999996424,
+            "transferSize": 1435,
+            "encodedBodySize": 1135,
+            "decodedBodySize": 1135
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 6924.494999974966,
+            "responseEnd": 6970.504999995232,
+            "transferSize": 950,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/d3d9-samplers.js",
+            "initiatorType": "script",
+            "startTime": 6935.875,
+            "responseEnd": 6960.454999983311,
+            "transferSize": 1834,
+            "encodedBodySize": 1534,
+            "decodedBodySize": 1534
+          },
+          {
+            "path": "/d3d9-pipelines.js",
+            "initiatorType": "script",
+            "startTime": 6936.444999992847,
+            "responseEnd": 6957.6449999809265,
+            "transferSize": 8911,
+            "encodedBodySize": 8611,
+            "decodedBodySize": 8611
+          },
+          {
+            "path": "/shader-uniforms.js",
+            "initiatorType": "script",
+            "startTime": 6937,
+            "responseEnd": 6972.509999990463,
+            "transferSize": 3443,
+            "encodedBodySize": 3143,
+            "decodedBodySize": 3143
+          },
+          {
+            "path": "/generated/mojoshader.js",
+            "initiatorType": "script",
+            "startTime": 6947.884999990463,
+            "responseEnd": 6968.5199999809265,
+            "transferSize": 11265,
+            "encodedBodySize": 10965,
+            "decodedBodySize": 10965
+          },
+          {
+            "path": "/generated/shader_translation.js",
+            "initiatorType": "script",
+            "startTime": 6948.364999979734,
+            "responseEnd": 6976.004999995232,
+            "transferSize": 12256,
+            "encodedBodySize": 11956,
+            "decodedBodySize": 11956
+          },
+          {
+            "path": "/vkd3d-shaders.js",
+            "initiatorType": "script",
+            "startTime": 6948.524999976158,
+            "responseEnd": 6974.55499997735,
+            "transferSize": 7772,
+            "encodedBodySize": 7472,
+            "decodedBodySize": 7472
+          },
+          {
+            "path": "/fixed-function.js",
+            "initiatorType": "script",
+            "startTime": 6959.419999986887,
+            "responseEnd": 6971.369999974966,
+            "transferSize": 9846,
+            "encodedBodySize": 9546,
+            "decodedBodySize": 9546
+          },
+          {
+            "path": "/vertex-layout.js",
+            "initiatorType": "script",
+            "startTime": 6959.504999995232,
+            "responseEnd": 6975.494999974966,
+            "transferSize": 2843,
+            "encodedBodySize": 2543,
+            "decodedBodySize": 2543
+          },
+          {
+            "path": "/generated/vkd3d_shader.js",
+            "initiatorType": "script",
+            "startTime": 6977.324999988079,
+            "responseEnd": 6980.014999985695,
+            "transferSize": 15056,
+            "encodedBodySize": 14756,
+            "decodedBodySize": 14756
+          }
+        ],
+        "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+      }
+    },
+    "originalExecutionAttempted": true,
+    "window": {
+      "title": "Title",
+      "width": 1280,
+      "height": 720
+    },
+    "direct3DCreate9Reached": true,
+    "direct3D9ObjectCreated": true,
+    "d3d9Device": {
+      "backendId": 1,
+      "width": 1280,
+      "height": 720,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed",
+      "sceneFrames": 0
+    },
+    "gpuSubmissions": 747199,
+    "presentationMetrics": {
+      "firstPresentMs": 1935.239990234375,
+      "totalSteadyIntervals": 14997,
+      "steadyDurationMs": 54953.280029296875,
+      "submissionFPS": 272.90454713539845,
+      "frameTimeMs": {
+        "p50": 2.094970703125,
+        "p95": 10.669921875,
+        "p99": 11.6650390625,
+        "min": 1.2099609375,
+        "max": 18.195068359375
+      },
+      "rollingFrameTimeMs": {
+        "p50": 2.0400390625,
+        "p95": 10.43505859375,
+        "p99": 11.550048828125,
+        "min": 1.224853515625,
+        "max": 12.235107421875
+      },
+      "rollingIntervals": 600,
+      "rollingStutterFrames": {
+        "over25": 0,
+        "over33": 0,
+        "over50": 0,
+        "over100": 0
+      },
+      "frameOutliers": [],
+      "retainedIntervals": 8192,
+      "warmupMs": 5000,
+      "queueCompletionSamples": [
+        {
+          "present": 14280,
+          "latencyMs": 9.050000011920929
+        },
+        {
+          "present": 14340,
+          "latencyMs": 7.235000014305115
+        },
+        {
+          "present": 14400,
+          "latencyMs": 5.544999986886978
+        },
+        {
+          "present": 14460,
+          "latencyMs": 10.680000007152557
+        },
+        {
+          "present": 14520,
+          "latencyMs": 5.159999996423721
+        },
+        {
+          "present": 14580,
+          "latencyMs": 9.055000007152557
+        },
+        {
+          "present": 14640,
+          "latencyMs": 4.484999984502792
+        },
+        {
+          "present": 14700,
+          "latencyMs": 4.819999992847443
+        },
+        {
+          "present": 14760,
+          "latencyMs": 4.784999996423721
+        },
+        {
+          "present": 14820,
+          "latencyMs": 11.179999977350235
+        },
+        {
+          "present": 14880,
+          "latencyMs": 7.990000009536743
+        },
+        {
+          "present": 14940,
+          "latencyMs": 5.554999977350235
+        },
+        {
+          "present": 15000,
+          "latencyMs": 5.070000022649765
+        },
+        {
+          "present": 15060,
+          "latencyMs": 4.674999982118607
+        },
+        {
+          "present": 15120,
+          "latencyMs": 8.264999985694885
+        },
+        {
+          "present": 15180,
+          "latencyMs": 4.679999977350235
+        },
+        {
+          "present": 15240,
+          "latencyMs": 6.96000000834465
+        },
+        {
+          "present": 15300,
+          "latencyMs": 9.944999992847443
+        },
+        {
+          "present": 15360,
+          "latencyMs": 5.155000001192093
+        },
+        {
+          "present": 15420,
+          "latencyMs": 6.995000004768372
+        },
+        {
+          "present": 15480,
+          "latencyMs": 10.340000003576279
+        },
+        {
+          "present": 15540,
+          "latencyMs": 4.5450000166893005
+        },
+        {
+          "present": 15600,
+          "latencyMs": 9.905000001192093
+        },
+        {
+          "present": 15660,
+          "latencyMs": 4.685000002384186
+        },
+        {
+          "present": 15720,
+          "latencyMs": 5.634999990463257
+        },
+        {
+          "present": 15780,
+          "latencyMs": 10.125
+        },
+        {
+          "present": 15840,
+          "latencyMs": 5.825000017881393
+        },
+        {
+          "present": 15900,
+          "latencyMs": 9.439999997615814
+        },
+        {
+          "present": 15960,
+          "latencyMs": 4.840000003576279
+        },
+        {
+          "present": 16020,
+          "latencyMs": 4.600000023841858
+        },
+        {
+          "present": 16080,
+          "latencyMs": 5.979999989271164
+        },
+        {
+          "present": 16140,
+          "latencyMs": 4.305000007152557
+        }
+      ],
+      "limitations": "Present submission intervals after 5-second warmup; lifetime percentiles use the last 8192 intervals and rolling metrics use the last 600; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+      "drawBridge": {
+        "drawBatches": 16213,
+        "batchedClears": 80995,
+        "batchedDraws": 649007,
+        "batchedUploads": 114521,
+        "uploadedBytes": 28800793,
+        "maxBatchCommands": 57,
+        "stagingBytes": 16777216,
+        "batchCpuMs": 0,
+        "drawDecodeCpuMs": 0,
+        "synchronousPresents": 12148,
+        "asynchronousPresents": 4052,
+        "pendingCommands": 1,
+        "maxPendingCommands": 2
+      },
+      "rendererWrites": {
+        "sourceGeometryWrites": 114447,
+        "versionedGeometryWrites": 114447,
+        "versionFallbacks": 0,
+        "sourceUniformWrites": 892047,
+        "queueWriteCalls": 48600,
+        "queueWriteBytes": 3636162984,
+        "rendererSubmissions": 16200,
+        "renderPasses": 81000,
+        "uploadPassBreaks": 0,
+        "stateCalls": 3063895,
+        "stateCallsSkipped": 2663081,
+        "drawCpuMs": 0,
+        "pipelineLookupCpuMs": 0,
+        "pendingGeometryBytes": 0,
+        "pendingUniformBytes": [
+          0,
+          0
+        ]
+      },
+      "wasmLinearMemoryBytes": 8409088,
+      "geometryGPUBytes": 16838000,
+      "textureGPUBytes": 4024996.5,
+      "colorLogicalBytes": 3686400,
+      "depthStencilLogicalMinimumBytes": 3686400,
+      "pipelineCacheEntries": 8,
+      "pipelineCompilations": 8,
+      "pipelineCacheHits": 649039,
+      "shaderObjects": 6,
+      "gpuTimingEnabled": false,
+      "captureEnabled": true,
+      "sceneEquivalenceEnabled": false,
+      "cameraTestEnabled": false
+    },
+    "stabilitySamples": [
+      {
+        "elapsedMs": 1935.5999999940395,
+        "applicationPresents": 0,
+        "wasmLinearMemoryBytes": 8409088,
+        "geometryGPUBytes": 16838000,
+        "textureGPUBytes": 4024996.5,
+        "pipelineCacheEntries": 6,
+        "pipelineCompilations": 6,
+        "pipelineCacheHits": 34,
+        "shaderObjects": 6,
+        "submissionFPS": null
+      },
+      {
+        "elapsedMs": 32124.019999980927,
+        "applicationPresents": 8039,
+        "wasmLinearMemoryBytes": 8409088,
+        "geometryGPUBytes": 16838000,
+        "textureGPUBytes": 4024996.5,
+        "pipelineCacheEntries": 8,
+        "pipelineCompilations": 8,
+        "pipelineCacheHits": 322081,
+        "shaderObjects": 6,
+        "submissionFPS": 271.46372965809434
+      }
+    ],
+    "frameCaptures": [
+      {
+        "present": 1,
+        "readbackCompletedMs": 1937.72509765625,
+        "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+        "width": 1280,
+        "height": 720,
+        "evidenceWidth": 320,
+        "evidenceHeight": 180,
+        "sceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 1280,
+          "height": 656,
+          "nonblackPixels": 839335,
+          "pixels": 839680,
+          "meanRgb": [
+            37,
+            21,
+            12
+          ]
+        },
+        "jpegBase64": "/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAC0AUADASIAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAAAgMAAQQFBgcI/8QAPRAAAgEDAwEGBAQEBAUFAAAAAQIRAAMhBBIxQQUTIlFhcTKBkaEGQrHRFCNSYnLB4fAVM1OSk3OCorLC/8QAGQEAAwEBAQAAAAAAAAAAAAAAAAECAwQF/8QAKhEAAgIBBAECBgIDAAAAAAAAAAECEQMSITFBBBNRIiMyUmFxFJGBobH/2gAMAwEAAhEDEQA/APzjbZDJTwk4KmtlhRdv2ka+mnVmVTduBilsEgFm2gtA5MAnGAa51rDqylSQZG5QePMHBr1XZP4nZfxZ+H+1O2NPon0vZuus6i5a0HZum0zOi3UZhFtEDmExuMDPEmsmk3uaP8GLtns2/wBn9q6zs/WXgNVor9zS3di7l3IxUwZEiQc1iuWTbuBe/aIn4f8AWuj+J+0bfbP4q7a7T0/e29Prddf1VtbijeqvcZgGgkTBHBNcy+SLglt2BmIrNrfYEVqGKSLjbxAg8UCMpEP4kGQw5X0qtRcgkMoZCOvE0oAKzd0enwtVJbAMuwSCTKwAHHpVhSFKkQaHRurXCH4aZFdO1Y01yC5aSc+PHpSlLSDdHKZdpHrSgP5uR1gGvRjQaN4kORHR6Rd0egS+21bgUHAa6J/QVKyoFKzjXF2qw9KSh5jk4rvHT6FyBseSYxdH7UY7O7P79AN7L123M01lSE5HnmmfzD2NQbwJ8Zmu7qND2dbvsNl0IOAbvX6Vlu6fRBSERuP+pNUsiY07OedxUAlvOq2sH2wx9a23NNp1sjaDJAJ8VKvWbaqQm6AeppqSYWIEbDKkn1FChlgCoA9qq8Jb4hgRQKkFSSB86oYxztYhUEDrFQMYM2wetLKFifEPrUChZG4SaYhwuHaV7oQfemi4qnFkH61k2EyQy/WiIbBDAYjmkM3W73in+DtE+Z3fvStS28ytruwB+WYP1NZgGPFwE+9NtCV2sQfY0AKzMDeKNS4IHix1IrWNNZKkkGfejuaOwqo3i+KMtTSsnWjEwZjMtx7UOdpJDD34rprpNITk/wDyrRpdBorhum8SI+HxxVrHfZm8yXRy7HT2q3acR1rs2+z9KNKzw4ZTHxUhrGmKKZExJG6peJgs8X0cm7JC4mCIFAkE5IEYLeVdqxptM5bfMAY8VWOzdIbO6HkNAAbFNQYPPHg4zkSV4XjHWjL7khhttgYUcmt17S2FKsCS2cE8ZrmliWUDxNHNPgaeoO44G0EQAMKKsTctjewVAcf6UI2csN7gfKj7hmYNcbH6+gphQDEhjbtjExjk0QuLbtkGGbyFNZ9jFbaKszOc1l2KihnO4nG0Gl2NK+QgXvPheOegFONy2zoGl9oMeQpRLXYVOPKKYLPdKHuZacKKV0PTZnVfEChkU9F3Tms4tEFSMielarfJrNmgdvwnmal8guCSeOlA7FWoCxYzU0JBs+21cIliRAkTWa2y3DwQw+lE4YvKHIqWye9aFhvP0qug7LdgGDMsQI3D/Oit3CMFip8xwaM7z6j2pL2yDIxPIPBpAaUuXBhLzj2JoT3jNLMx9SZrKGdZAHHQ0SXCzqD1o0gaNpXIYiOtQXGUyLrg+YNBc8Mx5TQqdwmOtKgGzcu5Zyfc1NknmqRgoyDVhxPBoApgRALGKEknqYonYGIoPkKBgNZ7x8NVtpidvi4xTEO05FEXE8GnYtxXcBQDjHUUs2QfzfatLuCIE1FAOaNQ0rM4seEgHn0pg0Tt+cVqS2Ix1Fa7aoF5MgVDyUaLG2cu3onnEEHFVassAevsK7GntwqkkedXptIptjcc1LzUXHA2cvZc6bqcmmvXVy+AeCTXVt6O0wB3R8/9K0afSWlVu8dtxM+Gs35CRp/EZwjoru4iQSPeqOnuqxQXCCPeK7y6aXdlddvSTVLo1a47O3lEUfyEhLw5NnBfvkGxrzbSJgMYpPPDk1q7VFpdVttsGVVgkHrXPe4B8PH610RbkrOacFCTRoh1+F2n0NWHvBSDddV5+I1k7xsgQT5ULOWwTLDoOKqmRQ65dYzDmP6j19qANKlVgLGSf3oJmFaWaeKe1gPsLGAB8I86q0gaAB7sgWgGYj4yMCtAfA3PJAiTQbDwBioVAxupOTDSi7hBQwcxSTCqoPiPMDinG3KnPPnQBFQSfFOKSdFKNkQu/gXjyWn7E3L3j+I4gZpQ7x4CiAegpqafYQbpC+nWpcjRQM3i3SZPSZptvlqzqHVhggGnAleD9qpmQ0pJmTS3ENEmjQlhk0F3DDrUghFzbugtBj5UdlXVjOIFBdCkndOOoo7TSzZxtqugDJJ5q1YyBNDTLYG2akYN1cDdB+VICkOCZMEQa0XCDEGkrHfAyZED0NUhB3DuBJA4pSEg4JngelPvdRjisowcY9DQgNIuk4O2aMOCIYViLZOYzPFOt3QQA0EnrQ0A3wz1mi7wetCCsZH0qDb61IyFz5Ci3qViluu5pBIXrSmBIA3r/wBwqqEP8M9Zo+8gYmfasyo4cSw5zmjc3I/XNFAPXUMMGtA1Y2FSTnFc3cxVhIk+tULd3kt96lwTKUmjr29TaHV/tWr+PgAWy0+tcO3abcDvX601ptxkGazeOLNlkktztrr2OGYgHmnHXqybNzBesV57vBHWoLsdWioeBFLyWd9NVYB5uY9R+1Ye1O2rrq1nTOyp1fdk+1ci5qt8qPhjypAYEHndVw8eKdsmfkykqQW6YB4wCKEsSs8DzqASY5PPoKIISfM9T5Vuc4IgZmFGT5mnpa3LOUkfOrFtFJaDuPU1fhjqaTYEFuCdo561e0TG7NQAHo1QhfM1Iy9nrVbD8qigEwJoTQAaKC4EzmnQgERJHnxSrPJ8qcVUKCstPngVMma41ZTFzCpAnr5VofTO4V2KgREsYpai4Y2A+1NNq+7AuxEYyYxUNm6jW5yLO4OM4PrRm4quQZI8xSArKyyDM1LjMHOTz1roo4jajJEg48zQ3fikeVZRclSCoj0qgynKllNKgG3GAMOsg9alkKXYKTIHWgBYz4g1FbcKxLrEjkU+gGnpTUEpSFYNwc0xZkcxUjZGXaRSzhwZETxTbvSl4LgEdZoQgrpDSR5UhRkgnrJBp90AAgeXWkiAMc+RpoACTES+KtiVUZYz5Diq4jHHrVwCIUGT61QDbbNIU7j6kU2Z521n2lVyDB/uFRoYxBiedwqWgDuhGBDMFjMUARUKsSYPE1FVdksM8c1SkEqpED1PFMAiwLGGOfSqLCGUt15iqfajQFyOs1a7W3FlMjPNAEt21bO8QPSnMluEhyYHShTbBUWzn1p+EIAsgmOtQ2axiS0qswGc44q7hUQEMx50+ylwtA04mf6SYrN2khU2wbWzByDE/Woi7lRpOLUQecnbSLlxrjbfEoHUDml4JMg5/uoghaIBj3FapHMWAWHNwR6VTKQCZY44ogArCVyB1agI6gEY6tNUBagT58EDoKO2SScg+1CokSMnoOlHbjbgg+1J8AjQVLCCRSiIJFGiEGTFA/xGoBB25ihZdsZFQIW4iiu8CgAUIDZNXcgRAihQbjzFFd6UD7KT4gCcE5rWGRYCoT5Fv2rPp/jHuK12r7gRbUL7CTUTZ0YFdlh9QT/LUgeSiKc9s7F7xwp9c0rvbzCH3keQpx0966Le1DgZBrFs6UjgRc2zu+U1SXCS26OOYplp2aRcUemIqxmIRRIn5V2nmiVZeqzVlUAHxCfnRMEhjtIIoSysoGRFICBPCQG+tRVZZgj61FQFCQxgcyKoKHMq4wM9KYF2y4MEZM9KbaV42iR1waFQ3IO6OgOKalzaRKnNJgQre6ww9cUIU94CVgzJg0zv14oDcQyZ+xpbgFcO846iKEWmAiI+c1QuID8Q58qb3yzS3AQ9ppyBQ92RwF9ae1wHz+hody9P/qadsCd0Sg8KnHnVG2ytIRdvrTO9ERB+hqNdUiM/Q0WwMzhwcGB6GqRXDAyefOjupuaQQB64oWtzA3rIxFMCitxiYmm2lcAjdnyJqktqjLuYAg9WpiWt4JFxYXJPlSbKirCVLx+Ekj/FxWnZdkbCQCoBO6M0hDbW2U7xSSwOJrZcsPbI711WfQ1jJnRGNhW9PqGUEXCT/iNZe07Zsm2LjKxKk5MkV0dKti2twNHeEMFb+kmP9frXP7VUKyFYbcDwDiKnG7maZo/LbOcQN2dvNXIDAErE9CaHxTwwovFu+Ex7V0nCGShPiC8etUcAghJ9JoULSZU8eVUCdpBUz50wDUnoCePSjTjpHpScgzjzyaZZ+EyQaT4BGlido2zPtSjyZmaYjEmMfSgf4jUAg7ZwaBifzTVqxXAj6UV2YFAFW/ioWUrzUUwcUV3pQMLTf8wTkSJFdUFVt77di0Gn82a5OnAN+3M7dwn2mura1ARCEQ558RNY5eTs8WNplJqWxuIHoBFHcutdtgLJI5Io7d2XXYij0IBrR2u7WtLpu6YA3J3bABxH71he9HZpaR5UXWJ+BSfara4skBCIWYLUKFdygAiT51Ddt9UaSIJmvRPGoE3FII281RCCPCcieak2yCVU48zVFwfy/ekAUqoZJYA4NUoRSRLeVWChElfvVSCcqPlTANFtq0BmE9SKpoaFVomKtWEyF6edCSDkWyCPWgCCdpAfJ45okkgS6kcZoUB/6Zkcc0SqR+TNKwBYZwFIq1WSfCsT5/SqIIOVAn1ogIztWDxmmAsjptPPM1bDwiAT554qHAGFH1pwtrsBjkZpXQCgoH5ZGJ8XFEbajBkCfOndyu0Qv3oCinkUrAUGUKAZwcdaaSjASxggx4aG8qWz8BPzqluL4dto4wDNMA1Fu44DbpJj2p1vukV1G4BhtOKUrgXCSvDc8U1NjB22ZHqfOokzSCGWdNZcMZcBRJxW9nTWMm93ViNo8PNZLF1FG0oChILCTmK2FrFoqbaYZZyeOQB9qwmzsgqH6Wzaa5tXdwSDAMACfOub26tsPZ2gxtJ5rp9n3QlxW8IAweuCKw9t2VdrJ8JO04ViQB061GN/MNPIT9Fs4sSwwR05qQC5BB29DNOFtSRI59aJ7KjMYHrXZZ5YlVDYZSD08UzVFQOJJjzpxVVTcAMYzST57VHtNO7AtRnhYxyaZbgTEfKgUdYWPeisgmYX5DND4BGljtUE0pjJJimYODM+WaW2CagEMt8GgdgwAANWhAGSajgACJoAlr4qpm3dOKiEA5qXABEUD7GaUgXVJEiRiuuO6W2p7qdxjLGuPpo71d3mMTE12Rct7QvciOTDGsM3KO/w1aY4tYQBu5tMZgYMU2zqgbyB9PZFviQDI+9KsXLADb7TfJsVqH8FbTcqM7tws4HzrlbO9RPFh0BB2nHrUBVtxK+tGtpNwU7pNAXRCQLZn1NeoeAHaALAbMHmmPbUxtUfShtXA5ysEes09WmYH1qWAgAAcD6U3bKAACl0y2xJigbFnBimXF60DfEfeiIITPM0AS18VXcUQT1oFBY0wiLZBpCM17kYB96pYiDtB+vtUu8jA46mhDdB68CrQMjNPr8qeoPdLWck8/8A6rQB/LQ+lJghqAiCTIpQpkblAkUupGR0ctAOPY0tluQIU/SmXhvBAdR86StsKQWIIq0IdYFzvF3AxOcVuFy5tACETzA4rCreMwyya0K023Qsu4nmaiRrBmwOx052W4u7vLpjz+f1qg2qxuRowOIis9q07ruVl2gwTu9/2Nbbu8NaIvJhApEyDFYP2OqLN3Zve97JQsSrAZGCVIB+tZ/xFO+wSpEqeRzR6QG46Kty0C2Msf2rN24xurpwXtsFUxs6cVjjXzUzbyGvRaOOMkUxgRbIOaAciicSC0g12nlgti0SeJpJYgEFgfZac2LZPvWYM20gj71SEw02nB2kYrvfg3W6HQdr273aun73TjlPOvPgiQD6cioYIkA/I1OSCyRcH2Xjm8clJdHovxLqNHq+2b9/s613WnY+FPIVxX+M0hWaR/Mx1mmB3AyJ8opQx6IqK6FObnJyfY1UDTM1d34RSO+4lfvTFuKwncKqiS1XcYmru9KsAngz7UJzjNIdDNIpbU2oE+Nceea7dzu02sbQyYIk1xdIdmptEgEbxIjnNd/vkYEGzbYecH965s/KPQ8LdMUl3TggtaYR/S5rSlzROUULeToCINIddNI71dueAf8AKnJY01u4jpqWU8ruWsHR2pb8HkgVBkuflReG4STyMzFAttSYLZ8hUYqhK7c9ZNemeCFbcNtVUAJPM1oRdpNJskGCBHyptwkEQYpMBfvTQQqg0oU0DcoBqRsWTJJorhMx0oTgmjYgpjzoAq18VR5knMUKttOKYTNsk0CMt4eIYk+tUo3GMn24FXdEsDyag69f0mrQMAzEALE+daVH8tazNIjj6UQckQGA+VDVgalhTMmaCD60pmIUHePpVBmJkHE8RSoYd22skyYoBD7V8R6AzQsbnuPahTfuE5z5U0IZ4EeDukU5O6ZWJLAjNZWLEnH2p1nfDeGT0xSaKizShshGUbxuI8ulaB3Fswe8PlmKyK14cIfTw1pL3NwKpMqMFevWspI6IujZpb+nt3VaLykERBGM+1FdsabURsa6As4Ygx7Um1d1gHhU8R/ywf8AKs/aF7VWzbJ3WyQcBIBrFRblsbznFR3OivZVjulYu0nkQKZf7H01srFxiCYrgf8AEtWMG8Y/wj9qY/aWruhd+oEdPCMfar9LL9xgsmJcxOq/Z1gcMfpRW+yrLW9xdp9hXFbXalTm+x9hVjtDWKuL5j/CKPTye4PJi6ide52VYVQwuNBAPHFZbuktqTDGPasZ7R1TDabuI4Kj9qS+rvk/8wrHQ1Sx5O2S5430bk0ysWljgTwKW+nUZByPSsv8VdV2liB5jM1TXrxEq+5T6CrUZe5lJxfCLdPEYJ/WlLA+JOeYqzdJEkkEmMUIVgRtP0NaEG2yLYAhyJHUVus2nJTxW3X3H+dcsXCpXcg+lbkvJ/DBMgBvesJo68b2NTRbuu3cbQD4ZkR603vluIGNu2WPJGD9qrRXWNpwrBsGIPX50P8AEOB/Osqw9UiPpWDR0xpDV7m4V7wMPWZ/Wuhc0Nu5bRrWptyFjaT865q3NLcEMj256q00waZtytp7ykHGTtJFZtfmjdOtzy9sqrgg5objnefOeavYEI3MMdKsMhLQIwTJr0zxC9OXa4skkVtxPrWG0WLjmK12gRMipYC6O2STB4oKbO1AYqRi2+I+9E8BdooDk5plwdaYFWuat25EUKGDmjeCpIFIRlvDxDE+lWuVgx6eQNS7kj9KCfqen7VaBlksf6jUzGN8j0oD5+HNOtWdwDNAFAB2w5AJBAjg0eScR8qqAfzfarKEDnNSwEX0cvgdOlCUuEKB08jR3YmHMEdKshWA8SCRg8VSCwVtuNplvnxVLbdiSCPPmj7u3dcS+TgYpiWrSK6hssImhjVhWgUQjvFDFh+YVra3eGHIX0LVlsaW2+7xkQJmOK6Lsmq2HeAQAOIrKSN4MZpLdwg7rrTtIXx4496x9oo6OhYgggxkGttvT2Wu7SzhmE5+/SsmusqWUWSxUcznNZx+o1yfQzEQSJgUhldGB8ZFaO7PAP2o201yOJBra0jjpmXc3UNxQkkKRuc+/FHdsXNOdzLCmRNJBIBXHnirTvgTQxJ2wI6RVPbZQIkjyNUhyI5xWq7+Wk2BlXDgLMdQaIsAviG0nyFOdVNtZHpPlWctKwBuXy600wBcmTIlZwajAAgboLCRNQYYBTniKjQwO8QRjFMB9kug8S7hHXIrQhtnwurI1ZLfeLBssDAiK2IEuKpuAq/9nSs5I1hIdast3n8tlYg8AwaO3ev2CVLMvo2f1pfcPm4h3r75HvT0v3BY6MAchxWD3OyLoIXbV747cP5oY+1PZUNtdrxjG6syGzezsNtj1DU67pXYJ3TK+0eeTWbo0TZwFsykwZ8zirVFUwviPUk4qWVcks5yRGTRsAgj4iF6cV3nkktE7zgADypzsVOBWW2zm6u6Qv0FavCTkj61LGKpqiVE0r0o7Z8WTx51I2CeTRGdhnmaFviPvRXDJgHFAAooY5NMaAhE0Fswc4q3AMncKBGa98QETiqUSevv50d3LAASKu2IJ9TNWnsBduySJaNvQRTNv9y1YJYZYD3oYzgj61IBd2fMUMHyNWWbz+lTc3rSGCbIbJifeotsCCCuOM0Y3tiYHrRmwQhYOmDxOaLCgArK28RIM8VQVicDNMVWIJmQPKnqHVZhvcjFJyoqMWwbdq4FYK6gHmnW7TL4u8Ux7GjQsyMDPwnoK1aWwjKoN60jMswzRFZSmzeMPyLVL9kK6MJU/wBI/aray964GuETxgAfpWqzvdAGuKJEH4RTrF6FBLH2KqKweRnRHHZlXs48h0A65FEugUEAXFM+UGtq3GuIVdgwPMBeKPRLZuWzF5JH9wms3kkarFE517s45RlDKfQVw+0tC+kM7QbbYB/yr26pddSDdXaOsKKjWW1Vp7Lq920wgwiwR6GiHkuD3CfiLItuT531HmIzWlm3RiK2a/sbU6XW91bs37inKkWySR5GOtHc7I7QxHZ2r/8AA37V3+rBpOzzXhmm1XBzn3KoORJxS22yJxPUcV0H7N17Wv5ei1LERIFljH2pJ7M1yLL6HVR5NaYR9qpTj7k+nP2ZiuCG8QPvVsTtHDL51uudjdqJbNx+zdcLfJLWHA/SlLoNWisw0uogxg22/amskXwweOa5TM1sclCZitdm8Qv8xWOYDAwR7+dRuztW0EaW+D/6Z/aq/h9TagXdLdMnqhmlqi+x6ZLo0K25y1txuAOOCaq3qnVSlwFh5HmhOg1Xx2rF8jyNsg05bGp7tRc0t5xMZtmRWTcfc6YKXsWq2nYd27WyfWRR3Fv27cFSVHDLxVDRXZlLdxf7XUj70/VjVixZ7i1fBE79ikjpFQ2vc0Vrg5G1vKpsamAk9KvNdB51itjVNjdaaZpbK55IoCwOKgoth9JpiKB7+dA7F7WPSKhUgcUxmC0O8TJoFuDsapsai7zyBo80BYrY1TYRk03NA6sx6RQFiuKLOAOTRC2fSrRYJJ+VA7KVG8qLa4ExR9KFn8UeVAJlhbhyI+tOQXBbYQJPrSRcPnRh3mJqWilJolu1dURtH1p9/vF0fjWM8g0I7z+sUy7vuabuyyzMzn9qh8ouMtqBsvCIPSna0M+ntlYkHqaypYugfGn3/atLJdGibfDbW5HQVLW6Zqp3FoK3/EsoIVD8/wDWiuDWWlDPbUIeG3CP1q9Fcm0AemK6Kr/EaK7Z/MPEvvWcnpfBcG5LZmSx/HDa6LaP/u/1rRqtHfGrW9oVB3rLqxiD1Hr71zdHe1EbLV5MdPL7Vtt3O0jOy8mBPA/aplFp3sXCbcapnR06dpYV9PZNskbgCQY9Dmiul+xu0Aw3PpLkbjEQawafV9ptcW2NTbS4eFZRP6V2NJp+077G32l3d7TsIbbAYD0wPvXPOOn6qo6MeRy2jdnYNm1rtOChUkiUbofeuWup7R0FxrFlbDWlORfmbfpI6f7xWXS9mfiLSTb0N60tmfCG2n9Qa1J2d+I7t9H1n8PeUDafhBjywBNc6hGN3JNHU80ppVFpmwnt50DLptGwIkbd+fvWFbnbl24yNo9OhGDuY4+9dLQdoXeydQ1i8HbR7ozzbJ/38+ldnV2rerRb1hwrxKXFyCPI+YrJz9N7xVPs0SeRbSdro4XZ1/tzs6+Rd01ltO3x2txgj0njH+zWTta3rLmtuXNDpbFuw3CFjI98xTe1L/a7XxY0121ZVVnY4Bnz2kg4rnXh24qhnv2Sp4I2kfYVtCG+v4U3+zKeWVaPiaX6Ol2Tr+0dIp0+t0ljU6JjLWy4lfVTyDWzW9lW9QrXeyLwugZawxh1/f8A3zXlu87Va8ts37ILYDGAJ+lbrug7c0brduXrKEcMpmPmBTnhSlakk3/sUPJlp0yi2v8Ag4a97YNjVWRcC42v4XT2P+RrBaTtHVM401lHC9N2QPaa1dq3db2hYtC5c0q305uAGW+1ctNL2ijq66uwGXggsCPnFaY4JK9kyMua3W9f4G3LXaSyDatSOR3gn9aGzZ7TuSbdu2GHPjE/Sa7Gn1dy7bCdqd1cbpetSG+eBNDdsSO8sOLqDhkMMKfqNbNIlxvdNnhJqTUqV6x4ZJqicgVKlAixUYwpIqVKAE8iTk0IqVKZQ22MT1o6lSkIk1KlSgCmOKupUoEQ0gck+dSpQNFp8VNBzUqUFPgZ3jVO+fzqVKVBZYvP51t0d1rmn1KNEBC1SpWc1sXjfxGNLr2yQpxW/szV3f46ykgq7BTjoTUqUZEtLDG3qQm6O57YuqmF38V1LDFboI6VKlYZOF+jsw8v9iu2x3Rt3beHkifaI/WlW/xF2igEXUx5oKlSiEYyxrUrM8spRyvS6HL+Ku1F4u2/+wUwfi7tYcXbf/jFSpSeHH9q/oazZPuf9hWO39ZrtWi6oWXkQTsiR5Ypmt7Z1vZOquafSXR3QY+FxPWpUrNQjq01saPJLTqvcyXvxJr74Xve6MZB2QQfcV3dLqXNu2x2kXPiWMGpUrPPGKjsjbxpylLdi+0bSpedBlZjNM7J1+oV7umL77S2yVD5j09qlSsmrx7nQ9p7HnL3aupF1o2DP9NLPaupP9H0qVK9BRXseW5yvkr/AIpqP7PpRWu1NStwFSqnzAqVKNK9hKcvc//Z"
+      },
+      {
+        "present": 30,
+        "readbackCompletedMs": 2142.860107421875,
+        "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+        "width": 1280,
+        "height": 720,
+        "evidenceWidth": 320,
+        "evidenceHeight": 180,
+        "sceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 1280,
+          "height": 656,
+          "nonblackPixels": 839380,
+          "pixels": 839680,
+          "meanRgb": [
+            37,
+            22,
+            12
+          ]
+        },
+        "jpegBase64": "/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAC0AUADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAAAgMAAQQFBgf/xAA/EAACAQMDAQYEAggFAgcAAAABAhEAAyEEEjFBBRMiUWFxMoGRoRRCBiNSYrHB0eEkNHKS8BYzBxVTg7LC8f/EABoBAAMBAQEBAAAAAAAAAAAAAAABAgMEBQb/xAArEQACAgEDAwMDBAMAAAAAAAAAAQIRAxIhMQRBUSIykQUT8BQzYXFSgaH/2gAMAwEAAhEDEQA/APlemvaMJqb2lPdu1p0Nm4B1HQ9fPzpYuC3ctMbi21hQ1xwxVFJUFm2gtAmTAJgGAawfhyV3LeS4m0lSUE481I/qK6/ZvbbJ+knYfaXaVnS3bPZ+ss33s6Ls/TaY3La3rbuItogYxbxuMDPEmvNUYtq2NxXY6HaWg1S9oXdNqriW9To7lzSXdg3KWtuVMHEiQc0Gp0l/R6q3ae/O62LghYwZ/pTe09Y3af6Q9p6201yxZ1urv6u2lwDcqXLrMoaCRMETBNV2x39vX6Yai6LhOnTaQI8MtXLNVKlwRFtS0nH/AE3N+zq7X43axOmtbSuJBLfevLAoQd3jtgTMZWvYf+I94L2lpFKbrf4K3M8T4v5RXjriKjuLDwQPhbr/AFrs6b9tGkPaZrwGGBlYA3CoqkKQcGndn7b+qFu5+aQR54mvRaXsLTXVW9cNzazEQG6gVrPIoclOVcnk2XaR60oD9bkdYBr6Bc/RjQM9sAXQGRWnf51h1H6O6K1qGUMwiOW9Af51C6mBKyKWx5C4u1WHpSUPMcnFezPYOjlZlgzBSA/Q+1bNR+ivZo1Nm3ZNzxSCRcnyprqYIJZEuTwDTP5h7GoN4E+MzXstX+jehs6m5Yyu3O5m9vX1rn3+xdLaV9r7hH7f96tZ4MakmcA7ioBLedVtYPthj61273Zelt6RHAbcygnxVl1WitWxC7onzq1kTGpWBpCg0zFk3MCeZyKEX1LBGsptnrOPvSLyyoG4Y9az7IZTIAnzqkM2XLqIxC2EIGZk/wBaBrytJNkTzgmspVmPxD61QXbILCTToLHtdMEC0AD70DMw+FBx70vYTJDL9atlOMrxFAFw5PwD6US7iGwRHUCli3PDKT7020sIVJB9jQwAzMDeKNS4IHix1IpzWE5gz70L2EABz9aVgAwZjMtx7UOdpJDD34o+7XyP1pi2kYSQZ96LQEsdPardpxHWjCIqSAZA86FmBHH3pBYq5PhxMEQBQqQTkgRgt5VoSGbOMVO5tkDBx0mmnQmZrhEleF496jPKgMIUDAHWmui7pySKzEkkAZMc1SYUXcaIkRHC1PiUbzAmoIn9pgKYtglgzkn+dDY0hYUliqjHpTAwVIGT6VpFl4JCqqgE80kIqKD8ROPSo1Gij5BRGdpIgdScCnb1LgQWgYJ4FXsa4MYHqKPuVtIGY7mPA6VNl6Tu2LFwOzWbiXLSo0srZgqRxTbGl3XFVrzwy7sCuadNqLWxiu63Px2jI/tXT0hKXUlyw2dema5pbHNLi0zs2LR01+2rXTcBtAgkRAk4rT+kjB9bpTudSulQEr1ya5nad6L2nguCLQkqec0q7cOpZGuXbwZV2Agxj/hrn0ttSMoxbakxXbmqdrd179xrr9wtu3uWSIJ5H0ya8o91bviCsLk5HI9673b2kvWdbbOnuPeItKxnkZP2ri6hgbrwgW4GyQIx7V2YUtKo2ivAt7o3B4KMBG5eZjrTLWu1CY/E3EnqpwaVLn1FKdDM8TyOhrak+R0dBO0NaDK66+CBAhz/AFpbarWXHJuam8SeSbh/rXODOsgDjoaJLhZ1B60aEGx0l1OotwV1N0EdQc/xroaK32hqLAv2+1O7zABusDj2rhXPDMeU1q0faD2bGwIpgnnmolHbYTVnW/8AL+09Xo7msPaK3EF7uWm6+4sBM8cRWbT9naq/b1NxdQoWy6oxZjktMR/tNTS9tPY7PfTBJ3XjdJj0ipo+1bdrTaq3cV9166jjaBA2hh5/vVFTSZPqQttLq3F3/E7lsqNx3HAwBWW5bvH4rwPuTTj2jtGpFtcXtoM9IM1la+Tyoq1qLSZF0bX7jItxZCls+QpT6NiyruE0+xqDauM8cqV+tV3w3gwetWmw3M504UDjHUUs2QfzfatLuCIzSz7U7GhXcwpAbn0ojpm6v9qMe1NLg9DRYmhKaYqeQZqrabQZMz6VqTJFS1py6jik5eSowbEE/vE0YUsJJrRb0e7Ij61ptaEmdzZJxFQ8kUWsM3wjnNagnNCQVMAma6o7PuXXYoybZgSTn7USdkXLl1pZSMCQfSl96K5ZS6fI3wclQWBkkCqCg8GflTtdaTT3zbV1cAZKmQD9KyPcA+Hj+NaRepWjKScXTHbCODn0qANncYHvWfvGyBBPlQs5bBMsOg4qqJDuP+yceZ6+1LmQQCAscmocwplmnin/AIcMVL9B8NPgALaNIFoSSPiIwK6NkWbKje3eMByazQ0ADAFUQOrVDtlppGu/qRcUqG5EVmkKqgDcefSqS3LDPJ8qeUW2JA3ZjPFQ6jsjXH6uRaB3JBJjrHFNi2rDc0scYzQbbtwCJj04FMXTpbhrzewFKzXSdIXL6u73bb+JCu+cRHnTLMO6yXELypiuULuosMUuC6iv4SD5GnI4EeJ/LmplE4WrO21lLxQvcvyogEOOPpVajTW7OoVBe1BBQNl+uax6dUZsvdIicNTdXFvUIFZ2GwfEZIyaxohWnRl7cCLqERdQ+42l+Pyk4kVyry3VxcUqR1I+01s7Z7u5qJdnUqoyBIyTWO9cLbpYFT9zXRjXpRohBJPNWrGQJoaZbA2zWgwbq4G6D8qQFIcEyYIg1ouEGINJWO+BkyIHoapCDuHcCSBxSkJBwTPA9Kfe6jHFZRg4x6GhAaRdJwds0YcEQwrEWycxmeKdbuggBoJPWhoBvhnrNF3g9aEFYyPpUG31qRkLnyFFvUrFLddzSCQvWlMCQBvX/cKqhD/DPWaLeIwD9KzqjhxLDnOaNzcj+OaKAPeesURdYjNZ9zbWEiT60src5J+9FAb7b2x+1Wxb42jZk+tce2jbhLD5mtNtja8jNZyimaxlR2EvkjacTyRWwX0ZNi7gDgkcxXDTVKo+HPnTbWrtL1asJYmdEM0TuWH04MDfjHSud2z26xRtPoXZUGDcDQT6D09a5es7S75WtWl224zjJ/tXPDAg87qrH06vVIWXqW1pgFumAeMAihLErPA86gEmOTz6CiCEnzPU+VdRxgiBmYUZPmaelrcs5SR86sW0UloO49TV+GOppNgQW4J2jnrV7RMbs1AAejVCF8zUjL2etVsPyqKATAmhNADdOga/bEzLAGPeuiwQYVJIP5q5+ljvVniRP1rpOFC7rYmTy2P+c1jk5OvpuGJui48KhEnqelPfSMVRnZQAIkmJzQi3dfKgmrfTXyym4+2MZbgVF9rN9LTszaRrpYpcdhaYEcyBNLBspdZX3FR1Vqy2muJcUENMjBqruoc3DuIOeoFdOk8vuduzctW4ZHOyOWNHrWS5eQsC0IIgx51xO/VrWxkgDMqYoJtnKOyHrIx9qj7fcSW5t1120GCOjEEDO7IzWPam5gjkkdCKgZ4IJVh9aEONxLJtJHIq0qQyz0pqCUpCsG4OaYsyOYplMjLtIpZw4MiJ4pt3pS8FwCOs0IQV0hpI8qQoyQT1kg0+6AAQPLrSRAGOfI00ABJiJfFWxKqMsZ8hxVcRjj1q4BEKDJ9aoBttmkKdx9SKbM87az7Sq5Bg/vCo0MYgxPO4VLQB3QjAhmCxmKAIqFWJMHiaiquyWGeOapSCVUiB6nimARYFjDHPpVFhDKW68xVPtRoC5HWaqVIbcpnnmgCgqt+cQPSiYJCw8x5UIK5AQ59aZhIHdz70DW4VsBmABOfSmqQB4TPvQoCTi1n50GoUY8Mexio5ZbWw3nJ20i5ca423xKB1A5peCTIOf3qIIWiAY9xVJGZYBYc3BHpVMpAJljjiiACsJXIHVqAjqARjq01QFqBPnwQOgo7ZJJyD7UKiRIyeg6UduNuCD7UnwCNBUsIJFKIgkUaIQZMUD/EagEHbmKFl2xkVAhbiKK7wKABQgNk1dyBECKFBuPMUV3pQPuXp/wDvoDO0sAY8prsF0SFt2vYtn7Vy9CY1Fs/vL/Guxb1F4AraUIPJVk1hme53dHG0xf8AjGMIrD0RYorlqLa99cVT65qy+pcbX7xh5cCjOku3ltiAsZM1jZ1OO557vb4XcXn0Jmol/eW3qhxzEVLV83JF22sRjwwTRAqQIsoAc8130eKKW5bzNv6GKpltACCwnzE1bC2AxCssdJpbOjKBkRQP+gtvgIDg++KGHE+IfWhCgoSHMDmRVBQ5lXGBnpTAu2XDQRkz0ptpXjaJHXBoVDcg7o6A4pqXNpEqc0MCFb3WGHrihCnvASsGZMGmd+vFAbiGTP2NLcArh3nHURQi0wERHzmqFxAfiHPlTe+WaW4CHtNOQKHuyOAvrT2uA+f0NDuXp/8AE07YE7olB4VOPOqNtlaQi7fWmd6IiD9DUa6pEZ+hotgZnDg4MD0NUiuGBk8+dHdTc0ggD1xQtbmBvWRiKYFEXCTzUUOJls+RNH3YQrLAH1ag2bpIdcZpgWFuGYMj3p225IKyMDrSV2qpG9ZkedaHtsp8bKKllxQS275GCx9mob4KBRciYJyZNNsKi7gzLJBAPlSdQCIIAYGeOlQuS5L0mcgbs7eauQGAJWJ6E0PinhhReLd8Jj2rQxDJQnxBePWqOAQQk+k0KFpMqePKqBO0gqZ86YBqT0BPHpRpx0j0pOQZx55NMs/CZINJ8AjSxO0bZn2pR5MzNMRiTGPpQP8AEagEHbODQMT+aatWK4EfSiuzAoAq38VCyleaimDiiu9KBjdB/mbUiRvWR55r0/hFrfZ01hWB5YE/86V5js4A6/TBgdveLu9pr1FvVd2ji2hAPPiJPtXH1PKPV+nx1RlsZl1LkjcwBOdqgD7UZt3dYq27YG4mNxIA+dOS6WddiqJ6EA/xrV2tbujs/Tta3+KRd7pBiIAkjiubVTR3PG64PBd+xxsWatriyQLZELMFqBCu5QARJ86hu2+qNJEEzXsHzdAm4pBGzn1qiEEeE5E81JtkEqpx5mqLg/l+9ABSqhklgDg1ShFJEt5VYKESV+9VIJyo+VMA0W2rQGYT1IqmhoVWiYq1YTIXp50JIORbII9aAIJ2kB8njmiSSBLqRxmhQH/0zI45olUj8maVgCwzgKRVqsk+FYnz+lUQQcqBPrRARnasHjNMBZHTaeeZq2HhEAnzzxUOAMKPrThbXYDHIzSugFBQPyyMT4uKI21GDIE+dO7ldohfvQFFPIpWAoMoUAzg4600lGAljBBjw0N5Utn4CfnVLcXw7bRxgGaYEbu3bxBp49qod2u4DdnBxVswDklZg80MqSx28etAUFbtW2nLAATWksl7buZgYj4aRbZRjYIPOTT91tSNqYInJqGaxQ2xYS5c2qzTtLcDoCf5Vn1YSFCyQJPkadZu7WBCjHkTQX7a3YO0D2JqV7jSa9BjiWGCOnNSAXIIO3oZpwtqSJHPrRPZUZjA9a0s5hKqGwykHp4pmqKgcSTHnTiqqm4AYxmknz2qPaad2BajPCxjk0y3AmI+VAo6wse9Fa64A9qHwCNLHaoJpTGSTFMG04zQbSz7VBJJwKgEHb4NA7BgAAaYUayxW8rI3kQRQOAAImhD77ktfFVM27pxUQgHNS4AIigO5p7MIXW2CwkC4pI88168iyllHFjLNGWNeO7O2/jbG4SO8XExOa9m160LYQacRyYczzXB1nuR7f0qNwlt3De5ZteNLdh23bQQpIgR5+9bezm1V68rqmnX8oCr4yI6Z9Ky6R7IBNyyYA43Ej5jyru6FdLpbqi1bFx3g7XG5FG0E5meoiK8/JPSqPWji1PdHxoOgIO049agKtuJX1o1tJuCndJoC6ISBbM+pr6I+NDtAFgNmDzTHtqY2qPpQ2rgc5WCPWaerTMD61LAQAAOB9KbtlAABS6ZbYkxQNizgxTLi9aBviPvREEJnmaAJa+KruKIJ60CgsaYRFsg0hGa9yMA+9UsRB2g/X2qXeRgcdTQhug9eBVoGRmn1+VPUHulrOSef/tWgD9Wh9KTBDUBEEmRShTI3KBIpdSMjo5aAcexpbLcgQp+lMvDeCA6j50lbYUgsQRVoQSi7uEgxOcUwu+IUieYFAx8RIZZNQkwwLCZ5mgBoZjbO1PFPlUBv4kH6UpEZuCse9PdSNhFxeIwZFQzVGjSi4X8SlhBxjmDH3q9SrDbvEY8qXaG9lUMsnHJ/pUvgMFhwYHSs17jSb9BmGSKYwItkHNAORROJBaQa0OcFsWiTxNJLEAgsD7LTmxbJ96zBm2kEfeqQmGm04O0jFHbnbkRSgRIB9ORUMESAfkabQGxVC5FN0OqOi7QtalFVmtsGAbg1z1ZpH6zHWa02gWWWUny2molG1TKi2naOt+kfa7/AKQdpvrb1q3adgBttiBXKu/CKMIrRMiaeukBUkXkOJ5NZx0Y4qK2SNJxyZJOb3bMaruMTV3elbPwF2JBn2k0ptLc3bYk1SnF9yXjkuUX2SpftTSQu79cnh5nxDFe31Pc2wHNgZMFZI/nXkOy7LWe1NIzAMq3ULCDkBhXtbuqtOpB01lhODBx968/rH6lR7f0qL0SvyZtNe0yurm26EYO24evpXd7Jt6bVPasWLeoUgEKVulT1Mnz/wCCuE9vRuyrdU2yTAUOR18jXW02hsWu0Auj7Ve0hXcou2gSVPQx/bg1w5aa5o9SHu4/6fJgVBkuflReG4STyMzFAttSYLZ8hUYqhK7c9ZNfRnxgVtw21VQAk8zWhF2k0myQYIEfKm3CQRBikwF+9NBCqDShTQNygGpGxZMkmiuEzHShOCaNiCmPOgCrXxVHmScxQq204phM2yTQIy3h4hiT61SjcYyfbgVd0SwPJqDr1/hNWgYBmIAWJ860qP1a1maRHH0og5IgMB8qGrA1LCmZM0EH1pTMQoO8fSqDMTIOJ4ilQw7ttZJkxQCH2r4j0BmhY3Pce1CgfcJE58qaEGwRGjxSKrwNJO4daFi5J8P2q1DwZE/KmAam2FI8WaYO6XBDE/Skg3AfhP8AtpxZ5BCzgdKllRY23cthgQHBnoa3aGxZvHb4lExJAaPasCXL8YDfJat72otBSrMhP7tZSi3sjdSit5Hes9nWTpu9YmQJ4HnWu52RpLSW33sdzhSNgxIOefSvKjtLWKCpvkLxG0R/CnP2trbqqH1I2zI8AwR8qxlgyviRpDNiXMT1q9ldnQAXcf8Atg0en7B0l1rk3HKqfD4QJrxrdqa1T/mn+Qo17a7SRfDq2iP2R/Ss302btI2/VdP/AIfnye3/AOnezvwxui7c3jle7EfLNIu9jaIfASR0Jtia8qP0h7UKG3+K8JGQba5+1Z27Z7QJgap1jpj+lSulz95/nwUur6avZ+fJ67T9haW87BnYACcKBR/9OaMozi6wZWiNnSAZma8gvbnaNtn/AMS4HnAM/anW+3e1Ap2akshz8Ckz9Jpvp8/aX58E/qenb9n58nbvdlW7YDJefM4Kgjn1rmW2tgfrbBhhnaY60g9pX7oBe86kmPDEUVpLwKm04bHAMH6VcYSivUwc4Sa0Kjp6ddOAuzUFdw/Ov8xXQs6a+dkPYvp/qH8DXEa8yMgu2QuOogz8q6FvU2vwItAlQGBznPyrGcXyjsxT2o23nGm1F1xo+7UGUkEAEHnGD9xUfVW79oO1iybhkEjB6eXvR9nai4bFxUdXAUxDcGPI1mfWuP8AM6W068+K3tIPyrHTbN1JIYBpL7KLy3FJ4O6f412L/Ym9UOi1tp9iT4nAxzMz61whd0F8bWS7YJyCrbh980SaK93qHQ6m0+8ER3gQkdRmlKL7Ov7KUknbXweFtlVcEHNDcc7z5zzV7AhG5hjpVhkJaBGCZNe4fLl6cu1xZJIrbifWsNosXHMVrtAiZFSwF0dskmDxQU2dqAxUjFt8R96J4C7RQHJzTLg60wKtc1btyIoUMHNG8FSQKQjLeHiGJ9KtcrBj08gal3JH8KCfqen9KtAyyWP7RqZjG+R6UB8/DmnWrO4BmgCgA7YcgEggRwaPJOI+VVAP5vtVlCBzmpYAtYe40rVnTXDADARg5NaLIt92ouzIMx51sW1proBMqCCZAzj/AIKaZVHOGmK7ZdgfWlHTs5JDoepzXTNvS3j+sS4WMAMMQPmDS3taW2bioHAIKkk/2osKZzNmwEb1mRwaNlujmAPVqcuktOx2swgSaK5tvBfGAQI4IoY0qYFgPmWMwY8WKjbxluOkkGq7iXjf4j5g0zT6Y3AQryAfKoe25b3VCyCRMCkMrowPjIroppVPDknyitB7OJWQJQ0vuJCWKTOPubqG4oSSFI3OffitWu0F7QtvZf1TSA3y4NYgSAVx54rSMlJWjOUXF0xiTtgR0iqe2ygRJHkapDkRzitV38tDYjKuHAWY6g0asBG7wE9RTXVTbWR6T5Vn3SoAG5R060+QNIc53qGSTBrUoQFVFzaXXAfjnzrFZaGAQ54g1olLo/XKUcQAV/pWMkdWOR07T3bKkXbfeJ5HxL9RTQdM0pcS5YcnpkD5Gs1gaqyFbRXBcAEFR1+RrWos6lVa+htXByLQ4+Vc8kdkJ+S7elud7Fh0uEHgNB+hq01er0rtbdnX91xI+/NU+jugG9ZYXbc5gww9xRLrLq2OlxQci4MAfOsuf5OjVW9lNqNPf/7lrZc87Rj7Uzule2O7uQem881nB02oyEay5/MrY+lHe0V1lQWHW7tz8XiNFLglt3weXWzKTBnzOKtUVTC+I9STipZVySznJEZNGwCCPiIXpxXqHhEtE7zgADypzsVOBWW2zm6u6Qv0FavCTkj61LGKpqiVE0r0o7Z8WTx51I2CeTRGdhnmaFviPvRXDJgHFAAooY5NMaAhE0Fswc4q3AMncKBGa98QETiqUSevv50d3LAASKu2IJ9TNWnsBduySJaNvQRTNv7y023ba7g3baY/M0VL2n7rYe9svuz4GmPeosYvuz5ihg+Rozu2zvXmIBzQl286ACXeowwFNt6m9bKMtxJT4ZUGPtQWVN5tve20Hm5gUy7pO6UsNTpmjoryaLHuS5qdQ7tcd1ZydxJUc/SlNduu5JOT1iqG4zLqMdTQl2HWgLYwNcWYcCRB9qpVLGSwNCpLsF3ATiTwK1HTC0D/AIjTt/peaTdAmyLYKw4yQelOs6cAyARODSlulZVnXyORTretVMFsDyIrKWo3g0bbelIO4OgHWa0W9MqlfGpDHpBg1gt9oqUK3GkHBiOKdp9bZt24ZtwPkRPzzWEozOqE4LlnQvaMwUuKHtPjj7GvNdsdmPoW3Bd1lsK0cehr0FrtQFGV38HHC5H1pp7W01+1c09/vHtEbWBVII95qcc8mN8Wi8kcWaNXTPEdR5iM1pZt0Yir1enSzqythna0cqSMkeRjE0b2XMbbbfJa9DUmkzy3Fp0Jfcqg5EnFLbbInE9RxWm7ZvC0ItPIjG00tdNej/L3WB/LtNCaFpfgSYVvFP8AqFa1uMEEhXt8TH86Qum1DuVSxeduqBCSPlWq1pNVYUv+GvqGgQ1sj5VMmvJpBPwO0wJk2XMxxMEV0LWsItN+KS4W+FXU7WHv5isD6e4QpWy6mMwp/hTEuvbULqLHeAmIYZ6cVg0mdcZNbG7Ny6XsXELiZB8LH+RpFvtC4FNvUKbkdHGRS72maTd0pYqTO1htYfyNEru1oC9Za4AY8SmQPQ1FJm6lWwWyw7A2rj2WIwCZH9qq8NTbswVLKOHTIqvwylgbDFf3LmM+hp2su6m3prH4YXVI3b9kkemRg0hN+DhbW8qmxqYCT0q812Hk2K2NU2N1ppmlsrnkigLA4qCi2H0mmIoHv50DsXtY9IqFSBxTGYLQ7xMmgW4OxqmxqLvPIGjzQFitjVNhGTTc0DqzHpFAWK4os4A5NELZ9KtFgkn5UDsEI3lUKtTulAzQ8eVArA2NU2NRd4PWrVtxgUAB3beVRlIgkU3NC6lhGKAsVORUgloFF3ZnpV7SCGxigdk2NVbWmmio3GOeaBWKCMKmxp4ohcBHWp3lAbhKXGIEVau1l5HwmqUyJFQgkQeKVDUma1vLcXa0EVVq/f0xK2ypToG6ViCuOCKMF+pBFToRp9w61vWdoESiWiPn/WiHaXaKHxW7Kjjxf/tc6xqHtGJx5VrN9bqQ1ZSxpdkaRzS8seq6u/cDvatqOjWiRHqK0d/2qF2G3YuLxLA5965IvXtPPdXdqUa67WMJW8D9P6VLx34Kjmf8nSstrw4LoFAwNjHA8oPIpjaqfDqFCsOvT+1csavWlgDeAnqQI/hU7zVXTm7beOhj+lJ4r5opZ2vJ07upu7T4u88g5z9awK2tuhiqWYBz4o+xNKe3qYHdOq+YmRQd3q5BN1JH/PKnGCXgJZW/I11137Fv/d/eisjtCCyKgjnxj+tFbuXgsXdh9jV94Dxg0/8ASJ1fyzlTUmpUrpOQk1ROQKlSgRYqMYUkVKlACeRJyaEVKlMobbGJ60dSpSESalSpQBTHFXUqUCIaQMyfOpUoGihyaZa61KlMGMmpNSpSAk1TfCfapUoAs81ZqVKBCPzkdKH81SpTKGWjkjpTKlSkIk1KlSgCHNUpMA1KlAg9xjmlElLnhxNSpSKQ3cT86m9lbBqVKlFvgZ+Ju/tfap+JueY+lSpTpE2yvxFzzFV3zk5ipUopBbP/2Q=="
+      },
+      {
+        "present": 60,
+        "readbackCompletedMs": 2300.7900390625,
+        "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+        "width": 1280,
+        "height": 720,
+        "evidenceWidth": 320,
+        "evidenceHeight": 180,
+        "sceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 1280,
+          "height": 656,
+          "nonblackPixels": 839431,
+          "pixels": 839680,
+          "meanRgb": [
+            37,
+            23,
+            12
+          ]
+        },
+        "jpegBase64": "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"
+      }
+    ],
+    "firstPresentObservedMs": 1967.794999986887,
+    "inputTransport": {
+      "queued": 0,
+      "dropped": 0
+    },
+    "endedAt": "2026-09-11T20:27:53.260Z",
+    "diagnosticAttemptMs": 61969.54999998212
+  }
+}

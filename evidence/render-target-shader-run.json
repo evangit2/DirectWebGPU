@@ -1,0 +1,1151 @@
+{
+  "summary": "passed",
+  "location": "http://127.0.0.1:8765/shader-test.html",
+  "report": {
+    "kind": "shader diagnostic, not Humus acceptance",
+    "runId": "0e9aa6a4-d97e-4bf9-92c4-ec2daa9af2d5",
+    "startedAt": "2026-09-11T20:22:08.662Z",
+    "checks": [
+      "VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga",
+      "misaligned/truncated bytecode rejected",
+      "asynchronous event-query marker and explicit flush completed on WebGPU",
+      "PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA through persistent texture storage and cached sampler/pipeline",
+      "indexed draw consumed persistent vertex/index buffers",
+      "browser WGSL compilation and pipeline validation passed",
+      "GPU draw completed; sampled interpolated color matched"
+    ],
+    "sceneFrames": 0,
+    "shaderBuild": {
+      "revision": "e82395f91329e6408a2ce6357e7f086627192fcf",
+      "builtAt": "2026-09-09T20:45:33.444891+00:00",
+      "dependencies": {
+        "theseus": {
+          "url": "https://github.com/evmar/theseus.git",
+          "revision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+          "license": "No license declaration found in checkout; local investigation only, no hosted redistribution."
+        },
+        "rust": "1.98.1",
+        "wasm_rust": "nightly-2026-09-07",
+        "wasm_bindgen_cli": "0.2.121",
+        "archive": {
+          "url": "https://humus.name/3D/DynamicBranching.zip",
+          "sha256": "8063039867fb69e4c58c6bad90f4aad80e43d0eb5c33818e1ba5a9c2be57077a"
+        },
+        "executable": {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        "mojoshader": {
+          "url": "https://github.com/icculus/mojoshader.git",
+          "revision": "ad5dff84830c2863c841f4b1f4e3df78c705b383",
+          "license": "zlib; unmodified source consumed locally, LICENSE.txt retained"
+        },
+        "emsdk": {
+          "url": "https://github.com/emscripten-core/emsdk.git",
+          "revision": "5eb0bde7585670252e8ba05e9d361627bffd08b5",
+          "version": "4.0.7"
+        },
+        "vkd3d": {
+          "url": "https://dl.winehq.org/vkd3d/source/vkd3d-2.1.tar.xz",
+          "version": "2.1",
+          "sha256": "7510146aff2adfb4ae07ab890701a607e5ff7c66e57100cfc9f630ec92eeda6a",
+          "license": "LGPL-2.1-or-later; adapter links libvkd3d-shader as WASM, patch recorded in patches/vkd3d.patch"
+        },
+        "spirv_headers": {
+          "url": "https://github.com/KhronosGroup/SPIRV-Headers.git",
+          "revision": "04fd3caa1e8267e4d95c806cad901181728e1006"
+        },
+        "vulkan_headers": {
+          "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
+          "revision": "ee2ec5fd83dafce291024683b50dc89219333076"
+        },
+        "naga": "30.0.1 (MIT OR Apache-2.0), exact lockfile runtime/shaders/Cargo.lock"
+      },
+      "vkd3dPatchSha256": "8d29d0f58827784778a9b69540200f70fe14d606dadc5568a5d3f77462a6b890",
+      "artifacts": {
+        "mojoshader.js": {
+          "sha256": "d99eb01510027f554a59d18bd98c139b128356c80a8ae88a87f8ffe4dd394a2b",
+          "bytes": 10965
+        },
+        "mojoshader.wasm": {
+          "sha256": "b105a04bf2c15dd5c25f5ad9e3fb5bdf1d77b368bbee218ae1024b76a875bf93",
+          "bytes": 113779
+        },
+        "vkd3d_shader.js": {
+          "sha256": "e0380083c344a8de00ed29d5851e23fe791291fe5d370378f7618918a1caed8b",
+          "bytes": 14756
+        },
+        "vkd3d_shader.wasm": {
+          "sha256": "58686c4fa986cfb01df41fec4416616577f0e794697fda1ab8850ddea0b9ead0",
+          "bytes": 1250990
+        },
+        "vkd3d-COPYING": {
+          "sha256": "1f69abfaeee0131bba28ad72d87683a223743d8c9ee1da113fde10cb082f3c91",
+          "bytes": 786
+        },
+        "vkd3d-LICENSE": {
+          "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+          "bytes": 26530
+        },
+        "shader_translation.js": {
+          "sha256": "69d23d6328cf60aa446af612080b7948b3e9f5ed3b1ba22945e78c229d507912",
+          "bytes": 11956
+        },
+        "shader_translation_bg.wasm": {
+          "sha256": "5cd4d38b3564d6f546275680c6f09b55f0560e43beccc389ca3c30c36d197205",
+          "bytes": 2144938
+        },
+        "vertex.bin": {
+          "sha256": "83aae20d5f7916e0ffffe70bfa8aa57307bf957fadfebd7be8c2ff3dd25ceb37",
+          "bytes": 32
+        },
+        "pixel.bin": {
+          "sha256": "8a04b32e5ea7961b1903223b79600be21fe210803d075849faab9f3b3b5b83a9",
+          "bytes": 32
+        },
+        "texture.bin": {
+          "sha256": "144144ce71cbdd119af5b15c2b3086ee24c37a9adb7ce60edbb0e0ab6944e9ed",
+          "bytes": 60
+        },
+        "vertexConstant.bin": {
+          "sha256": "2b461d3be18c096b50643d07cd0e0c12338547e5d5944d132c5c84bf697a93f1",
+          "bytes": 32
+        },
+        "vertexExplicit.bin": {
+          "sha256": "0f0b3085b3097fc533bbd09c83175f1f4ad3742cf8d2ccd29460c836ef68acf6",
+          "bytes": 56
+        },
+        "vertexExplicitSparse.bin": {
+          "sha256": "933f99efba4279bd03114b883e2ebb2952dcdc3884353fa58df31dd74c5a895b",
+          "bytes": 56
+        }
+      }
+    },
+    "build": {
+      "revision": "49305d5415236ad8596b2b162d376499e37f737a",
+      "dirty": true,
+      "guest": {
+        "id": "humus",
+        "title": "Humus",
+        "executablePath": "DynamicBranching/DynamicBranching.exe",
+        "workingDirectory": "/DynamicBranching",
+        "registryDwords": [
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedLeft",
+            0
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedTop",
+            0
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedRight",
+            1280
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedBottom",
+            720
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "Fullscreen",
+            0
+          ]
+        ]
+      },
+      "dependencies": {
+        "executable": {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        "guest": {
+          "id": "humus",
+          "title": "Humus",
+          "executablePath": "DynamicBranching/DynamicBranching.exe",
+          "workingDirectory": "/DynamicBranching",
+          "registryDwords": [
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedLeft",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedTop",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedRight",
+              1280
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedBottom",
+              720
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "Fullscreen",
+              0
+            ]
+          ]
+        }
+      },
+      "files": [
+        {
+          "path": "DynamicBranching/DynamicBranching.dsp",
+          "bytes": 7163,
+          "sha256": "3c086ee7a6b8e32c2c0719e2510fb05d431a8dc96955bf2da574c625d52a2677"
+        },
+        {
+          "path": "DynamicBranching/DynamicBranching.dsw",
+          "bytes": 555,
+          "sha256": "1a9c43ec3187ada28cd6cd25101b6b9b7fd44b31f7e6c5fdcc7a9d5c396c786d"
+        },
+        {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "bytes": 925696,
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        {
+          "path": "DynamicBranching/Main.cpp",
+          "bytes": 8514,
+          "sha256": "88d32ac76ce4227fa8924572a3641877129819b5abe3d40667fc379431e680ef"
+        },
+        {
+          "path": "DynamicBranching/depthAmbient.shd",
+          "bytes": 435,
+          "sha256": "b5f89e989b1fb9e367b71fa57500340be28771654941b5bbf82b484f0a087e2e"
+        },
+        {
+          "path": "DynamicBranching/if.shd",
+          "bytes": 411,
+          "sha256": "481045950c8b579040a85208e755abb2251650d68ac0808708b7c9275dd44d1d"
+        },
+        {
+          "path": "DynamicBranching/lighting.shd",
+          "bytes": 1585,
+          "sha256": "865b3f054522da77a1cbd884044ec99ed3d8afdf53340825039c3c8200d8e6e8"
+        },
+        {
+          "path": "Models/PillarRoom/Map.hmdl",
+          "bytes": 57028,
+          "sha256": "bd881f835d4e52b93351194c992f59cbd7187ef8850c4c2f7d9ad72225c492d5"
+        },
+        {
+          "path": "Textures/Fonts/Future.dds",
+          "bytes": 349680,
+          "sha256": "9b7f4ea36194f5ab48e38b33dc8039a8aab0ce905d541aa6dee1ed5f30de2022"
+        },
+        {
+          "path": "Textures/Fonts/Future.font",
+          "bytes": 5124,
+          "sha256": "878c2b3e5fa5961d0f3eacb564901e0e91dc185c834e48e01e4803f8cda1a2e3"
+        },
+        {
+          "path": "Textures/Particle.png",
+          "bytes": 613,
+          "sha256": "3987c11a7d2798dc189cd9309910ddfeecfb0551decfd1238c7a59b2d186e24d"
+        },
+        {
+          "path": "Textures/brick01.dds",
+          "bytes": 174904,
+          "sha256": "0c94736d677faa0d962f9e7f6c7688076652faee93130167813e59cb125a27e4"
+        },
+        {
+          "path": "Textures/brick01Bump.png",
+          "bytes": 74397,
+          "sha256": "3e8ea48fdb25da97f55d3f4c939b8c0a8572e2ad6bbb6f1105d6fd340889c823"
+        },
+        {
+          "path": "Textures/laying_rock7.dds",
+          "bytes": 174904,
+          "sha256": "e8ea9d650264bba9b6267470db2cd0c603b08ca1112e719c4974358806188235"
+        },
+        {
+          "path": "Textures/laying_rock7Bump.png",
+          "bytes": 87309,
+          "sha256": "ecaa27e2311541d0882bd5c1b53a5e4818dc808a29a6081a53a540b318aeebf5"
+        },
+        {
+          "path": "Textures/parqfloor2.dds",
+          "bytes": 174904,
+          "sha256": "b120f827ed239af7919a6ae298463eb70adea325acf330bc69a181698adfb292"
+        },
+        {
+          "path": "Textures/parqfloor2Bump.png",
+          "bytes": 8263,
+          "sha256": "7a4762e961cfc7ccff1cbe6d4793374319257237d7463f49090c30e812102795"
+        },
+        {
+          "path": "readme.txt",
+          "bytes": 1101,
+          "sha256": "56dd528b14422b1bb9e1cfe27197aeb2330647f2181118bd864f8d436438204d"
+        }
+      ],
+      "wasm_available": true,
+      "runtimeBuild": {
+        "guest": {
+          "id": "humus",
+          "title": "Humus",
+          "executablePath": "DynamicBranching/DynamicBranching.exe",
+          "workingDirectory": "/DynamicBranching",
+          "registryDwords": [
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedLeft",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedTop",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedRight",
+              1280
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedBottom",
+              720
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "Fullscreen",
+              0
+            ]
+          ]
+        },
+        "wasmProfile": "release",
+        "translatedTreeSha256": "31168ef3b97559be14c426a40f0adcd8680cc6ee89a5a51aeda3d37f6c7cfa90",
+        "cargoLockSha256": "968c5d084c3a8ffaae74c4436735dad977229fbde0141ec4279b7d8a134164fd",
+        "builtAt": "2026-09-11T19:48:45.665425+00:00",
+        "revision": "c50866c0d0c1a1f266fe6f5fc6f506593cc71e1c",
+        "workingTreeDirty": false,
+        "sourceSha256": "463ff6f94270c137e09519741154bc2bd82ec55eb5c946f6cc76b3b1801c801e",
+        "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+        "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+        "translationEntryPoints": [
+          "409a00",
+          "004233f4"
+        ],
+        "moduleUrl": "/generated/humus.js",
+        "wasmUrl": "/generated/humus_bg.wasm",
+        "wasmArtifact": "humus_bg.wasm",
+        "artifacts": {
+          "humus.js": {
+            "sha256": "224beabc26d3ca5d7c28305990286745aa3801d9a8a3038f51eb9050951ebe6a",
+            "bytes": 13813
+          },
+          "humus_bg.wasm": {
+            "sha256": "e8b735dcd89bdba8db014f329939b0894f68c41beb373784f37c41dbf82abe7c",
+            "bytes": 23713377
+          }
+        }
+      }
+    },
+    "shaderObjects": {
+      "result": "passed",
+      "checks": [
+        "owned bytecode",
+        "stage validation",
+        "malformed instruction rejection",
+        "paired translation",
+        "released handles rejected"
+      ],
+      "HumusFrames": 0
+    },
+    "inputDeclaration": {
+      "kind": "explicit VS1.1 POSITION v0 / COLOR v1",
+      "expectedInputLocations": [
+        0,
+        1
+      ],
+      "HumusFrames": 0
+    },
+    "shaders": {
+      "vertex": {
+        "samplers": [],
+        "spirvBytes": 584,
+        "wgsl": "struct VertexOutput {\n    @builtin(position) member: vec4<f32>,\n    @location(0) member_1: vec4<f32>,\n}\n\nvar<private> vs_v0_1: vec4<f32>;\nvar<private> vs_v1_1: vec4<f32>;\nvar<private> vs_oPos: vec4<f32> = vec4<f32>(0f, 0f, 0f, 1f);\nvar<private> vs_oT0_: vec4<f32>;\n\nfn main_1() {\n    let _e4 = vs_v0_1;\n    vs_oPos = _e4;\n    let _e5 = vs_v1_1;\n    vs_oT0_ = _e5;\n    return;\n}\n\n@vertex \nfn main(@location(0) vs_v0_: vec4<f32>, @location(1) vs_v1_: vec4<f32>) -> VertexOutput {\n    vs_v0_1 = vs_v0_;\n    vs_v1_1 = vs_v1_;\n    main_1();\n    let _e6 = vs_oPos;\n    let _e7 = vs_oT0_;\n    return VertexOutput(_e6, _e7);\n}\n",
+        "uniformGroup": 1,
+        "uniforms": [],
+        "constants": [],
+        "inputs": [
+          {
+            "usage": 0,
+            "index": 0,
+            "location": 0
+          },
+          {
+            "usage": 10,
+            "index": 0,
+            "location": 1
+          }
+        ]
+      },
+      "pixel": {
+        "samplers": [],
+        "spirvBytes": 500,
+        "wgsl": "var<private> ps_PointCoordOrTexCoord0_1: vec4<f32>;\nvar<private> ps_t0_: vec4<f32>;\nvar<private> ps_oC0_: vec4<f32>;\n\nfn main_1() {\n    let _e3 = ps_PointCoordOrTexCoord0_1;\n    ps_t0_ = _e3.xyzw;\n    let _e5 = ps_t0_;\n    ps_oC0_ = _e5;\n    return;\n}\n\n@fragment \nfn main(@location(0) ps_PointCoordOrTexCoord0_: vec4<f32>) -> @location(0) vec4<f32> {\n    ps_PointCoordOrTexCoord0_1 = ps_PointCoordOrTexCoord0_;\n    main_1();\n    let _e3 = ps_oC0_;\n    return _e3;\n}\n",
+        "uniformGroup": 3,
+        "uniforms": [],
+        "constants": []
+      }
+    },
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "isFallbackAdapter": false
+    },
+    "eventQuery": {
+      "result": "passed",
+      "checks": [
+        "Issue marker stayed asynchronous",
+        "D3DGETDATA_FLUSH boundary completed submitted WebGPU work",
+        "shared completion word signaled"
+      ]
+    },
+    "floatLimit": {
+      "result": "passed",
+      "source": "@compute @workgroup_size(1) fn main(){let x=0x1.fffffep+127f; let y=-0x1.fffffep+127f;}"
+    },
+    "drawPackets": {
+      "result": "passed",
+      "fixedFunction": {
+        "result": "passed",
+        "outsideInsideBGRA": [
+          [
+            0,
+            0,
+            0,
+            255
+          ],
+          [
+            175,
+            61,
+            4,
+            255
+          ]
+        ],
+        "checks": [
+          "three transform matrices applied in order",
+          "texture RGB multiplied by diffuse",
+          "texture alpha independent of diffuse alpha",
+          "fixed-function alpha-test pipeline compiled"
+        ]
+      },
+      "samples": [
+        {
+          "indexed": false,
+          "rgba": [
+            64,
+            128,
+            191,
+            255
+          ]
+        },
+        {
+          "indexed": true,
+          "rgba": [
+            64,
+            128,
+            191,
+            255
+          ]
+        },
+        {
+          "indexedUserPointer": true,
+          "rgba": [
+            64,
+            128,
+            191,
+            255
+          ]
+        },
+        {
+          "indexed": true,
+          "textured": true,
+          "rgba": [
+            17,
+            121,
+            233,
+            255
+          ]
+        },
+        {
+          "samplerSlot": 7,
+          "rgba": [
+            17,
+            121,
+            233,
+            255
+          ]
+        },
+        {
+          "viewport": [
+            4,
+            8,
+            16,
+            16
+          ],
+          "depthRangeRejected": [
+            [
+              0,
+              0,
+              0,
+              255
+            ],
+            [
+              0,
+              0,
+              0,
+              255
+            ]
+          ],
+          "insideOutsideBGRA": [
+            [
+              191,
+              128,
+              64,
+              255
+            ],
+            [
+              0,
+              0,
+              0,
+              255
+            ]
+          ]
+        },
+        {
+          "scissor": [
+            0,
+            0,
+            16,
+            32
+          ],
+          "insideOutsideBGRA": [
+            [
+              191,
+              128,
+              64,
+              255
+            ],
+            [
+              0,
+              0,
+              0,
+              255
+            ]
+          ]
+        }
+      ],
+      "draws": 8,
+      "checks": [
+        "viewport rectangle and depth range verified by GPU pixels",
+        "scissor rectangle verified by inside/outside GPU pixels",
+        "viewport and scissor changes reuse dynamic state",
+        "deferred indexed user-pointer uploads reach the same GPU draw",
+        "reflected sampler slots 0 and 7 produce expected textured pixels",
+        "released texture draw rejected",
+        "decoded draw packets reach GPU rendering",
+        "indexed and nonindexed output matched",
+        "buffer overflow and truncated packets rejected"
+      ],
+      "HumusFrames": 0
+    },
+    "samplers": {
+      "result": "passed",
+      "samples": [
+        {
+          "name": "repeat",
+          "rgba": [
+            1,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "clamp",
+          "rgba": [
+            0,
+            0,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "mirror",
+          "rgba": [
+            0,
+            0,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "bilinear",
+          "rgba": [
+            0.5,
+            0,
+            0.5,
+            1
+          ]
+        },
+        {
+          "name": "mip filtering disabled",
+          "rgba": [
+            1,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "nearest mip",
+          "rgba": [
+            0,
+            1,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "linear mip",
+          "rgba": [
+            0.5,
+            0.5,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "largest mip restriction",
+          "rgba": [
+            0,
+            1,
+            0,
+            1
+          ]
+        }
+      ],
+      "cacheEntries": 7,
+      "HumusFrames": 0
+    },
+    "textures": {
+      "result": "passed",
+      "compressed": [
+        {
+          "format": 827611204,
+          "levels": 4,
+          "smallestMip": [
+            1,
+            1
+          ]
+        },
+        {
+          "format": 861165636,
+          "levels": 4,
+          "smallestMip": [
+            1,
+            1
+          ]
+        },
+        {
+          "format": 894720068,
+          "levels": 4,
+          "smallestMip": [
+            1,
+            1
+          ]
+        }
+      ],
+      "checks": [
+        "2D and cube render-target textures plus standalone color/depth surfaces clear through hardware WebGPU",
+        "2D/cube render-target subresources and standalone color surface read back expected pixels",
+        "L8 luminance replication, opaque alpha, pitch and tail mip verified",
+        "GPU readback verifies pitched BGRA rows",
+        "XRGB samples opaque without modifying guest",
+        "compressed mip payloads including 2x2 and 1x1 copied exactly",
+        "six D3D cube faces upload, orient, and sample through a cube view",
+        "invalid ranges, cube layers, descriptions, and stale handles rejected",
+        "resource budget released"
+      ],
+      "HumusFrames": 0
+    },
+    "geometryBuffers": {
+      "result": "passed",
+      "vertexBytes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        60,
+        70,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        0,
+        0
+      ],
+      "indexBytes": [
+        0,
+        0,
+        1,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      "checks": [
+        "GPU readback matches partial vertex updates",
+        "16-bit index tail preserved with alignment padding",
+        "misalignment, pointer overflow, size overflow and stale handles rejected",
+        "resource destruction releases allocation budget"
+      ],
+      "HumusFrames": 0
+    },
+    "vertexLayout": [
+      {
+        "stream": 0,
+        "arrayStride": 32,
+        "stepMode": "vertex",
+        "attributes": [
+          {
+            "shaderLocation": 0,
+            "offset": 0,
+            "format": "float32x4"
+          },
+          {
+            "shaderLocation": 1,
+            "offset": 16,
+            "format": "float32x4"
+          }
+        ]
+      }
+    ],
+    "centerRGBA": [
+      63,
+      66,
+      126,
+      255
+    ],
+    "textureShader": {
+      "samplers": [
+        {
+          "group": 2,
+          "textureBinding": 0,
+          "samplerBinding": 1,
+          "dimension": 1
+        }
+      ],
+      "spirvBytes": 724,
+      "wgsl": "var<private> ps_r0_: vec4<f32>;\n@group(2) @binding(0) \nvar ps_s0_: texture_2d<f32>;\nvar<private> ps_PointCoordOrTexCoord0_1: vec4<f32>;\nvar<private> ps_t0_: vec4<f32>;\nvar<private> ps_oC0_: vec4<f32>;\n@group(2) @binding(1) \nvar global: sampler;\n\nfn main_1() {\n    let _e6 = ps_PointCoordOrTexCoord0_1;\n    ps_t0_ = _e6.xyzw;\n    let _e8 = ps_t0_;\n    let _e10 = textureSample(ps_s0_, global, _e8.xy);\n    ps_r0_ = _e10;\n    let _e11 = ps_r0_;\n    ps_oC0_ = _e11;\n    return;\n}\n\n@fragment \nfn main(@location(0) ps_PointCoordOrTexCoord0_: vec4<f32>) -> @location(0) vec4<f32> {\n    ps_PointCoordOrTexCoord0_1 = ps_PointCoordOrTexCoord0_;\n    main_1();\n    let _e3 = ps_oC0_;\n    return _e3;\n}\n",
+      "uniformGroup": 3,
+      "uniforms": [],
+      "constants": []
+    },
+    "textureRGBA": [
+      17,
+      121,
+      233,
+      255
+    ],
+    "compactInputs": {
+      "result": "passed",
+      "cases": [
+        {
+          "colorComponents": 1,
+          "positionComponents": 3,
+          "centerRGBA": [
+            64,
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "colorComponents": 2,
+          "positionComponents": 3,
+          "centerRGBA": [
+            64,
+            128,
+            0,
+            255
+          ]
+        },
+        {
+          "colorComponents": 3,
+          "positionComponents": 3,
+          "centerRGBA": [
+            64,
+            128,
+            191,
+            255
+          ]
+        }
+      ],
+      "draws": 3,
+      "HumusFrames": 0
+    },
+    "shaderConstants": {
+      "result": "passed",
+      "centerRGBA": [
+        64,
+        128,
+        191,
+        255
+      ],
+      "uniforms": [
+        {
+          "type": 0,
+          "index": 7,
+          "count": 1,
+          "constant": false
+        }
+      ],
+      "packedBytes": 16,
+      "draws": 1,
+      "HumusFrames": 0
+    },
+    "alphaStencil": {
+      "result": "passed",
+      "draws": 3,
+      "stencilSamples": [
+        [
+          64,
+          0,
+          26,
+          255
+        ],
+        [
+          0,
+          0,
+          26,
+          255
+        ]
+      ],
+      "depthSamples": [
+        [
+          64,
+          0,
+          26,
+          255
+        ],
+        [
+          0,
+          255,
+          0,
+          255
+        ]
+      ],
+      "checks": [
+        "alpha LESS255 passes .5 and rejects 1",
+        "discarded fragments leave stencil unchanged",
+        "stencil equality gates additive lighting",
+        "discarded fragments leave depth unchanged"
+      ]
+    },
+    "pipelineCache": {
+      "result": "passed",
+      "compilations": 5,
+      "translations": 2,
+      "checks": [
+        "unchanged draw reuses linked shader pair and pipeline",
+        "dynamic stencil reference does not compile a new pipeline",
+        "alpha/stencil/blend/depth variants produce verified GPU samples"
+      ],
+      "HumusFrames": 0
+    },
+    "indexedGeometry": {
+      "result": "passed",
+      "indexCount": 3,
+      "indexFormat": "uint16",
+      "source": "GeometryBuffers shared-memory uploads",
+      "HumusFrames": 0
+    },
+    "deviceBridge": {
+      "result": "passed",
+      "checks": [
+        "capability profile and format rejection verified",
+        "texture render target and standalone depth surface bound, cleared, restored, and released",
+        "draw submitted to a texture target and that texture was sampled after returning to the backbuffer",
+        "active attachment release and depth clear without an attachment rejected",
+        "textured draw RPC submitted GPU work",
+        "draw packet RPC submitted GPU work and rejected truncation",
+        "texture RPC allocation, mip upload, bounds and lifetime passed",
+        "shader RPC validation and lifetime passed",
+        "buffer RPC allocation/upload/bounds/lifetime passed",
+        "empty input polling and queued key delivery passed",
+        "unsupported device configuration rejected",
+        "asynchronous GPU validation wakes blocked-style RPC",
+        "color/depth/stencil attachments allocated and cleared",
+        "GPU-to-GPU presentation validated",
+        "released handle rejected"
+      ],
+      "diagnosticPresents": 1,
+      "HumusFrames": 0,
+      "events": [
+        {
+          "type": "probe",
+          "result": {
+            "secureContext": true,
+            "crossOriginIsolated": true,
+            "sharedArrayBuffer": true,
+            "webgpu": true,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+            "runtime": {
+              "mode": "wined3d-webgpu",
+              "deprecated": false,
+              "shaderCompiler": "vkd3d-shader",
+              "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+            },
+            "adapter": {
+              "vendor": "apple",
+              "architecture": "metal-3",
+              "device": "",
+              "description": "",
+              "isFallbackAdapter": false
+            },
+            "features": [
+              "depth32float-stencil8",
+              "rg11b10ufloat-renderable",
+              "texture-formats-tier1",
+              "bgra8unorm-storage",
+              "texture-compression-bc",
+              "dual-source-blending",
+              "core-features-and-limits",
+              "float32-filterable",
+              "indirect-first-instance",
+              "texture-compression-astc-sliced-3d",
+              "float32-blendable",
+              "subgroup-size-control",
+              "texture-compression-astc",
+              "texture-compression-etc2",
+              "depth-clip-control",
+              "texture-compression-bc-sliced-3d",
+              "timestamp-query",
+              "clip-distances",
+              "texture-formats-tier2",
+              "shader-f16",
+              "primitive-index",
+              "texture-component-swizzle",
+              "subgroups"
+            ],
+            "timestampQuery": {
+              "requested": false,
+              "available": true
+            },
+            "deviceCreated": true,
+            "hardwareAcceleration": "GPU device available; no Humus scene verified"
+          }
+        },
+        {
+          "type": "window-created",
+          "title": "device diagnostic",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "type": "d3d9-device-rejected",
+          "params": [
+            64,
+            64,
+            21,
+            1,
+            8,
+            0,
+            1,
+            0,
+            1,
+            1,
+            75,
+            0,
+            0,
+            2147483648
+          ],
+          "windowSize": [
+            64,
+            64
+          ],
+          "reason": "unsupported device parameters"
+        },
+        {
+          "type": "d3d9-device-created",
+          "backendId": 1,
+          "width": 64,
+          "height": 64,
+          "colorFormat": "bgra8unorm",
+          "depthFormat": "depth24plus-stencil8",
+          "validation": "passed",
+          "sceneFrames": 0
+        },
+        {
+          "type": "gpu-submission",
+          "kind": "clear",
+          "count": 1,
+          "sceneFrames": 0
+        },
+        {
+          "type": "realm-resources",
+          "sample": {
+            "realm": "gpuWorker",
+            "phase": "first completed Present",
+            "timeOrigin": 1789158128959.175,
+            "snapshotTime": 84.98500001430511,
+            "snapshotEpoch": 1789158129044.1602,
+            "navigation": [],
+            "resourceCount": 0,
+            "retainedEntries": 0,
+            "transferSize": 0,
+            "encodedBodySize": 0,
+            "decodedBodySize": 0,
+            "zeroSizeEntries": 0,
+            "entries": [],
+            "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+          }
+        },
+        {
+          "type": "performance-sample",
+          "sample": {
+            "firstPresentMs": 14.8349609375,
+            "totalSteadyIntervals": 0,
+            "steadyDurationMs": 0,
+            "submissionFPS": null,
+            "frameTimeMs": {
+              "p50": null,
+              "p95": null,
+              "p99": null,
+              "min": null,
+              "max": null
+            },
+            "rollingFrameTimeMs": {
+              "p50": null,
+              "p95": null,
+              "p99": null,
+              "min": null,
+              "max": null
+            },
+            "rollingIntervals": 0,
+            "rollingStutterFrames": {
+              "over25": 0,
+              "over33": 0,
+              "over50": 0,
+              "over100": 0
+            },
+            "frameOutliers": [],
+            "retainedIntervals": 0,
+            "warmupMs": 5000,
+            "queueCompletionSamples": [],
+            "limitations": "Present submission intervals after 5-second warmup; lifetime percentiles use the last 8192 intervals and rolling metrics use the last 600; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+            "drawBridge": {
+              "drawBatches": 0,
+              "batchedClears": 0,
+              "batchedDraws": 0,
+              "batchedUploads": 0,
+              "uploadedBytes": 0,
+              "maxBatchCommands": 0,
+              "stagingBytes": 16777216,
+              "batchCpuMs": 0,
+              "drawDecodeCpuMs": 0,
+              "synchronousPresents": 0,
+              "asynchronousPresents": 1,
+              "pendingCommands": 1,
+              "maxPendingCommands": 1
+            },
+            "rendererWrites": {
+              "sourceGeometryWrites": 0,
+              "versionedGeometryWrites": 0,
+              "versionFallbacks": 0,
+              "sourceUniformWrites": 0,
+              "queueWriteCalls": 0,
+              "queueWriteBytes": 0,
+              "rendererSubmissions": 1,
+              "renderPasses": 0,
+              "uploadPassBreaks": 0,
+              "stateCalls": 0,
+              "stateCallsSkipped": 0,
+              "drawCpuMs": 0,
+              "pipelineLookupCpuMs": 0,
+              "pendingGeometryBytes": 0,
+              "pendingUniformBytes": [
+                0,
+                0
+              ]
+            },
+            "wasmLinearMemoryBytes": 32768,
+            "geometryGPUBytes": 0,
+            "textureGPUBytes": 0,
+            "colorLogicalBytes": 16384,
+            "depthStencilLogicalMinimumBytes": 16384,
+            "pipelineCacheEntries": 0,
+            "pipelineCompilations": 0,
+            "pipelineCacheHits": 0,
+            "shaderObjects": 0,
+            "gpuTimingEnabled": false,
+            "captureEnabled": false,
+            "sceneEquivalenceEnabled": false,
+            "cameraTestEnabled": false
+          }
+        },
+        {
+          "type": "application-present",
+          "count": 1,
+          "submittedFrames": 1,
+          "completedFrames": 1,
+          "sceneFrames": 0
+        },
+        {
+          "type": "shader-rejected",
+          "message": "RangeError: unsupported shader profile"
+        },
+        {
+          "type": "draw-rejected",
+          "message": "RangeError: trailing draw packet data\n    at decodeDraw (http://127.0.0.1:8765/d3d9-draw.js:35:24)\n    at drawPacket (http://127.0.0.1:8765/gpu-worker.js:125:10)\n    at graphics (http://127.0.0.1:8765/gpu-worker.js:284:10)\n    at dispatchAsync (http://127.0.0.1:8765/gpu-worker.js:116:17)\n    at GpuCommandScheduler.dispatch [as run] (http://127.0.0.1:8765/gpu-worker.js:63:37)\n    at GpuCommandScheduler.pump (http://127.0.0.1:8765/gpu-command-scheduler.js:25:21)\n    at GpuCommandScheduler.enqueue (http://127.0.0.1:8765/gpu-command-scheduler.js:18:146)\n    at port.onmessage (http://127.0.0.1:8765/gpu-worker.js:51:44) declaration=null"
+        },
+        {
+          "type": "gpu-submission",
+          "kind": "clear",
+          "count": 4,
+          "sceneFrames": 0
+        },
+        {
+          "type": "shader-rejected",
+          "message": "RangeError: released shader handle"
+        }
+      ]
+    },
+    "diagnosticDraws": 17,
+    "result": "passed"
+  }
+}

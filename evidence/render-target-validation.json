@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-11",
+  "result": "passed",
+  "scope": "Generic D3D8 and D3D9 offscreen color and depth render targets through the DirectWebGPU WebGPU backend",
+  "implementationRevision": "b23640412bb8935f0cc6c511c1b563575e1b292e",
+  "artifactRevision": "56beb10ad384aefece5c5744d2599f341231c1d1",
+  "manifestRevision": "1902b0d8c69a56c45986228c28adf8a7a9253705",
+  "runtimeArtifact": {
+    "path": "web/generated/humus_bg.wasm",
+    "bytes": 23721213,
+    "sha256": "bce9ecd7169fd9d28469a0de520c6851d0f8a0e5d768a90b4e2c4f8e7dd2d637"
+  },
+  "checks": {
+    "nativeRust": [
+      "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d9::tests -- --nocapture",
+      "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d8::tests -- --nocapture"
+    ],
+    "javascriptSuite": "all scripts/test_*.mjs passed",
+    "shaderSuite": "scripts/test_shaders.py passed",
+    "serverSuite": "scripts/test_server.py passed",
+    "patchStack": "20 patches reproduce 180 source files from f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "legacyMode": "wined3d-webgpu remains default; legacy-win32 remains explicitly selectable",
+    "browserWebGPU": {
+      "runId": "0e9aa6a4-d97e-4bf9-92c4-ec2daa9af2d5",
+      "result": "passed",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "isFallbackAdapter": false
+      },
+      "targetChecks": [
+        "2D and cube render-target textures plus standalone color/depth surfaces clear through hardware WebGPU",
+        "2D/cube render-target subresources and standalone color surfaces read back expected pixels",
+        "a draw submitted to a texture target was sampled after returning to the default backbuffer",
+        "active attachment release and depth clear without an attachment were rejected"
+      ],
+      "diagnosticDraws": 17
+    }
+  },
+  "humus": {
+    "runId": "a4904e1d-4cbf-4c23-8efe-3c1da23eee64",
+    "originalExecutionAttempted": true,
+    "status": "60-second frame-delivery measurement completed",
+    "applicationPresents": 16221,
+    "submittedFrames": 16221,
+    "firstPresentObservedMs": 1967.794999986887,
+    "rollingFrameTimeMs": {
+      "p50": 2.0400390625,
+      "p95": 10.43505859375,
+      "p99": 11.550048828125,
+      "min": 1.224853515625,
+      "max": 12.235107421875
+    },
+    "rollingStutterFrames": {
+      "over25": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0
+    },
+    "pipelineCompilations": 8,
+    "pipelineCacheHits": 649039,
+    "errorEvents": [],
+    "frameEvidence": {
+      "captures": 3,
+      "firstSceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839335,
+        "pixels": 839680,
+        "meanRgb": [37, 21, 12]
+      },
+      "visualInspection": "Recognizable lit Humus brick-room scene rendered from the original executable."
+    }
+  },
+  "limitations": [
+    "This validates the new render-target operations with actual WebGPU hardware and checks one original Humus program for regressions; broad game compatibility remains in progress.",
+    "The Humus executable did not exercise the new offscreen render-target API in this run; the browser diagnostic performs the target creation, binding, clear, draw, sampling, readback, lifetime, and error checks.",
+    "Supported color formats are A8R8G8B8 and X8R8G8B8; supported depth format is D24S8; multisampling, lockable render targets, readback/copy APIs, MRT slots above zero, other depth formats, and volume textures remain unsupported.",
+    "Present submission intervals do not equal display scan-out or GPU shader duration."
+  ],
+  "humusRun": "evidence/render-target-humus-run.json",
+  "shaderRun": "evidence/render-target-shader-run.json"
+}
