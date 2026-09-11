@@ -1,0 +1,146 @@
+diff --git a/runtime/src/machine.rs b/runtime/src/machine.rs
+--- a/runtime/src/machine.rs
++++ b/runtime/src/machine.rs
+@@ -1,4 +1,4 @@
+-use crate::{Cont, ContFn, Flags, Memory, Regs, SegOfs, fpu::FPU, mmx::MMX, sse::SSE, segofs};
++use crate::{Cont, ContFn, Flags, Memory, Regs, SegOfs, fpu::FPU, mmx::MMX, segofs, sse::SSE};
+ 
+ #[derive(Default)]
+ pub struct CPU {
+diff --git a/runtime/src/ops/bit.rs b/runtime/src/ops/bit.rs
+--- a/runtime/src/ops/bit.rs
++++ b/runtime/src/ops/bit.rs
+@@ -1,28 +1,72 @@
+ //! Unprefixed IA-32 BT/BTS/BTR/BTC. Locked forms remain explicit traps.
+-use crate::{Flags,Memory};
+-pub fn bit_word(value:u32,index:u32,width:u32,operation:u32,flags:&mut Flags)->u32{
+- assert!(width==16||width==32);let mask=1u32<<(index&(width-1));flags.set(Flags::CF,value&mask!=0);
+- let result=match operation{0=>value,1=>value|mask,2=>value&!mask,3=>value^mask,_=>panic!("invalid bit operation")};
+- if width==16{result&0xffff}else{result}
++use crate::{Flags, Memory};
++pub fn bit_word(value: u32, index: u32, width: u32, operation: u32, flags: &mut Flags) -> u32 {
++    assert!(width == 16 || width == 32);
++    let mask = 1u32 << (index & (width - 1));
++    flags.set(Flags::CF, value & mask != 0);
++    let result = match operation {
++        0 => value,
++        1 => value | mask,
++        2 => value & !mask,
++        3 => value ^ mask,
++        _ => panic!("invalid bit operation"),
++    };
++    if width == 16 { result & 0xffff } else { result }
+ }
+-pub fn bit_address(base:u32,index:i32,width:u32)->u32{
+- let shift=match width{16=>4,32=>5,_=>panic!("invalid bit width")};base.wrapping_add((index>>shift).wrapping_mul((width/8)as i32)as u32)
++pub fn bit_address(base: u32, index: i32, width: u32) -> u32 {
++    let shift = match width {
++        16 => 4,
++        32 => 5,
++        _ => panic!("invalid bit width"),
++    };
++    base.wrapping_add((index >> shift).wrapping_mul((width / 8) as i32) as u32)
+ }
+-pub fn bit_memory(memory:&mut Memory,flags:&mut Flags,base:u32,index:i32,width:u32,operation:u32){
+- let addr=bit_address(base,index,width);let old=if width==16{memory.read::<u16>(addr)as u32}else{memory.read::<u32>(addr)};
+- let value=bit_word(old,index as u32,width,operation,flags);
+- if operation!=0{if width==16{memory.write::<u16>(addr,value as u16)}else{memory.write::<u32>(addr,value)}}
++pub fn bit_memory(
++    memory: &mut Memory,
++    flags: &mut Flags,
++    base: u32,
++    index: i32,
++    width: u32,
++    operation: u32,
++) {
++    let addr = bit_address(base, index, width);
++    let old = if width == 16 {
++        memory.read::<u16>(addr) as u32
++    } else {
++        memory.read::<u32>(addr)
++    };
++    let value = bit_word(old, index as u32, width, operation, flags);
++    if operation != 0 {
++        if width == 16 {
++            memory.write::<u16>(addr, value as u16)
++        } else {
++            memory.write::<u32>(addr, value)
++        }
++    }
+ }
+-#[cfg(test)]mod bit_tests{
+- use super::*;
+- #[test]fn memory_bitstrings_and_carry(){
+-  let mut memory=Memory::leak_new(0x2000);let mut flags=Flags::ZF;
+-  bit_memory(&mut memory,&mut flags,0x1020,-1,32,1);assert!(!flags.contains(Flags::CF));assert!(flags.contains(Flags::ZF));assert_eq!(memory.read::<u32>(0x101c),0x80000000);
+-  bit_memory(&mut memory,&mut flags,0x1020,-1,32,2);assert!(flags.contains(Flags::CF));assert_eq!(memory.read::<u32>(0x101c),0);
+-  bit_memory(&mut memory,&mut flags,0x1020,63,32,3);assert_eq!(memory.read::<u32>(0x1024),0x80000000);
+-  bit_memory(&mut memory,&mut flags,0x1020,63,32,0);assert!(flags.contains(Flags::CF));assert_eq!(memory.read::<u32>(0x1024),0x80000000);
+-  bit_memory(&mut memory,&mut flags,0x1040,-1,16,1);assert_eq!(memory.read::<u16>(0x103e),0x8000);
+-  assert_eq!(bit_word(0,33,32,1,&mut flags),2);assert_eq!(bit_word(0,17,16,1,&mut flags),2);
+-  assert_eq!(bit_address(0xffff_fffc,32,32),0);
+- }
++#[cfg(test)]
++mod bit_tests {
++    use super::*;
++    #[test]
++    fn memory_bitstrings_and_carry() {
++        let mut memory = Memory::leak_new(0x2000);
++        let mut flags = Flags::ZF;
++        bit_memory(&mut memory, &mut flags, 0x1020, -1, 32, 1);
++        assert!(!flags.contains(Flags::CF));
++        assert!(flags.contains(Flags::ZF));
++        assert_eq!(memory.read::<u32>(0x101c), 0x80000000);
++        bit_memory(&mut memory, &mut flags, 0x1020, -1, 32, 2);
++        assert!(flags.contains(Flags::CF));
++        assert_eq!(memory.read::<u32>(0x101c), 0);
++        bit_memory(&mut memory, &mut flags, 0x1020, 63, 32, 3);
++        assert_eq!(memory.read::<u32>(0x1024), 0x80000000);
++        bit_memory(&mut memory, &mut flags, 0x1020, 63, 32, 0);
++        assert!(flags.contains(Flags::CF));
++        assert_eq!(memory.read::<u32>(0x1024), 0x80000000);
++        bit_memory(&mut memory, &mut flags, 0x1040, -1, 16, 1);
++        assert_eq!(memory.read::<u16>(0x103e), 0x8000);
++        assert_eq!(bit_word(0, 33, 32, 1, &mut flags), 2);
++        assert_eq!(bit_word(0, 17, 16, 1, &mut flags), 2);
++        assert_eq!(bit_address(0xffff_fffc, 32, 32), 0);
++    }
+ }
+diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
+--- a/runtime/src/ops/misc.rs
++++ b/runtime/src/ops/misc.rs
+@@ -142,7 +142,10 @@
+             regs.edx = u32::from_le_bytes(*b"eusW");
+             regs.ecx = u32::from_le_bytes(*b"asm!");
+         }
+-        1 => { regs.eax = 0x500; regs.edx = 0x11; } // x87 and the virtual timestamp counter
++        1 => {
++            regs.eax = 0x500;
++            regs.edx = 0x11;
++        } // x87 and the virtual timestamp counter
+         0x8000_0000 => regs.eax = 0x8000_0000,
+         _ => {}
+     }
+@@ -161,6 +164,6 @@
+         assert_eq!(regs.esi, 0x12345678);
+         regs.eax = 7;
+         super::cpuid(&mut regs);
+-        assert_eq!((regs.eax, regs.ebx, regs.ecx, regs.edx), (0,0,0,0));
++        assert_eq!((regs.eax, regs.ebx, regs.ecx, regs.edx), (0, 0, 0, 0));
+     }
+ }
+diff --git a/runtime/src/ops/string.rs b/runtime/src/ops/string.rs
+--- a/runtime/src/ops/string.rs
++++ b/runtime/src/ops/string.rs
+@@ -171,10 +171,7 @@
+             panic!(
+                 "guest movs null-page access src={src_addr:#010x} dst={dst_addr:#010x} \
+                  esi={:#010x} edi={:#010x} ecx={:#010x} eip={:#010x}",
+-                self.cpu.regs.esi,
+-                self.cpu.regs.edi,
+-                self.cpu.regs.ecx,
+-                self.cpu.regs.eip_context,
++                self.cpu.regs.esi, self.cpu.regs.edi, self.cpu.regs.ecx, self.cpu.regs.eip_context,
+             );
+         }
+         let val = self.memory.read::<S>(src_addr);

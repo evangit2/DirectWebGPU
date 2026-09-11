@@ -1,5 +1,6 @@
 """Fetch pinned source and original permitted assets; preserve any existing checkout."""
 import pathlib,json,subprocess,hashlib,urllib.request,zipfile,shutil
+from theseus_patches import patch_series,read_source_manifest,source_hashes
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 deps=json.loads((ROOT/'dependencies.json').read_text())
 def run(*args,**kwargs):subprocess.run(args,check=True,**kwargs)
@@ -27,13 +28,13 @@ if not vendor.exists():
  run('git','clone',deps['theseus']['url'],str(vendor));run('git','-C',str(vendor),'checkout','--detach',deps['theseus']['revision'])
 actual=subprocess.check_output(['git','-C',str(vendor),'rev-parse','HEAD'],text=True).strip()
 if actual!=deps['theseus']['revision']:raise RuntimeError(f'Unexpected Theseus revision {actual}; preserve it and restore in a fresh folder')
-theseus_patches=[ROOT/'patches/theseus.patch',*sorted((ROOT/'patches').glob('theseus-*.patch'))]
-for patch in theseus_patches:
- if not patch.exists():continue
- if patch.name=='theseus.patch' and (vendor/'win32/winapi/src/d3d9.rs').exists():continue
- applied=subprocess.run(['git','-C',str(vendor),'apply','--reverse','--check',str(patch)],capture_output=True).returncode==0
- if not applied:
+expected_sources=read_source_manifest(ROOT)
+if source_hashes(vendor)!=expected_sources:
+ status=subprocess.check_output(['git','-C',str(vendor),'status','--porcelain','--untracked-files=all'],text=True)
+ if status:raise RuntimeError('Theseus source is neither pristine nor the recorded DirectWebGPU patch result; preserve it and restore in a fresh folder')
+ for patch in patch_series(ROOT):
   run('git','-C',str(vendor),'apply','--check',str(patch));run('git','-C',str(vendor),'apply',str(patch))
+ if source_hashes(vendor)!=expected_sources:raise RuntimeError('Theseus patch result does not match patches/theseus-source.sha256')
 for p in (ROOT/'runtime/humus').rglob('*'):
  if p.is_file():
   dest=vendor/'out/humus'/p.relative_to(ROOT/'runtime/humus');dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dest)

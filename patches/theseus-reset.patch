@@ -85,4 +85,4 @@
 + }
   #[win32_derive::dllexport]pub fn Present(ctx:&mut Context,this:u32,src:u32,dst:u32,window:u32,dirty:u32)->u32{d3d9::IDirect3DDevice9::Present(ctx,this,src,dst,window,dirty)}
   #[win32_derive::dllexport]pub fn GetBackBuffer(ctx:&mut Context,this:u32,index:u32,kind:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetBackBuffer(ctx,this,0,index,kind,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
- pub fn GetRasterStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetRasterStatus")}
+  pub fn GetRasterStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetRasterStatus")}

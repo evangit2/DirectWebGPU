@@ -50,6 +50,7 @@ Then open `http://127.0.0.1:8766/mygame` for the game view or `http://127.0.0.1:
 
 ```sh
 python3 scripts/bootstrap.py
+python3 scripts/test_patch_stack.py
 python3 scripts/fetch_openmpt.py
 scripts/translate.sh
 scripts/run_native.sh             # native diagnostic lacks browser GPU; 60-second cap

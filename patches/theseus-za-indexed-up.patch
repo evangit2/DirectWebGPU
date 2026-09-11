@@ -1,0 +1,157 @@
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -4,5 +4,5 @@
+ struct Stream{buffer:u32,offset:u32,stride:u32}
+ #[derive(Clone)]
+-struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,up_index_buffers:[u32;2],up_index_offsets:[u32;2],states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
+ static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+ pub static mut VTABLE:u32=0;
+@@ -17,5 +17,5 @@
+  let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
+  let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
+- IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,up_buffer:0,up_offset:0,states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,up_buffer:0,up_offset:0,up_index_buffers:[0;2],up_index_offsets:[0;2],states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
+ }
+ pub fn exists(this:u32)->bool{DEVICES.lock().unwrap().contains_key(&this)}
+@@ -38,5 +38,5 @@
+  for shader in d.shaders{super::shader::release_binding(ctx,shader)}
+  IDirect3DSurface9::destroy_owned(ctx,d.color);IDirect3DSurface9::destroy_owned(ctx,d.depth);
+- if d.up_buffer!=0{host::graphics_call(7,&[d.backend,d.up_buffer]);}
++ if d.up_buffer!=0{host::graphics_call(7,&[d.backend,d.up_buffer]);}for buffer in d.up_index_buffers{if buffer!=0{host::graphics_call(7,&[d.backend,buffer]);}}
+  host::graphics_call(2,&[d.backend]);IDirect3D9::Release(ctx,d.parent);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);0
+ }
+@@ -58,5 +58,5 @@
+ #[win32_derive::dllexport]
+ pub fn Present(ctx:&mut Context,this:u32,src:u32,dst:u32,window:u32,dirty:u32)->u32{
+- let d=device(this);if d.scene||src!=0||dst!=0||window!=0||dirty!=0{return D3DERR_INVALIDCALL}crate::memory_metrics::present(ctx);let result=hresult(host::graphics_call(4,&[d.backend]));if result==D3D_OK{DEVICES.lock().unwrap().get_mut(&this).unwrap().up_offset=0;}result
++ let d=device(this);if d.scene||src!=0||dst!=0||window!=0||dirty!=0{return D3DERR_INVALIDCALL}crate::memory_metrics::present(ctx);let result=hresult(host::graphics_call(4,&[d.backend]));if result==D3D_OK{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.up_offset=0;d.up_index_offsets=[0;2];}result
+ }
+ pub const VTABLE_ENTRIES:[&str;119]=["QueryInterface","AddRef","Release","TestCooperativeLevel","GetAvailableTextureMem","EvictManagedResources","GetDirect3D","GetDeviceCaps","GetDisplayMode","GetCreationParameters","SetCursorProperties","SetCursorPosition","ShowCursor","CreateAdditionalSwapChain","GetSwapChain","GetNumberOfSwapChains","Reset","Present","GetBackBuffer","GetRasterStatus","SetDialogBoxMode","SetGammaRamp","GetGammaRamp","CreateTexture","CreateVolumeTexture","CreateCubeTexture","CreateVertexBuffer","CreateIndexBuffer","CreateRenderTarget","CreateDepthStencilSurface","UpdateSurface","UpdateTexture","GetRenderTargetData","GetFrontBufferData","StretchRect","ColorFill","CreateOffscreenPlainSurface","SetRenderTarget","GetRenderTarget","SetDepthStencilSurface","GetDepthStencilSurface","BeginScene","EndScene","Clear","SetTransform","GetTransform","MultiplyTransform","SetViewport","GetViewport","SetMaterial","GetMaterial","SetLight","GetLight","LightEnable","GetLightEnable","SetClipPlane","GetClipPlane","SetRenderState","GetRenderState","CreateStateBlock","BeginStateBlock","EndStateBlock","SetClipStatus","GetClipStatus","GetTexture","SetTexture","GetTextureStageState","SetTextureStageState","GetSamplerState","SetSamplerState","ValidateDevice","SetPaletteEntries","GetPaletteEntries","SetCurrentTexturePalette","GetCurrentTexturePalette","SetScissorRect","GetScissorRect","SetSoftwareVertexProcessing","GetSoftwareVertexProcessing","SetNPatchMode","GetNPatchMode","DrawPrimitive","DrawIndexedPrimitive","DrawPrimitiveUP","DrawIndexedPrimitiveUP","ProcessVertices","CreateVertexDeclaration","SetVertexDeclaration","GetVertexDeclaration","SetFVF","GetFVF","CreateVertexShader","SetVertexShader","GetVertexShader","SetVertexShaderConstantF","GetVertexShaderConstantF","SetVertexShaderConstantI","GetVertexShaderConstantI","SetVertexShaderConstantB","GetVertexShaderConstantB","SetStreamSource","GetStreamSource","SetStreamSourceFreq","GetStreamSourceFreq","SetIndices","GetIndices","CreatePixelShader","SetPixelShader","GetPixelShader","SetPixelShaderConstantF","GetPixelShaderConstantF","SetPixelShaderConstantI","GetPixelShaderConstantI","SetPixelShaderConstantB","GetPixelShaderConstantB","DrawRectPatch","DrawTriPatch","DeletePatch","CreateQuery"];
+@@ -97,7 +97,7 @@
+  for texture in current.textures{super::IDirect3DTexture9::release_binding(ctx,texture)}for shader in current.shaders{super::shader::release_binding(ctx,shader)}
+  IDirect3DSurface9::destroy_owned(ctx,current.color);IDirect3DSurface9::destroy_owned(ctx,current.depth);
+- if current.up_buffer!=0{host::graphics_call(7,&[current.backend,current.up_buffer]);}
++ if current.up_buffer!=0{host::graphics_call(7,&[current.backend,current.up_buffer]);}for buffer in current.up_index_buffers{if buffer!=0{host::graphics_call(7,&[current.backend,buffer]);}}
+  let color=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],params[2],1);let depth=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],75,2);
+- let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();D3D_OK
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.up_index_buffers=[0;2];d.up_index_offsets=[0;2];d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();D3D_OK
+ }
+ #[win32_derive::dllexport]
+@@ -266,8 +266,27 @@
+  if bytes==0||aligned>16*1024*1024-upload_offset{return D3DERR_INVALIDCALL;}
+  let uploaded=host::graphics_call(6,&[d.backend,gpu,upload_offset,prepared.bytes.as_ptr()as usize as u32,bytes]);
+- let result=if uploaded==1{DEVICES.lock().unwrap().get_mut(&this).unwrap().up_offset=upload_offset+aligned;draw_prepared(ctx,this,prepared.kind,0,primitives,None,Some((gpu,upload_offset,prepared.stride,&prepared.declaration)))}else{uploaded};
++ let result=if uploaded==1{DEVICES.lock().unwrap().get_mut(&this).unwrap().up_offset=upload_offset+aligned;draw_prepared(ctx,this,prepared.kind,0,primitives,None,Some(UpDraw{vertex:gpu,offset:upload_offset,stride:prepared.stride,declaration:&prepared.declaration,index:None}))}else{uploaded};
+  result
+ }
+-pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawIndexedPrimitiveUP",9)}
++#[win32_derive::dllexport]
++pub fn DrawIndexedPrimitiveUP(ctx:&mut Context,this:u32,kind:u32,min:u32,num:u32,primitives:u32,index_pointer:u32,index_format:u32,vertex_pointer:u32,stride:u32)->u32{
++ let d=device(this);
++ // Direct3D consumes both user arrays before returning and clears the current
++ // stream-zero and index bindings after every call, including failures.
++ SetStreamSource(ctx,this,0,0,0,0);SetIndices(ctx,this,0);
++ if !d.scene||d.declaration==0||num==0{return D3DERR_INVALIDCALL}
++ let Some(index_count)=super::up::vertex_count(kind,primitives)else{return D3DERR_INVALIDCALL};let index_width=match index_format{101=>2u32,102=>4,_=>return D3DERR_INVALIDCALL};
++ let Some(index_bytes)=index_count.checked_mul(index_width)else{return D3DERR_INVALIDCALL};let Some(vertex_start)=min.checked_mul(stride).and_then(|n|vertex_pointer.checked_add(n))else{return D3DERR_INVALIDCALL};let Some(vertex_bytes)=num.checked_mul(stride)else{return D3DERR_INVALIDCALL};
++ if index_bytes>4*1024*1024||vertex_bytes>16*1024*1024||!valid(ctx,index_pointer,index_bytes as usize)||!valid(ctx,vertex_start,vertex_bytes as usize){return D3DERR_INVALIDCALL}
++ let declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let Some(prepared)=super::up::prepare_indexed(kind,primitives,min,num,index_format,stride,&declaration,&ctx.memory.bytes[vertex_start as usize..(vertex_start+vertex_bytes)as usize],&ctx.memory.bytes[index_pointer as usize..(index_pointer+index_bytes)as usize])else{return D3DERR_INVALIDCALL};
++ let vertex_gpu=if d.up_buffer!=0{d.up_buffer}else{let gpu=host::graphics_call(5,&[d.backend,6,16*1024*1024,100]);if gpu==0||gpu>=0x80000000{return D3DERR_NOTAVAILABLE}DEVICES.lock().unwrap().get_mut(&this).unwrap().up_buffer=gpu;gpu};
++ let index_slot=(index_format-101)as usize;let current=device(this);let index_gpu=if current.up_index_buffers[index_slot]!=0{current.up_index_buffers[index_slot]}else{let gpu=host::graphics_call(5,&[d.backend,7,4*1024*1024,index_format]);if gpu==0||gpu>=0x80000000{return D3DERR_NOTAVAILABLE}DEVICES.lock().unwrap().get_mut(&this).unwrap().up_index_buffers[index_slot]=gpu;gpu};
++ let current=device(this);let vertex_size=prepared.vertices.len()as u32;let index_size=prepared.indices.len()as u32;let vertex_offset=current.up_offset;let index_offset=current.up_index_offsets[index_slot];let vertex_aligned=(vertex_size+3)&!3;let index_aligned=(index_size+3)&!3;
++ if vertex_size==0||index_size==0||vertex_aligned>16*1024*1024-vertex_offset||index_aligned>4*1024*1024-index_offset{return D3DERR_INVALIDCALL}
++ let uploaded_vertices=host::graphics_call(6,&[d.backend,vertex_gpu,vertex_offset,prepared.vertices.as_ptr()as usize as u32,vertex_size]);if uploaded_vertices!=1{return uploaded_vertices}
++ let uploaded_indices=host::graphics_call(6,&[d.backend,index_gpu,index_offset,prepared.indices.as_ptr()as usize as u32,index_size]);if uploaded_indices!=1{return uploaded_indices}
++ {let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.up_offset=vertex_offset+vertex_aligned;d.up_index_offsets[index_slot]=index_offset+index_aligned;}
++ draw_prepared(ctx,this,prepared.kind,index_offset/index_width,primitives,None,Some(UpDraw{vertex:vertex_gpu,offset:vertex_offset,stride:prepared.stride,declaration:&prepared.declaration,index:Some((index_gpu,prepared.max))}))
++}
+ pub fn ProcessVertices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ProcessVertices",7)}
+ #[win32_derive::dllexport]
+@@ -358,5 +377,6 @@
+  draw_prepared(ctx,this,kind,first,primitives,indexed,None)
+ }
+-fn draw_prepared(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>,up:Option<(u32,u32,u32,&[u8])>)->u32{
++#[derive(Clone,Copy)]struct UpDraw<'a>{vertex:u32,offset:u32,stride:u32,declaration:&'a[u8],index:Option<(u32,u32)>}
++fn draw_prepared(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>,up:Option<UpDraw<'_>>)->u32{
+  let d=device(this);if !d.scene||d.declaration==0{return D3DERR_INVALIDCALL}
+  let fixed=d.shaders==[0,0];if d.shaders.contains(&0)&&!fixed{panic!("unsupported D3D9 mixed fixed/programmable shader stages");}
+@@ -366,8 +386,8 @@
+  // color or a neutral color for normal-only vertices.
+  let factor=match kind{1=>1,2=>2,4=>3,_=>return D3DERR_INVALIDCALL};let Some(count)=primitives.checked_mul(factor)else{return D3DERR_INVALIDCALL};if count==0||count>1048576{return D3DERR_INVALIDCALL}
+- let (index,base,max)=if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
+- let owned_declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let declaration=up.map(|u|u.3).unwrap_or(&owned_declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137&&**k!=139).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
++ let (index,base,max)=if let Some((gpu,max))=up.and_then(|u|u.index){(gpu,0,max)}else if let Some((base,min,num))=indexed{if d.indices==0{return D3DERR_INVALIDCALL}let Some(max)=super::buffers::index_range(ctx,d.indices,first,count,base,min,num)else{return D3DERR_INVALIDCALL};(super::buffers::draw_handle(d.indices).unwrap(),base as u32,max)}else{let Some(max)=first.checked_add(count-1)else{return D3DERR_INVALIDCALL};(0,0,max)};
++ let owned_declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let declaration=up.map(|u|u.declaration).unwrap_or(&owned_declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137&&**k!=139).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
+  let mut words=vec![if fixed{0x33445246}else{0x41445246},if fixed{0}else{super::shader::gpu_handle(d.shaders[0])},if fixed{0}else{super::shader::gpu_handle(d.shaders[1])},kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
+- for (slot,stream) in d.streams.into_iter().enumerate(){if let Some((gpu,offset,stride,_))=up{words.extend_from_slice(&if slot==0{[gpu,offset,stride]}else{[0,0,0]});continue;}let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
++ for (slot,stream) in d.streams.into_iter().enumerate(){if let Some(up)=up{words.extend_from_slice(&if slot==0{[up.vertex,up.offset,up.stride]}else{[0,0,0]});continue;}let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
+  for(k,v)in states{words.extend_from_slice(&[k,v])}for chunk in declaration.chunks_exact(4){words.push(u32::from_le_bytes(chunk.try_into().unwrap()))}if !fixed{d.constants.lock().unwrap().draw_words(&mut words);}
+  for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}for stage in d.texture_stages{words.extend_from_slice(&stage);}words.extend_from_slice(&d.viewport);words.extend_from_slice(&d.scissor);
+--- a/win32/winapi/src/d3d9/up.rs
++++ b/win32/winapi/src/d3d9/up.rs
+@@ -1,4 +1,5 @@
+ //! Bounded user-pointer vertex normalization; no rasterization or geometry replacement.
+ pub struct Prepared{pub kind:u32,pub stride:u32,pub declaration:Vec<u8>,pub bytes:Vec<u8>}
++pub struct PreparedIndexed{pub kind:u32,pub stride:u32,pub declaration:Vec<u8>,pub vertices:Vec<u8>,pub indices:Vec<u8>,pub max:u32}
+ pub fn vertex_count(kind:u32,primitives:u32)->Option<u32>{
+  if primitives==0||primitives>349525{return None;}
+@@ -33,4 +34,16 @@
+  Some(Prepared{kind:output_kind,stride:width,declaration:layout,bytes})
+ }
++pub fn prepare_indexed(kind:u32,primitives:u32,min:u32,num:u32,format:u32,stride:u32,declaration:&[u8],vertices:&[u8],indices:&[u8])->Option<PreparedIndexed>{
++ let input_count=vertex_count(kind,primitives)?;let index_width=match format{101=>2usize,102=>4,_=>return None};
++ if num==0||vertices.len()!=num.checked_mul(stride)? as usize||indices.len()!=input_count as usize*index_width{return None;}
++ let normalized=prepare(1,num,stride,declaration,vertices)?;
++ let end=min.checked_add(num)?;let mut source=Vec::with_capacity(input_count as usize);
++ for raw in indices.chunks_exact(index_width){let value=if index_width==2{u16::from_le_bytes(raw.try_into().ok()?)as u32}else{u32::from_le_bytes(raw.try_into().ok()?)};if value<min||value>=end{return None;}source.push(value-min);}
++ let output_kind=match kind{3=>2,5|6=>4,_=>kind};let factor=match output_kind{1=>1,2=>2,4=>3,_=>return None};let output_count=primitives.checked_mul(factor)?;
++ let mut output=Vec::with_capacity(output_count as usize*index_width);let mut max=0;
++ for i in 0..output_count{let source_index=match kind{3=>i/2+i%2,5=>{let triangle=i/3;let corner=i%3;triangle+if triangle%2==1&&corner<2{1-corner}else{corner}},6=>{let corner=i%3;if corner==0{0}else{i/3+corner}},_=>i};let value=*source.get(source_index as usize)?;max=max.max(value);if index_width==2{output.extend_from_slice(&(value as u16).to_le_bytes())}else{output.extend_from_slice(&value.to_le_bytes())}}
++ while output.len()%4!=0{output.push(0)}
++ Some(PreparedIndexed{kind:output_kind,stride:normalized.stride,declaration:normalized.declaration,vertices:normalized.bytes,indices:output,max})
++}
+ #[cfg(test)]mod tests{
+  use super::*;
+@@ -49,3 +62,10 @@
+   let p=prepare(3,4,4,&decl,&source).unwrap();let ids:Vec<u32>=p.bytes.chunks_exact(4).map(|b|u32::from_le_bytes(b.try_into().unwrap())).collect();assert_eq!(ids,[0,1,1,2,2,3,3,4]);
+  }
++ #[test]fn indexed_lists_strips_ranges_and_formats(){
++  let declaration=crate::d3d9::IDirect3DVertexDeclaration9::from_fvf(0x42).unwrap();let mut vertices=Vec::new();for i in 0..4{vertices.extend_from_slice(&(i as f32).to_le_bytes());vertices.extend_from_slice(&[0;8]);vertices.extend_from_slice(&[0x11,0x22,0x33,0x44]);}
++  let indices16:[u16;4]=[2,3,4,5];let raw16:Vec<u8>=indices16.into_iter().flat_map(u16::to_le_bytes).collect();let p=prepare_indexed(5,2,2,4,101,16,&declaration,&vertices,&raw16).unwrap();assert_eq!((p.kind,p.stride,p.max,p.vertices.len()),(4,28,3,112));let decoded:Vec<u16>=p.indices.chunks_exact(2).map(|b|u16::from_le_bytes(b.try_into().unwrap())).collect();assert_eq!(decoded,[0,1,2,2,1,3]);
++  let indices32:[u32;4]=[7,8,9,10];let raw32:Vec<u8>=indices32.into_iter().flat_map(u32::to_le_bytes).collect();let p=prepare_indexed(6,2,7,4,102,16,&declaration,&vertices,&raw32).unwrap();let decoded:Vec<u32>=p.indices.chunks_exact(4).map(|b|u32::from_le_bytes(b.try_into().unwrap())).collect();assert_eq!(decoded,[0,1,2,0,2,3]);
++  let triangle:[u16;3]=[2,3,4];let raw:Vec<u8>=triangle.into_iter().flat_map(u16::to_le_bytes).collect();let p=prepare_indexed(4,1,2,4,101,16,&declaration,&vertices,&raw).unwrap();assert_eq!(p.indices.len(),8);assert_eq!(&p.indices[..6],&[0,0,1,0,2,0]);
++  let bad:[u16;3]=[2,3,6];let raw:Vec<u8>=bad.into_iter().flat_map(u16::to_le_bytes).collect();assert!(prepare_indexed(4,1,2,4,101,16,&declaration,&vertices,&raw).is_none());assert!(prepare_indexed(4,1,2,4,100,16,&declaration,&vertices,&raw).is_none());
++ }
+ }
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -242,5 +242,5 @@
+  #[win32_derive::dllexport]pub fn DrawIndexedPrimitive(ctx:&mut Context,this:u32,k:u32,min:u32,num:u32,start:u32,count:u32)->u32{let base=state(this).base as i32;d3d9::IDirect3DDevice9::DrawIndexedPrimitive(ctx,this,k,base,min,num,start,count)}
+  #[win32_derive::dllexport]pub fn DrawPrimitiveUP(ctx:&mut Context,this:u32,k:u32,count:u32,p:u32,stride:u32)->u32{d3d9::IDirect3DDevice9::DrawPrimitiveUP(ctx,this,k,count,p,stride)}
+- pub fn DrawIndexedPrimitiveUP_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DrawIndexedPrimitiveUP")}
++ #[win32_derive::dllexport]pub fn DrawIndexedPrimitiveUP(ctx:&mut Context,this:u32,k:u32,min:u32,num:u32,count:u32,indices:u32,format:u32,vertices:u32,stride:u32)->u32{d3d9::IDirect3DDevice9::DrawIndexedPrimitiveUP(ctx,this,k,min,num,count,indices,format,vertices,stride)}
+  pub fn ProcessVertices_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","ProcessVertices")}
+  #[win32_derive::dllexport]pub fn CreateVertexShader(ctx:&mut Context,this:u32,pdeclaration:u32,pfunction:u32,out:u32,usage:u32)->u32{
+@@ -395,4 +395,7 @@
+   assert_eq!(ctx.memory.read::<u32>(0x1364),23);
+   assert_eq!(ctx.memory.read::<u32>(ib),0x1c00);
+- }
+-}
++  assert_eq!(IDirect3DDevice8::SetVertexShader(&mut ctx,dev,0x142),D3D_OK);assert_eq!(IDirect3DDevice8::BeginScene(&mut ctx,dev),D3D_OK);ctx.memory.bytes[0x1500..0x1548].fill(0);ctx.memory.bytes[0x1580..0x1586].copy_from_slice(&[0,0,1,0,2,0]);
++  ctx.call32_x86(runtime::Cont(IDirect3DDevice8::DrawIndexedPrimitiveUP_stdcall),vec![dev,4,0,3,1,0x1580,101,0x1500,24]);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(IDirect3DDevice8::EndScene(&mut ctx,dev),D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetStreamSource(&mut ctx,dev,0,0x1350,0x1354),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1350),0);assert_eq!(IDirect3DDevice8::GetIndices(&mut ctx,dev,0x1360,0x1364),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1360),0);
++ }
++}
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -340,5 +340,8 @@
+         assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,4,0,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::BeginScene(&mut ctx,dev),D3D_OK);
+         ctx.call32_x86(runtime::Cont(IDirect3DDevice9::DrawPrimitive_stdcall),vec![dev,4,0,1]);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);assert_eq!(ctx.cpu.regs.esp,original_sp); // Native host has no GPU; packet reached its real boundary.
+-        assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,6,0,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,4,u32::MAX,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::DrawIndexedPrimitive(&mut ctx,dev,4,0,0,3,u32::MAX,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::EndScene(&mut ctx,dev),D3D_OK);
++        assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,6,0,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::DrawPrimitive(&mut ctx,dev,4,u32::MAX,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::DrawIndexedPrimitive(&mut ctx,dev,4,0,0,3,u32::MAX,1),D3DERR_INVALIDCALL);
++        ctx.memory.bytes[0x1900..0x193c].fill(0);ctx.memory.bytes[0x1980..0x1986].copy_from_slice(&[0,0,1,0,2,0]);ctx.call32_x86(runtime::Cont(IDirect3DDevice9::DrawIndexedPrimitiveUP_stdcall),vec![dev,4,0,3,1,0x1980,101,0x1900,20]);assert_eq!(ctx.cpu.regs.eax,D3DERR_NOTAVAILABLE);assert_eq!(ctx.cpu.regs.esp,original_sp);
++        assert_eq!(IDirect3DDevice9::GetStreamSource(&mut ctx,dev,0,0x1200,0x1204,0x1208),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),0);assert_eq!(IDirect3DDevice9::GetIndices(&mut ctx,dev,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),0);assert_eq!(IDirect3DDevice9::SetStreamSource(&mut ctx,dev,0,vb,4,16),D3D_OK);assert_eq!(IDirect3DDevice9::SetIndices(&mut ctx,dev,ib),D3D_OK);
++        assert_eq!(IDirect3DDevice9::EndScene(&mut ctx,dev),D3D_OK);
+         assert_eq!(buffers::Release(&mut ctx,vb),0);assert_eq!(buffers::Release(&mut ctx,ib),0);
+         assert_ne!(ctx.memory.read::<u32>(vb),0); // bindings keep storage alive
