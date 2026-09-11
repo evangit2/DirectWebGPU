@@ -17,7 +17,7 @@ console.log(`Draw batch ownership, ${BATCH_COMMANDS}-command bound, pointer vali
 // Exercise the real blocking handoff, including notification before/after wait.
 const {Worker}=await import('node:worker_threads');
 const worker=new Worker(`const {parentPort}=require('node:worker_threads'); import(${JSON.stringify(new URL('../web/draw-batch.js',import.meta.url).href)}).then(({executeDrawBatch})=>parentPort.on('message',data=>executeDrawBatch(data,async()=>1)));`,{eval:true});
-try{const concurrent=new DrawBatch(data=>worker.postMessage(data));concurrent.enqueue([13,9,4096,5500],memory);concurrent.flush();assert.equal(concurrent.commands.length,0);}finally{await worker.terminate();}
+try{const concurrent=new DrawBatch(data=>worker.postMessage(data));concurrent.enqueue([13,9,4096,5500],memory);concurrent.flush();assert.equal(concurrent.commands.length,0);concurrent.drain();}finally{await worker.terminate();}
 console.log('Cross-worker Atomics handoff passed');
 
 // Mixed updates retain source bytes and execute before later consumers.
@@ -29,3 +29,8 @@ const large=new SharedArrayBuffer(BATCH_BYTES+8192);assert.equal(mixed.enqueue([
 console.log('Mixed upload/draw order, copied bytes, alignment and large-upload fallback passed');
 const failedOrder=[];await assert.rejects(()=>executeDrawBatch({buffer:mixed.buffer,commands:mixed.commands},async op=>{failedOrder.push(op);return op===11?0x8876086c:1;}),/rejected/);assert.deepEqual(failedOrder,[3,6,13,11]);assert.equal(new Int32Array(mixed.buffer)[0],2);
 console.log('Rejected texture update aborts subsequent draws and wakes the CPU');
+const frames=[];const framed=new DrawBatch(data=>{frames.push({...data,commands:data.commands.map(a=>a.slice())});Atomics.store(new Int32Array(data.buffer),0,1)});
+framed.enqueue([3,9,3,0xff102030,0x3f800000,0],memory);assert.equal(framed.enqueue([4,9],memory),true);framed.flush();
+assert.equal(frames.length,1);await executeDrawBatch(frames[0],async()=>1);
+assert.throws(()=>framed.enqueue([4,9,1],memory),/command/);
+console.log('Present is a validated draw-batch frame boundary');

@@ -1,0 +1,40 @@
+{
+  "benchmark": "Hamsterball Impossible Race",
+  "environment": {
+    "browser": "Chrome 152 headless",
+    "renderer": "SwiftShader WebGPU",
+    "resolution": "1280x720",
+    "input": "ArrowUp + ArrowLeft",
+    "measurementSeconds": 15
+  },
+  "baseline": {
+    "completedFrameRate": 23.53,
+    "frameTimeMs": {
+      "p50": 33.9548,
+      "p95": 83.165,
+      "p99": 123.9048,
+      "max": 198.6001
+    },
+    "over100ms": 19,
+    "measurementSeconds": 30
+  },
+  "optimized": {
+    "completedFrameRate": 53.53,
+    "frameTimeMs": {
+      "p50": 17.3398,
+      "p95": 28.165,
+      "p99": 53.145,
+      "max": 151.47
+    },
+    "over100ms": 1,
+    "completedFrames": 803
+  },
+  "changes": [
+    "single-check translated memory access",
+    "release diagnostic bookkeeping removed from translated hot path",
+    "two-slot CPU/GPU frame overlap",
+    "completed-GPU-frame backpressure",
+    "lower-allocation D3D8/D3D9 draw decoding"
+  ],
+  "limitations": "Automated software-renderer benchmark. User-visible performance depends on browser, GPU and system load. Frame rate counts completed WebGPU Presents; it does not claim physical display scan-out."
+}

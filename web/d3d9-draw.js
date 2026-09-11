@@ -10,7 +10,9 @@ const EMPTY_REGISTERS=new Uint32Array(0);
 const alignUniform=value=>(value+255)&~255;
 const floatBitsView=new DataView(new ArrayBuffer(4));
 const floatFromBits=value=>{floatBitsView.setUint32(0,value,true);return floatBitsView.getFloat32(0,true);};
-function defaultTextureStages(){return Array.from({length:8},(_,stage)=>new Uint32Array(stage===0?[4,2,1,2,2,1,0,0]:[1,2,1,1,2,1,stage,0]));}
+const DEFAULT_TEXTURE_STAGES=Object.freeze(Array.from({length:8},(_,stage)=>new Uint32Array(stage===0?[4,2,1,2,2,1,0,0]:[1,2,1,1,2,1,stage,0])));
+function defaultTextureStages(){return DEFAULT_TEXTURE_STAGES}
+const samplerAt=(samplers,index)=>samplers instanceof Uint32Array?samplers.subarray(index*14,index*14+14):samplers[index];
 export function decodeDraw(memory,pointer,length){
  if(!(memory instanceof SharedArrayBuffer)||![pointer,length].every(Number.isInteger)||pointer<4096||pointer%4||length%4||length<2048||length>16384||pointer+length>memory.byteLength)throw RangeError('invalid draw packet range');
  // The caller keeps the synchronous RPC or draw-batch storage exclusively
@@ -22,10 +24,10 @@ export function decodeDraw(memory,pointer,length){
  const [magic,vertex,pixel,kind,count,first,index,base,max,declarationLength,stateCount]=take(11);
  const fixedHeader=vertex===0&&pixel===0,compactFixed=magic===0x32445246;
  if(magic!==0x39445246&&!(compactFixed&&fixedHeader)||![1,2,4].includes(kind)||count<1||count>1048576||count%({1:1,2:2,4:3})[kind]||declarationLength<16||declarationLength>520||declarationLength%8||![20,21].includes(stateCount))throw RangeError('invalid draw header');
- const streams=Array.from({length:16},()=>{const [id,offset,stride]=take(3);return{id,offset,stride}}),state=new D3D9RenderState(),seen=new Set();
- for(let i=0;i<stateCount;i++){const [type,value]=take(2);if(seen.has(type))throw RangeError('duplicate render state');seen.add(type);state.set(type,value)}
+ const streams=Array.from({length:16},()=>{const [id,offset,stride]=take(3);return{id,offset,stride}}),state=new D3D9RenderState();
+ for(let i=0;i<stateCount;i++){const [type,value]=take(2);if(state.has(type))throw RangeError('duplicate render state');state.set(type,value)}
  const declarationWords=take(declarationLength/4),declaration=new Uint8Array(declarationWords.buffer,declarationWords.byteOffset,declarationWords.byteLength);let registers=compactFixed?null:[[take(1024),take(64),take(16)],[take(128),take(64),take(16)]];
- const textures=take(16),samplers=Array.from({length:16},()=>take(14)),remaining=w.length-p;
+ const textures=take(16),samplers=take(16*14),remaining=w.length-p;
  const hasTextureStages=remaining===(fixedHeader?214:70)||remaining===(fixedHeader?118:70),textureStages=hasTextureStages?Array.from({length:8},()=>take(8)):defaultTextureStages(),viewport=take(6);
  const fixed=fixedHeader?take(48):null,lighting=fixedHeader&&p+96===w.length?take(96):null;
  if(compactFixed){const floatWords=new Uint32Array(fixed.buffer,fixed.byteOffset,fixed.length+(lighting?.length??0));registers=[[floatWords,EMPTY_REGISTERS,EMPTY_REGISTERS],[EMPTY_REGISTERS,EMPTY_REGISTERS,EMPTY_REGISTERS]];}
@@ -33,7 +35,7 @@ export function decodeDraw(memory,pointer,length){
  return{fixed,lighting,vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,textureStages,viewport};
 }
 export class DrawRenderer{
- constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.uniformWords=this.uniformShadow.map(bytes=>new Uint32Array(bytes.buffer));this.pendingUniformBytes=[0,0];this.uniformCursors=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic geometry ring',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST|GPUBufferUsage.VERTEX|GPUBufferUsage.INDEX});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.deferredCopies=[];this.versionedResources=new Set();this.bindingCaches=new WeakMap();this.encoder=null;this.pass=null;this.passState=null;this.writeMetrics={sourceGeometryWrites:0,versionedGeometryWrites:0,versionFallbacks:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0,renderPasses:0,uploadPassBreaks:0,stateCalls:0,stateCallsSkipped:0};}
+ constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.uniformWords=this.uniformShadow.map(bytes=>new Uint32Array(bytes.buffer));this.pendingUniformBytes=[0,0];this.uniformCursors=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic geometry ring',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST|GPUBufferUsage.VERTEX|GPUBufferUsage.INDEX});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.deferredCopies=[];this.versionedResources=new Set();this.bindingCaches=new WeakMap();this.encoder=null;this.pass=null;this.passState=null;this.writeMetrics={sourceGeometryWrites:0,versionedGeometryWrites:0,versionFallbacks:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0,renderPasses:0,uploadPassBreaks:0,stateCalls:0,stateCallsSkipped:0,drawCpuMs:0,pipelineLookupCpuMs:0};}
  setShaderObjects(objects){this.cache.setShaderObjects(objects);}
  draw(packet){
   const timingStart=performance.now();
@@ -42,6 +44,7 @@ export class DrawRenderer{
   if(!width||!height||x+width>b.color.width||y+height>b.color.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
   const textureStages=packet.textureStages??defaultTextureStages(),textured=!!packet.textures[0]&&textureStages[0][0]!==1;
   const cached=this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology,fixed:!!packet.fixed,textured,textureStages,lighting:packet.lighting,viewportSize:[width,height]});
+  if(b.profileStutters)this.writeMetrics.pipelineLookupCpuMs+=performance.now()-timingStart;
   if(cached?.then)return cached.then(entry=>this.drawWithEntry(packet,entry,timingStart));
  return this.drawWithEntry(packet,cached,timingStart);
  }
@@ -88,7 +91,7 @@ present(target){
   for(const s of entry.shaders.pixel.samplers){
    const sourceIndex=s.sourceIndex??s.textureBinding;
    if(s.group!==2||s.dimension!==1||sourceIndex>=16||s.textureBinding>=32||s.samplerBinding>=32)throw RangeError('unsupported texture sampler reflection');
-   const textureId=packet.textures[sourceIndex],texture=b.textures.get(textureId),samplerState=packet.samplers[sourceIndex];
+   const textureId=packet.textures[sourceIndex],texture=b.textures.get(textureId),samplerState=samplerAt(packet.samplers,sourceIndex);
    textureKey.push(sourceIndex,textureId,...samplerState);
    textureEntries.push({binding:s.textureBinding,resource:texture.view},{binding:s.samplerBinding,resource:this.samplers.get(samplerState,texture.levels)});
   }
@@ -130,7 +133,7 @@ present(target){
   const stencil=packet.state.get(RS.STENCILREF)&255;if(state.stencil!==stencil){pass.setStencilReference(stencil);state.stencil=stencil;call();}else skip();
   bindings.forEach((binding,slot)=>{const previous=state.vertices[slot];if(!previous||previous.buffer!==binding.buffer||previous.offset!==binding.offset||previous.size!==binding.size){pass.setVertexBuffer(slot,binding.buffer,binding.offset,binding.size);state.vertices[slot]=binding;call();}else skip();});
   groups.forEach((group,slot)=>{if(state.groups[slot]!==group){pass.setBindGroup(slot,group);state.groups[slot]=group;call();}else skip();});
-  if(index){const format=index.format===101?'uint16':'uint32',version=index.dynamicVersion,indexBinding={buffer:version?.buffer??index.buffer,format,offset:version?.base??0,size:version?.length??index.size},first=version?packet.first-version.offset/indexWidth:packet.first;if(!state.index||state.index.buffer!==indexBinding.buffer||state.index.format!==format||state.index.offset!==indexBinding.offset||state.index.size!==indexBinding.size){pass.setIndexBuffer(indexBinding.buffer,format,indexBinding.offset,indexBinding.size);state.index=indexBinding;call();}else skip();pass.drawIndexed(packet.count,1,first,packet.base,0)}else pass.draw(packet.count,1,packet.first,0);if(timestampWrites){this.flush();b.timer.cpuWallMs+=performance.now()-timingStart;}
+  if(index){const format=index.format===101?'uint16':'uint32',version=index.dynamicVersion,indexBinding={buffer:version?.buffer??index.buffer,format,offset:version?.base??0,size:version?.length??index.size},first=version?packet.first-version.offset/indexWidth:packet.first;if(!state.index||state.index.buffer!==indexBinding.buffer||state.index.format!==format||state.index.offset!==indexBinding.offset||state.index.size!==indexBinding.size){pass.setIndexBuffer(indexBinding.buffer,format,indexBinding.offset,indexBinding.size);state.index=indexBinding;call();}else skip();pass.drawIndexed(packet.count,1,first,packet.base,0)}else pass.draw(packet.count,1,packet.first,0);if(b.profileStutters)this.writeMetrics.drawCpuMs+=performance.now()-timingStart;if(timestampWrites){this.flush();b.timer.cpuWallMs+=performance.now()-timingStart;}
  }
  flush(){this.endPass();this.commitDeferredCopies();if(!this.encoder)return;const queue=this.device.queue;if(this.stagingCursor){queue.writeBuffer(this.staging,0,this.stagingShadow.subarray(0,this.stagingCursor));this.writeMetrics.queueWriteCalls++;this.writeMetrics.queueWriteBytes+=this.stagingCursor;}for(let stage=0;stage<2;stage++){const bytes=this.pendingUniformBytes[stage];if(!bytes)continue;queue.writeBuffer(this.uniforms[stage],0,this.uniformShadow[stage].subarray(0,bytes));this.writeMetrics.queueWriteCalls++;this.writeMetrics.queueWriteBytes+=bytes;}queue.submit([this.encoder.finish()]);this.writeMetrics.rendererSubmissions++;this.encoder=null;this.stagingCursor=0;this.uniformCursors.fill(0);this.pendingUniformBytes.fill(0);}
  snapshotMetrics(){return{...this.writeMetrics,pendingGeometryBytes:this.stagingCursor,pendingUniformBytes:[...this.pendingUniformBytes]};}

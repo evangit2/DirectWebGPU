@@ -3,6 +3,7 @@
 export const BATCH_BYTES=8*1048576, BATCH_COMMANDS=512;
 function layout(a){
  if(!Array.isArray(a)||a.some(v=>!Number.isInteger(v)||v<0||v>0xffffffff)||a[1]<1)throw RangeError('invalid queued command args');
+ if(a[0]===4&&a.length===2)return {};
  if(a[0]===3&&a.length===6)return {};
  if(a[0]===13&&a.length===4&&a[3]>=2048&&a[3]<=16384&&a[3]%4===0)return {pointer:2,length:3};
  if(a[0]===6&&a.length===6&&a[2]>0&&a[3]%4===0&&a[5]>0&&a[5]%4===0)return {pointer:4,length:5};
@@ -10,7 +11,19 @@ function layout(a){
  throw RangeError('invalid queued draw/upload command');
 }
 export class DrawBatch {
- constructor(post,wait=words=>Atomics.wait(words,0,0)) {this.post=post;this.wait=wait;this.buffer=new SharedArrayBuffer(BATCH_BYTES+4096);this.control=new Int32Array(this.buffer,0,1);this.commands=[];this.offset=4096;this.failed=false;}
+ constructor(post,wait=words=>Atomics.wait(words,0,0),depth=2) {
+  if(!Number.isInteger(depth)||depth<1||depth>4)throw RangeError('invalid draw batch depth');
+  this.post=post;this.wait=wait;this.buffers=Array.from({length:depth},()=>new SharedArrayBuffer(BATCH_BYTES+4096));
+  for(const buffer of this.buffers)Atomics.store(new Int32Array(buffer,0,1),0,1);
+  this.index=0;this.commands=[];this.offset=4096;this.failed=false;
+ }
+ get buffer(){return this.buffers[this.index]}
+ get control(){return new Int32Array(this.buffer,0,1)}
+ acquire(buffer){
+  const control=new Int32Array(buffer,0,1);
+  while(Atomics.load(control,0)===0)this.wait(control);
+  if(Atomics.load(control,0)!==1){this.failed=true;throw Error('deferred D3D9 draw/upload failed; see GPU diagnostics');}
+ }
  enqueue(args,memory) {
   if(this.failed)throw Error('graphics batch transport has failed');
   const spec=layout(args);
@@ -29,12 +42,16 @@ export class DrawBatch {
  flush() {
   if(this.failed)throw Error('graphics batch transport has failed');
   if(!this.commands.length)return;
-  Atomics.store(this.control,0,0);
-  this.post({func:'draw_batch',buffer:this.buffer,commands:this.commands});
-  while(Atomics.load(this.control,0)===0)this.wait(this.control);
-  if(Atomics.load(this.control,0)!==1){this.failed=true;throw Error('deferred D3D9 draw/upload failed; see GPU diagnostics');}
+  const outgoing=this.buffer,control=new Int32Array(outgoing,0,1);
+  Atomics.store(control,0,0);
+  this.post({func:'draw_batch',buffer:outgoing,commands:this.commands});
+  // Synchronous transports (including tests) can report failure immediately.
+  if(Atomics.load(control,0)>1){this.failed=true;throw Error('deferred D3D9 draw/upload failed; see GPU diagnostics');}
+  this.index=(this.index+1)%this.buffers.length;
+  this.acquire(this.buffer);
   this.commands=[];this.offset=4096;
  }
+ drain(){this.flush();for(const buffer of this.buffers)this.acquire(buffer)}
 }
 export async function executeDrawBatch(data,graphics,fastDraw=null) {
  const {buffer,commands}=data;

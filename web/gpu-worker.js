@@ -19,7 +19,7 @@ import {D3D9RenderState,RS} from './d3d9-state.js';
 let gpuTiming=false,profileStutters=false;
 let shaderMode=RUNTIME_MODES.WINED3D;
 let sceneEquivalence=false,omitDiagnosticLighting=false;
-let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024};
+let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024,batchCpuMs:0,drawDecodeCpuMs:0};
 let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput,lastPresentWork=null,outlierQueueProbePending=false;
 let nextAudioId=1;const audioStreams=new Map();
 let nextMusicId=1;const musicTracks=new Set();
@@ -28,7 +28,7 @@ const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 function presentWork(){
  const writes=backend?.draws?.snapshotMetrics()??{};
- return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,renderPasses:writes.renderPasses??0,uploadPassBreaks:writes.uploadPassBreaks??0,versionedGeometryWrites:writes.versionedGeometryWrites??0,versionFallbacks:writes.versionFallbacks??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
+ return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,batchCpuMs:bridgeMetrics.batchCpuMs,drawDecodeCpuMs:bridgeMetrics.drawDecodeCpuMs,drawCpuMs:writes.drawCpuMs??0,pipelineLookupCpuMs:writes.pipelineLookupCpuMs??0,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,renderPasses:writes.renderPasses??0,uploadPassBreaks:writes.uploadPassBreaks??0,versionedGeometryWrites:writes.versionedGeometryWrites??0,versionFallbacks:writes.versionFallbacks??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
 }
 function workDelta(current,previous){const result={};for(const [key,value] of Object.entries(current))result[key]=previous?value-(previous[key]??0):0;return result;}
 async function init(data){
@@ -51,7 +51,7 @@ async function ensureShaderObjects(){
 }
 async function dispatch(data){
  const {func,args,buffer,retAddr,payload}=data;
- if(func==='draw_batch'){await executeDrawBatch(data,graphics,drawPacket);bridgeMetrics.drawBatches++;for(const a of data.commands){if(a[0]===3)bridgeMetrics.batchedClears++;else if(a[0]===13)bridgeMetrics.batchedDraws++;else if(a[0]===6||a[0]===11){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
+ if(func==='draw_batch'){const started=profileStutters?performance.now():0;await executeDrawBatch(data,graphics,drawPacket);if(profileStutters)bridgeMetrics.batchCpuMs+=performance.now()-started;bridgeMetrics.drawBatches++;for(const a of data.commands){if(a[0]===3)bridgeMetrics.batchedClears++;else if(a[0]===13)bridgeMetrics.batchedDraws++;else if(a[0]===6||a[0]===11){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
@@ -105,13 +105,15 @@ async function dispatch(data){
 }
 function drawPacket(a,memory){
  if(a.length!==3)return INVALID;
- let packet;
+ let packet;const decodeStarted=profileStutters?performance.now():0;
  try{
   packet=decodeDraw(memory,a[1],a[2]);
+  if(profileStutters)bridgeMetrics.drawDecodeCpuMs+=performance.now()-decodeStarted;
   if(drawStateTrace>0){
    const textureStages=packet.textureStages.map(stage=>Array.from(stage)),textures=Array.from(packet.textures.slice(0,8));
    const textureInfo=textures.map(id=>{if(!id)return null;const texture=backend.textures.get(id);return{id,width:texture.width,height:texture.height,levels:texture.levels,format:texture.format,gpuFormat:texture.gpuFormat,uploads:texture.uploads};});
-   const sample={present:backend.presents+1,fixed:Boolean(packet.fixed),vertex:packet.vertex,pixel:packet.pixel,kind:packet.kind,count:packet.count,textures,textureInfo,sampler0:Array.from(packet.samplers[0]),textureStages,lightingHeader:packet.lighting?Array.from(packet.lighting.slice(0,4)):null,state:packet.state.values,declaration:Array.from(packet.declaration)};
+   const sampler0=packet.samplers instanceof Uint32Array?packet.samplers.subarray(0,14):packet.samplers[0];
+   const sample={present:backend.presents+1,fixed:Boolean(packet.fixed),vertex:packet.vertex,pixel:packet.pixel,kind:packet.kind,count:packet.count,textures,textureInfo,sampler0:Array.from(sampler0),textureStages,lightingHeader:packet.lighting?Array.from(packet.lighting.slice(0,4)):null,state:packet.state.values,declaration:Array.from(packet.declaration)};
    const fingerprint=JSON.stringify([sample.fixed,sample.vertex,sample.pixel,sample.kind,textures,textureStages,sample.lightingHeader,sample.state,sample.declaration]);
    if(!drawStateFingerprints.has(fingerprint)){drawStateFingerprints.add(fingerprint);drawStateTrace--;emit('draw-state',{sample});}
   }
@@ -146,7 +148,7 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,submissions:0};
+  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,submissions:0,profileStutters};
   if(gpuTiming&&device.features.has('timestamp-query'))backend.timer=new GpuTiming(device);
   if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend,omitDiagnosticLighting);
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
@@ -177,7 +179,12 @@ async function graphics(op,a,memory){
   if(backend.draws)backend.draws.present(context.getCurrentTexture());else{const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);}
   if(backend.timer){const sample=await backend.timer.finish(backend.presents+1);if(sample)emit('gpu-timing',{sample});}
   if(backend.equivalence){const sample=await backend.equivalence.compare(backend.presents+1);if(sample)emit('scene-equivalence',{sample});}
-  backend.presents++;if(backend.presents===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first Present submission')});backend.submissions++;
+  // Pace the translated application by completed GPU frames. Without this
+  // boundary, Present submissions can look fast while the compositor trails
+  // seconds behind. The CPU-side two-slot batch ring preserves one frame of
+  // useful CPU/GPU overlap while bounding latency.
+  await device.queue.onSubmittedWorkDone();
+  backend.presents++;if(backend.presents===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first completed Present')});backend.submissions++;
   const currentWork=presentWork(),interval=metrics.present(performance.timeOrigin+performance.now(),{present:backend.presents,work:workDelta(currentWork,lastPresentWork)});lastPresentWork=currentWork;
   if(profileStutters&&interval?.intervalMs>=25&&!outlierQueueProbePending){const began=performance.now(),completedPresent=backend.presents;outlierQueueProbePending=true;device.queue.onSubmittedWorkDone().then(()=>metrics.completeOutlier(completedPresent,performance.now()-began)).finally(()=>{outlierQueueProbePending=false;});}
   if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},rendererWrites:backend.draws?.snapshotMetrics()??null,wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,pipelineCompilations:backend.draws?.cache.compilations??0,pipelineCacheHits:backend.draws?.cache.hits??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}
