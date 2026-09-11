@@ -20,7 +20,7 @@ import {GpuCommandScheduler} from './gpu-command-scheduler.js';
 let gpuTiming=false,profileStutters=false,frameFenceInterval=4;
 let shaderMode=RUNTIME_MODES.WINED3D;
 let sceneEquivalence=false,omitDiagnosticLighting=false;
-let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024,batchCpuMs:0,drawDecodeCpuMs:0};
+let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024,batchCpuMs:0,drawDecodeCpuMs:0,synchronousPresents:0,asynchronousPresents:0};
 let device,canvas,context,windowSize,backend,nextId=1,port,commandScheduler,waitingInput,lastPresentWork=null,outlierQueueProbePending=false;
 let nextAudioId=1;const audioStreams=new Map();
 let nextMusicId=1;const musicTracks=new Set();
@@ -148,15 +148,40 @@ function clearCommand(a){
  clearColor.r=((argb>>>16)&255)/255;clearColor.g=((argb>>>8)&255)/255;clearColor.b=(argb&255)/255;clearColor.a=(argb>>>24)/255;
  backend.draws??=new DrawRenderer(device,backend);backend.draws.clear(flags,clearColor,z,stencil&255);backend.equivalence?.clear(flags,clearColor,z,stencil&255);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
 }
+function finishPresent(present,memory){
+ if(present===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first completed Present')});backend.submissions++;
+ const currentWork=presentWork(),interval=metrics.present(performance.timeOrigin+performance.now(),{present,work:workDelta(currentWork,lastPresentWork)});lastPresentWork=currentWork;
+ if(profileStutters&&interval?.intervalMs>=25&&!outlierQueueProbePending){const began=performance.now(),completedPresent=present;outlierQueueProbePending=true;device.queue.onSubmittedWorkDone().then(()=>metrics.completeOutlier(completedPresent,performance.now()-began)).finally(()=>{outlierQueueProbePending=false;});}
+ if(present===1||present%60===0){const began=performance.now(),completedPresent=present;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},rendererWrites:backend.draws?.snapshotMetrics()??null,wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,pipelineCompilations:backend.draws?.cache.compilations??0,pipelineCacheHits:backend.draws?.cache.hits??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}
+ const complete=()=>{if(cameraTest&&[1,30].includes(present)){const message=[present===1?5:6,72,38,1];input(message);emit('controlled-input',{present,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:present,submittedFrames:present,completedFrames:backend.completedPresents,sceneFrames:0});return 1;};
+ if(captureFrames&&[1,30,60].includes(present))return captureFrame(device,backend.color,present,metrics.startEpoch).then(sample=>{emit('frame-capture',{sample});return complete();});
+ return complete();
+}
+function completePresent(present,memory){
+ backend.presents=present;
+ // Keep a bounded number of submitted frames while allowing unfenced Presents
+ // to return a plain result and avoid a worker microtask on the common path.
+ if(present===1||present-backend.completedPresents>=frameFenceInterval)return device.queue.onSubmittedWorkDone().then(()=>{backend.completedPresents=present;return finishPresent(present,memory);});
+ return finishPresent(present,memory);
+}
+function presentCommand(a,memory){
+ if(a.length!==1||!backend||a[0]!==backend.id)return INVALID;
+ if(backend.draws)backend.draws.present(context.getCurrentTexture());else{const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);}
+ const present=backend.presents+1,willFence=present===1||present-backend.completedPresents>=frameFenceInterval,willCapture=captureFrames&&[1,30,60].includes(present),willWait=!!backend.timer||!!backend.equivalence||willFence||willCapture;
+ bridgeMetrics[willWait?'asynchronousPresents':'synchronousPresents']++;
+ const afterEquivalence=()=>backend.equivalence?backend.equivalence.compare(present).then(sample=>{if(sample)emit('scene-equivalence',{sample});return completePresent(present,memory);}):completePresent(present,memory);
+ return backend.timer?backend.timer.finish(present).then(sample=>{if(sample)emit('gpu-timing',{sample});return afterEquivalence();}):afterEquivalence();
+}
 function batchCommand(op,a,memory){
  if(!backend||a[0]!==backend.id)return INVALID;
  if(op===13&&a.length===3)return drawPacket(a[0],a[1],a[2],memory);
  if(op===3)return clearCommand(a);
+ if(op===4)return presentCommand(a,memory);
  if(op===6&&a.length===5){
-  try{backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+  try{backend.equivalence?.flush();backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  if(op===11&&a.length===6){
-  try{backend.draws?.flush();backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+  try{backend.draws?.flush();backend.equivalence?.flush();backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  return graphics(op,a,memory);
 }
@@ -198,25 +223,13 @@ async function graphics(op,a,memory){
   return clearCommand(a);
  }
  if(op===4){ // Ordinary presentation is GPU-to-GPU; opt-in diagnostic samples separately.
-  if(backend.draws)backend.draws.present(context.getCurrentTexture());else{const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);}
-  if(backend.timer){const sample=await backend.timer.finish(backend.presents+1);if(sample)emit('gpu-timing',{sample});}
-  if(backend.equivalence){const sample=await backend.equivalence.compare(backend.presents+1);if(sample)emit('scene-equivalence',{sample});}
-  backend.presents++;
-  // Metal pays a large synchronization cost when every Present waits for an
-  // empty queue. Fence a small group instead: latency stays bounded while the
-  // browser has enough queued work to keep the GPU and compositor busy.
-  if(backend.presents===1||backend.presents-backend.completedPresents>=frameFenceInterval){await device.queue.onSubmittedWorkDone();backend.completedPresents=backend.presents;}
-  if(backend.presents===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first completed Present')});backend.submissions++;
-  const currentWork=presentWork(),interval=metrics.present(performance.timeOrigin+performance.now(),{present:backend.presents,work:workDelta(currentWork,lastPresentWork)});lastPresentWork=currentWork;
-  if(profileStutters&&interval?.intervalMs>=25&&!outlierQueueProbePending){const began=performance.now(),completedPresent=backend.presents;outlierQueueProbePending=true;device.queue.onSubmittedWorkDone().then(()=>metrics.completeOutlier(completedPresent,performance.now()-began)).finally(()=>{outlierQueueProbePending=false;});}
-  if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},rendererWrites:backend.draws?.snapshotMetrics()??null,wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,pipelineCompilations:backend.draws?.cache.compilations??0,pipelineCacheHits:backend.draws?.cache.hits??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}
-  if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,completedFrames:backend.completedPresents,sceneFrames:0});return 1;
+  return presentCommand(a,memory);
  }
  if(op>=5&&op<=7){
   try{
    if(op===5&&a.length===4)return await backend.buffers.create(a[1],a[2],a[3]);
-   if(op===6&&a.length===5){await backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}
-   if(op===7&&a.length===2){backend.draws?.flush();backend.buffers.destroy(a[1]);return 1;}
+   if(op===6&&a.length===5){backend.equivalence?.flush();await backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}
+   if(op===7&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();backend.buffers.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
@@ -235,8 +248,8 @@ async function graphics(op,a,memory){
  if(op>=10&&op<=12){
   try{
    if(op===10&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4]);
-   if(op===11&&a.length===6){backend.draws?.flush();await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
-   if(op===12&&a.length===2){backend.draws?.flush();backend.textures.destroy(a[1]);return 1;}
+   if(op===11&&a.length===6){backend.draws?.flush();backend.equivalence?.flush();await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
+   if(op===12&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();backend.textures.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
