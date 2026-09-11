@@ -28,7 +28,7 @@ const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 function presentWork(){
  const writes=backend?.draws?.snapshotMetrics()??{};
- return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
+ return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,renderPasses:writes.renderPasses??0,uploadPassBreaks:writes.uploadPassBreaks??0,versionedGeometryWrites:writes.versionedGeometryWrites??0,versionFallbacks:writes.versionFallbacks??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
 }
 function workDelta(current,previous){const result={};for(const [key,value] of Object.entries(current))result[key]=previous?value-(previous[key]??0):0;return result;}
 async function init(data){

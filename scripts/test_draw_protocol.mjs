@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {fixedFunctionPair} from '../web/fixed-function.js';
-globalThis.GPUBufferUsage={COPY_SRC:4,COPY_DST:8,UNIFORM:64};
+globalThis.GPUBufferUsage={COPY_SRC:4,COPY_DST:8,INDEX:16,VERTEX:32,UNIFORM:64};
 const {decodeDraw,DrawRenderer}=await import('../web/d3d9-draw.js');
 
 const states=[[7,1],[14,1],[15,0],[19,2],[20,1],[22,3],[23,4],[24,0],[25,8],[27,0],[52,0],[53,1],[54,1],[55,1],[56,8],[57,0],[58,0xffffffff],[59,0xffffffff],[168,15],[171,1]];
@@ -46,7 +46,7 @@ const geometry={};renderer.uploadBuffer(geometry,0,new Uint8Array([1,2,3,4]));re
 renderer.stageUniform(0,0,new Uint32Array([0x11223344]));renderer.stageUniform(0,16,new Uint32Array([0x55667788]));renderer.stageUniform(1,0,new Uint32Array([0x99aabbcc]));renderer.flush();
 assert.equal(copies.length,2);assert.equal(submissions.length,1);assert.equal(writes.length,3);assert.deepEqual(writes.map(write=>write.data.byteLength),[8,20,4]);
 assert.deepEqual([...writes[0].data],[1,2,3,4,5,6,7,8]);assert.equal(new DataView(writes[1].data.buffer).getUint32(16,true),0x55667788);assert.equal(new DataView(writes[2].data.buffer).getUint32(0,true),0x99aabbcc);
-assert.deepEqual(renderer.snapshotMetrics(),{sourceGeometryWrites:2,sourceUniformWrites:3,queueWriteCalls:3,queueWriteBytes:32,rendererSubmissions:1,stateCalls:0,stateCallsSkipped:0,pendingGeometryBytes:0,pendingUniformBytes:[0,0]});
+assert.deepEqual(renderer.snapshotMetrics(),{sourceGeometryWrites:2,versionedGeometryWrites:2,versionFallbacks:0,sourceUniformWrites:3,queueWriteCalls:3,queueWriteBytes:32,rendererSubmissions:1,renderPasses:0,uploadPassBreaks:0,stateCalls:0,stateCallsSkipped:0,pendingGeometryBytes:0,pendingUniformBytes:[0,0]});
 const color={createView(){return'color-view'}},depth={createView(){return'depth-view'}};renderer.backend={color,depth,width:800,height:600};renderer.clear(7,{r:0,g:0,b:0,a:1},1,0);renderer.present('swap-texture');
 assert.equal(passes.length,1);assert.equal(textureCopies.length,1);assert.equal(submissions.length,2);assert.equal(renderer.snapshotMetrics().rendererSubmissions,2);
 renderer.dispose();
