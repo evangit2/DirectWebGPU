@@ -22,7 +22,7 @@ export class TextureStorage {
   const id=this.nextId++;this.items.set(id,{texture,view:texture.createView(),width,height,levels,format,gpuFormat,block,blockBytes,conversion,mips,bytes,...(this.traceUploads?{uploads:[]}:{})});this.bytes+=bytes;return id;
  }
  get(id){const item=this.items.get(id);if(!item)throw RangeError('invalid or released texture handle');return item;}
- async upload(id,level,memory,pointer,pitch,length){
+ upload(id,level,memory,pointer,pitch,length){
   const t=this.get(id),m=t.mips[level];
   if(!Number.isInteger(level)||!m||!(memory instanceof SharedArrayBuffer)||![pointer,pitch,length].every(Number.isInteger)||pointer<4096||pitch<m.rowBytes||pitch%t.blockBytes||length<(m.rows-1)*pitch+m.rowBytes||length>128*1024*1024||pointer+length>memory.byteLength)throw RangeError('invalid texture upload range');
   let data=new Uint8Array(memory,pointer,length);

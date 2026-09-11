@@ -27,4 +27,8 @@ assert.deepEqual(depths,[[1,1],[2,2],[1,2],[0,2]]);
 scheduler.enqueue({func:'audio_write',id:'bad-audio'});
 await Promise.resolve();await Promise.resolve();
 assert.deepEqual(errors,['audio failed']);
+
+const syncOrder=[],syncDepth=[];const syncScheduler=new GpuCommandScheduler(command=>syncOrder.push(command.id),()=>{},(pending,maxPending)=>syncDepth.push([pending,maxPending]));
+for(let i=0;i<1000;i++)syncScheduler.enqueue({func:'draw_batch',id:i});
+await syncScheduler.idle();assert.deepEqual(syncOrder,Array.from({length:1000},(_,i)=>i));assert.equal(syncScheduler.pending,0);assert.equal(syncScheduler.queue.length,0);assert(syncDepth.every(([pending,maxPending])=>pending<=1&&maxPending===1));
 console.log('GPU scheduler separates real-time host traffic from ordered graphics');

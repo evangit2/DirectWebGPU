@@ -24,7 +24,8 @@ assert.throws(()=>batch.enqueue([13,9,4096,2044],memory),/command/);
 const queued=[];const producer=new DrawBatch(data=>queued.push(data));
 producer.enqueue([13,9,4096,5500],memory);producer.enqueue([13,9,4096,5500],memory);producer.flush();
 const order=[];
-const summary=await executeDrawBatch(queued[0],()=>{throw Error('draw fast path expected')},(id,pointer,length,buffer)=>{assert.equal(id,9);assert.equal(length,5500);assert.equal(new Uint8Array(buffer,pointer,1)[0],7);order.push(pointer);return 1;});
+const completed=executeDrawBatch(queued[0],()=>{throw Error('batch fast path expected')},(op,args,buffer)=>{assert.equal(op,13);assert.equal(args[0],9);assert.equal(args[2],5500);assert.equal(new Uint8Array(buffer,args[1],1)[0],7);order.push(args[1]);return 1;});
+assert.equal(completed?.then,undefined);const summary=completed;
 assert.deepEqual(order,[BATCH_HEADER_BYTES,BATCH_HEADER_BYTES+5500]);assert.deepEqual(summary,{commands:2,clears:0,draws:2,uploads:0,uploadedBytes:0});assert.equal(new Int32Array(queued[0].buffer)[0],1);
 
 const rejected=[];const rejectionProducer=new DrawBatch(data=>rejected.push(data));
@@ -35,7 +36,7 @@ const malformed=[];const malformedProducer=new DrawBatch(data=>malformed.push(da
 malformedProducer.enqueue([13,9,4096,5500],memory);malformedProducer.enqueue([13,9,4096,5500],memory);malformedProducer.flush();
 const malformedWords=new Uint32Array(malformed[0].buffer,0,BATCH_HEADER_BYTES/4);
 malformedWords[2+BATCH_RECORD_WORDS+1+2]=BATCH_HEADER_BYTES;
-await assert.rejects(()=>executeDrawBatch(malformed[0],async()=>{throw Error('must prevalidate');}),/command/);
+assert.throws(()=>executeDrawBatch(malformed[0],async()=>{throw Error('must prevalidate');}),/command/);assert.equal(new Int32Array(malformed[0].buffer)[0],2);
 
 const failure=new DrawBatch(data=>Atomics.store(new Int32Array(data.buffer),0,2));failure.enqueue([13,9,4096,5500],memory);assert.throws(()=>failure.flush(),/deferred/);assert.throws(()=>failure.enqueue([13,9,4096,5500],memory),/failed/);
 console.log(`Draw batch shared records, ownership, ${BATCH_COMMANDS}-command bound, pointer validation, ordering and fail-stop tests passed`);

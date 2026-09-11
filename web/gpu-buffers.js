@@ -15,7 +15,7 @@ export class GeometryBuffers {
   const id=this.nextId++;this.items.set(id,{buffer,kind,size,padded,format});this.bytes+=padded;return id;
  }
  get(id){const item=this.items.get(id);if(!item)throw RangeError('invalid or released geometry handle');return item;}
- async upload(id,offset,memory,pointer,length,draws=null){
+ upload(id,offset,memory,pointer,length,draws=null){
   const b=this.get(id);
   if(!(memory instanceof SharedArrayBuffer)||![offset,pointer,length].every(Number.isInteger)||offset<0||offset%4||pointer<0x1000||length<=0||length%4||offset+length>b.padded||pointer+length>memory.byteLength)throw RangeError('invalid geometry upload range');
   const data=new Uint8Array(memory,pointer,length);

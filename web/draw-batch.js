@@ -67,7 +67,7 @@ export class DrawBatch {
  }
  drain(){this.flush();for(const buffer of this.buffers)this.acquire(buffer)}
 }
-export async function executeDrawBatch(data,graphics,fastDraw=null) {
+export function executeDrawBatch(data,graphics,fastCommand=null) {
  const {buffer}=data;
   if(!(buffer instanceof SharedArrayBuffer)||buffer.byteLength!==BATCH_BYTES+BATCH_HEADER_BYTES)throw Error('invalid graphics batch storage');
  const control=new Int32Array(buffer,0,1);let result=2;
@@ -77,14 +77,21 @@ export async function executeDrawBatch(data,graphics,fastDraw=null) {
   let end=BATCH_HEADER_BYTES;
   for(let i=0;i<count;i++){const a=readCommand(words,i,command),s=layout(a);if(s.pointer===undefined)continue;if(a[s.pointer]!==end||end+a[s.length]>buffer.byteLength)throw Error('invalid graphics batch command');end+=Math.ceil(a[s.length]/4)*4;}
   const args=[],summary={commands:count,clears:0,draws:0,uploads:0,uploadedBytes:0};
-  for(let i=0;i<count;i++){
-   const a=readCommand(words,i,command),op=a[0];let pending;
-   if(fastDraw&&op===13)pending=fastDraw(a[1],a[2],a[3],buffer);
-   else{args.length=a.length-1;for(let j=1;j<a.length;j++)args[j-1]=a[j];pending=graphics(op,args,buffer);}
-   const result=pending?.then?await pending:pending;
-   if(result!==1)throw Error(`queued draw/upload rejected: op=${op} result=0x${(result>>>0).toString(16)} args=${JSON.stringify(a.slice(1))}`);
+  const accepted=(op,a,value)=>{
+   if(value!==1)throw Error(`queued draw/upload rejected: op=${op} result=0x${(value>>>0).toString(16)} args=${JSON.stringify(a.slice(1))}`);
    if(op===3)summary.clears++;else if(op===13)summary.draws++;else if(op===6||op===11){summary.uploads++;summary.uploadedBytes+=a[a.length-1];}
-  }
-  result=1;return summary;
- } finally {Atomics.store(control,0,result);Atomics.notify(control,0,1);}
+  };
+  const runFrom=start=>{
+   for(let i=start;i<count;i++){
+    const a=readCommand(words,i,command),op=a[0];args.length=a.length-1;for(let j=1;j<a.length;j++)args[j-1]=a[j];
+    const pending=fastCommand?fastCommand(op,args,buffer):graphics(op,args,buffer);
+    if(pending?.then)return Promise.resolve(pending).then(value=>{accepted(op,a,value);return runFrom(i+1);});
+    accepted(op,a,pending);
+   }
+   return summary;
+  };
+  const pending=runFrom(0);
+  if(pending?.then)return pending.then(value=>{result=1;Atomics.store(control,0,result);Atomics.notify(control,0,1);return value;},error=>{Atomics.store(control,0,result);Atomics.notify(control,0,1);throw error;});
+  result=1;Atomics.store(control,0,result);Atomics.notify(control,0,1);return pending;
+ } catch(error){Atomics.store(control,0,result);Atomics.notify(control,0,1);throw error;}
 }

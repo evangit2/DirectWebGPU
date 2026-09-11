@@ -27,6 +27,7 @@ let nextMusicId=1;const musicTracks=new Set();
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
+const clearBits=new DataView(new ArrayBuffer(4)),clearColor={r:0,g:0,b:0,a:0};
 function presentWork(){
  const writes=backend?.draws?.snapshotMetrics()??{};
  return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,batchCpuMs:bridgeMetrics.batchCpuMs,drawDecodeCpuMs:bridgeMetrics.drawDecodeCpuMs,drawCpuMs:writes.drawCpuMs??0,pipelineLookupCpuMs:writes.pipelineLookupCpuMs??0,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,renderPasses:writes.renderPasses??0,uploadPassBreaks:writes.uploadPassBreaks??0,versionedGeometryWrites:writes.versionedGeometryWrites??0,versionFallbacks:writes.versionFallbacks??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
@@ -51,9 +52,15 @@ async function ensureShaderObjects(){
  backend.draws?.setShaderObjects(backend.shaders);
  return backend.shaders;
 }
-async function dispatch(data){
+function recordBatch(summary,started){if(profileStutters)bridgeMetrics.batchCpuMs+=performance.now()-started;bridgeMetrics.drawBatches++;bridgeMetrics.batchedClears+=summary.clears;bridgeMetrics.batchedDraws+=summary.draws;bridgeMetrics.batchedUploads+=summary.uploads;bridgeMetrics.uploadedBytes+=summary.uploadedBytes;bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,summary.commands);}
+function dispatch(data){
+ if(data.func!=='draw_batch')return dispatchAsync(data);
+ const started=profileStutters?performance.now():0,pending=executeDrawBatch(data,graphics,batchCommand);
+ if(pending?.then)return pending.then(summary=>recordBatch(summary,started));
+ recordBatch(pending,started);
+}
+async function dispatchAsync(data){
  const {func,args,buffer,retAddr,payload}=data;
- if(func==='draw_batch'){const started=profileStutters?performance.now():0,summary=await executeDrawBatch(data,graphics,drawPacket);if(profileStutters)bridgeMetrics.batchCpuMs+=performance.now()-started;bridgeMetrics.drawBatches++;bridgeMetrics.batchedClears+=summary.clears;bridgeMetrics.batchedDraws+=summary.draws;bridgeMetrics.batchedUploads+=summary.uploads;bridgeMetrics.uploadedBytes+=summary.uploadedBytes;bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,summary.commands);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
@@ -135,6 +142,24 @@ function drawPacket(id,pointer,length,memory){
   return packet.state.get(15)!==0&&!backend.draws.cache.objects?ensureShaderObjects().then(submitReady):submitReady();
  }catch(e){const message=String(e.stack??e);emit('draw-rejected',{message:`${message} declaration=${JSON.stringify(packet?Array.from(packet.declaration):null)}`});return INVALID;}
 }
+function clearCommand(a){
+ const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
+ clearBits.setUint32(0,zBits,true);const z=clearBits.getFloat32(0,true);if(!Number.isFinite(z)||z<0||z>1)return INVALID;
+ clearColor.r=((argb>>>16)&255)/255;clearColor.g=((argb>>>8)&255)/255;clearColor.b=(argb&255)/255;clearColor.a=(argb>>>24)/255;
+ backend.draws??=new DrawRenderer(device,backend);backend.draws.clear(flags,clearColor,z,stencil&255);backend.equivalence?.clear(flags,clearColor,z,stencil&255);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
+}
+function batchCommand(op,a,memory){
+ if(!backend||a[0]!==backend.id)return INVALID;
+ if(op===13&&a.length===3)return drawPacket(a[0],a[1],a[2],memory);
+ if(op===3)return clearCommand(a);
+ if(op===6&&a.length===5){
+  try{backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ if(op===11&&a.length===6){
+  try{backend.draws?.flush();backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ return graphics(op,a,memory);
+}
 async function graphics(op,a,memory){
  if(op===14){if(a.length!==1||!(memory instanceof SharedArrayBuffer)||a[0]<4096||a[0]%4||a[0]+304>memory.byteLength)return INVALID;new Uint32Array(memory,a[0],76).set(deviceCaps());return 1;}
  if(op===15){return a.length===3&&supportsFormat(device,...a)?1:UNAVAILABLE;}
@@ -170,12 +195,7 @@ async function graphics(op,a,memory){
   emit('window-resized',{width,height,source:'IDirect3DDevice Reset'});emit('d3d9-device-reset',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed'});return 1;
  }
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
-  const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
-  const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
-  const colorValue={r:((argb>>>16)&255)/255,g:((argb>>>8)&255)/255,b:(argb&255)/255,a:(argb>>>24)/255};
-  backend.draws??=new DrawRenderer(device,backend);backend.draws.clear(flags,colorValue,z,stencil&255);
-  backend.equivalence?.clear(flags,colorValue,z,stencil&255);
-  emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
+  return clearCommand(a);
  }
  if(op===4){ // Ordinary presentation is GPU-to-GPU; opt-in diagnostic samples separately.
   if(backend.draws)backend.draws.present(context.getCurrentTexture());else{const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);}
