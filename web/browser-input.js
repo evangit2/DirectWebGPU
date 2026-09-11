@@ -129,6 +129,8 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  };
  const listen=(element,type,listener)=>{element.addEventListener(type,listener);touchListeners.push([element,type,listener]);};
  if(touchRoot){
+  const suppressNativeGesture=event=>event.preventDefault();
+  for(const type of ['contextmenu','dragstart','selectstart'])listen(touchRoot,type,suppressNativeGesture);
   for(const button of touchRoot.querySelectorAll('[data-touch-key]')){
    const down=event=>{if(!isRunning())return;event.preventDefault();unlock();try{button.setPointerCapture(event.pointerId);}catch(_){}const code=button.dataset.touchKey,mapped=mappedCode(code);touchKeys.set(event.pointerId,mapped);const message=keyboardMessage('keydown',mapped);if(message)emit(message);};
    const up=event=>{const code=touchKeys.get(event.pointerId);if(!code)return;event.preventDefault();touchKeys.delete(event.pointerId);const message=keyboardMessage('keyup',code);if(message)emit(message);};

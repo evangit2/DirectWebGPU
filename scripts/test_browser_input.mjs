@@ -29,7 +29,10 @@ const touchElement=(dataset={})=>{
  return{dataset,style:{},listeners,addEventListener:(type,listener)=>listeners.set(type,listener),removeEventListener:()=>{},setPointerCapture:()=>{},getBoundingClientRect:()=>({left:0,top:0,width:160,height:160})};
 };
 const escapeButton=touchElement({touchKey:'Escape'}),enterButton=touchElement({touchKey:'Enter'}),joystick=touchElement(),knob=touchElement();
+const touchRootListeners=new Map();
 const touchRoot={
+ addEventListener:(type,listener)=>touchRootListeners.set(type,listener),
+ removeEventListener:()=>{},
  querySelectorAll:selector=>selector==='[data-touch-key]'?[escapeButton,enterButton]:[],
  querySelector:selector=>selector==='[data-touch-joystick]'?joystick:selector==='[data-touch-knob]'?knob:null,
 };
@@ -56,6 +59,9 @@ const cursors=[];
 const visibility=[];
 let pointerLockRequests=0;
 const input=bindBrowserInput(canvas,{isRunning:()=>true,send:message=>sent.push(message),profile:inverted,touchRoot,onVirtualCursor:state=>cursors.push(state),onCursorVisibilityChange:value=>visibility.push(value)});
+let selectionPrevented=false;
+touchRootListeners.get('selectstart')({preventDefault(){selectionPrevented=true;}});
+assert.equal(selectionPrevented,true);
 input.warp(400,300);
 canvasListeners.get('pointermove')({type:'pointermove',movementX:7,movementY:-4,buttons:0,button:-1});
 assert.deepEqual(sent.at(-1),[7,7,-4,0]);

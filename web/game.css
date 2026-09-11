@@ -251,7 +251,16 @@ footer #metrics {
     padding: 18px max(22px, env(safe-area-inset-right)) 18px max(22px, env(safe-area-inset-left));
     background: #080d14;
     touch-action: none;
+    -webkit-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .touch-controls * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
   }
   #capture, #debug-toggle {
     display: none;
@@ -283,6 +292,7 @@ footer #metrics {
     border-radius: 50%;
     background: radial-gradient(circle, #182536 0 23%, #0e1723 24% 100%);
     touch-action: none;
+    transform: translateX(-10px);
   }
   .touch-joystick i {
     position: absolute;
