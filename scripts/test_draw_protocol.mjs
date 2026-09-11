@@ -35,6 +35,11 @@ assert.match(fixedFunctionPair(positionT,false,[800,600],null,null,false).vertex
 assert.doesNotMatch(fixedFunctionPair(positionT,false,[800,600],null,null,true).vertex.wgsl,/clamp\(position\.z/);
 assert.match(fixedFunctionPair(positionT,false,[800,600],null,null,true,false).vertex.wgsl,/,0\.0,1\.0\)/);
 assert.doesNotMatch(fixedFunctionPair(positionT,false,[800,600],null,null,true,false).vertex.wgsl,/position\.z,1\.0/);
+const cubeDecl=new Uint8Array([0,0,0,0,2,0,0,0,0,0,12,0,2,0,3,0,0,0,24,0,2,0,5,0,255,0,0,0,17,0,0,0]);
+const cubePair=fixedFunctionPair(cubeDecl,true,[800,600],[[4,2,1,2,2,1,0,0]],null,true,true,3);
+assert.match(cubePair.pixel.wgsl,/texture_cube<f32>/);assert.match(cubePair.vertex.wgsl,/uv:vec3<f32>/);assert.equal(cubePair.pixel.samplers[0].dimension,3);
+const reflected=fixedFunctionPair(cubeDecl.subarray(0,24),true,[800,600],[[4,2,1,2,2,1,0x30000,0]],null,true,true,3);
+assert.match(reflected.vertex.wgsl,/reflect\(normalize/);assert.equal(reflected.vertex.inputs.some(input=>input.usage===5),false);
 new Uint32Array(compact.memory,4096,1)[0]=0x39445246;assert.throws(()=>decodeDraw(compact.memory,4096,compact.length),/truncated/);
 
 const writes=[],copies=[],textureCopies=[],passes=[],submissions=[],buffers=[];

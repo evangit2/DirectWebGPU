@@ -1,4 +1,4 @@
-// GPU-resident 2D sampled textures; full-mip uploads preserve guest row pitch.
+// GPU-resident 2D and cube textures; full-mip uploads preserve guest row pitch.
 const FORMATS=new Map([
  [20,['rgba8unorm',1,3,true]],[21,['bgra8unorm',1,4,false]],[22,['bgra8unorm',1,4,false]],
  [23,['rgba8unorm',1,2,true]],[24,['rgba8unorm',1,2,true]],[25,['rgba8unorm',1,2,true]],[26,['rgba8unorm',1,2,true]],
@@ -7,24 +7,25 @@ const FORMATS=new Map([
 ]);
 export class TextureStorage {
  constructor(device,{traceUploads=false}={}){this.device=device;this.traceUploads=traceUploads;this.items=new Map();this.bytes=0;this.nextId=1;}
- async create(width,height,levels,format){
+ async create(width,height,levels,format,faces=1){
   const f=FORMATS.get(format);
-  if(!f||![width,height,levels].every(Number.isInteger)||width<1||height<1||width>4096||height>4096||levels<0||levels>1+Math.floor(Math.log2(Math.max(width,height))))throw RangeError('unsupported texture description');
+  if(!f||![width,height,levels,faces].every(Number.isInteger)||![1,6].includes(faces)||faces===6&&width!==height||width<1||height<1||width>4096||height>4096||levels<0||levels>1+Math.floor(Math.log2(Math.max(width,height))))throw RangeError('unsupported texture description');
   const [gpuFormat,block,blockBytes,conversion]=f;
   if(block===4&&(!this.device.features.has('texture-compression-bc')||width%4||height%4))throw RangeError('BC texture unsupported or base dimensions unaligned');
   levels ||= 1+Math.floor(Math.log2(Math.max(width,height)));
   const mips=Array.from({length:levels},(_,level)=>{const w=Math.max(1,width>>level),h=Math.max(1,height>>level),columns=Math.ceil(w/block),rows=Math.ceil(h/block);return {width:w,height:h,physicalWidth:columns*block,physicalHeight:rows*block,rowBytes:columns*blockBytes,rows};});
-  const bytes=mips.reduce((n,m)=>n+m.width*m.height*(conversion?4:blockBytes/(block*block)),0);
+  const bytes=faces*mips.reduce((n,m)=>n+m.width*m.height*(conversion?4:blockBytes/(block*block)),0);
   if(this.items.size>=4096||this.bytes+bytes>128*1024*1024||this.nextId>=0x80000000)throw RangeError('texture budget exceeded');
   const d=this.device;d.pushErrorScope('validation');d.pushErrorScope('out-of-memory');let texture;
-  try{texture=d.createTexture({label:'D3D9 sampled texture',size:[width,height],mipLevelCount:levels,format:gpuFormat,usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.COPY_SRC});}
+  try{texture=d.createTexture({label:faces===6?'D3D cube texture':'D3D 2D texture',size:{width,height,depthOrArrayLayers:faces},mipLevelCount:levels,format:gpuFormat,usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.COPY_SRC});}
   finally{const oom=await d.popErrorScope(),error=await d.popErrorScope();if(oom||error){texture?.destroy();throw Error((oom??error).message)}}
-  const id=this.nextId++;this.items.set(id,{texture,view:texture.createView(),width,height,levels,format,gpuFormat,block,blockBytes,conversion,mips,bytes,...(this.traceUploads?{uploads:[]}:{})});this.bytes+=bytes;return id;
+  const dimension=faces===6?3:1,view=texture.createView(faces===6?{dimension:'cube'}:undefined);
+  const id=this.nextId++;this.items.set(id,{texture,view,width,height,faces,dimension,levels,format,gpuFormat,block,blockBytes,conversion,mips,bytes,...(this.traceUploads?{uploads:[]}:{})});this.bytes+=bytes;return id;
  }
  get(id){const item=this.items.get(id);if(!item)throw RangeError('invalid or released texture handle');return item;}
- upload(id,level,memory,pointer,pitch,length){
+ upload(id,level,memory,pointer,pitch,length,layer=0){
   const t=this.get(id),m=t.mips[level];
-  if(!Number.isInteger(level)||!m||!(memory instanceof SharedArrayBuffer)||![pointer,pitch,length].every(Number.isInteger)||pointer<4096||pitch<m.rowBytes||pitch%t.blockBytes||length<(m.rows-1)*pitch+m.rowBytes||length>128*1024*1024||pointer+length>memory.byteLength)throw RangeError('invalid texture upload range');
+  if(!Number.isInteger(level)||!m||!Number.isInteger(layer)||layer<0||layer>=t.faces||!(memory instanceof SharedArrayBuffer)||![pointer,pitch,length].every(Number.isInteger)||pointer<4096||pitch<m.rowBytes||pitch%t.blockBytes||length<(m.rows-1)*pitch+m.rowBytes||length>128*1024*1024||pointer+length>memory.byteLength)throw RangeError('invalid texture upload range');
   let data=new Uint8Array(memory,pointer,length);
   // X8R8G8B8 must sample with alpha one, regardless of unused guest byte.
   if(t.format===22){data=data.slice();for(let y=0;y<m.rows;y++)for(let x=3;x<m.rowBytes;x+=4)data[y*pitch+x]=255;}
@@ -43,9 +44,9 @@ export class TextureStorage {
   }
   if(this.traceUploads){const sampleCount=Math.min(1024,m.width*m.height),step=Math.max(1,Math.floor(m.width*m.height/sampleCount)),channelSums=[0,0,0,0];let sampled=0;
    if(t.block===1&&data.byteLength>=m.width*m.height*4){for(let pixel=0;pixel<m.width*m.height&&sampled<sampleCount;pixel+=step){const y=Math.floor(pixel/m.width),x=pixel-y*m.width,at=y*pitch+x*4;for(let channel=0;channel<4;channel++)channelSums[channel]+=data[at+channel];sampled++;}}
-   t.uploads[level]={length:data.byteLength,pitch,sampledPixels:sampled,meanChannels:sampled?channelSums.map(value=>Math.round(value/sampled)):null,firstBytes:Array.from(data.slice(0,16))};
+   t.uploads[layer*t.levels+level]={layer,level,length:data.byteLength,pitch,sampledPixels:sampled,meanChannels:sampled?channelSums.map(value=>Math.round(value/sampled)):null,firstBytes:Array.from(data.slice(0,16))};
   }
-  this.device.queue.writeTexture({texture:t.texture,mipLevel:level},data,{bytesPerRow:pitch,rowsPerImage:m.rows},[m.physicalWidth,m.physicalHeight]);
+  this.device.queue.writeTexture({texture:t.texture,mipLevel:level,origin:{x:0,y:0,z:layer}},data,{bytesPerRow:pitch,rowsPerImage:m.rows},[m.physicalWidth,m.physicalHeight,1]);
  }
  destroy(id){const t=this.get(id);t.texture.destroy();this.items.delete(id);this.bytes-=t.bytes;}
  dispose(){for(const id of this.items.keys())this.destroy(id);}

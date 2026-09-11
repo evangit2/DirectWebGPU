@@ -184,6 +184,9 @@ function batchCommand(op,a,memory){
  if(op===11&&a.length===6){
   try{backend.draws?.flush();backend.equivalence?.flush();backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
+ if(op===20&&a.length===7){
+  try{backend.draws?.flush();backend.equivalence?.flush();backend.textures.upload(a[1],a[3],memory,a[4],a[5],a[6],a[2]);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
  return graphics(op,a,memory);
 }
 async function graphics(op,a,memory){
@@ -253,6 +256,13 @@ async function graphics(op,a,memory){
    if(op===10&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4]);
    if(op===11&&a.length===6){backend.draws?.flush();backend.equivalence?.flush();await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
    if(op===12&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();backend.textures.destroy(a[1]);return 1;}
+   return INVALID;
+  }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ if(op===19||op===20){
+  try{
+   if(op===19&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4],6);
+   if(op===20&&a.length===7){backend.draws?.flush();backend.equivalence?.flush();await backend.textures.upload(a[1],a[3],memory,a[4],a[5],a[6],a[2]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }

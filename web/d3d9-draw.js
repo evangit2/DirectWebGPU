@@ -45,7 +45,8 @@ export class DrawRenderer{
   if(!width||!height||x+width>b.color.width||y+height>b.color.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
   if(!drawScissor(packet,b))throw RangeError('invalid draw scissor');
   const textureStages=packet.textureStages??defaultTextureStages(),textured=!!packet.textures[0]&&textureStages[0][0]!==1;
-  const cached=this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology,fixed:!!packet.fixed,textured,textureStages,lighting:packet.lighting,viewportSize:[width,height]});
+  const textureDimension=textured?b.textures.get(packet.textures[0]).dimension:1;
+  const cached=this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology,fixed:!!packet.fixed,textured,textureDimension,textureStages,lighting:packet.lighting,viewportSize:[width,height]});
   if(b.profileStutters)this.writeMetrics.pipelineLookupCpuMs+=performance.now()-timingStart;
   if(cached?.then)return cached.then(entry=>this.drawWithEntry(packet,entry,timingStart));
  return this.drawWithEntry(packet,cached,timingStart);
@@ -92,8 +93,9 @@ present(target){
   const textureKey=[];
   for(const s of entry.shaders.pixel.samplers){
    const sourceIndex=s.sourceIndex??s.textureBinding;
-   if(s.group!==2||s.dimension!==1||sourceIndex>=16||s.textureBinding>=32||s.samplerBinding>=32)throw RangeError('unsupported texture sampler reflection');
+   if(s.group!==2||![1,3].includes(s.dimension)||sourceIndex>=16||s.textureBinding>=32||s.samplerBinding>=32)throw RangeError('unsupported texture sampler reflection');
    const textureId=packet.textures[sourceIndex],texture=b.textures.get(textureId),samplerState=samplerAt(packet.samplers,sourceIndex);
+   if(texture.dimension!==s.dimension)throw RangeError('texture dimension does not match shader sampler');
    textureKey.push(sourceIndex,textureId,...samplerState);
    textureEntries.push({binding:s.textureBinding,resource:texture.view},{binding:s.samplerBinding,resource:this.samplers.get(samplerState,texture.levels)});
   }

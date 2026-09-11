@@ -1,0 +1,665 @@
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -31,10 +31,11 @@
+  let multisample=ctx.memory.read::<u32>(out+16);ctx.memory.write::<u32>(out+16,size);ctx.memory.write::<u32>(out+20,multisample);D3D_OK
+ }
+ 
+-pub const VTABLES:[(&str,&[&str]);6]=[
++pub const VTABLES:[(&str,&[&str]);7]=[
+  ("IDirect3D8",&IDirect3D8::VTABLE_ENTRIES),
+  ("IDirect3DDevice8",&IDirect3DDevice8::VTABLE_ENTRIES),
+  ("IDirect3DTexture8",&IDirect3DTexture8::VTABLE_ENTRIES),
++ ("IDirect3DCubeTexture8",&IDirect3DCubeTexture8::VTABLE_ENTRIES),
+  ("IDirect3DSurface8",&IDirect3DSurface8::VTABLE_ENTRIES),
+  ("IDirect3DVertexBuffer8",&IDirect3DVertexBuffer8::VTABLE_ENTRIES),
+  ("IDirect3DIndexBuffer8",&IDirect3DIndexBuffer8::VTABLE_ENTRIES),
+@@ -76,7 +77,7 @@
+   if !valid(ctx,out,53*4){return D3DERR_INVALIDCALL}let mut c=[0u32;53];
+   c[0]=1;c[1]=0;c[3]=0x20000000|0x00080000;c[5]=1;c[7]=0x00080000;
+   c[8]=0x2|0x10|0x20|0x40|0x80|0x800;c[9]=0x10|0x400000;c[10]=0xff;c[11]=0x7ff;c[12]=0x3ff;c[13]=0xff;
+-  c[15]=0x1|0x4|0x40|0x4000;c[16]=0x100|0x200|0x10000|0x20000;c[19]=0x1|0x2|0x4;c[21]=0x1|0x2|0x4|0x8;
++  c[15]=0x1|0x4|0x40|0x800|0x4000|0x10000|0x20000;c[16]=0x100|0x200|0x10000|0x20000;c[17]=c[16];c[19]=0x1|0x2|0x4;c[21]=0x1|0x2|0x4|0x8;
+   c[22]=4096;c[23]=4096;c[25]=8192;c[26]=4096;c[27]=1;c[28]=1e10f32.to_bits();c[34]=0xff;c[35]=8;c[36]=0x3ffffff;c[37]=8;c[38]=1;c[42]=1;c[44]=1.0f32.to_bits();c[45]=349525;c[46]=0xffffff;c[47]=16;c[48]=2048;c[52]=1.0f32.to_bits();
+   for(i,v)in c.into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,v)}D3D_OK
+  }
+@@ -177,7 +178,7 @@
+  #[win32_derive::dllexport]pub fn GetGammaRamp(ctx:&mut Context,_this:u32,ramp:u32){if valid(ctx,ramp,1536){ctx.memory.bytes[ramp as usize..ramp as usize+1536].fill(0xff)}}
+  #[win32_derive::dllexport]pub fn CreateTexture(ctx:&mut Context,this:u32,w:u32,h:u32,levels:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateTexture(ctx,this,w,h,levels,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DTexture8::VTABLE});}r}
+  pub fn CreateVolumeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateVolumeTexture")}
+- pub fn CreateCubeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateCubeTexture")}
++ #[win32_derive::dllexport]pub fn CreateCubeTexture(ctx:&mut Context,this:u32,edge:u32,levels:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateCubeTexture(ctx,this,edge,levels,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DCubeTexture8::VTABLE});}r}
+  #[win32_derive::dllexport]pub fn CreateVertexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,fvf:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateVertexBuffer(ctx,this,size,usage,fvf,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DVertexBuffer8::VTABLE});}r}
+  #[win32_derive::dllexport]pub fn CreateIndexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateIndexBuffer(ctx,this,size,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DIndexBuffer8::VTABLE});}r}
+  pub fn CreateRenderTarget_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateRenderTarget")}
+@@ -186,8 +187,8 @@
+  #[win32_derive::dllexport]
+  pub fn CopyRects(ctx:&mut Context,_this:u32,source:u32,source_rects:u32,count:u32,dest:u32,dest_points:u32)->u32{
+   if count==0{return D3D_OK}
+-  let Some((src_texture,src_level))=d3d9::IDirect3DSurface9::texture_backing(source)else{return D3DERR_INVALIDCALL};
+-  let Some((dst_texture,dst_level))=d3d9::IDirect3DSurface9::texture_backing(dest)else{return D3DERR_INVALIDCALL};
++  let Some((src_texture,src_face,src_level))=d3d9::IDirect3DSurface9::texture_backing(source)else{return D3DERR_INVALIDCALL};
++  let Some((dst_texture,dst_face,dst_level))=d3d9::IDirect3DSurface9::texture_backing(dest)else{return D3DERR_INVALIDCALL};
+   let (src_width,src_height)=d3d9::IDirect3DSurface9::dimensions(source);
+   let (dst_width,dst_height)=d3d9::IDirect3DSurface9::dimensions(dest);
+   for i in 0..count{
+@@ -202,7 +203,7 @@
+     (ctx.memory.read::<i32>(p).max(0) as u32,ctx.memory.read::<i32>(p+4).max(0) as u32)
+    };
+    if rect[2]>src_width||rect[3]>src_height||x>dst_width||y>dst_height{return D3DERR_INVALIDCALL}
+-   let r=d3d9::IDirect3DTexture9::copy_region(ctx,src_texture,src_level,dst_texture,dst_level,rect,x,y);
++   let r=d3d9::IDirect3DTexture9::copy_region(ctx,src_texture,src_face,src_level,dst_texture,dst_face,dst_level,rect,x,y);
+    if r!=D3D_OK{return r}
+   }
+   D3D_OK
+@@ -248,7 +249,7 @@
+  }
+  pub fn SetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetClipStatus")}
+  pub fn GetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetClipStatus")}
+- #[win32_derive::dllexport]pub fn GetTexture(ctx:&mut Context,this:u32,stage:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetTexture(ctx,this,stage,out);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DTexture8::VTABLE});}}r}
++ #[win32_derive::dllexport]pub fn GetTexture(ctx:&mut Context,this:u32,stage:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetTexture(ctx,this,stage,out);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{let vt=if d3d9::IDirect3DTexture9::is_cube(p){unsafe{IDirect3DCubeTexture8::VTABLE}}else{unsafe{IDirect3DTexture8::VTABLE}};overwrite_vtable(ctx,p,vt);}}r}
+  #[win32_derive::dllexport]pub fn SetTexture(ctx:&mut Context,this:u32,stage:u32,p:u32)->u32{d3d9::IDirect3DDevice9::SetTexture(ctx,this,stage,p)}
+  #[win32_derive::dllexport]pub fn GetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::GetSamplerState(ctx,this,stage,s,out)}if tss_kind(kind).is_some(){return d3d9::IDirect3DDevice9::GetTextureStageState(ctx,this,stage,kind,out)}let value=state(this).tss.get(&(stage,kind)).copied().unwrap_or_else(||default_tss(stage,kind));ctx.memory.write::<u32>(out,value);D3D_OK}
+  #[win32_derive::dllexport]pub fn SetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::SetSamplerState(ctx,this,stage,s,value)}if stage>=8{return D3DERR_INVALIDCALL}if tss_kind(kind).is_some(){return d3d9::IDirect3DDevice9::SetTextureStageState(ctx,this,stage,kind,value)}let mut states=STATE.lock().unwrap();let state=states.get_mut(&this).unwrap();if let Some(recording)=state.recording.as_mut(){recording.values.tss.insert((stage,kind),value);recording.mask.tss.insert((stage,kind));}else{state.tss.insert((stage,kind),value);}D3D_OK}
+@@ -311,6 +312,17 @@
+  pub use crate::d3d9::IDirect3DTexture9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,SetPriority_stdcall,GetPriority_stdcall,PreLoad_stdcall,GetType_stdcall,SetLOD_stdcall,GetLOD_stdcall,GetLevelCount_stdcall,LockRect_stdcall,UnlockRect_stdcall,AddDirtyRect_stdcall};
+  #[win32_derive::dllexport]pub fn GetLevelDesc(ctx:&mut Context,this:u32,level:u32,out:u32)->u32{let result=d3d9::IDirect3DTexture9::GetLevelDesc(ctx,this,level,out);d3d8_surface_desc(ctx,out,result)}
+  #[win32_derive::dllexport]pub fn GetSurfaceLevel(ctx:&mut Context,this:u32,level:u32,out:u32)->u32{let r=d3d9::IDirect3DTexture9::GetSurfaceLevel(ctx,this,level,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++}
++pub mod IDirect3DCubeTexture8{
++ use super::*;pub static mut VTABLE:u32=0;
++ pub const VTABLE_ENTRIES:[&str;19]=["QueryInterface","AddRef","Release","GetDevice","SetPrivateData","GetPrivateData","FreePrivateData","SetPriority","GetPriority","PreLoad","GetType","SetLOD","GetLOD","GetLevelCount","GetLevelDesc","GetCubeMapSurface","LockRect","UnlockRect","AddDirtyRect"];
++ pub use crate::d3d9::IDirect3DCubeTexture9::{QueryInterface_stdcall,AddRef_stdcall,Release_stdcall,GetDevice_stdcall,SetPrivateData_stdcall,GetPrivateData_stdcall,FreePrivateData_stdcall,SetPriority_stdcall,GetPriority_stdcall,PreLoad_stdcall,GetType_stdcall,SetLOD_stdcall,GetLOD_stdcall,GetLevelCount_stdcall};
++ pub use crate::d3d9::IDirect3DCubeTexture9::{AddRef,GetDevice,GetLevelCount,GetType,QueryInterface,Release};
++ #[win32_derive::dllexport]pub fn GetLevelDesc(ctx:&mut Context,this:u32,level:u32,out:u32)->u32{let result=d3d9::IDirect3DTexture9::GetLevelDesc(ctx,this,level,out);d3d8_surface_desc(ctx,out,result)}
++ #[win32_derive::dllexport]pub fn GetCubeMapSurface(ctx:&mut Context,this:u32,face:u32,level:u32,out:u32)->u32{let r=d3d9::IDirect3DCubeTexture9::GetCubeMapSurface(ctx,this,face,level,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++ #[win32_derive::dllexport]pub fn LockRect(ctx:&mut Context,this:u32,face:u32,level:u32,out:u32,rect:u32,flags:u32)->u32{d3d9::IDirect3DCubeTexture9::LockRect(ctx,this,face,level,out,rect,flags)}
++ #[win32_derive::dllexport]pub fn UnlockRect(ctx:&mut Context,this:u32,face:u32,level:u32)->u32{d3d9::IDirect3DCubeTexture9::UnlockRect(ctx,this,face,level)}
++ #[win32_derive::dllexport]pub fn AddDirtyRect(ctx:&mut Context,this:u32,face:u32,rect:u32)->u32{d3d9::IDirect3DCubeTexture9::AddDirtyRect(ctx,this,face,rect)}
+ }
+ pub mod IDirect3DSurface8{
+  use super::*;pub static mut VTABLE:u32=0;
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -33,7 +33,9 @@
+ pub mod IDirect3DQuery9{pub use super::IDirect3DDevice9::query::*;pub static mut VTABLE:u32=0;}
+ #[path="d3d9/texture.rs"]
+ pub mod IDirect3DTexture9;
+-pub const VTABLES: [(&str, &[&str]);11] = [("IDirect3DTexture9", &IDirect3DTexture9::VTABLE_ENTRIES),("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES),("IDirect3DStateBlock9", &IDirect3DStateBlock9::VTABLE_ENTRIES),("IDirect3DQuery9", &IDirect3DQuery9::VTABLE_ENTRIES)];
++#[path="d3d9/cube.rs"]
++pub mod IDirect3DCubeTexture9;
++pub const VTABLES: [(&str, &[&str]);12] = [("IDirect3DTexture9", &IDirect3DTexture9::VTABLE_ENTRIES),("IDirect3DCubeTexture9", &IDirect3DCubeTexture9::VTABLE_ENTRIES),("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES),("IDirect3DStateBlock9", &IDirect3DStateBlock9::VTABLE_ENTRIES),("IDirect3DQuery9", &IDirect3DQuery9::VTABLE_ENTRIES)];
+ fn valid(ctx: &Context, p: u32, n: usize) -> bool {
+     p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
+ }
+--- a/win32/winapi/src/d3d9/cube.rs
++++ b/win32/winapi/src/d3d9/cube.rs
+@@ -0,0 +1,73 @@
++//! IDirect3DCubeTexture9 ABI over the shared texture store.
++use super::*;
++
++pub static mut VTABLE: u32 = 0;
++pub const VTABLE_ENTRIES: [&str; 22] = [
++    "QueryInterface",
++    "AddRef",
++    "Release",
++    "GetDevice",
++    "SetPrivateData",
++    "GetPrivateData",
++    "FreePrivateData",
++    "SetPriority",
++    "GetPriority",
++    "PreLoad",
++    "GetType",
++    "SetLOD",
++    "GetLOD",
++    "GetLevelCount",
++    "SetAutoGenFilterType",
++    "GetAutoGenFilterType",
++    "GenerateMipSubLevels",
++    "GetLevelDesc",
++    "GetCubeMapSurface",
++    "LockRect",
++    "UnlockRect",
++    "AddDirtyRect",
++];
++
++pub use super::IDirect3DTexture9::{
++    AddRef, GetDevice, GetLevelCount, GetLevelDesc, GetType, QueryInterface, Release,
++};
++pub use super::IDirect3DTexture9::{
++    AddRef_stdcall, FreePrivateData_stdcall, GenerateMipSubLevels_stdcall,
++    GetAutoGenFilterType_stdcall, GetDevice_stdcall, GetLOD_stdcall, GetLevelCount_stdcall,
++    GetLevelDesc_stdcall, GetPriority_stdcall, GetPrivateData_stdcall, GetType_stdcall,
++    PreLoad_stdcall, QueryInterface_stdcall, Release_stdcall, SetAutoGenFilterType_stdcall,
++    SetLOD_stdcall, SetPriority_stdcall, SetPrivateData_stdcall,
++};
++
++#[win32_derive::dllexport]
++pub fn GetCubeMapSurface(ctx: &mut Context, this: u32, face: u32, level: u32, out: u32) -> u32 {
++    IDirect3DTexture9::get_surface(ctx, this, face, level, out)
++}
++
++#[win32_derive::dllexport]
++pub fn LockRect(
++    ctx: &mut Context,
++    this: u32,
++    face: u32,
++    level: u32,
++    out: u32,
++    rect: u32,
++    flags: u32,
++) -> u32 {
++    IDirect3DTexture9::lock_rect(ctx, this, face, level, out, rect, flags)
++}
++
++#[win32_derive::dllexport]
++pub fn UnlockRect(ctx: &mut Context, this: u32, face: u32, level: u32) -> u32 {
++    IDirect3DTexture9::unlock_rect(ctx, this, face, level)
++}
++
++#[win32_derive::dllexport]
++pub fn AddDirtyRect(ctx: &mut Context, this: u32, face: u32, rect: u32) -> u32 {
++    if !IDirect3DTexture9::is_cube(this) || face >= 6 || (rect != 0 && !valid(ctx, rect, 16)) {
++        D3DERR_INVALIDCALL
++    } else {
++        // UnlockRect uploads complete subresources immediately, so no deferred
++        // dirty-region bookkeeping is needed for the supported managed path.
++        D3D_OK
++    }
++}
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -323,7 +323,8 @@
+ #[win32_derive::dllexport]
+ pub fn CreateTexture(ctx:&mut Context,this:u32,width:u32,height:u32,levels:u32,usage:u32,format:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::IDirect3DTexture9::create(ctx,this,d.backend,width,height,levels,usage,format,pool,out,shared)}
+ pub fn CreateVolumeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateVolumeTexture",10)}
+-pub fn CreateCubeTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateCubeTexture",8)}
++#[win32_derive::dllexport]
++pub fn CreateCubeTexture(ctx:&mut Context,this:u32,edge:u32,levels:u32,usage:u32,format:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::IDirect3DTexture9::create_cube(ctx,this,d.backend,edge,levels,usage,format,pool,out,shared)}
+ #[win32_derive::dllexport]
+ pub fn CreateVertexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format_or_fvf:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::buffers::create(ctx,this,d.backend,6,size,usage,100,pool,format_or_fvf,out,shared)}
+ #[win32_derive::dllexport]
+--- a/win32/winapi/src/d3d9/surface.rs
++++ b/win32/winapi/src/d3d9/surface.rs
+@@ -5,7 +5,7 @@
+     refs: u32,
+     device: u32,
+     desc: [u32; 8],
+-    texture: Option<(u32, u32)>,
++    texture: Option<(u32, u32, u32)>,
+ }
+ static SURFACES: LazyLock<Mutex<HashMap<u32, Surface>>> =
+     LazyLock::new(|| Mutex::new(HashMap::new()));
+@@ -44,7 +44,7 @@
+         .clone()
+ }
+ 
+-pub(crate) fn texture_backing(this: u32) -> Option<(u32, u32)> {
++pub(crate) fn texture_backing(this: u32) -> Option<(u32, u32, u32)> {
+     surface(this).texture
+ }
+ 
+@@ -98,6 +98,7 @@
+     ctx: &mut Context,
+     owner: u32,
+     texture: u32,
++    face: u32,
+     level: u32,
+     desc: [u32; 8],
+ ) -> u32 {
+@@ -114,7 +115,7 @@
+             refs: 0,
+             device: owner,
+             desc,
+-            texture: Some((texture, level)),
++            texture: Some((texture, face, level)),
+         },
+     );
+     p
+@@ -146,7 +147,7 @@
+     let owner = s.device;
+     let texture = s.texture;
+     drop(map);
+-    if let Some((t, _)) = texture {
++    if let Some((t, _, _)) = texture {
+         IDirect3DTexture9::AddRef(ctx, t);
+     } else {
+         IDirect3DDevice9::AddRef(ctx, owner);
+@@ -163,7 +164,7 @@
+     let owner = s.device;
+     let texture = s.texture;
+     drop(map);
+-    if let Some((t, _)) = texture {
++    if let Some((t, _, _)) = texture {
+         IDirect3DTexture9::Release(ctx, t);
+     } else {
+         IDirect3DDevice9::Release(ctx, owner);
+@@ -223,7 +224,7 @@
+ #[win32_derive::dllexport]
+ pub fn GetContainer(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
+     let s = surface(this);
+-    if let Some((t, _)) = s.texture {
++    if let Some((t, _, _)) = s.texture {
+         return IDirect3DTexture9::QueryInterface(ctx, t, iid, out);
+     }
+     fail(ctx, "GetContainer for attachment")
+@@ -231,16 +232,16 @@
+ #[win32_derive::dllexport]
+ pub fn LockRect(ctx: &mut Context, this: u32, out: u32, rect: u32, flags: u32) -> u32 {
+     let s = surface(this);
+-    if let Some((t, level)) = s.texture {
+-        return IDirect3DTexture9::LockRect(ctx, t, level, out, rect, flags);
++    if let Some((t, face, level)) = s.texture {
++        return IDirect3DTexture9::lock_rect(ctx, t, face, level, out, rect, flags);
+     }
+     D3DERR_INVALIDCALL
+ }
+ #[win32_derive::dllexport]
+ pub fn UnlockRect(ctx: &mut Context, this: u32) -> u32 {
+     let s = surface(this);
+-    if let Some((t, level)) = s.texture {
+-        return IDirect3DTexture9::UnlockRect(ctx, t, level);
++    if let Some((t, face, level)) = s.texture {
++        return IDirect3DTexture9::unlock_rect(ctx, t, face, level);
+     }
+     D3DERR_INVALIDCALL
+ }
+--- a/win32/winapi/src/d3d9/texture.rs
++++ b/win32/winapi/src/d3d9/texture.rs
+@@ -1,4 +1,4 @@
+-//! D3D9 sampled 2D texture COM objects with persistent mip lock storage.
++//! Shared D3D8/D3D9 sampled 2D and cube texture storage.
+ use super::*;
+ pub static mut VTABLE: u32 = 0;
+ #[derive(Clone, Debug)]
+@@ -8,7 +8,6 @@
+     pitch: u32,
+     offset: u32,
+     size: u32,
+-    locked: Option<bool>,
+ }
+ #[derive(Clone)]
+ struct Texture {
+@@ -21,7 +20,11 @@
+     usage: u32,
+     pool: u32,
+     format: u32,
++    kind: u32,
++    faces: u32,
++    face_stride: u32,
+     mips: Vec<Mip>,
++    locks: Vec<Option<bool>>,
+     surfaces: Vec<u32>,
+ }
+ static TEXTURES: LazyLock<Mutex<HashMap<u32, Texture>>> =
+@@ -95,7 +98,6 @@
+             pitch,
+             offset,
+             size,
+-            locked: None,
+         });
+         offset += size;
+     }
+@@ -114,6 +116,40 @@
+     out: u32,
+     shared: u32,
+ ) -> u32 {
++    create_kind(ctx, owner, backend, width, height, levels, usage, format, pool, out, shared, 3, 1, unsafe { VTABLE })
++}
++
++pub(super) fn create_cube(
++    ctx: &mut Context,
++    owner: u32,
++    backend: u32,
++    edge: u32,
++    levels: u32,
++    usage: u32,
++    format: u32,
++    pool: u32,
++    out: u32,
++    shared: u32,
++) -> u32 {
++    create_kind(ctx, owner, backend, edge, edge, levels, usage, format, pool, out, shared, 5, 6, unsafe { super::IDirect3DCubeTexture9::VTABLE })
++}
++
++fn create_kind(
++    ctx: &mut Context,
++    owner: u32,
++    backend: u32,
++    width: u32,
++    height: u32,
++    levels: u32,
++    usage: u32,
++    format: u32,
++    pool: u32,
++    out: u32,
++    shared: u32,
++    kind: u32,
++    faces: u32,
++    vtable: u32,
++) -> u32 {
+     if !valid(ctx, out, 4) {
+         return D3DERR_INVALIDCALL;
+     }
+@@ -124,11 +160,16 @@
+     let Some(mips) = layout(width, height, levels, format) else {
+         return D3DERR_INVALIDCALL;
+     };
+-    let gpu = host::graphics_call(10, &[backend, width, height, mips.len() as u32, format]);
++    let opcode = if faces == 6 { 19 } else { 10 };
++    let gpu = host::graphics_call(opcode, &[backend, width, height, mips.len() as u32, format]);
+     if gpu >= 0x80000000 {
+         return gpu;
+     }
+-    let size = mips.last().unwrap().offset + mips.last().unwrap().size;
++    let face_stride = mips.last().unwrap().offset + mips.last().unwrap().size;
++    let Some(size) = face_stride.checked_mul(faces) else {
++        host::graphics_call(12, &[backend, gpu]);
++        return D3DERR_INVALIDCALL;
++    };
+     let data = kernel32::lock().process_heap.alloc(&mut ctx.memory, size);
+     if data == 0 {
+         host::graphics_call(12, &[backend, gpu]);
+@@ -141,9 +182,8 @@
+         return 0x8007000e;
+     }
+     ctx.memory.bytes[data as usize..(data + size) as usize].fill(0);
+-    let vt = unsafe { VTABLE };
+-    assert!(valid(ctx, vt, 22 * 4));
+-    ctx.memory.write::<u32>(this, vt);
++    assert!(valid(ctx, vtable, 22 * 4));
++    ctx.memory.write::<u32>(this, vtable);
+     IDirect3DDevice9::AddRef(ctx, owner);
+     TEXTURES.lock().unwrap().insert(
+         this,
+@@ -157,7 +197,11 @@
+             usage,
+             pool,
+             format,
+-            surfaces: vec![0; mips.len()],
++            kind,
++            faces,
++            face_stride,
++            locks: vec![None; faces as usize * mips.len()],
++            surfaces: vec![0; faces as usize * mips.len()],
+             mips,
+         },
+     );
+@@ -166,7 +210,7 @@
+ }
+ #[win32_derive::dllexport]
+ pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
+-    texture(this);
++    let t = texture(this);
+     if !valid(ctx, out, 4) {
+         return E_POINTER;
+     }
+@@ -174,25 +218,17 @@
+     if !valid(ctx, iid, 16) {
+         return E_POINTER;
+     }
+-    const IDS: [[u8; 16]; 4] = [
+-        IID_UNKNOWN,
+-        [
+-            0x5d, 0xc0, 0xee, 0x05, 0x7d, 0x8f, 0x62, 0x43, 0xb9, 0x99, 0xd1, 0xba, 0xf3, 0x57,
+-            0xc7, 0x04,
+-        ],
+-        [
+-            0x7e, 0xa8, 0x0c, 0x58, 0x3c, 0x1d, 0x54, 0x4d, 0x99, 0x1d, 0xb7, 0xd3, 0xe3, 0xc2,
+-            0x98, 0xce,
+-        ],
+-        [
+-            0x27, 0x12, 0xc3, 0x85, 0xe5, 0x3d, 0x00, 0x4f, 0x9b, 0x3a, 0xf1, 0x1a, 0xc3, 0x8c,
+-            0x18, 0xb5,
+-        ],
+-    ];
+-    if !IDS
+-        .iter()
+-        .any(|id| id == &ctx.memory.bytes[iid as usize..iid as usize + 16])
+-    {
++    const RESOURCE9: [u8; 16] = [0x5d,0xc0,0xee,0x05,0x7d,0x8f,0x62,0x43,0xb9,0x99,0xd1,0xba,0xf3,0x57,0xc7,0x04];
++    const BASE9: [u8; 16] = [0x7e,0xa8,0x0c,0x58,0x3c,0x1d,0x54,0x4d,0x99,0x1d,0xb7,0xd3,0xe3,0xc2,0x98,0xce];
++    const TEX9: [u8; 16] = [0x27,0x12,0xc3,0x85,0xe5,0x3d,0x00,0x4f,0x9b,0x3a,0xf1,0x1a,0xc3,0x8c,0x18,0xb5];
++    const CUBE9: [u8; 16] = [0x81,0x2f,0xf3,0xff,0x53,0xd9,0x3a,0x47,0x92,0x23,0x93,0xd6,0x52,0xab,0xa9,0x3f];
++    const BASE8: [u8; 16] = [0xfa,0x1c,0x21,0xb4,0xb9,0x51,0x9f,0x4a,0xab,0x78,0xdb,0x99,0xb2,0xbb,0x67,0x8e];
++    const TEX8: [u8; 16] = [0x75,0xd5,0xcd,0xe4,0x66,0x28,0x01,0x4f,0xb1,0x2e,0x7e,0xec,0xe1,0xec,0x93,0x58];
++    const CUBE8: [u8; 16] = [0x68,0xb9,0xe5,0x3e,0xca,0x2a,0x34,0x4c,0x8b,0xb5,0x7e,0x0c,0x3d,0x19,0xb7,0x50];
++    let id = &ctx.memory.bytes[iid as usize..iid as usize + 16];
++    let common = [IID_UNKNOWN, RESOURCE9, BASE9, BASE8].iter().any(|candidate| candidate == id);
++    let specific = if t.kind == 5 { [CUBE9, CUBE8].iter().any(|candidate| candidate == id) } else { [TEX9, TEX8].iter().any(|candidate| candidate == id) };
++    if !common && !specific {
+         return E_NOINTERFACE;
+     }
+     AddRef(ctx, this);
+@@ -288,8 +324,7 @@
+ 
+ #[win32_derive::dllexport]
+ pub fn GetType(_ctx: &mut Context, this: u32) -> u32 {
+-    texture(this);
+-    3
++    texture(this).kind
+ }
+ #[win32_derive::dllexport]
+ pub fn GetLevelCount(_ctx: &mut Context, this: u32) -> u32 {
+@@ -312,11 +347,15 @@
+     }
+     D3D_OK
+ }
+-fn lockable(t: &Texture, level: u32, flags: u32) -> bool {
+-    let Some(m) = t.mips.get(level as usize) else {
++fn subresource(t: &Texture, face: u32, level: u32) -> Option<usize> {
++    if face >= t.faces || level as usize >= t.mips.len() { return None; }
++    Some(face as usize * t.mips.len() + level as usize)
++}
++fn lockable(t: &Texture, face: u32, level: u32, flags: u32) -> bool {
++    let Some(index) = subresource(t, face, level) else {
+         return false;
+     };
+-    m.locked.is_none()
++    t.locks[index].is_none()
+         && flags & !0x2810 == 0
+         && !(flags & 0x10 != 0 && flags & 0x2000 != 0)
+         && (t.pool != 0 || t.usage & 0x200 != 0)
+@@ -347,6 +386,9 @@
+ }
+ #[win32_derive::dllexport]
+ pub fn LockRect(ctx: &mut Context, this: u32, level: u32, out: u32, rect: u32, flags: u32) -> u32 {
++    lock_rect(ctx, this, 0, level, out, rect, flags)
++}
++pub(crate) fn lock_rect(ctx: &mut Context, this: u32, face: u32, level: u32, out: u32, rect: u32, flags: u32) -> u32 {
+     if !valid(ctx, out, 8) {
+         return D3DERR_INVALIDCALL;
+     }
+@@ -354,8 +396,8 @@
+     let t = map.get_mut(&this).expect("invalid texture LockRect");
+     // Upload the full mip on unlock; untouched staging bytes preserve its other regions.
+     if (rect != 0 && flags & 0x2000 != 0)
+-        || (flags & 0x2000 != 0 && (level != 0 || t.mips.iter().any(|m| m.locked.is_some())))
+-        || !lockable(t, level, flags)
++        || (flags & 0x2000 != 0 && (level != 0 || t.locks.iter().any(Option::is_some)))
++        || !lockable(t, face, level, flags)
+     {
+         return D3DERR_INVALIDCALL;
+     }
+@@ -373,33 +415,39 @@
+     };
+     if flags & 0x2000 != 0 {
+         for m in &t.mips {
+-            ctx.memory.bytes[(t.data + m.offset) as usize..(t.data + m.offset + m.size) as usize]
++            let base=t.data+face*t.face_stride;
++            ctx.memory.bytes[(base + m.offset) as usize..(base + m.offset + m.size) as usize]
+                 .fill(0);
+         }
+     }
+-    let m = &mut t.mips[level as usize];
+-    m.locked = Some(flags & 0x10 != 0);
++    let index=subresource(t,face,level).unwrap();
++    t.locks[index] = Some(flags & 0x10 != 0);
++    let m = &t.mips[level as usize];
+     ctx.memory.write::<u32>(out, m.pitch);
+-    ctx.memory.write::<u32>(out + 4, t.data + m.offset + offset);
++    ctx.memory.write::<u32>(out + 4, t.data + face*t.face_stride + m.offset + offset);
+     D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn UnlockRect(ctx: &mut Context, this: u32, level: u32) -> u32 {
++    unlock_rect(ctx, this, 0, level)
++}
++pub(crate) fn unlock_rect(ctx: &mut Context, this: u32, face: u32, level: u32) -> u32 {
+     let t = texture(this);
++    let Some(index) = subresource(&t, face, level) else { return D3DERR_INVALIDCALL; };
+     let Some(m) = t.mips.get(level as usize) else {
+         return D3DERR_INVALIDCALL;
+     };
+-    let Some(readonly) = m.locked else {
++    let Some(readonly) = t.locks[index] else {
+         return D3DERR_INVALIDCALL;
+     };
+     if !readonly {
+-        let pointer = host_pointer(ctx, t.data + m.offset);
+-        let result = host::graphics_call(11, &[t.backend, t.gpu, level, pointer, m.pitch, m.size]);
++        let pointer = host_pointer(ctx, t.data + face*t.face_stride + m.offset);
++        let result = if t.faces == 6 { host::graphics_call(20, &[t.backend, t.gpu, face, level, pointer, m.pitch, m.size]) } else { host::graphics_call(11, &[t.backend, t.gpu, level, pointer, m.pitch, m.size]) };
+         if result != 1 {
+             return result;
+         }
+     }
+-    TEXTURES.lock().unwrap().get_mut(&this).unwrap().mips[level as usize].locked = None;
++    TEXTURES.lock().unwrap().get_mut(&this).unwrap().locks[index] = None;
+     D3D_OK
+ }
+ fn fail(ctx: &Context, name: &str) -> ! {
+@@ -443,27 +491,32 @@
+ }
+ #[win32_derive::dllexport]
+ pub fn GetSurfaceLevel(ctx: &mut Context, this: u32, level: u32, out: u32) -> u32 {
++    get_surface(ctx, this, 0, level, out)
++}
++pub(crate) fn get_surface(ctx: &mut Context, this: u32, face: u32, level: u32, out: u32) -> u32 {
+     if !valid(ctx, out, 4) {
+         return D3DERR_INVALIDCALL;
+     }
+     ctx.memory.write::<u32>(out, 0);
+     let t = texture(this);
+-    let Some(m) = t.mips.get(level as usize) else {
+-        return D3DERR_INVALIDCALL;
+-    };
+-    let mut surface = t.surfaces[level as usize];
++    let Some(index) = subresource(&t, face, level) else {
++        return D3DERR_INVALIDCALL;
++    };
++    let m=&t.mips[level as usize];
++    let mut surface = t.surfaces[index];
+     if surface == 0 {
+         surface = IDirect3DSurface9::create_texture(
+             ctx,
+             t.owner,
+             this,
++            face,
+             level,
+             [t.format, 1, t.usage, t.pool, 0, 0, m.width, m.height],
+         );
+         if surface == 0 {
+             return 0x8007000e;
+         }
+-        TEXTURES.lock().unwrap().get_mut(&this).unwrap().surfaces[level as usize] = surface;
++        TEXTURES.lock().unwrap().get_mut(&this).unwrap().surfaces[index] = surface;
+     }
+     IDirect3DSurface9::AddRef(ctx, surface);
+     ctx.memory.write::<u32>(out, surface);
+@@ -492,6 +545,10 @@
+             usage: 0,
+             pool: 1,
+             format: 0x31545844,
++            kind: 3,
++            faces: 1,
++            face_stride: 56,
++            locks: vec![None; mips.len()],
+             surfaces: vec![0; mips.len()],
+             mips,
+         },
+@@ -553,24 +610,34 @@
+             usage: 0,
+             pool: 1,
+             format: 21,
++            kind: 3,
++            faces: 1,
++            face_stride: 340,
+             mips: layout(8, 8, 0, 21).unwrap(),
++            locks: vec![None; 4],
+             surfaces: vec![0; 4],
+         };
+-        assert!(lockable(&t, 0, 0x810));
+-        assert!(!lockable(&t, 0, 0x2000));
+-        assert!(!lockable(&t, 0, 0x8000));
+-        assert!(!lockable(&t, 4, 0));
++        assert!(lockable(&t, 0, 0, 0x810));
++        assert!(!lockable(&t, 0, 0, 0x2000));
++        assert!(!lockable(&t, 0, 0, 0x8000));
++        assert!(!lockable(&t, 0, 4, 0));
+         t.pool = 0;
+-        assert!(!lockable(&t, 0, 0));
++        assert!(!lockable(&t, 0, 0, 0));
+         t.usage = 0x200;
+-        assert!(lockable(&t, 0, 0x2000));
+-        assert!(!lockable(&t, 0, 0x2010));
+-        t.mips[0].locked = Some(false);
+-        assert!(!lockable(&t, 0, 0));
++        assert!(lockable(&t, 0, 0, 0x2000));
++        assert!(!lockable(&t, 0, 0, 0x2010));
++        t.locks[0] = Some(false);
++        assert!(!lockable(&t, 0, 0, 0));
++        let cube_mips=layout(4,4,0,21).unwrap();
++        let mut cube=Texture{kind:5,faces:6,face_stride:84,mips:cube_mips,locks:vec![None;18],surfaces:vec![0;18],..t.clone()};
++        assert_eq!(subresource(&cube,0,0),Some(0));assert_eq!(subresource(&cube,5,2),Some(17));assert_eq!(subresource(&cube,6,0),None);
++        let locked=subresource(&cube,5,1).unwrap();cube.locks[locked]=Some(true);
++        assert!(!lockable(&cube,5,1,0));assert!(lockable(&cube,4,1,0));
+     }
+ }
+ 
+-pub(super) fn draw_handle(this:u32)->Option<u32>{let t=texture(this);if t.mips.iter().any(|m|m.locked.is_some()){None}else{Some(t.gpu)}}
++pub(super) fn draw_handle(this:u32)->Option<u32>{let t=texture(this);if t.locks.iter().any(Option::is_some){None}else{Some(t.gpu)}}
++pub(crate) fn is_cube(this:u32)->bool{texture(this).kind==5}
+ 
+ /// Copy a rectangle between texture-backed surfaces. D3D8 uses this path for
+ /// image uploads, so the copy updates both the CPU staging bytes and the
+@@ -578,8 +645,10 @@
+ pub(crate) fn copy_region(
+     ctx: &mut Context,
+     source: u32,
++    source_face: u32,
+     source_level: u32,
+     dest: u32,
++    dest_face: u32,
+     dest_level: u32,
+     source_rect: [u32; 4],
+     dest_left: u32,
+@@ -587,6 +656,7 @@
+ ) -> u32 {
+     let src = texture(source);
+     let dst = texture(dest);
++    if subresource(&src,source_face,source_level).is_none()||subresource(&dst,dest_face,dest_level).is_none(){return D3DERR_INVALIDCALL;}
+     let Some(sm) = src.mips.get(source_level as usize) else { return D3DERR_INVALIDCALL; };
+     let Some(dm) = dst.mips.get(dest_level as usize) else { return D3DERR_INVALIDCALL; };
+     if src.format != dst.format { return D3DERR_INVALIDCALL; }
+@@ -613,8 +683,8 @@
+     }
+     let Some(row_bytes_u32) = width.checked_mul(bytes) else { return D3DERR_INVALIDCALL; };
+     let row_bytes = row_bytes_u32 as usize;
+-    let src_base = src.data + sm.offset + top / block * sm.pitch + left / block * bytes;
+-    let dst_base = dst.data + dm.offset + dest_top / block * dm.pitch + dest_left / block * bytes;
++    let src_base = src.data + source_face*src.face_stride + sm.offset + top / block * sm.pitch + left / block * bytes;
++    let dst_base = dst.data + dest_face*dst.face_stride + dm.offset + dest_top / block * dm.pitch + dest_left / block * bytes;
+     for row in 0..height {
+         let src_start = (src_base + row * sm.pitch) as usize;
+         let dst_start = (dst_base + row * dm.pitch) as usize;
+@@ -628,7 +698,7 @@
+     }
+     // Host graphics calls address the imported WASM linear memory, whereas
+     // D3D locks expose offsets in the emulated Win32 address space.
+-    let pointer = host_pointer(ctx, dst.data + dm.offset);
+-    let result = host::graphics_call(11, &[dst.backend, dst.gpu, dest_level, pointer, dm.pitch, dm.size]);
++    let pointer = host_pointer(ctx, dst.data + dest_face*dst.face_stride + dm.offset);
++    let result = if dst.faces==6{host::graphics_call(20,&[dst.backend,dst.gpu,dest_face,dest_level,pointer,dm.pitch,dm.size])}else{host::graphics_call(11, &[dst.backend, dst.gpu, dest_level, pointer, dm.pitch, dm.size])};
+     if result == 1 { D3D_OK } else { result }
+ }
