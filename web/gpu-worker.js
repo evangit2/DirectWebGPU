@@ -29,6 +29,11 @@ const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
 const clearBits=new DataView(new ArrayBuffer(4)),clearColor={r:0,g:0,b:0,a:0};
+function installDefaultTargets(target,width,height,color,depth){
+ target.color=color;target.depth=depth;target.width=width;target.height=height;
+ target.targetColor={texture:color,view:color.createView(),width,height,format:'bgra8unorm',textureId:0,face:0,level:0,stencil:false};
+ target.targetDepth={texture:depth,view:depth.createView(),width,height,format:'depth24plus-stencil8',textureId:0,face:0,level:0,stencil:true};
+}
 function presentWork(){
  const writes=backend?.draws?.snapshotMetrics()??{};
  return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,batchCpuMs:bridgeMetrics.batchCpuMs,drawDecodeCpuMs:bridgeMetrics.drawDecodeCpuMs,drawCpuMs:writes.drawCpuMs??0,pipelineLookupCpuMs:writes.pipelineLookupCpuMs??0,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,renderPasses:writes.renderPasses??0,uploadPassBreaks:writes.uploadPassBreaks??0,versionedGeometryWrites:writes.versionedGeometryWrites??0,versionFallbacks:writes.versionFallbacks??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
@@ -132,8 +137,8 @@ function drawPacket(id,pointer,length,memory){
   backend.draws??=new DrawRenderer(device,backend);
   const submit=()=>{
    const drawn=backend.draws.draw(packet);
-   if(drawn?.then)return drawn.then(()=>backend.equivalence?.draw(packet)).then(()=>{backend.submissions++;return 1;});
-   const equivalent=backend.equivalence?.draw(packet);
+   if(drawn?.then)return drawn.then(()=>backend.targetColor.textureId===0?backend.equivalence?.draw(packet):undefined).then(()=>{backend.submissions++;return 1;});
+   const equivalent=backend.targetColor.textureId===0?backend.equivalence?.draw(packet):undefined;
    return equivalent?.then?equivalent.then(()=>{backend.submissions++;return 1;}):(backend.submissions++,1);
   };
   const submitReady=()=>{
@@ -145,9 +150,10 @@ function drawPacket(id,pointer,length,memory){
 }
 function clearCommand(a){
  const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
+ if(flags&6&&!backend.targetDepth||flags&4&&!backend.targetDepth?.stencil)return INVALID;
  clearBits.setUint32(0,zBits,true);const z=clearBits.getFloat32(0,true);if(!Number.isFinite(z)||z<0||z>1)return INVALID;
  clearColor.r=((argb>>>16)&255)/255;clearColor.g=((argb>>>8)&255)/255;clearColor.b=(argb&255)/255;clearColor.a=(argb>>>24)/255;
- backend.draws??=new DrawRenderer(device,backend);backend.draws.clear(flags,clearColor,z,stencil&255);backend.equivalence?.clear(flags,clearColor,z,stencil&255);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
+ backend.draws??=new DrawRenderer(device,backend);backend.draws.clear(flags,clearColor,z,stencil&255);if(backend.targetColor.textureId===0)backend.equivalence?.clear(flags,clearColor,z,stencil&255);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
 }
 function finishPresent(present,memory){
  if(present===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first completed Present')});backend.submissions++;
@@ -204,7 +210,7 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,completedPresents:0,submissions:0,profileStutters};
+  backend={id:nextId++,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,completedPresents:0,submissions:0,profileStutters};installDefaultTargets(backend,width,height,color,depth);
   if(gpuTiming&&device.features.has('timestamp-query'))backend.timer=new GpuTiming(device);
   if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend,omitDiagnosticLighting);
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
@@ -222,7 +228,7 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 reset backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 reset D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();emit('d3d9-device-reset-rejected',{params:a.slice(1),reason:(oom??validation).message});return UNAVAILABLE;}
-  backend.equivalence?.dispose();backend.equivalence=null;backend.color.destroy();backend.depth.destroy();backend.color=color;backend.depth=depth;backend.width=width;backend.height=height;backend.state=new D3D9RenderState();windowSize=[width,height];canvas.width=width;canvas.height=height;context.configure({device,format:'bgra8unorm',alphaMode:'opaque',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_DST});
+  backend.equivalence?.dispose();backend.equivalence=null;backend.color.destroy();backend.depth.destroy();installDefaultTargets(backend,width,height,color,depth);backend.state=new D3D9RenderState();windowSize=[width,height];canvas.width=width;canvas.height=height;context.configure({device,format:'bgra8unorm',alphaMode:'opaque',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_DST});
   emit('window-resized',{width,height,source:'IDirect3DDevice Reset'});emit('d3d9-device-reset',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed'});return 1;
  }
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
@@ -253,16 +259,24 @@ async function graphics(op,a,memory){
  }
  if(op>=10&&op<=12){
   try{
-   if(op===10&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4]);
+   if(op===10&&a.length===6)return await backend.textures.create(a[1],a[2],a[3],a[4],1,a[5]);
    if(op===11&&a.length===6){backend.draws?.flush();backend.equivalence?.flush();await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
-   if(op===12&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();backend.textures.destroy(a[1]);return 1;}
+   if(op===12&&a.length===2){if(a[1]===backend.targetColor.textureId||a[1]===backend.targetDepth?.textureId)return INVALID;backend.draws?.flush();backend.equivalence?.flush();backend.textures.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  if(op===19||op===20){
   try{
-   if(op===19&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4],6);
+   if(op===19&&a.length===6)return await backend.textures.create(a[1],a[2],a[3],a[4],6,a[5]);
    if(op===20&&a.length===7){backend.draws?.flush();backend.equivalence?.flush();await backend.textures.upload(a[1],a[3],memory,a[4],a[5],a[6],a[2]);return 1;}
+   return INVALID;
+  }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ if(op>=21&&op<=23){
+  try{
+   if(op===21&&a.length===5)return await backend.textures.createSurface(a[1],a[2],a[3],a[4]);
+   if(op===22&&a.length===4){backend.draws?.flush();backend.equivalence?.flush();const [,id,face,level]=a,target=id===0?{texture:backend.color,view:backend.color.createView(),width:backend.width,height:backend.height,format:'bgra8unorm',textureId:0,face:0,level:0,stencil:false}:backend.textures.attachment(id,face,level,1);if(backend.targetDepth&&(backend.targetDepth.width<target.width||backend.targetDepth.height<target.height))return INVALID;backend.targetColor=target;return 1;}
+   if(op===23&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();const id=a[1],target=id===0xffffffff?null:id===0?{texture:backend.depth,view:backend.depth.createView(),width:backend.width,height:backend.height,format:'depth24plus-stencil8',textureId:0,face:0,level:0,stencil:true}:backend.textures.attachment(id,0,0,2);if(target&&(target.width<backend.targetColor.width||target.height<backend.targetColor.height))return INVALID;backend.targetDepth=target;return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }

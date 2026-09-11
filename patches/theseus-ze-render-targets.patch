@@ -1,0 +1,401 @@
+diff --git a/win32/winapi/src/d3d8.rs b/win32/winapi/src/d3d8.rs
+index 9da7c43..fd211e5 100644
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -181,8 +181,8 @@ pub mod IDirect3DDevice8{
+  #[win32_derive::dllexport]pub fn CreateCubeTexture(ctx:&mut Context,this:u32,edge:u32,levels:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateCubeTexture(ctx,this,edge,levels,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DCubeTexture8::VTABLE});}r}
+  #[win32_derive::dllexport]pub fn CreateVertexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,fvf:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateVertexBuffer(ctx,this,size,usage,fvf,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DVertexBuffer8::VTABLE});}r}
+  #[win32_derive::dllexport]pub fn CreateIndexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format:u32,pool:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateIndexBuffer(ctx,this,size,usage,format,pool,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DIndexBuffer8::VTABLE});}r}
+- pub fn CreateRenderTarget_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateRenderTarget")}
+- pub fn CreateDepthStencilSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateDepthStencilSurface")}
++ #[win32_derive::dllexport]pub fn CreateRenderTarget(ctx:&mut Context,this:u32,width:u32,height:u32,format:u32,multisample:u32,lockable:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateRenderTarget(ctx,this,width,height,format,multisample,0,lockable,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
++ #[win32_derive::dllexport]pub fn CreateDepthStencilSurface(ctx:&mut Context,this:u32,width:u32,height:u32,format:u32,multisample:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::CreateDepthStencilSurface(ctx,this,width,height,format,multisample,0,0,out,0);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
+  pub fn CreateImageSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateImageSurface")}
+  #[win32_derive::dllexport]
+  pub fn CopyRects(ctx:&mut Context,_this:u32,source:u32,source_rects:u32,count:u32,dest:u32,dest_points:u32)->u32{
+diff --git a/win32/winapi/src/d3d9.rs b/win32/winapi/src/d3d9.rs
+index eb89cf8..a6c6f06 100644
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -5,6 +5,7 @@ use std::{collections::HashMap, sync::{LazyLock, Mutex}};
+ use crate::kernel32;
+ 
+ pub const D3D_OK: u32 = 0;
++pub const D3DERR_NOTFOUND: u32 = 0x88760866;
+ pub const D3DERR_INVALIDCALL: u32 = 0x8876086c;
+ pub const D3DERR_NOTAVAILABLE: u32 = 0x8876086a;
+ const E_NOINTERFACE: u32 = 0x80004002;
+diff --git a/win32/winapi/src/d3d9/device.rs b/win32/winapi/src/d3d9/device.rs
+index 8807f3b..c01c256 100644
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -97,7 +97,7 @@ struct StateValues {
+ #[derive(Clone)]
+ struct Recording { mask: StateMask, values: StateValues }
+ #[derive(Clone)]
+-struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,up_index_buffers:[u32;2],up_index_offsets:[u32;2],states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>,recording:Option<Recording>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,render_target:u32,depth_target:u32,render_size:[u32;2],up_buffer:u32,up_offset:u32,up_index_buffers:[u32;2],up_index_offsets:[u32;2],states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>,recording:Option<Recording>}
+ static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+ pub static mut VTABLE:u32=0;
+ const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
+@@ -228,7 +228,7 @@ pub fn create(ctx:&mut Context,parent:u32,backend:u32,focus:u32,flags:u32,width:
+  let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
+  let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
+  let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
+- IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,up_buffer:0,up_offset:0,up_index_buffers:[0;2],up_index_offsets:[0;2],states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default(),recording:None}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,render_target:color,depth_target:depth,render_size:[width,height],up_buffer:0,up_offset:0,up_index_buffers:[0;2],up_index_offsets:[0;2],states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default(),recording:None}).is_none());p
+ }
+ pub fn exists(this:u32)->bool{DEVICES.lock().unwrap().contains_key(&this)}
+ #[win32_derive::dllexport]
+@@ -249,6 +249,8 @@ pub fn Release(ctx:&mut Context,this:u32)->u32{
+  IDirect3DVertexDeclaration9::release_binding(ctx,d.declaration);
+  for texture in d.textures{super::IDirect3DTexture9::release_binding(ctx,texture)}
+  for shader in d.shaders{super::shader::release_binding(ctx,shader)}
++ if d.render_target!=d.color{IDirect3DSurface9::release_binding(ctx,d.render_target)}
++ if d.depth_target!=0&&d.depth_target!=d.depth{IDirect3DSurface9::release_binding(ctx,d.depth_target)}
+  IDirect3DSurface9::destroy_owned(ctx,d.color);IDirect3DSurface9::destroy_owned(ctx,d.depth);
+  if d.up_buffer!=0{host::graphics_call(7,&[d.backend,d.up_buffer]);}for buffer in d.up_index_buffers{if buffer!=0{host::graphics_call(7,&[d.backend,buffer]);}}
+  host::graphics_call(2,&[d.backend]);IDirect3D9::Release(ctx,d.parent);ctx.memory.write::<u32>(this,0);kernel32::lock().process_heap.free(&mut ctx.memory,this);0
+@@ -298,7 +300,7 @@ pub fn GetNumberOfSwapChains(_ctx:&mut Context,this:u32)->u32{device(this);1}
+ #[win32_derive::dllexport]
+ pub fn Reset(ctx:&mut Context,this:u32,presentation:u32)->u32{
+  let current=device(this);
+- if current.scene||current.recording.is_some()||!valid(ctx,presentation,56)||IDirect3DSurface9::has_external_refs(current.color)||IDirect3DSurface9::has_external_refs(current.depth){return D3DERR_INVALIDCALL}
++ if current.scene||current.recording.is_some()||current.render_target!=current.color||current.depth_target!=current.depth||!valid(ctx,presentation,56)||IDirect3DSurface9::has_external_refs(current.color)||IDirect3DSurface9::has_external_refs(current.depth){return D3DERR_INVALIDCALL}
+  let mut params:[u32;14]=std::array::from_fn(|i|ctx.memory.read::<u32>(presentation+i as u32*4));
+  if params[0]==0{params[0]=current.target_size[0]}if params[1]==0{params[1]=current.target_size[1]}if params[2]==0{params[2]=current.target_format}
+  if params[0]>4096||params[1]>4096{return D3DERR_INVALIDCALL}
+@@ -311,7 +313,7 @@ pub fn Reset(ctx:&mut Context,this:u32,presentation:u32)->u32{
+  IDirect3DSurface9::destroy_owned(ctx,current.color);IDirect3DSurface9::destroy_owned(ctx,current.depth);
+  if current.up_buffer!=0{host::graphics_call(7,&[current.backend,current.up_buffer]);}for buffer in current.up_index_buffers{if buffer!=0{host::graphics_call(7,&[current.backend,buffer]);}}
+  let color=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],params[2],1);let depth=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],75,2);
+- let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.up_index_buffers=[0;2];d.up_index_offsets=[0;2];d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();d.recording=None;D3D_OK
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.render_target=color;d.depth_target=depth;d.render_size=[params[0],params[1]];d.up_buffer=0;d.up_offset=0;d.up_index_buffers=[0;2];d.up_index_offsets=[0;2];d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();d.recording=None;D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetBackBuffer(ctx:&mut Context,this:u32,swap:u32,index:u32,kind:u32,out:u32)->u32{if swap!=0||index!=0||kind!=0{return D3DERR_INVALIDCALL}GetRenderTarget(ctx,this,0,out)}
+@@ -329,8 +331,16 @@ pub fn CreateCubeTexture(ctx:&mut Context,this:u32,edge:u32,levels:u32,usage:u32
+ pub fn CreateVertexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format_or_fvf:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::buffers::create(ctx,this,d.backend,6,size,usage,100,pool,format_or_fvf,out,shared)}
+ #[win32_derive::dllexport]
+ pub fn CreateIndexBuffer(ctx:&mut Context,this:u32,size:u32,usage:u32,format_or_fvf:u32,pool:u32,out:u32,shared:u32)->u32{let d=device(this);super::buffers::create(ctx,this,d.backend,7,size,usage,format_or_fvf,pool,0,out,shared)}
+-pub fn CreateRenderTarget_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateRenderTarget",9)}
+-pub fn CreateDepthStencilSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateDepthStencilSurface",9)}
++#[win32_derive::dllexport]
++pub fn CreateRenderTarget(ctx:&mut Context,this:u32,width:u32,height:u32,format:u32,multisample:u32,quality:u32,lockable:u32,out:u32,shared:u32)->u32{
++ let d=device(this);if multisample!=0||quality!=0||lockable!=0||shared!=0||![21,22].contains(&format){if valid(ctx,out,4){ctx.memory.write::<u32>(out,0)}return D3DERR_INVALIDCALL}
++ IDirect3DSurface9::create_standalone(ctx,this,d.backend,width,height,format,1,out)
++}
++#[win32_derive::dllexport]
++pub fn CreateDepthStencilSurface(ctx:&mut Context,this:u32,width:u32,height:u32,format:u32,multisample:u32,quality:u32,_discard:u32,out:u32,shared:u32)->u32{
++ let d=device(this);if multisample!=0||quality!=0||shared!=0||format!=75{if valid(ctx,out,4){ctx.memory.write::<u32>(out,0)}return D3DERR_INVALIDCALL}
++ IDirect3DSurface9::create_standalone(ctx,this,d.backend,width,height,format,2,out)
++}
+ pub fn UpdateSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UpdateSurface",5)}
+ pub fn UpdateTexture_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"UpdateTexture",3)}
+ pub fn GetRenderTargetData_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetRenderTargetData",3)}
+@@ -339,13 +349,29 @@ pub fn StretchRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"StretchRec
+ pub fn ColorFill_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ColorFill",4)}
+ pub fn CreateOffscreenPlainSurface_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateOffscreenPlainSurface",7)}
+ #[win32_derive::dllexport]
+-pub fn SetRenderTarget(_ctx:&mut Context,this:u32,index:u32,surface:u32)->u32{let d=device(this);if index!=0||surface!=d.color{return D3DERR_INVALIDCALL}D3D_OK}
++pub fn SetRenderTarget(ctx:&mut Context,this:u32,index:u32,surface:u32)->u32{
++ let current=device(this);if index!=0||surface==0{return D3DERR_INVALIDCALL}
++ let Some(target)=IDirect3DSurface9::attachment(surface,this,1)else{return D3DERR_INVALIDCALL};
++ if current.depth_target!=0{let Some(depth)=IDirect3DSurface9::attachment(current.depth_target,this,2)else{return D3DERR_INVALIDCALL};if depth.width<target.width||depth.height<target.height{return D3DERR_INVALIDCALL}}
++ if surface!=current.render_target&&surface!=current.color&&!IDirect3DSurface9::retain_binding(surface,this,1){return D3DERR_INVALIDCALL}
++ let result=hresult(host::graphics_call(22,&[current.backend,target.gpu,target.face,target.level]));
++ if result!=D3D_OK{if surface!=current.render_target&&surface!=current.color{IDirect3DSurface9::release_binding(ctx,surface)}return result}
++ let old=current.render_target;{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.render_target=surface;d.render_size=[target.width,target.height];d.viewport=default_viewport(target.width,target.height);}
++ if old!=surface&&old!=current.color{IDirect3DSurface9::release_binding(ctx,old)}D3D_OK
++}
+ #[win32_derive::dllexport]
+-pub fn GetRenderTarget(ctx:&mut Context,this:u32,index:u32,out:u32)->u32{let d=device(this);if index!=0||!valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DSurface9::AddRef(ctx,d.color);ctx.memory.write::<u32>(out,d.color);D3D_OK}
++pub fn GetRenderTarget(ctx:&mut Context,this:u32,index:u32,out:u32)->u32{let d=device(this);if index!=0||!valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DSurface9::AddRef(ctx,d.render_target);ctx.memory.write::<u32>(out,d.render_target);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetDepthStencilSurface(_ctx:&mut Context,this:u32,surface:u32)->u32{let d=device(this);if surface!=d.depth{return D3DERR_INVALIDCALL}D3D_OK}
++pub fn SetDepthStencilSurface(ctx:&mut Context,this:u32,surface:u32)->u32{
++ let current=device(this);let target=if surface==0{None}else{let Some(target)=IDirect3DSurface9::attachment(surface,this,2)else{return D3DERR_INVALIDCALL};if target.width<current.render_size[0]||target.height<current.render_size[1]{return D3DERR_INVALIDCALL}Some(target)};
++ if surface!=current.depth_target&&surface!=0&&surface!=current.depth&&!IDirect3DSurface9::retain_binding(surface,this,2){return D3DERR_INVALIDCALL}
++ let result=hresult(host::graphics_call(23,&[current.backend,target.map_or(u32::MAX,|value|value.gpu)]));
++ if result!=D3D_OK{if surface!=current.depth_target&&surface!=0&&surface!=current.depth{IDirect3DSurface9::release_binding(ctx,surface)}return result}
++ let old=current.depth_target;DEVICES.lock().unwrap().get_mut(&this).unwrap().depth_target=surface;
++ if old!=surface&&old!=0&&old!=current.depth{IDirect3DSurface9::release_binding(ctx,old)}D3D_OK
++}
+ #[win32_derive::dllexport]
+-pub fn GetDepthStencilSurface(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}IDirect3DSurface9::AddRef(ctx,d.depth);ctx.memory.write::<u32>(out,d.depth);D3D_OK}
++pub fn GetDepthStencilSurface(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,0);if d.depth_target==0{return D3DERR_NOTFOUND}IDirect3DSurface9::AddRef(ctx,d.depth_target);ctx.memory.write::<u32>(out,d.depth_target);D3D_OK}
+ fn transform_kind(kind:u32)->bool{matches!(kind,2|3|16..=23|256..=511)}
+ fn identity_transform()->[u32;16]{let mut m=[0;16];for i in [0,5,10,15]{m[i]=1.0f32.to_bits();}m}
+ #[win32_derive::dllexport]
+@@ -371,7 +397,7 @@ pub fn MultiplyTransform(ctx:&mut Context,this:u32,kind:u32,pointer:u32)->u32{
+ #[win32_derive::dllexport]
+ pub fn SetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{
+  let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid viewport device");if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}let v:[u32;6]=std::array::from_fn(|i|ctx.memory.read::<u32>(pointer+i as u32*4));let min=f32::from_bits(v[4]);let max=f32::from_bits(v[5]);
+- if v[2]==0||v[3]==0||v[0]as u64+v[2]as u64>d.target_size[0]as u64||v[1]as u64+v[3]as u64>d.target_size[1]as u64||!min.is_finite()||!max.is_finite()||min<0.0||max>1.0||min>max{return D3DERR_INVALIDCALL}if let Some(recording)=d.recording.as_mut(){recording.values.viewport=v;recording.mask.viewport=true;}else{d.viewport=v;}D3D_OK
++ if v[2]==0||v[3]==0||v[0]as u64+v[2]as u64>d.render_size[0]as u64||v[1]as u64+v[3]as u64>d.render_size[1]as u64||!min.is_finite()||!max.is_finite()||min<0.0||max>1.0||min>max{return D3DERR_INVALIDCALL}if let Some(recording)=d.recording.as_mut(){recording.values.viewport=v;recording.mask.viewport=true;}else{d.viewport=v;}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}for(i,v)in d.viewport.into_iter().enumerate(){ctx.memory.write::<u32>(pointer+i as u32*4,v)}D3D_OK}
+@@ -447,7 +473,7 @@ pub fn GetCurrentTexturePalette_stdcall(ctx:&mut Context)->runtime::Cont{fail(ct
+ #[win32_derive::dllexport]
+ pub fn SetScissorRect(ctx:&mut Context,this:u32,pointer:u32)->u32{
+  let d=device(this);if !valid(ctx,pointer,16){return D3DERR_INVALIDCALL}let rect=ctx.memory.read::<[i32;4]>(pointer);
+- if rect[0]<0||rect[1]<0||rect[2]<=rect[0]||rect[3]<=rect[1]||rect[2]as u32>d.target_size[0]||rect[3]as u32>d.target_size[1]{return D3DERR_INVALIDCALL}
++ if rect[0]<0||rect[1]<0||rect[2]<=rect[0]||rect[3]<=rect[1]||rect[2]as u32>d.render_size[0]||rect[3]as u32>d.render_size[1]{return D3DERR_INVALIDCALL}
+  let rect=rect.map(|v|v as u32);let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).unwrap();if let Some(recording)=device.recording.as_mut(){recording.values.scissor=rect;recording.mask.scissor=true;}else{device.scissor=rect;}D3D_OK
+ }
+ #[win32_derive::dllexport]
+diff --git a/win32/winapi/src/d3d9/surface.rs b/win32/winapi/src/d3d9/surface.rs
+index 9efb5cf..48d6a3a 100644
+--- a/win32/winapi/src/d3d9/surface.rs
++++ b/win32/winapi/src/d3d9/surface.rs
+@@ -3,9 +3,13 @@ use super::*;
+ #[derive(Clone)]
+ struct Surface {
+     refs: u32,
++    bindings: u32,
+     device: u32,
+     desc: [u32; 8],
+     texture: Option<(u32, u32, u32)>,
++    backend: u32,
++    gpu: u32,
++    standalone: bool,
+ }
+ static SURFACES: LazyLock<Mutex<HashMap<u32, Surface>>> =
+     LazyLock::new(|| Mutex::new(HashMap::new()));
+@@ -52,6 +56,35 @@ pub(crate) fn dimensions(this: u32) -> (u32, u32) {
+     let s = surface(this);
+     (s.desc[6], s.desc[7])
+ }
++#[derive(Clone, Copy)]
++pub(crate) struct Attachment {
++    pub gpu: u32,
++    pub face: u32,
++    pub level: u32,
++    pub width: u32,
++    pub height: u32,
++}
++pub(crate) fn attachment(this: u32, owner: u32, usage: u32) -> Option<Attachment> {
++    let s = surface(this);
++    if s.device != owner || s.desc[2] & usage == 0 {
++        return None;
++    }
++    if let Some((texture, face, level)) = s.texture {
++        let (gpu, texture_usage, _format, width, height) =
++            IDirect3DTexture9::attachment(texture, face, level)?;
++        if texture_usage & usage == 0 {
++            return None;
++        }
++        return Some(Attachment { gpu, face, level, width, height });
++    }
++    Some(Attachment {
++        gpu: s.gpu,
++        face: 0,
++        level: 0,
++        width: s.desc[6],
++        height: s.desc[7],
++    })
++}
+ pub(crate) fn has_external_refs(this: u32) -> bool {
+     surface(this).refs != 0
+ }
+@@ -75,9 +108,13 @@ pub fn create_owned(
+                 p,
+                 Surface {
+                     refs: 0,
++                    bindings: 0,
+                     device: owner,
+                     desc: [format, 1, usage, 0, 0, 0, width, height],
+-                    texture: None
++                    texture: None,
++                    backend: 0,
++                    gpu: 0,
++                    standalone: false,
+                 }
+             )
+             .is_none()
+@@ -91,6 +128,7 @@ pub fn destroy_owned(ctx: &mut Context, this: u32) {
+         .remove(&this)
+         .expect("invalid owned surface");
+     assert_eq!(s.refs, 0);
++    assert_eq!(s.bindings, 0);
+     ctx.memory.write::<u32>(this, 0);
+     kernel32::lock().process_heap.free(&mut ctx.memory, this);
+ }
+@@ -113,13 +151,105 @@ pub(super) fn create_texture(
+         p,
+         Surface {
+             refs: 0,
++            bindings: 0,
+             device: owner,
+             desc,
+             texture: Some((texture, face, level)),
++            backend: 0,
++            gpu: 0,
++            standalone: false,
+         },
+     );
+     p
+ }
++pub(super) fn create_standalone(
++    ctx: &mut Context,
++    owner: u32,
++    backend: u32,
++    width: u32,
++    height: u32,
++    format: u32,
++    usage: u32,
++    out: u32,
++) -> u32 {
++    if !valid(ctx, out, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    ctx.memory.write::<u32>(out, 0);
++    if width == 0 || height == 0 || width > 4096 || height > 4096 || ![1, 2].contains(&usage) {
++        return D3DERR_INVALIDCALL;
++    }
++    let gpu = host::graphics_call(21, &[backend, width, height, format, usage]);
++    if gpu >= 0x80000000 {
++        return gpu;
++    }
++    let vt = unsafe { VTABLE };
++    assert!(valid(ctx, vt, 17 * 4));
++    let p = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    if p == 0 {
++        host::graphics_call(12, &[backend, gpu]);
++        return 0x8007000e;
++    }
++    ctx.memory.write::<u32>(p, vt);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    SURFACES.lock().unwrap().insert(
++        p,
++        Surface {
++            refs: 1,
++            bindings: 0,
++            device: owner,
++            desc: [format, 1, usage, 0, 0, 0, width, height],
++            texture: None,
++            backend,
++            gpu,
++            standalone: true,
++        },
++    );
++    ctx.memory.write::<u32>(out, p);
++    D3D_OK
++}
++fn destroy_standalone(ctx: &mut Context, this: u32, s: &Surface) {
++    assert!(s.standalone && s.refs == 0 && s.bindings == 0);
++    host::graphics_call(12, &[s.backend, s.gpu]);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
++}
++pub(super) fn retain_binding(this: u32, owner: u32, usage: u32) -> bool {
++    let mut map = SURFACES.lock().unwrap();
++    let Some(s) = map.get_mut(&this) else { return false; };
++    if s.device != owner || s.desc[2] & usage == 0 {
++        return false;
++    }
++    if let Some((texture, _, _)) = s.texture {
++        if !IDirect3DTexture9::retain_binding(texture, owner) {
++            return false;
++        }
++    }
++    s.bindings = s.bindings.checked_add(1).expect("surface binding overflow");
++    true
++}
++pub(super) fn release_binding(ctx: &mut Context, this: u32) {
++    if this == 0 {
++        return;
++    }
++    let mut map = SURFACES.lock().unwrap();
++    let s = map.get_mut(&this).expect("invalid surface binding");
++    assert!(s.bindings > 0);
++    s.bindings -= 1;
++    let texture = s.texture.map(|value| value.0);
++    let removed = if s.standalone && s.refs == 0 && s.bindings == 0 {
++        map.remove(&this)
++    } else {
++        None
++    };
++    drop(map);
++    if let Some(texture) = texture {
++        IDirect3DTexture9::release_binding(ctx, texture);
++    }
++    if let Some(s) = removed {
++        destroy_standalone(ctx, this, &s);
++    }
++}
+ #[win32_derive::dllexport]
+ pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
+     surface(this);
+@@ -163,7 +293,15 @@ pub fn Release(ctx: &mut Context, this: u32) -> u32 {
+     let n = s.refs;
+     let owner = s.device;
+     let texture = s.texture;
++    let removed = if s.standalone && n == 0 && s.bindings == 0 {
++        map.remove(&this)
++    } else {
++        None
++    };
+     drop(map);
++    if let Some(s) = removed.as_ref() {
++        destroy_standalone(ctx, this, s);
++    }
+     if let Some((t, _, _)) = texture {
+         IDirect3DTexture9::Release(ctx, t);
+     } else {
+@@ -227,7 +365,10 @@ pub fn GetContainer(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
+     if let Some((t, _, _)) = s.texture {
+         return IDirect3DTexture9::QueryInterface(ctx, t, iid, out);
+     }
+-    fail(ctx, "GetContainer for attachment")
++    if valid(ctx, out, 4) {
++        ctx.memory.write::<u32>(out, 0);
++    }
++    E_NOINTERFACE
+ }
+ #[win32_derive::dllexport]
+ pub fn LockRect(ctx: &mut Context, this: u32, out: u32, rect: u32, flags: u32) -> u32 {
+diff --git a/win32/winapi/src/d3d9/texture.rs b/win32/winapi/src/d3d9/texture.rs
+index 3a1295c..93fcce5 100644
+--- a/win32/winapi/src/d3d9/texture.rs
++++ b/win32/winapi/src/d3d9/texture.rs
+@@ -154,14 +154,20 @@ fn create_kind(
+         return D3DERR_INVALIDCALL;
+     }
+     ctx.memory.write::<u32>(out, 0);
+-    if shared != 0 || pool > 1 || usage & !0x200 != 0 || (pool == 1 && usage != 0) {
++    let render_target = usage == 1;
++    if shared != 0
++        || pool > 1
++        || ![0, 1, 0x200].contains(&usage)
++        || (pool == 1 && usage != 0)
++        || (render_target && (pool != 0 || ![21, 22].contains(&format)))
++    {
+         return D3DERR_INVALIDCALL;
+     }
+     let Some(mips) = layout(width, height, levels, format) else {
+         return D3DERR_INVALIDCALL;
+     };
+     let opcode = if faces == 6 { 19 } else { 10 };
+-    let gpu = host::graphics_call(opcode, &[backend, width, height, mips.len() as u32, format]);
++    let gpu = host::graphics_call(opcode, &[backend, width, height, mips.len() as u32, format, usage]);
+     if gpu >= 0x80000000 {
+         return gpu;
+     }
+@@ -293,6 +299,15 @@ pub(super) fn retain_binding(this: u32, owner: u32) -> bool {
+     s.bindings = s.bindings.checked_add(1).expect("texture binding overflow");
+     true
+ }
++pub(super) fn attachment(this: u32, face: u32, level: u32) -> Option<(u32, u32, u32, u32, u32)> {
++    let t = texture(this);
++    let index = subresource(&t, face, level)?;
++    let m = t.mips.get(level as usize)?;
++    if t.usage & 1 == 0 || t.locks[index].is_some() {
++        return None;
++    }
++    Some((t.gpu, t.usage, t.format, m.width, m.height))
++}
+ pub(super) fn release_binding(ctx: &mut Context, this: u32) {
+     if this == 0 {
+         return;

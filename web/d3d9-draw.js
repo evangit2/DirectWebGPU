@@ -10,7 +10,7 @@ const EMPTY_REGISTERS=new Uint32Array(0);
 const alignUniform=value=>(value+255)&~255;
 const floatBitsView=new DataView(new ArrayBuffer(4));
 const floatFromBits=value=>{floatBitsView.setUint32(0,value,true);return floatBitsView.getFloat32(0,true);};
-function drawScissor(packet,backend){const enabled=packet.state.get(RS.SCISSORTESTENABLE)!==0,rect=enabled?packet.scissor:[0,0,backend.color.width,backend.color.height];if(!rect||rect.length!==4)return null;const [left,top,right,bottom]=rect;if(![left,top,right,bottom].every(Number.isInteger)||left<0||top<0||right<=left||bottom<=top||right>backend.color.width||bottom>backend.color.height)return null;return[left,top,right,bottom]}
+function drawScissor(packet,backend){const target=backend.targetColor,enabled=packet.state.get(RS.SCISSORTESTENABLE)!==0,rect=enabled?packet.scissor:[0,0,target.width,target.height];if(!rect||rect.length!==4)return null;const [left,top,right,bottom]=rect;if(![left,top,right,bottom].every(Number.isInteger)||left<0||top<0||right<=left||bottom<=top||right>target.width||bottom>target.height)return null;return[left,top,right,bottom]}
 const DEFAULT_TEXTURE_STAGES=Object.freeze(Array.from({length:8},(_,stage)=>new Uint32Array(stage===0?[4,2,1,2,2,1,0,0]:[1,2,1,1,2,1,stage,0])));
 function defaultTextureStages(){return DEFAULT_TEXTURE_STAGES}
 const samplerAt=(samplers,index)=>samplers instanceof Uint32Array?samplers.subarray(index*14,index*14+14):samplers[index];
@@ -36,17 +36,17 @@ export function decodeDraw(memory,pointer,length){
  return{fixed,lighting,vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,textureStages,viewport,scissor};
 }
 export class DrawRenderer{
- constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.uniformWords=this.uniformShadow.map(bytes=>new Uint32Array(bytes.buffer));this.pendingUniformBytes=[0,0];this.uniformCursors=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic geometry ring',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST|GPUBufferUsage.VERTEX|GPUBufferUsage.INDEX});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.deferredCopies=[];this.versionedResources=new Set();this.bindingCaches=new WeakMap();this.encoder=null;this.pass=null;this.passState=null;this.writeMetrics={sourceGeometryWrites:0,versionedGeometryWrites:0,versionFallbacks:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0,renderPasses:0,uploadPassBreaks:0,stateCalls:0,stateCallsSkipped:0,drawCpuMs:0,pipelineLookupCpuMs:0};}
+ constructor(device,backend){this.device=device;this.backend=backend;if(backend.color&&!backend.targetColor)backend.targetColor={texture:backend.color,view:backend.color.createView(),width:backend.width??backend.color.width,height:backend.height??backend.color.height,format:backend.color.format??'bgra8unorm',textureId:0,stencil:false};if(backend.depth&&!Object.hasOwn(backend,'targetDepth'))backend.targetDepth={texture:backend.depth,view:backend.depth.createView(),width:backend.width??backend.depth.width,height:backend.height??backend.depth.height,format:backend.depth.format??'depth24plus-stencil8',textureId:0,stencil:true};this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.uniformWords=this.uniformShadow.map(bytes=>new Uint32Array(bytes.buffer));this.pendingUniformBytes=[0,0];this.uniformCursors=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic geometry ring',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST|GPUBufferUsage.VERTEX|GPUBufferUsage.INDEX});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.deferredCopies=[];this.versionedResources=new Set();this.bindingCaches=new WeakMap();this.encoder=null;this.pass=null;this.passState=null;this.writeMetrics={sourceGeometryWrites:0,versionedGeometryWrites:0,versionFallbacks:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0,renderPasses:0,uploadPassBreaks:0,stateCalls:0,stateCallsSkipped:0,drawCpuMs:0,pipelineLookupCpuMs:0};}
  setShaderObjects(objects){this.cache.setShaderObjects(objects);}
  draw(packet){
   const timingStart=performance.now();
   const d=this.device,b=this.backend,topology=({1:'point-list',2:'line-list',4:'triangle-list'})[packet.kind];
   const [x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=floatFromBits(minBits),maxDepth=floatFromBits(maxBits);
-  if(!width||!height||x+width>b.color.width||y+height>b.color.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
+  if(!width||!height||x+width>b.targetColor.width||y+height>b.targetColor.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
   if(!drawScissor(packet,b))throw RangeError('invalid draw scissor');
   const textureStages=packet.textureStages??defaultTextureStages(),textured=!!packet.textures[0]&&textureStages[0][0]!==1;
   const textureDimension=textured?b.textures.get(packet.textures[0]).dimension:1;
-  const cached=this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology,fixed:!!packet.fixed,textured,textureDimension,textureStages,lighting:packet.lighting,viewportSize:[width,height]});
+  const cached=this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{colorFormat:b.targetColor.format,depthFormat:b.targetDepth?.format??null,topology,fixed:!!packet.fixed,textured,textureDimension,textureStages,lighting:packet.lighting,viewportSize:[width,height]});
   if(b.profileStutters)this.writeMetrics.pipelineLookupCpuMs+=performance.now()-timingStart;
   if(cached?.then)return cached.then(entry=>this.drawWithEntry(packet,entry,timingStart));
  return this.drawWithEntry(packet,cached,timingStart);
@@ -56,7 +56,9 @@ export class DrawRenderer{
  prepareBufferUpload(upload=false){this.endPass(upload);this.commitDeferredCopies();this.encoder??=this.device.createCommandEncoder();}
  clear(flags,colorValue,z,stencil){
   this.prepareBufferUpload();
-  const pass=this.encoder.beginRenderPass({colorAttachments:[{view:this.backend.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:colorValue}],depthStencilAttachment:{view:this.backend.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil}});pass.end();
+  const depth=this.backend.targetDepth,descriptor={colorAttachments:[{view:this.backend.targetColor.view,loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:colorValue}]};
+  if(depth)descriptor.depthStencilAttachment={view:depth.view,depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,...(depth.stencil?{stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil}:{})};
+  const pass=this.encoder.beginRenderPass(descriptor);pass.end();
  }
 present(target){
   this.prepareBufferUpload();
@@ -95,6 +97,7 @@ present(target){
    const sourceIndex=s.sourceIndex??s.textureBinding;
    if(s.group!==2||![1,3].includes(s.dimension)||sourceIndex>=16||s.textureBinding>=32||s.samplerBinding>=32)throw RangeError('unsupported texture sampler reflection');
    const textureId=packet.textures[sourceIndex],texture=b.textures.get(textureId),samplerState=samplerAt(packet.samplers,sourceIndex);
+   if(textureId===b.targetColor.textureId||textureId===b.targetDepth?.textureId)throw RangeError('active render attachment cannot be sampled');
    if(texture.dimension!==s.dimension)throw RangeError('texture dimension does not match shader sampler');
    textureKey.push(sourceIndex,textureId,...samplerState);
    textureEntries.push({binding:s.textureBinding,resource:texture.view},{binding:s.samplerBinding,resource:this.samplers.get(samplerState,texture.levels)});
@@ -130,7 +133,7 @@ present(target){
   // same submitted command buffer. Replacing it here silently discarded every
   // upload after the first renderer warm-up, which particularly broke
   // DrawPrimitiveUP/D3D8 user-pointer geometry.
-  if(!this.pass){this.encoder??=d.createCommandEncoder();this.pass=this.encoder.beginRenderPass({...(timestampWrites?{timestampWrites}:{}),colorAttachments:[{view:b.color.createView(),loadOp:'load',storeOp:'store'}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:'load',depthStoreOp:'store',stencilLoadOp:'load',stencilStoreOp:'store'}});this.passState={pipeline:null,viewport:null,scissor:null,stencil:-1,vertices:[],groups:[],index:null};this.writeMetrics.renderPasses++;}
+  if(!this.pass){this.encoder??=d.createCommandEncoder();const descriptor={...(timestampWrites?{timestampWrites}:{}),colorAttachments:[{view:b.targetColor.view,loadOp:'load',storeOp:'store'}]};if(b.targetDepth)descriptor.depthStencilAttachment={view:b.targetDepth.view,depthLoadOp:'load',depthStoreOp:'store',...(b.targetDepth.stencil?{stencilLoadOp:'load',stencilStoreOp:'store'}:{})};this.pass=this.encoder.beginRenderPass(descriptor);this.passState={pipeline:null,viewport:null,scissor:null,stencil:-1,vertices:[],groups:[],index:null};this.writeMetrics.renderPasses++;}
   const pass=this.pass,state=this.passState,call=()=>this.writeMetrics.stateCalls++,skip=()=>this.writeMetrics.stateCallsSkipped++;
   if(!state.viewport||state.viewport[0]!==x||state.viewport[1]!==y||state.viewport[2]!==width||state.viewport[3]!==height||state.viewport[4]!==minDepth||state.viewport[5]!==maxDepth){pass.setViewport(x,y,width,height,minDepth,maxDepth);state.viewport=[x,y,width,height,minDepth,maxDepth];call();}else skip();
   if(!state.scissor||state.scissor[0]!==left||state.scissor[1]!==top||state.scissor[2]!==right||state.scissor[3]!==bottom){pass.setScissorRect(left,top,right-left,bottom-top);state.scissor=[left,top,right,bottom];call();}else skip();

@@ -26,6 +26,7 @@ export function deviceCaps(){
 }
 export function supportsFormat(device,usage,kind,format){
  if(kind===1)return usage===1&&[21,22].includes(format)||usage===2&&format===75;
- if(![3,5].includes(kind)||![0,0x200].includes(usage))return false;
+ if(![3,5].includes(kind)||![0,1,0x200].includes(usage))return false;
+ if(usage===1)return [21,22].includes(format);
  return [20,21,22,23,24,25,26,28,29,50].includes(format)||device.features.has('texture-compression-bc')&&[0x31545844,0x33545844,0x35545844].includes(format);
 }
