@@ -16,11 +16,12 @@ import {enqueueInput} from './input-queue.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
+import {GpuCommandScheduler} from './gpu-command-scheduler.js';
 let gpuTiming=false,profileStutters=false,frameFenceInterval=4;
 let shaderMode=RUNTIME_MODES.WINED3D;
 let sceneEquivalence=false,omitDiagnosticLighting=false;
 let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024,batchCpuMs:0,drawDecodeCpuMs:0};
-let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput,lastPresentWork=null,outlierQueueProbePending=false;
+let device,canvas,context,windowSize,backend,nextId=1,port,commandScheduler,waitingInput,lastPresentWork=null,outlierQueueProbePending=false;
 let nextAudioId=1;const audioStreams=new Map();
 let nextMusicId=1;const musicTracks=new Set();
 const inputQueue=[];
@@ -39,7 +40,8 @@ async function init(data){
  const requiredFeatures=adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[];result.timestampQuery={requested:gpuTiming,available:adapter.features.has('timestamp-query')};if(gpuTiming&&result.timestampQuery.available)requiredFeatures.push('timestamp-query');
  device=await adapter.requestDevice({requiredFeatures});device.addEventListener('uncapturederror',e=>emit('gpu-error',{message:e.error.message}));device.lost.then(i=>emit('gpu-lost',{reason:i.reason,message:i.message}));
  result.deviceCreated=true;result.hardwareAcceleration='GPU device available; no Humus scene verified';
- let chain=Promise.resolve();port.onmessage=({data})=>{if(++pending>64){emit('gpu-error',{message:'GPU command queue limit exceeded'});return}chain=chain.then(()=>dispatch(data)).catch(e=>emit('gpu-error',{message:String(e)})).finally(()=>pending--)};
+ commandScheduler=new GpuCommandScheduler(dispatch,error=>emit('gpu-error',{message:String(error)}),(pending,maxPending)=>{bridgeMetrics.pendingCommands=pending;bridgeMetrics.maxPendingCommands=maxPending;});
+ port.onmessage=({data})=>commandScheduler.enqueue(data);
  port.start();port.postMessage({ready:true,result});emit('probe',{result});
 }
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}

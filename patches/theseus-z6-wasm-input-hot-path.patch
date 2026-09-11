@@ -1,0 +1,112 @@
+--- a/runtime/src/lib.rs
++++ b/runtime/src/lib.rs
+@@ -90,21 +90,20 @@
+     /// Record translated execution context for diagnostics on a later memory fault.
+     #[inline(always)]
+     pub fn mark_eip(&mut self, eip: u32) {
+-        self.memory.set_last_eip(eip);
+-        // Copying every register at every translated basic block is useful in
+-        // development builds but disproportionately expensive in a release
+-        // runtime. The block EIP remains available in production diagnostics.
+         #[cfg(debug_assertions)]
+-        self.memory.set_last_regs([
+-            self.cpu.regs.eax,
+-            self.cpu.regs.ecx,
+-            self.cpu.regs.edx,
+-            self.cpu.regs.ebx,
+-            self.cpu.regs.esi,
+-            self.cpu.regs.edi,
+-            self.cpu.regs.esp,
+-            self.cpu.regs.ebp,
+-        ]);
++        {
++            self.memory.set_last_eip(eip);
++            self.memory.set_last_regs([
++                self.cpu.regs.eax,
++                self.cpu.regs.ecx,
++                self.cpu.regs.edx,
++                self.cpu.regs.ebx,
++                self.cpu.regs.esi,
++                self.cpu.regs.edi,
++                self.cpu.regs.esp,
++                self.cpu.regs.ebp,
++            ]);
++        }
+     }
+ 
+     /// Call an x86 stdcall function, only returning once the function returns.
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -1,8 +1,27 @@
+-use std::{arch::wasm32, cell::{Cell, RefCell}, sync::Mutex};
++use std::{
++    arch::wasm32,
++    cell::{Cell, RefCell},
++    sync::{
++        atomic::{AtomicI32, Ordering},
++        Mutex,
++    },
++};
+ 
+ use web_sys::wasm_bindgen::prelude::*;
+ 
+ use crate as host;
++
++const INPUT_HEADER_WORDS: usize = 4;
++const INPUT_CAPACITY: usize = 1024;
++const INPUT_MESSAGE_WORDS: usize = 4;
++const INPUT_QUEUE_WORDS: usize = INPUT_HEADER_WORDS + INPUT_CAPACITY * INPUT_MESSAGE_WORDS;
++static INPUT_QUEUE: [AtomicI32; INPUT_QUEUE_WORDS] =
++    [const { AtomicI32::new(0) }; INPUT_QUEUE_WORDS];
++
++#[wasm_bindgen]
++pub fn input_queue_address() -> u32 {
++    INPUT_QUEUE.as_ptr() as u32
++}
+ 
+ pub struct Surface {
+     id: i32,
+@@ -419,16 +438,37 @@
+         })
+     }
+ 
++    fn take_shared_message(wait: bool) -> Option<host::Message> {
++        loop {
++            let head = INPUT_QUEUE[0].load(Ordering::Acquire) as u32;
++            let tail = INPUT_QUEUE[1].load(Ordering::Acquire) as u32;
++            if head != tail {
++                let slot = INPUT_HEADER_WORDS
++                    + (head as usize & (INPUT_CAPACITY - 1)) * INPUT_MESSAGE_WORDS;
++                let message = [
++                    INPUT_QUEUE[slot].load(Ordering::Relaxed),
++                    INPUT_QUEUE[slot + 1].load(Ordering::Relaxed),
++                    INPUT_QUEUE[slot + 2].load(Ordering::Relaxed),
++                    INPUT_QUEUE[slot + 3].load(Ordering::Relaxed),
++                ];
++                INPUT_QUEUE[0].store(head.wrapping_add(1) as i32, Ordering::Release);
++                return Self::parse_message(&message);
++            }
++            if !wait {
++                return None;
++            }
++            unsafe {
++                wasm32::memory_atomic_wait32(INPUT_QUEUE[1].as_ptr(), tail as i32, -1);
++            }
++        }
++    }
++
+     pub fn poll_message(&mut self) -> Option<host::Message> {
+-        let mut buf = [0i32; 4];
+-        self.send_sync_buf("poll_message", js_sys::Array::new(), &mut buf);
+-        Self::parse_message(&buf)
++        Self::take_shared_message(false)
+     }
+ 
+     pub fn wait_message(&mut self) -> host::Message {
+-        let mut buf = [0i32; 4];
+-        self.send_sync_buf("wait_message", js_sys::Array::new(), &mut buf);
+-        Self::parse_message(&buf).unwrap()
++        Self::take_shared_message(true).unwrap()
+     }
+ 
+     fn send_sync(&mut self, msg: &str, args: js_sys::Array) -> i32 {

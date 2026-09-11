@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {InputBroker,createSharedInputQueue,pushSharedInput,takeSharedInput,sharedInputStats} from '../web/input-transport.js';
+import {InputBroker,attachSharedInputQueue,createSharedInputQueue,pushSharedInput,takeSharedInput,sharedInputStats} from '../web/input-transport.js';
 
 function reply(){return{buffer:new SharedArrayBuffer(32),address:4};}
 function values(target){return Array.from(new Int32Array(target.buffer,target.address,4));}
@@ -28,5 +28,9 @@ assert.deepEqual(sharedInputStats(shared),{queued:2,dropped:0});
 assert.deepEqual(takeSharedInput(shared),[5,0x48,0x26,1]);
 assert.deepEqual(takeSharedInput(shared),[7,3,-2,0]);
 assert.deepEqual(sharedInputStats(shared),{queued:0,dropped:0});
+
+const wasmMemory=new SharedArrayBuffer(65536),attached=attachSharedInputQueue(wasmMemory,4096);
+assert.equal(pushSharedInput(attached,[5,0x4b,0x25,1]),true);
+assert.deepEqual(takeSharedInput(attached),[5,0x4b,0x25,1]);
 
 console.log('Dedicated input transport polls, waits, validates, and coalesces motion');

@@ -3,7 +3,7 @@ import {runtimeMode,runtimeModeInfo} from './runtime-mode.js';
 import {BrowserTrackerMusic} from './tracker-music.js';
 import {bindBrowserInput} from './browser-input.js';
 import {audioQueueNeedsReset} from './audio-scheduling.js';
-import {createSharedInputQueue,pushSharedInput,sharedInputStats} from './input-transport.js';
+import {attachSharedInputQueue,createSharedInputQueue,pushSharedInput,sharedInputStats} from './input-transport.js';
 function boundedPayload(){const copy={...report,events:[...report.events]};let data=JSON.stringify({token,report:copy});while(new TextEncoder().encode(data).length>240000&&copy.events.length){copy.events.shift();copy.droppedEvents++;data=JSON.stringify({token,report:copy})}return data}
 const $=id=>document.getElementById(id);
 let build,worker,gpuWorker,inputQueue,token,timer,probeWorker,inputBinding,activeRegistryPreset=null,launchGeneration=0,HAS_BACKEND=false;
@@ -83,6 +83,7 @@ async function start(long=false,registryPreset=null){
   worker=new Worker(new URL(`./worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
+   if(data.type==='input-queue-ready'){inputQueue=attachSharedInputQueue(data.buffer,data.address);report.inputTransportMode='wasm-shared';return;}
    if(data.type==='cursor-warp'){inputBinding?.warp(data.x,data.y);report.cursorWarps=(report.cursorWarps??0)+1;if(report.cursorWarps<=3)(report.cursorWarpSamples??=[]).push({x:data.x,y:data.y,timeMs:performance.now()-report.startTimeMs});return;}
    if(data.type==='cursor-visibility'){inputBinding?.setCursorVisible(data.visible);report.cursorVisible=data.visible;return;}
    if(data.type==='audio-open'){browserAudio.open(data.streamId,data.sampleRate,data.channels);audioDiagnostic('audio-open',{sampleRate:data.sampleRate,channels:data.channels});return;}

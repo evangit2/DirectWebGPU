@@ -102,6 +102,7 @@ self.onmessage=async({data})=>{
   if(await hash(wasmBytes)!==wasmEntry.sha256)throw Error('WASM artifact hash mismatch');
   if(build.runtimeBuild.executableSha256!==actual)throw Error('WASM was built for a different EXE');
   await exe.default({memory,module_or_path:wasmBytes});
+  if(typeof exe.input_queue_address==='function')postMessage({type:'input-queue-ready',buffer:memory.buffer,address:exe.input_queue_address()});
   for(const f of build.files){
    const fileBytes=f.path===exeFile.path?bytes:await cache.load(assetUrl(f.path));
    if(await hash(fileBytes)!==f.sha256)throw Error('asset integrity mismatch: '+f.path);

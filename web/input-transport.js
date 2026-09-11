@@ -1,16 +1,24 @@
 import {enqueueInput} from './input-queue.js';
 
 const HEADER_WORDS=4,INPUT_CAPACITY=1024,MESSAGE_WORDS=4;
+const QUEUE_WORDS=HEADER_WORDS+INPUT_CAPACITY*MESSAGE_WORDS;
+
+function queueWords(queue){
+ const buffer=queue?.buffer??queue,address=queue?.address??0;
+ if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<0||address%4||address+QUEUE_WORDS*4>buffer.byteLength)throw Error('invalid shared input queue');
+ return new Int32Array(buffer,address,QUEUE_WORDS);
+}
+
+export function attachSharedInputQueue(buffer,address){queueWords({buffer,address});return{buffer,address};}
 
 /** Single-producer/single-consumer input ring shared by the page and CPU worker. */
 export function createSharedInputQueue(){
- return new SharedArrayBuffer((HEADER_WORDS+INPUT_CAPACITY*MESSAGE_WORDS)*Int32Array.BYTES_PER_ELEMENT);
+ return new SharedArrayBuffer(QUEUE_WORDS*Int32Array.BYTES_PER_ELEMENT);
 }
 
 export function pushSharedInput(buffer,message){
  const validated=[];enqueueInput(validated,message,1);
- if(!(buffer instanceof SharedArrayBuffer)||buffer.byteLength!==(HEADER_WORDS+INPUT_CAPACITY*MESSAGE_WORDS)*4)throw Error('invalid shared input queue');
- const words=new Int32Array(buffer),head=Atomics.load(words,0)>>>0,tail=Atomics.load(words,1)>>>0;
+ const words=queueWords(buffer),head=Atomics.load(words,0)>>>0,tail=Atomics.load(words,1)>>>0;
  if((tail-head)>>>0>=INPUT_CAPACITY){Atomics.add(words,2,1);return false;}
  const slot=HEADER_WORDS+(tail&(INPUT_CAPACITY-1))*MESSAGE_WORDS;
  for(let i=0;i<MESSAGE_WORDS;i++)Atomics.store(words,slot+i,validated[0][i]);
@@ -18,8 +26,7 @@ export function pushSharedInput(buffer,message){
 }
 
 export function takeSharedInput(buffer,wait=false){
- if(!(buffer instanceof SharedArrayBuffer)||buffer.byteLength!==(HEADER_WORDS+INPUT_CAPACITY*MESSAGE_WORDS)*4)throw Error('invalid shared input queue');
- const words=new Int32Array(buffer);
+ const words=queueWords(buffer);
  for(;;){
   const head=Atomics.load(words,0)>>>0,tail=Atomics.load(words,1)>>>0;
   if(head!==tail){const slot=HEADER_WORDS+(head&(INPUT_CAPACITY-1))*MESSAGE_WORDS,out=Array.from(words.subarray(slot,slot+MESSAGE_WORDS));Atomics.store(words,0,(head+1)|0);return out;}
@@ -28,7 +35,7 @@ export function takeSharedInput(buffer,wait=false){
  }
 }
 
-export function sharedInputStats(buffer){const words=new Int32Array(buffer);return{queued:(Atomics.load(words,1)-Atomics.load(words,0))>>>0,dropped:Atomics.load(words,2)>>>0};}
+export function sharedInputStats(buffer){const words=queueWords(buffer);return{queued:(Atomics.load(words,1)-Atomics.load(words,0))>>>0,dropped:Atomics.load(words,2)>>>0};}
 
 export function writeInputReply(buffer,address,message){
  if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+16>buffer.byteLength)throw Error('invalid input reply pointer');
