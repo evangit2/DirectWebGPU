@@ -1,0 +1,949 @@
+--- a/win32/winapi/src/d3d9/constants.rs
++++ b/win32/winapi/src/d3d9/constants.rs
+@@ -6,11 +6,12 @@
+     Int,
+     Bool,
+ }
+-#[derive(Default)]
++#[derive(Clone, Default)]
+ pub struct Registers {
+     vertex: Stage,
+     pixel: Stage,
+ }
++#[derive(Clone)]
+ struct Stage {
+     floats: [u32; 1024],
+     ints: [u32; 64],
+@@ -26,6 +27,53 @@
+     }
+ }
+ impl Registers {
++    pub fn copy_selected_from(
++        &mut self,
++        source: &Self,
++        pixel: bool,
++        kind: Kind,
++        selected: &[bool],
++    ) {
++        let destination = if pixel {
++            &mut self.pixel
++        } else {
++            &mut self.vertex
++        };
++        let source = if pixel {
++            &source.pixel
++        } else {
++            &source.vertex
++        };
++        match kind {
++            Kind::Float => {
++                let limit = if pixel { 32 } else { 256 };
++                for register in 0..limit {
++                    if selected.get(register).copied().unwrap_or(false) {
++                        let offset = register * 4;
++                        destination.floats[offset..offset + 4]
++                            .copy_from_slice(&source.floats[offset..offset + 4]);
++                    }
++                }
++            }
++            Kind::Int => {
++                for register in 0..16 {
++                    if selected.get(register).copied().unwrap_or(false) {
++                        let offset = register * 4;
++                        destination.ints[offset..offset + 4]
++                            .copy_from_slice(&source.ints[offset..offset + 4]);
++                    }
++                }
++            }
++            Kind::Bool => {
++                for register in 0..16 {
++                    if selected.get(register).copied().unwrap_or(false) {
++                        destination.bools[register] = source.bools[register];
++                    }
++                }
++            }
++        }
++    }
++
+     pub fn transfer(
+         &mut self,
+         ctx: &mut Context,
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -29,9 +29,10 @@
+ mod shader;
+ pub mod IDirect3DVertexShader9{pub use super::shader::*;pub static mut VTABLE:u32=0;}
+ pub mod IDirect3DPixelShader9{pub use super::shader::*;pub static mut VTABLE:u32=0;}
++pub mod IDirect3DStateBlock9{pub use super::IDirect3DDevice9::stateblock::*;pub static mut VTABLE:u32=0;}
+ #[path="d3d9/texture.rs"]
+ pub mod IDirect3DTexture9;
+-pub const VTABLES: [(&str, &[&str]);9] = [("IDirect3DTexture9", &IDirect3DTexture9::VTABLE_ENTRIES),("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES)];
++pub const VTABLES: [(&str, &[&str]);10] = [("IDirect3DTexture9", &IDirect3DTexture9::VTABLE_ENTRIES),("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES),("IDirect3DStateBlock9", &IDirect3DStateBlock9::VTABLE_ENTRIES)];
+ fn valid(ctx: &Context, p: u32, n: usize) -> bool {
+     p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
+ }
+@@ -240,7 +241,7 @@
+         ctx.call32_x86(runtime::Cont(IDirect3D9::CheckDeviceFormatConversion_stdcall),vec![obj,0,1,21,22]);
+         assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
+         assert_eq!(IDirect3D9::CheckDeviceFormatConversion(&mut ctx,obj,0,1,23,22),D3DERR_NOTAVAILABLE);
+-        unsafe {IDirect3DDevice9::VTABLE=0x1800;IDirect3DSurface9::VTABLE=0x1a00;}
++        unsafe {IDirect3DDevice9::VTABLE=0x1800;IDirect3DSurface9::VTABLE=0x1a00;IDirect3DStateBlock9::VTABLE=0x1b00;}
+         let dev=IDirect3DDevice9::create(&mut ctx,obj,1,1,0x40,800,600,21);
+         ctx.call32_x86(runtime::Cont(IDirect3DDevice9::TestCooperativeLevel_stdcall),vec![dev]);
+         assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
+@@ -305,6 +306,26 @@
+         for(i,v)in [10,20,400,300,0x3e800000,0x3f400000].into_iter().enumerate(){ctx.memory.write::<u32>(0x1700+i as u32*4,v)}ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetViewport_stdcall),vec![dev,0x1700]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);
+         ctx.memory.write::<u32>(0x1700,u32::MAX);assert_eq!(IDirect3DDevice9::SetViewport(&mut ctx,dev,0x1700),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetViewport(&mut ctx,dev,0x1700),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1700),10);assert_eq!(ctx.memory.read::<u32>(0x1710),0x3e800000);
+         ctx.memory.write::<u32>(0x1710,0x7fc00000);assert_eq!(IDirect3DDevice9::SetViewport(&mut ctx,dev,0x1700),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetViewport(&mut ctx,dev,0xfffffff0),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,27,0),D3D_OK);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,137,0),D3D_OK);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::CreateStateBlock_stdcall),vec![dev,2,0x1760]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);let pixel_block=ctx.memory.read::<u32>(0x1760);assert_eq!(ctx.memory.read::<u32>(pixel_block),0x1b00);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,27,1),D3D_OK);assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,137,1),D3D_OK);
++        assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,pixel_block),D3D_OK);assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,27,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),0);assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,137,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),1);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,27,1),D3D_OK);assert_eq!(IDirect3DStateBlock9::Capture(&mut ctx,pixel_block),D3D_OK);assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,27,0),D3D_OK);assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,pixel_block),D3D_OK);assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,27,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),1);
++        ctx.memory.bytes[0x1100..0x1110].copy_from_slice(&IID_UNKNOWN);assert_eq!(IDirect3DStateBlock9::QueryInterface(&mut ctx,pixel_block,0x1100,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),pixel_block);assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,pixel_block),1);
++        assert_eq!(IDirect3DStateBlock9::GetDevice(&mut ctx,pixel_block,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),dev);IDirect3DDevice9::Release(&mut ctx,dev);
++
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::BeginStateBlock_stdcall),vec![dev]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DDevice9::BeginStateBlock(&mut ctx,dev),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::CreateStateBlock(&mut ctx,dev,1,0x1760),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,27,0),D3D_OK);assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,0,1,2),D3D_OK);
++        for(i,bits)in [1.0f32,2.0,3.0,4.0].map(f32::to_bits).into_iter().enumerate(){ctx.memory.write::<u32>(0x1780+i as u32*4,bits);}assert_eq!(IDirect3DDevice9::SetVertexShaderConstantF(&mut ctx,dev,7,0x1780,1),D3D_OK);
++        assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,27,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),1);assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,0,1,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),3);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::EndStateBlock_stdcall),vec![dev,0x1760]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);let recorded_block=ctx.memory.read::<u32>(0x1760);
++        assert_eq!(IDirect3DDevice9::EndStateBlock(&mut ctx,dev,0x1760),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,27,1),D3D_OK);assert_eq!(IDirect3DDevice9::SetSamplerState(&mut ctx,dev,0,1,1),D3D_OK);
++        for(i,bits)in [5.0f32,6.0,7.0,8.0].map(f32::to_bits).into_iter().enumerate(){ctx.memory.write::<u32>(0x1780+i as u32*4,bits);}assert_eq!(IDirect3DDevice9::SetVertexShaderConstantF(&mut ctx,dev,7,0x1780,1),D3D_OK);
++        assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,recorded_block),D3D_OK);assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,27,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),0);assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,0,1,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),2);assert_eq!(IDirect3DDevice9::GetVertexShaderConstantF(&mut ctx,dev,7,0x1790,1),D3D_OK);assert_eq!(ctx.memory.read::<[u32;4]>(0x1790),[1.0f32,2.0,3.0,4.0].map(f32::to_bits));
++        assert_eq!(IDirect3DDevice9::BeginStateBlock(&mut ctx,dev),D3D_OK);assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,recorded_block),D3DERR_INVALIDCALL);assert_eq!(IDirect3DStateBlock9::Capture(&mut ctx,recorded_block),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::EndStateBlock(&mut ctx,dev,0x1760),D3D_OK);let empty_block=ctx.memory.read::<u32>(0x1760);assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,empty_block),0);
++        assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,recorded_block),0);assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,pixel_block),0);
+         let shader=shader::fixture(&mut ctx,dev,0);
+         assert_eq!(shader::GetFunction(&mut ctx,shader,0,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e00),20);
+         ctx.memory.write::<u32>(0x1e00,4);ctx.memory.bytes[0x1e10..0x1e24].fill(0xa5);assert_eq!(shader::GetFunction(&mut ctx,shader,0x1e10,0x1e00),D3DERR_INVALIDCALL);assert!(ctx.memory.bytes[0x1e10..0x1e24].iter().all(|b|*b==0xa5));
+@@ -317,6 +338,7 @@
+         assert_eq!(IDirect3DTexture9::LockRect(&mut ctx,tex,3,0x1e00,0,0),D3DERR_INVALIDCALL);assert_eq!(IDirect3DTexture9::UnlockRect(&mut ctx,tex,3),D3D_OK);assert_eq!(IDirect3DTexture9::UnlockRect(&mut ctx,tex,3),D3DERR_INVALIDCALL);
+         assert_eq!(IDirect3DDevice9::SetTexture(&mut ctx,dev,16,tex),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::SetTexture(&mut ctx,dev,0,tex),D3D_OK);assert_eq!(IDirect3DTexture9::Release(&mut ctx,tex),0);
+         assert_eq!(IDirect3DDevice9::GetTexture(&mut ctx,dev,0,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),tex);assert_eq!(IDirect3DTexture9::Release(&mut ctx,tex),0);
++        assert_eq!(IDirect3DDevice9::CreateStateBlock(&mut ctx,dev,1,0x1760),D3D_OK);let resource_block=ctx.memory.read::<u32>(0x1760);assert_eq!(IDirect3DDevice9::SetTexture(&mut ctx,dev,0,0),D3D_OK);assert_ne!(ctx.memory.read::<u32>(tex),0);assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,resource_block),D3D_OK);assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,resource_block),0);
+         ctx.call32_x86(runtime::Cont(IDirect3DTexture9::GetSurfaceLevel_stdcall),vec![tex,3,0x1200]);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.cpu.regs.esp,original_sp);let mip_surface=ctx.memory.read::<u32>(0x1200);
+         assert_eq!(IDirect3DTexture9::GetSurfaceLevel(&mut ctx,tex,3,0x1200),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1200),mip_surface);assert_eq!(IDirect3DSurface9::Release(&mut ctx,mip_surface),1);
+         assert_eq!(IDirect3DSurface9::GetDesc(&mut ctx,mip_surface,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e0c),1);assert_eq!(ctx.memory.read::<u32>(0x1e18),1);
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -1,13 +1,223 @@
+ //! IDirect3DDevice9 COM identity and browser-backed attachment lifecycle.
+ use super::*;
++use std::collections::HashSet;
++#[path="stateblock.rs"]
++pub mod stateblock;
+ #[derive(Clone,Copy,Default)]
+ struct Stream{buffer:u32,offset:u32,stride:u32}
++
+ #[derive(Clone)]
+-struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,up_index_buffers:[u32;2],up_index_offsets:[u32;2],states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct ConstantMask {
++    vertex_float: Vec<bool>,
++    vertex_int: Vec<bool>,
++    vertex_bool: Vec<bool>,
++    pixel_float: Vec<bool>,
++    pixel_int: Vec<bool>,
++    pixel_bool: Vec<bool>,
++}
++impl Default for ConstantMask {
++    fn default() -> Self {
++        Self {
++            vertex_float: vec![false; 256],
++            vertex_int: vec![false; 16],
++            vertex_bool: vec![false; 16],
++            pixel_float: vec![false; 32],
++            pixel_int: vec![false; 16],
++            pixel_bool: vec![false; 16],
++        }
++    }
++}
++impl ConstantMask {
++    fn select(&mut self, pixel: bool, kind: super::constants::Kind, start: u32, count: u32) {
++        let values = match (pixel, kind) {
++            (false, super::constants::Kind::Float) => &mut self.vertex_float,
++            (false, super::constants::Kind::Int) => &mut self.vertex_int,
++            (false, super::constants::Kind::Bool) => &mut self.vertex_bool,
++            (true, super::constants::Kind::Float) => &mut self.pixel_float,
++            (true, super::constants::Kind::Int) => &mut self.pixel_int,
++            (true, super::constants::Kind::Bool) => &mut self.pixel_bool,
++        };
++        for register in start as usize..(start + count) as usize {
++            values[register] = true;
++        }
++    }
++    fn select_stage(&mut self, pixel: bool) {
++        let values = if pixel {
++            [&mut self.pixel_float, &mut self.pixel_int, &mut self.pixel_bool]
++        } else {
++            [&mut self.vertex_float, &mut self.vertex_int, &mut self.vertex_bool]
++        };
++        for value in values {
++            value.fill(true);
++        }
++    }
++}
++
++#[derive(Clone,Default)]
++struct StateMask {
++    render_states: HashSet<u32>,
++    texture_stages: HashSet<(u32,u32)>,
++    sampler_states: HashSet<(u32,u32)>,
++    transforms: HashSet<u32>,
++    streams: HashSet<u32>,
++    textures: HashSet<u32>,
++    lights: HashSet<u32>,
++    light_enabled: HashSet<u32>,
++    material: bool,
++    viewport: bool,
++    scissor: bool,
++    indices: bool,
++    vertex_input: bool,
++    shaders: [bool;2],
++    constants: ConstantMask,
++}
++
++#[derive(Clone)]
++struct StateValues {
++    states: HashMap<u32,u32>,
++    texture_stages: [[u32;8];8],
++    material: [u32;17],
++    lights: HashMap<u32,[u32;26]>,
++    light_enabled: HashMap<u32,bool>,
++    transforms: HashMap<u32,[u32;16]>,
++    streams: [Stream;16],
++    indices: u32,
++    declaration: u32,
++    fvf: u32,
++    shaders: [u32;2],
++    textures: [u32;16],
++    samplers: [[u32;14];16],
++    viewport: [u32;6],
++    scissor: [u32;4],
++    constants: std::sync::Arc<Mutex<super::constants::Registers>>,
++}
++
++#[derive(Clone)]
++struct Recording { mask: StateMask, values: StateValues }
++#[derive(Clone)]
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,up_index_buffers:[u32;2],up_index_offsets:[u32;2],states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>,recording:Option<Recording>}
+ static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+ pub static mut VTABLE:u32=0;
+ const IID_DEVICE:[u8;16]=[0x96,0x3b,0x22,0xd0,0x7a,0xbf,0xfd,0x43,0x92,0xbd,0xa4,0x3b,0x0d,0x82,0xb9,0xeb];
+ fn device(this:u32)->Device{DEVICES.lock().unwrap().get(&this).expect("invalid/released IDirect3DDevice9").clone()}
++impl StateValues {
++    fn capture(device: &Device) -> Self {
++        Self {
++            states: device.states.clone(),
++            texture_stages: device.texture_stages,
++            material: device.material,
++            lights: device.lights.clone(),
++            light_enabled: device.light_enabled.clone(),
++            transforms: device.transforms.clone(),
++            streams: device.streams,
++            indices: device.indices,
++            declaration: device.declaration,
++            fvf: device.fvf,
++            shaders: device.shaders,
++            textures: device.textures,
++            samplers: device.samplers,
++            viewport: device.viewport,
++            scissor: device.scissor,
++            constants: std::sync::Arc::new(Mutex::new(device.constants.lock().unwrap().clone())),
++        }
++    }
++    fn retain_resources(&self, owner: u32, mask: &StateMask) {
++        for stream in &mask.streams {
++            let pointer = self.streams[*stream as usize].buffer;
++            if pointer != 0 { super::buffers::retain_binding(pointer); }
++        }
++        if mask.indices && self.indices != 0 { super::buffers::retain_binding(self.indices); }
++        if mask.vertex_input && self.declaration != 0 {
++            assert!(IDirect3DVertexDeclaration9::retain_binding(self.declaration, owner));
++        }
++        for stage in 0..2 {
++            let pointer = self.shaders[stage];
++            if mask.shaders[stage] && pointer != 0 {
++                assert!(super::shader::retain_binding(pointer, owner, stage as u32));
++            }
++        }
++        for stage in &mask.textures {
++            let pointer = self.textures[*stage as usize];
++            if pointer != 0 { assert!(super::IDirect3DTexture9::retain_binding(pointer, owner)); }
++        }
++    }
++    fn release_resources(&self, ctx: &mut Context, mask: &StateMask) {
++        for stream in &mask.streams {
++            super::buffers::release_binding(ctx, self.streams[*stream as usize].buffer);
++        }
++        if mask.indices { super::buffers::release_binding(ctx, self.indices); }
++        if mask.vertex_input { IDirect3DVertexDeclaration9::release_binding(ctx, self.declaration); }
++        for stage in 0..2 {
++            if mask.shaders[stage] { super::shader::release_binding(ctx, self.shaders[stage]); }
++        }
++        for stage in &mask.textures {
++            super::IDirect3DTexture9::release_binding(ctx, self.textures[*stage as usize]);
++        }
++    }
++}
++
++fn pixel_render_state(kind: u32) -> bool {
++    matches!(kind,7|14|15|19|20|23|24|25|27|52..=59|168|171|174)
++}
++fn vertex_render_state(kind: u32) -> bool { matches!(kind,22|136|137|139) }
++fn transform_states() -> impl Iterator<Item=u32> {
++    [2,3].into_iter().chain(16..=23).chain(256..=511)
++}
++fn state_mask(kind: u32, device: &Device) -> Option<StateMask> {
++    if !(1..=3).contains(&kind) { return None; }
++    let all = kind == 1;
++    let pixel = all || kind == 2;
++    let vertex = all || kind == 3;
++    let mut mask = StateMask::default();
++    for state in device.states.keys().copied() {
++        if all || pixel && pixel_render_state(state) || vertex && vertex_render_state(state) {
++            mask.render_states.insert(state);
++        }
++    }
++    if pixel {
++        for stage in 0..8 { for state in [1,2,3,4,5,6,11,12] { mask.texture_stages.insert((stage,state)); } }
++        for stage in 0..16 { for state in 1..=13 { mask.sampler_states.insert((stage,state)); } }
++        mask.shaders[1] = true;
++        mask.constants.select_stage(true);
++    }
++    if vertex {
++        for stage in 0..8 { for state in [11,12] { mask.texture_stages.insert((stage,state)); } }
++        mask.vertex_input = true;
++        mask.shaders[0] = true;
++        mask.constants.select_stage(false);
++        mask.lights.extend(device.lights.keys().copied());
++        mask.light_enabled.extend(device.light_enabled.keys().copied());
++    }
++    if all {
++        mask.transforms.extend(transform_states());
++        mask.streams.extend(0..16);
++        mask.textures.extend(0..16);
++        mask.material = true;
++        mask.viewport = true;
++        mask.scissor = true;
++        mask.indices = true;
++        mask.lights.extend(device.lights.keys().copied());
++        mask.light_enabled.extend(device.light_enabled.keys().copied());
++    }
++    Some(mask)
++}
++
++fn recording_active(this: u32) -> bool { device(this).recording.is_some() }
++fn constant_registers(this: u32) -> std::sync::Arc<Mutex<super::constants::Registers>> {
++    let device = device(this);
++    device.recording.map(|recording| recording.values.constants).unwrap_or(device.constants)
++}
++fn record_constants(this:u32,pixel:bool,kind:super::constants::Kind,start:u32,count:u32) {
++    if let Some(recording)=DEVICES.lock().unwrap().get_mut(&this).unwrap().recording.as_mut() {
++        recording.mask.constants.select(pixel,kind,start,count);
++    }
++}
++fn set_constants(ctx:&mut Context,this:u32,pixel:bool,kind:super::constants::Kind,start:u32,pointer:u32,count:u32)->u32{
++    let registers=constant_registers(this);
++    let result=registers.lock().unwrap().transfer(ctx,pixel,kind,start,pointer,count,true);
++    if result==D3D_OK{record_constants(this,pixel,kind,start,count)}
++    result
++}
+ fn fail(ctx:&Context,name:&str,count:u32)->!{
+  let sp=ctx.cpu.regs.esp;let args:Vec<_>=(0..count).map(|i|ctx.memory.read::<u32>(sp+4+i*4)).collect();
+  panic!("unsupported API: d3d9!IDirect3DDevice9::{name}; args={args:#x?}; stack_return={:#010x}",ctx.memory.read::<u32>(sp));
+@@ -16,7 +226,7 @@
+  let vtable=unsafe{VTABLE};assert!(valid(ctx,vtable,119*4),"device vtable not linked");
+  let p=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);ctx.memory.write::<u32>(p,vtable);
+  let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
+- IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,up_buffer:0,up_offset:0,up_index_buffers:[0;2],up_index_offsets:[0;2],states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,up_buffer:0,up_offset:0,up_index_buffers:[0;2],up_index_offsets:[0;2],states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default(),recording:None}).is_none());p
+ }
+ pub fn exists(this:u32)->bool{DEVICES.lock().unwrap().contains_key(&this)}
+ #[win32_derive::dllexport]
+@@ -31,6 +241,7 @@
+ pub fn Release(ctx:&mut Context,this:u32)->u32{
+  let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid device Release");d.refs-=1;let refs=d.refs;
+  if refs!=0{return refs}let d=map.remove(&this).unwrap();drop(map);
++ if let Some(recording)=&d.recording{recording.values.release_resources(ctx,&recording.mask)}
+  for stream in d.streams{super::buffers::release_binding(ctx,stream.buffer)}
+  super::buffers::release_binding(ctx,d.indices);
+  IDirect3DVertexDeclaration9::release_binding(ctx,d.declaration);
+@@ -85,7 +296,7 @@
+ #[win32_derive::dllexport]
+ pub fn Reset(ctx:&mut Context,this:u32,presentation:u32)->u32{
+  let current=device(this);
+- if current.scene||!valid(ctx,presentation,56)||IDirect3DSurface9::has_external_refs(current.color)||IDirect3DSurface9::has_external_refs(current.depth){return D3DERR_INVALIDCALL}
++ if current.scene||current.recording.is_some()||!valid(ctx,presentation,56)||IDirect3DSurface9::has_external_refs(current.color)||IDirect3DSurface9::has_external_refs(current.depth){return D3DERR_INVALIDCALL}
+  let mut params:[u32;14]=std::array::from_fn(|i|ctx.memory.read::<u32>(presentation+i as u32*4));
+  if params[0]==0{params[0]=current.target_size[0]}if params[1]==0{params[1]=current.target_size[1]}if params[2]==0{params[2]=current.target_format}
+  if params[0]>4096||params[1]>4096{return D3DERR_INVALIDCALL}
+@@ -98,7 +309,7 @@
+  IDirect3DSurface9::destroy_owned(ctx,current.color);IDirect3DSurface9::destroy_owned(ctx,current.depth);
+  if current.up_buffer!=0{host::graphics_call(7,&[current.backend,current.up_buffer]);}for buffer in current.up_index_buffers{if buffer!=0{host::graphics_call(7,&[current.backend,buffer]);}}
+  let color=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],params[2],1);let depth=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],75,2);
+- let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.up_index_buffers=[0;2];d.up_index_offsets=[0;2];d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();D3D_OK
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.up_index_buffers=[0;2];d.up_index_offsets=[0;2];d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();d.recording=None;D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetBackBuffer(ctx:&mut Context,this:u32,swap:u32,index:u32,kind:u32,out:u32)->u32{if swap!=0||index!=0||kind!=0{return D3DERR_INVALIDCALL}GetRenderTarget(ctx,this,0,out)}
+@@ -137,7 +348,7 @@
+ #[win32_derive::dllexport]
+ pub fn SetTransform(ctx:&mut Context,this:u32,kind:u32,pointer:u32)->u32{
+  device(this);if !transform_kind(kind)||!valid(ctx,pointer,64){return D3DERR_INVALIDCALL;}
+- let m=ctx.memory.read::<[u32;16]>(pointer);DEVICES.lock().unwrap().get_mut(&this).unwrap().transforms.insert(kind,m);D3D_OK
++ let m=ctx.memory.read::<[u32;16]>(pointer);let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).unwrap();if let Some(recording)=device.recording.as_mut(){recording.values.transforms.insert(kind,m);recording.mask.transforms.insert(kind);}else{device.transforms.insert(kind,m);}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetTransform(ctx:&mut Context,this:u32,kind:u32,pointer:u32)->u32{
+@@ -152,25 +363,25 @@
+ #[win32_derive::dllexport]
+ pub fn MultiplyTransform(ctx:&mut Context,this:u32,kind:u32,pointer:u32)->u32{
+  device(this);if !transform_kind(kind)||!valid(ctx,pointer,64){return D3DERR_INVALIDCALL}
+- let left=ctx.memory.read::<[u32;16]>(pointer);let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();let current=d.transforms.get(&kind).copied().unwrap_or_else(identity_transform);d.transforms.insert(kind,multiply_matrices(left,current));D3D_OK
++ let left=ctx.memory.read::<[u32;16]>(pointer);let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let current=recording.values.transforms.get(&kind).copied().unwrap_or_else(identity_transform);recording.values.transforms.insert(kind,multiply_matrices(left,current));recording.mask.transforms.insert(kind);}else{let current=d.transforms.get(&kind).copied().unwrap_or_else(identity_transform);d.transforms.insert(kind,multiply_matrices(left,current));}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn SetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{
+  let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid viewport device");if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}let v:[u32;6]=std::array::from_fn(|i|ctx.memory.read::<u32>(pointer+i as u32*4));let min=f32::from_bits(v[4]);let max=f32::from_bits(v[5]);
+- if v[2]==0||v[3]==0||v[0]as u64+v[2]as u64>d.target_size[0]as u64||v[1]as u64+v[3]as u64>d.target_size[1]as u64||!min.is_finite()||!max.is_finite()||min<0.0||max>1.0||min>max{return D3DERR_INVALIDCALL}d.viewport=v;D3D_OK
++ if v[2]==0||v[3]==0||v[0]as u64+v[2]as u64>d.target_size[0]as u64||v[1]as u64+v[3]as u64>d.target_size[1]as u64||!min.is_finite()||!max.is_finite()||min<0.0||max>1.0||min>max{return D3DERR_INVALIDCALL}if let Some(recording)=d.recording.as_mut(){recording.values.viewport=v;recording.mask.viewport=true;}else{d.viewport=v;}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,24){return D3DERR_INVALIDCALL}for(i,v)in d.viewport.into_iter().enumerate(){ctx.memory.write::<u32>(pointer+i as u32*4,v)}D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetMaterial(ctx:&mut Context,this:u32,material:u32)->u32{if !valid(ctx,material,68){return D3DERR_INVALIDCALL}let value=ctx.memory.read::<[u32;17]>(material);DEVICES.lock().unwrap().get_mut(&this).expect("invalid material device").material=value;D3D_OK}
++pub fn SetMaterial(ctx:&mut Context,this:u32,material:u32)->u32{if !valid(ctx,material,68){return D3DERR_INVALIDCALL}let value=ctx.memory.read::<[u32;17]>(material);let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).expect("invalid material device");if let Some(recording)=device.recording.as_mut(){recording.values.material=value;recording.mask.material=true;}else{device.material=value;}D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetMaterial(ctx:&mut Context,this:u32,material:u32)->u32{let d=device(this);if !valid(ctx,material,68){return D3DERR_INVALIDCALL}ctx.memory.write::<[u32;17]>(material,d.material);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetLight(ctx:&mut Context,this:u32,index:u32,light:u32)->u32{if !valid(ctx,light,104){return D3DERR_INVALIDCALL}let value=ctx.memory.read::<[u32;26]>(light);DEVICES.lock().unwrap().get_mut(&this).expect("invalid light device").lights.insert(index,value);D3D_OK}
++pub fn SetLight(ctx:&mut Context,this:u32,index:u32,light:u32)->u32{if !valid(ctx,light,104){return D3DERR_INVALIDCALL}let value=ctx.memory.read::<[u32;26]>(light);let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).expect("invalid light device");if let Some(recording)=device.recording.as_mut(){recording.values.lights.insert(index,value);recording.mask.lights.insert(index);}else{device.lights.insert(index,value);}D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetLight(ctx:&mut Context,this:u32,index:u32,light:u32)->u32{let d=device(this);if !valid(ctx,light,104){return D3DERR_INVALIDCALL}let Some(value)=d.lights.get(&index)else{return D3DERR_INVALIDCALL};ctx.memory.write::<[u32;26]>(light,*value);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn LightEnable(_ctx:&mut Context,this:u32,index:u32,enable:u32)->u32{if enable>1{return D3DERR_INVALIDCALL}DEVICES.lock().unwrap().get_mut(&this).expect("invalid light device").light_enabled.insert(index,enable!=0);D3D_OK}
++pub fn LightEnable(_ctx:&mut Context,this:u32,index:u32,enable:u32)->u32{if enable>1{return D3DERR_INVALIDCALL}let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).expect("invalid light device");if let Some(recording)=device.recording.as_mut(){recording.values.light_enabled.insert(index,enable!=0);recording.mask.light_enabled.insert(index);}else{device.light_enabled.insert(index,enable!=0);}D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetLightEnable(ctx:&mut Context,this:u32,index:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,u32::from(d.light_enabled.get(&index).copied().unwrap_or(false)));D3D_OK}
+ pub fn SetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetClipPlane",3)}
+@@ -192,30 +403,37 @@
+  // D3D9 API contract without making every guest fail during setup.
+  if !d.states.contains_key(&kind){return D3D_OK}
+  let valid=match kind{7|14|15|27|52|136|137|174=>value<=1,19|20=>(1..=11).contains(&value),22=>(1..=3).contains(&value),23|25|53|54|55|56=>(1..=8).contains(&value),24=>value<=255,168=>value<=15,171=>(1..=5).contains(&value),_=>true};
+- if !valid{return D3DERR_INVALIDCALL}d.states.insert(kind,value);D3D_OK
++ if !valid{return D3DERR_INVALIDCALL}if let Some(recording)=d.recording.as_mut(){recording.values.states.insert(kind,value);recording.mask.render_states.insert(kind);}else{d.states.insert(kind,value);}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetRenderState(ctx:&mut Context,this:u32,kind:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}let Some(value)=d.states.get(&kind)else{return D3DERR_INVALIDCALL};ctx.memory.write::<u32>(out,*value);D3D_OK}
+-pub fn CreateStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateStateBlock",3)}
+-pub fn BeginStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"BeginStateBlock",1)}
+-pub fn EndStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"EndStateBlock",2)}
++#[win32_derive::dllexport]
++pub fn CreateStateBlock(ctx:&mut Context,this:u32,kind:u32,out:u32)->u32{stateblock::create_typed(ctx,this,kind,out)}
++#[win32_derive::dllexport]
++pub fn BeginStateBlock(_ctx:&mut Context,this:u32)->u32{stateblock::begin(this)}
++#[win32_derive::dllexport]
++pub fn EndStateBlock(ctx:&mut Context,this:u32,out:u32)->u32{stateblock::end(ctx,this,out)}
+ pub fn SetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetClipStatus",2)}
+ pub fn GetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetClipStatus",2)}
+ #[win32_derive::dllexport]
+ pub fn GetTexture(ctx:&mut Context,this:u32,stage:u32,out:u32)->u32{let d=device(this);if stage>=16||!valid(ctx,out,4){return D3DERR_INVALIDCALL}let texture=d.textures[stage as usize];if texture!=0{super::IDirect3DTexture9::AddRef(ctx,texture);}ctx.memory.write::<u32>(out,texture);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetTexture(ctx:&mut Context,this:u32,stage:u32,pointer:u32)->u32{device(this);if stage>=16||(pointer!=0&&!super::IDirect3DTexture9::retain_binding(pointer,this)){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().textures[stage as usize],pointer)};super::IDirect3DTexture9::release_binding(ctx,old);D3D_OK}
++pub fn SetTexture(ctx:&mut Context,this:u32,stage:u32,pointer:u32)->u32{
++ device(this);if stage>=16||(pointer!=0&&!super::IDirect3DTexture9::retain_binding(pointer,this)){return D3DERR_INVALIDCALL}
++ let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let old=if recording.mask.textures.insert(stage){0}else{recording.values.textures[stage as usize]};recording.values.textures[stage as usize]=pointer;old}else{std::mem::replace(&mut d.textures[stage as usize],pointer)}};
++ super::IDirect3DTexture9::release_binding(ctx,old);D3D_OK
++}
+ #[win32_derive::dllexport]
+ pub fn GetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,out:u32)->u32{let d=device(this);if stage>=8||!(1..=6).contains(&kind)&&kind!=11&&kind!=12||!valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,d.texture_stages[stage as usize][texture_stage_slot(kind)]);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetTextureStageState(_ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid texture-stage device");if stage>=8||!(1..=6).contains(&kind)&&kind!=11&&kind!=12{return D3DERR_INVALIDCALL}d.texture_stages[stage as usize][texture_stage_slot(kind)]=value;D3D_OK}
++pub fn SetTextureStageState(_ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid texture-stage device");if stage>=8||!(1..=6).contains(&kind)&&kind!=11&&kind!=12{return D3DERR_INVALIDCALL}if let Some(recording)=d.recording.as_mut(){recording.values.texture_stages[stage as usize][texture_stage_slot(kind)]=value;recording.mask.texture_stages.insert((stage,kind));}else{d.texture_stages[stage as usize][texture_stage_slot(kind)]=value;}D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetSamplerState(ctx:&mut Context,this:u32,stage:u32,kind:u32,out:u32)->u32{let d=device(this);if stage>=16||kind==0||kind>13||!valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,d.samplers[stage as usize][kind as usize]);D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn SetSamplerState(_ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{
+  let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid sampler device");
+  let supported=match kind{1..=3=>(1..=3).contains(&value),4=>true,5|6=>(1..=2).contains(&value),7=>value<=2,8|11|12|13=>value==0,9=>value<=12,10=>value==1,_=>false};
+- if stage>=16||!supported{return D3DERR_INVALIDCALL}d.samplers[stage as usize][kind as usize]=value;D3D_OK
++ if stage>=16||!supported{return D3DERR_INVALIDCALL}if let Some(recording)=d.recording.as_mut(){recording.values.samplers[stage as usize][kind as usize]=value;recording.mask.sampler_states.insert((stage,kind));}else{d.samplers[stage as usize][kind as usize]=value;}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn ValidateDevice(ctx:&mut Context,this:u32,out:u32)->u32{device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,1);D3D_OK}
+@@ -227,7 +445,7 @@
+ pub fn SetScissorRect(ctx:&mut Context,this:u32,pointer:u32)->u32{
+  let d=device(this);if !valid(ctx,pointer,16){return D3DERR_INVALIDCALL}let rect=ctx.memory.read::<[i32;4]>(pointer);
+  if rect[0]<0||rect[1]<0||rect[2]<=rect[0]||rect[3]<=rect[1]||rect[2]as u32>d.target_size[0]||rect[3]as u32>d.target_size[1]{return D3DERR_INVALIDCALL}
+- DEVICES.lock().unwrap().get_mut(&this).unwrap().scissor=rect.map(|v|v as u32);D3D_OK
++ let rect=rect.map(|v|v as u32);let mut devices=DEVICES.lock().unwrap();let device=devices.get_mut(&this).unwrap();if let Some(recording)=device.recording.as_mut(){recording.values.scissor=rect;recording.mask.scissor=true;}else{device.scissor=rect;}D3D_OK
+ }
+ #[win32_derive::dllexport]
+ pub fn GetScissorRect(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,16){return D3DERR_INVALIDCALL}ctx.memory.write::<[u32;4]>(pointer,d.scissor);D3D_OK}
+@@ -235,6 +453,7 @@
+ pub fn SetSoftwareVertexProcessing(_ctx:&mut Context,this:u32,software:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid vertex-processing device");let requested=software!=0;if d.flags&0x80==0{return if d.software_vertex_processing==requested{D3D_OK}else{D3DERR_INVALIDCALL}}d.software_vertex_processing=requested;D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetSoftwareVertexProcessing(_ctx:&mut Context,this:u32)->u32{u32::from(device(this).software_vertex_processing)}
++pub fn can_set_software_vertex_processing(this:u32,software:u32)->bool{let device=device(this);device.flags&0x80!=0||device.software_vertex_processing==(software!=0)}
+ #[win32_derive::dllexport]
+ pub fn SetNPatchMode(_ctx:&mut Context,this:u32,segments:u32)->u32{device(this);let segments=f32::from_bits(segments);if !segments.is_finite(){return D3DERR_INVALIDCALL}if segments<1.0{D3D_OK}else{D3DERR_NOTAVAILABLE}}
+ #[win32_derive::dllexport]
+@@ -292,13 +511,19 @@
+ #[win32_derive::dllexport]
+ pub fn CreateVertexDeclaration(ctx:&mut Context,this:u32,elements:u32,out:u32)->u32{device(this);IDirect3DVertexDeclaration9::create(ctx,this,elements,out)}
+ #[win32_derive::dllexport]
+-pub fn SetVertexDeclaration(ctx:&mut Context,this:u32,declaration:u32)->u32{device(this);if declaration!=0&&!IDirect3DVertexDeclaration9::retain_binding(declaration,this){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();{let d=map.get_mut(&this).unwrap();d.fvf=0;std::mem::replace(&mut d.declaration,declaration)}};IDirect3DVertexDeclaration9::release_binding(ctx,old);D3D_OK}
++pub fn SetVertexDeclaration(ctx:&mut Context,this:u32,declaration:u32)->u32{
++ device(this);if declaration!=0&&!IDirect3DVertexDeclaration9::retain_binding(declaration,this){return D3DERR_INVALIDCALL}
++ let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let old=if std::mem::replace(&mut recording.mask.vertex_input,true){recording.values.declaration}else{0};recording.values.fvf=0;recording.values.declaration=declaration;old}else{d.fvf=0;std::mem::replace(&mut d.declaration,declaration)}};
++ IDirect3DVertexDeclaration9::release_binding(ctx,old);D3D_OK
++}
+ #[win32_derive::dllexport]
+ pub fn GetVertexDeclaration(ctx:&mut Context,this:u32,out:u32)->u32{let d=device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if d.declaration!=0{IDirect3DVertexDeclaration9::AddRef(ctx,d.declaration);}ctx.memory.write::<u32>(out,d.declaration);D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn SetFVF(ctx:&mut Context,this:u32,fvf:u32)->u32{
+- let d=device(this);if fvf==0{return D3D_OK;}if d.fvf==fvf{return D3D_OK;}
++ let d=device(this);if fvf==0{return D3D_OK;}
+  let Some(bytes)=IDirect3DVertexDeclaration9::from_fvf(fvf)else{return D3DERR_INVALIDCALL;};
++ if d.recording.is_some(){let old={let mut devices=DEVICES.lock().unwrap();let recording=devices.get_mut(&this).unwrap().recording.as_mut().unwrap();let old=if std::mem::replace(&mut recording.mask.vertex_input,true){recording.values.declaration}else{0};recording.values.declaration=0;recording.values.fvf=fvf;old};IDirect3DVertexDeclaration9::release_binding(ctx,old);return D3D_OK}
++ if d.fvf==fvf{return D3D_OK;}
+  let declaration=match IDirect3DVertexDeclaration9::create_owned(ctx,this,bytes){Ok(p)=>p,Err(e)=>return e};
+  let result=SetVertexDeclaration(ctx,this,declaration);IDirect3DVertexDeclaration9::Release(ctx,declaration);
+  if result==D3D_OK{DEVICES.lock().unwrap().get_mut(&this).unwrap().fvf=fvf;}result
+@@ -308,19 +533,19 @@
+ #[win32_derive::dllexport]
+ pub fn CreateVertexShader(ctx:&mut Context,this:u32,pointer:u32,out:u32)->u32{let d=device(this);super::shader::create(ctx,this,d.backend,0,pointer,out)}
+ #[win32_derive::dllexport]
+-pub fn SetVertexShader(ctx:&mut Context,this:u32,pointer:u32)->u32{device(this);if pointer!=0&&!super::shader::retain_binding(pointer,this,0){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().shaders[0],pointer)};super::shader::release_binding(ctx,old);D3D_OK}
++pub fn SetVertexShader(ctx:&mut Context,this:u32,pointer:u32)->u32{device(this);if pointer!=0&&!super::shader::retain_binding(pointer,this,0){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let old=if std::mem::replace(&mut recording.mask.shaders[0],true){recording.values.shaders[0]}else{0};recording.values.shaders[0]=pointer;old}else{std::mem::replace(&mut d.shaders[0],pointer)}};super::shader::release_binding(ctx,old);D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetVertexShader(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,4){return D3DERR_INVALIDCALL}let shader=d.shaders[0];if shader!=0{super::shader::AddRef(ctx,shader);}ctx.memory.write::<u32>(pointer,shader);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetVertexShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Float,start,pointer,count,true);result}
++pub fn SetVertexShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{set_constants(ctx,this,false,super::constants::Kind::Float,start,pointer,count)}
+ #[win32_derive::dllexport]
+ pub fn GetVertexShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Float,start,pointer,count,false);result}
+ #[win32_derive::dllexport]
+-pub fn SetVertexShaderConstantI(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Int,start,pointer,count,true);result}
++pub fn SetVertexShaderConstantI(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{set_constants(ctx,this,false,super::constants::Kind::Int,start,pointer,count)}
+ #[win32_derive::dllexport]
+ pub fn GetVertexShaderConstantI(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Int,start,pointer,count,false);result}
+ #[win32_derive::dllexport]
+-pub fn SetVertexShaderConstantB(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Bool,start,pointer,count,true);result}
++pub fn SetVertexShaderConstantB(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{set_constants(ctx,this,false,super::constants::Kind::Bool,start,pointer,count)}
+ #[win32_derive::dllexport]
+ pub fn GetVertexShaderConstantB(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,false,super::constants::Kind::Bool,start,pointer,count,false);result}
+ #[win32_derive::dllexport]
+@@ -328,7 +553,7 @@
+  device(this);
+  if stream>=16||stride>2048||(buffer!=0&&!super::buffers::binding_valid(buffer,this,6,offset)){return D3DERR_INVALIDCALL}
+  if buffer!=0{super::buffers::retain_binding(buffer)}
+- let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();std::mem::replace(&mut d.streams[stream as usize],Stream{buffer,offset,stride})};
++ let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let old=if recording.mask.streams.insert(stream){Stream::default()}else{recording.values.streams[stream as usize]};recording.values.streams[stream as usize]=Stream{buffer,offset,stride};old}else{std::mem::replace(&mut d.streams[stream as usize],Stream{buffer,offset,stride})}};
+  super::buffers::release_binding(ctx,old.buffer);D3D_OK
+ }
+ #[win32_derive::dllexport]
+@@ -345,7 +570,7 @@
+ pub fn SetIndices(ctx:&mut Context,this:u32,buffer:u32)->u32{
+  device(this);if buffer!=0&&!super::buffers::binding_valid(buffer,this,7,0){return D3DERR_INVALIDCALL}
+  if buffer!=0{super::buffers::retain_binding(buffer)}
+- let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().indices,buffer)};
++ let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let old=if std::mem::replace(&mut recording.mask.indices,true){recording.values.indices}else{0};recording.values.indices=buffer;old}else{std::mem::replace(&mut d.indices,buffer)}};
+  super::buffers::release_binding(ctx,old);D3D_OK
+ }
+ #[win32_derive::dllexport]
+@@ -353,19 +578,19 @@
+ #[win32_derive::dllexport]
+ pub fn CreatePixelShader(ctx:&mut Context,this:u32,pointer:u32,out:u32)->u32{let d=device(this);super::shader::create(ctx,this,d.backend,1,pointer,out)}
+ #[win32_derive::dllexport]
+-pub fn SetPixelShader(ctx:&mut Context,this:u32,pointer:u32)->u32{device(this);if pointer!=0&&!super::shader::retain_binding(pointer,this,1){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();std::mem::replace(&mut map.get_mut(&this).unwrap().shaders[1],pointer)};super::shader::release_binding(ctx,old);D3D_OK}
++pub fn SetPixelShader(ctx:&mut Context,this:u32,pointer:u32)->u32{device(this);if pointer!=0&&!super::shader::retain_binding(pointer,this,1){return D3DERR_INVALIDCALL}let old={let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();if let Some(recording)=d.recording.as_mut(){let old=if std::mem::replace(&mut recording.mask.shaders[1],true){recording.values.shaders[1]}else{0};recording.values.shaders[1]=pointer;old}else{std::mem::replace(&mut d.shaders[1],pointer)}};super::shader::release_binding(ctx,old);D3D_OK}
+ #[win32_derive::dllexport]
+ pub fn GetPixelShader(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,4){return D3DERR_INVALIDCALL}let shader=d.shaders[1];if shader!=0{super::shader::AddRef(ctx,shader);}ctx.memory.write::<u32>(pointer,shader);D3D_OK}
+ #[win32_derive::dllexport]
+-pub fn SetPixelShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Float,start,pointer,count,true);result}
++pub fn SetPixelShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{set_constants(ctx,this,true,super::constants::Kind::Float,start,pointer,count)}
+ #[win32_derive::dllexport]
+ pub fn GetPixelShaderConstantF(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Float,start,pointer,count,false);result}
+ #[win32_derive::dllexport]
+-pub fn SetPixelShaderConstantI(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Int,start,pointer,count,true);result}
++pub fn SetPixelShaderConstantI(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{set_constants(ctx,this,true,super::constants::Kind::Int,start,pointer,count)}
+ #[win32_derive::dllexport]
+ pub fn GetPixelShaderConstantI(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Int,start,pointer,count,false);result}
+ #[win32_derive::dllexport]
+-pub fn SetPixelShaderConstantB(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Bool,start,pointer,count,true);result}
++pub fn SetPixelShaderConstantB(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{set_constants(ctx,this,true,super::constants::Kind::Bool,start,pointer,count)}
+ #[win32_derive::dllexport]
+ pub fn GetPixelShaderConstantB(ctx:&mut Context,this:u32,start:u32,pointer:u32,count:u32)->u32{let registers=device(this).constants;let result=registers.lock().unwrap().transfer(ctx,true,super::constants::Kind::Bool,start,pointer,count,false);result}
+ pub fn DrawRectPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawRectPatch",4)}
+--- /dev/null
++++ b/win32/winapi/src/d3d9/stateblock.rs
+@@ -0,0 +1,244 @@
++//! Direct3D 9 state-block capture, recording, COM lifetime, and application.
++use super::*;
++
++#[derive(Clone)]
++struct StateBlock {
++    refs: u32,
++    device: u32,
++    mask: StateMask,
++    values: StateValues,
++}
++
++static BLOCKS: LazyLock<Mutex<HashMap<u32, StateBlock>>> =
++    LazyLock::new(|| Mutex::new(HashMap::new()));
++
++pub const VTABLE_ENTRIES: [&str; 6] = [
++    "QueryInterface",
++    "AddRef",
++    "Release",
++    "GetDevice",
++    "Capture",
++    "Apply",
++];
++
++const IID_STATE_BLOCK: [u8; 16] = [
++    0xe5, 0x4f, 0x7c, 0xb0, 0x0d, 0x31, 0xa8, 0x4b,
++    0xa2, 0x3c, 0x4f, 0x0f, 0x20, 0x6f, 0x21, 0x8b,
++];
++
++fn block(this: u32) -> StateBlock {
++    BLOCKS.lock().unwrap().get(&this)
++        .expect("invalid/released IDirect3DStateBlock9").clone()
++}
++
++fn create_owned(
++    ctx: &mut Context,
++    owner: u32,
++    mask: StateMask,
++    values: StateValues,
++    resources_retained: bool,
++) -> Result<u32, u32> {
++    let vtable = unsafe { crate::d3d9::IDirect3DStateBlock9::VTABLE };
++    assert!(valid(ctx, vtable, VTABLE_ENTRIES.len() * 4), "state-block vtable missing");
++    let this = kernel32::lock().process_heap.alloc(&mut ctx.memory, 4);
++    if this == 0 {
++        if resources_retained { values.release_resources(ctx, &mask); }
++        return Err(0x8007000e);
++    }
++    if !resources_retained { values.retain_resources(owner, &mask); }
++    ctx.memory.write::<u32>(this, vtable);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    BLOCKS.lock().unwrap().insert(this, StateBlock { refs: 1, device: owner, mask, values });
++    Ok(this)
++}
++
++pub(super) fn create_typed(ctx: &mut Context, owner: u32, kind: u32, out: u32) -> u32 {
++    if !valid(ctx, out, 4) { return D3DERR_INVALIDCALL; }
++    ctx.memory.write::<u32>(out, 0);
++    let current = device(owner);
++    if current.recording.is_some() { return D3DERR_INVALIDCALL; }
++    let Some(mask) = state_mask(kind, &current) else { return D3DERR_INVALIDCALL; };
++    let values = StateValues::capture(&current);
++    match create_owned(ctx, owner, mask, values, false) {
++        Ok(this) => { ctx.memory.write::<u32>(out, this); D3D_OK }
++        Err(error) => error,
++    }
++}
++
++pub(super) fn begin(owner: u32) -> u32 {
++    let current = device(owner);
++    if current.recording.is_some() { return D3DERR_INVALIDCALL; }
++    let recording = Recording { mask: StateMask::default(), values: StateValues::capture(&current) };
++    DEVICES.lock().unwrap().get_mut(&owner).unwrap().recording = Some(recording);
++    D3D_OK
++}
++
++pub(super) fn end(ctx: &mut Context, owner: u32, out: u32) -> u32 {
++    if !valid(ctx, out, 4) { return D3DERR_INVALIDCALL; }
++    ctx.memory.write::<u32>(out, 0);
++    let recording = {
++        let mut devices = DEVICES.lock().unwrap();
++        let device = devices.get_mut(&owner).expect("invalid state-block device");
++        let Some(recording) = device.recording.take() else { return D3DERR_INVALIDCALL; };
++        recording
++    };
++    match create_owned(ctx, owner, recording.mask, recording.values, true) {
++        Ok(this) => { ctx.memory.write::<u32>(out, this); D3D_OK }
++        Err(error) => error,
++    }
++}
++
++fn apply_values(owner: u32, mask: &StateMask, values: &StateValues) -> u32 {
++    {
++        let mut devices = DEVICES.lock().unwrap();
++        let device = devices.get_mut(&owner).expect("invalid state-block device");
++        for state in &mask.render_states {
++            if let Some(value) = values.states.get(state) { device.states.insert(*state, *value); }
++        }
++        for (stage, state) in &mask.texture_stages {
++            device.texture_stages[*stage as usize][texture_stage_slot(*state)] =
++                values.texture_stages[*stage as usize][texture_stage_slot(*state)];
++        }
++        for (stage, state) in &mask.sampler_states {
++            device.samplers[*stage as usize][*state as usize] = values.samplers[*stage as usize][*state as usize];
++        }
++        for transform in &mask.transforms {
++            match values.transforms.get(transform) {
++                Some(value) => { device.transforms.insert(*transform, *value); }
++                None => { device.transforms.remove(transform); }
++            }
++        }
++        for light in &mask.lights {
++            match values.lights.get(light) {
++                Some(value) => { device.lights.insert(*light, *value); }
++                None => { device.lights.remove(light); }
++            }
++        }
++        for light in &mask.light_enabled {
++            match values.light_enabled.get(light) {
++                Some(value) => { device.light_enabled.insert(*light, *value); }
++                None => { device.light_enabled.remove(light); }
++            }
++        }
++        if mask.material { device.material = values.material; }
++        if mask.viewport { device.viewport = values.viewport; }
++        if mask.scissor { device.scissor = values.scissor; }
++    }
++    {
++        let target = device(owner).constants;
++        let mut target = target.lock().unwrap();
++        let source = values.constants.lock().unwrap();
++        target.copy_selected_from(&source, false, super::super::constants::Kind::Float, &mask.constants.vertex_float);
++        target.copy_selected_from(&source, false, super::super::constants::Kind::Int, &mask.constants.vertex_int);
++        target.copy_selected_from(&source, false, super::super::constants::Kind::Bool, &mask.constants.vertex_bool);
++        target.copy_selected_from(&source, true, super::super::constants::Kind::Float, &mask.constants.pixel_float);
++        target.copy_selected_from(&source, true, super::super::constants::Kind::Int, &mask.constants.pixel_int);
++        target.copy_selected_from(&source, true, super::super::constants::Kind::Bool, &mask.constants.pixel_bool);
++    }
++    D3D_OK
++}
++
++fn apply_resources(ctx: &mut Context, owner: u32, mask: &StateMask, values: &StateValues) -> u32 {
++    for stream in &mask.streams {
++        let value = values.streams[*stream as usize];
++        let result = SetStreamSource(ctx, owner, *stream, value.buffer, value.offset, value.stride);
++        if result != D3D_OK { return result; }
++    }
++    if mask.indices {
++        let result = SetIndices(ctx, owner, values.indices);
++        if result != D3D_OK { return result; }
++    }
++    if mask.vertex_input {
++        let result = if values.fvf != 0 {
++            SetFVF(ctx, owner, values.fvf)
++        } else {
++            SetVertexDeclaration(ctx, owner, values.declaration)
++        };
++        if result != D3D_OK { return result; }
++    }
++    for stage in 0..2 {
++        if mask.shaders[stage] {
++            let result = if stage == 0 {
++                SetVertexShader(ctx, owner, values.shaders[stage])
++            } else {
++                SetPixelShader(ctx, owner, values.shaders[stage])
++            };
++            if result != D3D_OK { return result; }
++        }
++    }
++    for stage in &mask.textures {
++        let result = SetTexture(ctx, owner, *stage, values.textures[*stage as usize]);
++        if result != D3D_OK { return result; }
++    }
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++    block(this);
++    if !valid(ctx, out, 4) { return E_POINTER; }
++    ctx.memory.write::<u32>(out, 0);
++    if !valid(ctx, iid, 16) { return E_POINTER; }
++    let id = &ctx.memory.bytes[iid as usize..iid as usize + 16];
++    if id != IID_UNKNOWN && id != IID_STATE_BLOCK { return E_NOINTERFACE; }
++    AddRef(ctx, this);
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn AddRef(_ctx: &mut Context, this: u32) -> u32 {
++    let mut blocks = BLOCKS.lock().unwrap();
++    let block = blocks.get_mut(&this).expect("invalid state-block AddRef");
++    block.refs = block.refs.checked_add(1).expect("state-block ref overflow");
++    block.refs
++}
++
++#[win32_derive::dllexport]
++pub fn Release(ctx: &mut Context, this: u32) -> u32 {
++    let removed = {
++        let mut blocks = BLOCKS.lock().unwrap();
++        let block = blocks.get_mut(&this).expect("invalid state-block Release");
++        block.refs -= 1;
++        if block.refs != 0 { return block.refs; }
++        blocks.remove(&this).unwrap()
++    };
++    removed.values.release_resources(ctx, &removed.mask);
++    IDirect3DDevice9::Release(ctx, removed.device);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
++    0
++}
++
++#[win32_derive::dllexport]
++pub fn GetDevice(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let block = block(this);
++    if !valid(ctx, out, 4) { return D3DERR_INVALIDCALL; }
++    IDirect3DDevice9::AddRef(ctx, block.device);
++    ctx.memory.write::<u32>(out, block.device);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn Capture(ctx: &mut Context, this: u32) -> u32 {
++    let block = block(this);
++    let current = device(block.device);
++    if current.recording.is_some() { return D3DERR_INVALIDCALL; }
++    let values = StateValues::capture(&current);
++    values.retain_resources(block.device, &block.mask);
++    let old = {
++        let mut blocks = BLOCKS.lock().unwrap();
++        std::mem::replace(&mut blocks.get_mut(&this).unwrap().values, values)
++    };
++    old.release_resources(ctx, &block.mask);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn Apply(ctx: &mut Context, this: u32) -> u32 {
++    let block = block(this);
++    if recording_active(block.device) { return D3DERR_INVALIDCALL; }
++    let result = apply_values(block.device, &block.mask, &block.values);
++    if result != D3D_OK { return result; }
++    apply_resources(ctx, block.device, &block.mask, &block.values)
++}
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -96,13 +96,31 @@
+ pub mod IDirect3DDevice8{
+  use super::*;
+  pub static mut VTABLE:u32=0;
+- #[derive(Clone,Default)]struct State{base:u32,vertex:u32,pixel:u32,tss:HashMap<(u32,u32),u32>}
++ #[derive(Clone,Default)]struct WrapperValues{base:u32,vertex:u32,pixel:u32,tss:HashMap<(u32,u32),u32>,software_vertex_processing:u32}
++ #[derive(Clone,Default)]struct WrapperMask{base:bool,vertex:bool,pixel:bool,tss:HashSet<(u32,u32)>,all_tss:bool,software_vertex_processing:bool}
++ #[derive(Clone)]struct WrapperRecording{values:WrapperValues,mask:WrapperMask}
++ #[derive(Clone,Default)]struct State{base:u32,vertex:u32,pixel:u32,tss:HashMap<(u32,u32),u32>,recording:Option<WrapperRecording>}
++ #[derive(Clone)]struct StateBlock{device:u32,inner:u32,values:WrapperValues,mask:WrapperMask}
+  static STATE:LazyLock<Mutex<HashMap<u32,State>>>=LazyLock::new(||Mutex::new(HashMap::new()));
++ static STATE_BLOCKS:LazyLock<Mutex<HashMap<u32,StateBlock>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+  #[derive(Clone)]struct ShaderHandle{device:u32,stage:u32,shader:u32,declaration:u32,decl_words:Vec<u32>,constants:Vec<(u32,[u32;4])>}
+  static SHADERS:LazyLock<Mutex<HashMap<u32,ShaderHandle>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+  static NEXT_SHADER:AtomicU32=AtomicU32::new(0x8000_0000);
+  pub(super) fn init(this:u32){STATE.lock().unwrap().insert(this,State::default());}
+  fn state(this:u32)->State{STATE.lock().unwrap().get(&this).cloned().expect("invalid D3D8 device")}
++ fn wrapper_values(ctx:&mut Context,this:u32)->WrapperValues{let state=state(this);WrapperValues{base:state.base,vertex:state.vertex,pixel:state.pixel,tss:state.tss,software_vertex_processing:d3d9::IDirect3DDevice9::GetSoftwareVertexProcessing(ctx,this)}}
++ fn wrapper_mask(kind:u32)->Option<WrapperMask>{Some(match kind{1=>WrapperMask{base:true,vertex:true,pixel:true,all_tss:true,software_vertex_processing:true,..Default::default()},2=>WrapperMask{pixel:true,..Default::default()},3=>WrapperMask{vertex:true,software_vertex_processing:true,..Default::default()},_=>return None})}
++ fn apply_wrapper(ctx:&mut Context,block:&StateBlock)->u32{
++  if block.mask.software_vertex_processing{let result=d3d9::IDirect3DDevice9::SetSoftwareVertexProcessing(ctx,block.device,block.values.software_vertex_processing);if result!=D3D_OK{return result}}
++  let mut states=STATE.lock().unwrap();let state=states.get_mut(&block.device).expect("invalid D3D8 state-block device");
++  if block.mask.base{state.base=block.values.base}if block.mask.vertex{state.vertex=block.values.vertex}if block.mask.pixel{state.pixel=block.values.pixel}
++  if block.mask.all_tss{state.tss=block.values.tss.clone()}else{for key in &block.mask.tss{match block.values.tss.get(key){Some(value)=>{state.tss.insert(*key,*value);},None=>{state.tss.remove(key);}}}}
++  D3D_OK
++ }
++ fn capture_wrapper(ctx:&mut Context,block:&mut StateBlock){let values=wrapper_values(ctx,block.device);if block.mask.base{block.values.base=values.base}if block.mask.vertex{block.values.vertex=values.vertex}if block.mask.pixel{block.values.pixel=values.pixel}if block.mask.software_vertex_processing{block.values.software_vertex_processing=values.software_vertex_processing}if block.mask.all_tss{block.values.tss=values.tss}else{for key in &block.mask.tss{match values.tss.get(key){Some(value)=>{block.values.tss.insert(*key,*value);},None=>{block.values.tss.remove(key);}}}}}
++ fn set_vertex_handle(this:u32,value:u32){let mut states=STATE.lock().unwrap();let state=states.get_mut(&this).unwrap();if let Some(recording)=state.recording.as_mut(){recording.values.vertex=value;recording.mask.vertex=true;}else{state.vertex=value;}}
++ fn set_pixel_handle(this:u32,value:u32){let mut states=STATE.lock().unwrap();let state=states.get_mut(&this).unwrap();if let Some(recording)=state.recording.as_mut(){recording.values.pixel=value;recording.mask.pixel=true;}else{state.pixel=value;}}
++ fn set_index_base(this:u32,value:u32){let mut states=STATE.lock().unwrap();let state=states.get_mut(&this).unwrap();if let Some(recording)=state.recording.as_mut(){recording.values.base=value;recording.mask.base=true;}else{state.base=value;}}
+  fn shader(this:u32,device:u32,stage:u32)->Option<ShaderHandle>{let s=SHADERS.lock().unwrap().get(&this)?.clone();(s.device==device&&s.stage==stage).then_some(s)}
+  fn shader_handle()->u32{let handle=NEXT_SHADER.fetch_add(1,Ordering::Relaxed);if handle==0{panic!("D3D8 shader handle space exhausted")}handle}
+  fn shader_semantic(register:u32)->Option<(u8,u8)>{Some(match register{0=>(0,0),1=>(1,0),2=>(2,0),3=>(3,0),4=>(4,0),5=>(10,0),6=>(10,1),7..=14=>(5,(register-7)as u8),15=>(0,1),16=>(3,1),_=>return None})}
+@@ -210,20 +228,30 @@
+  #[win32_derive::dllexport]pub fn GetLightEnable(ctx:&mut Context,this:u32,index:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetLightEnable(ctx,this,index,out)}
+  pub fn SetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetClipPlane")}
+  pub fn GetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetClipPlane")}
+- #[win32_derive::dllexport]pub fn SetRenderState(ctx:&mut Context,this:u32,k:u32,v:u32)->u32{if k==153{return d3d9::IDirect3DDevice9::SetSoftwareVertexProcessing(ctx,this,v)}d3d9::IDirect3DDevice9::SetRenderState(ctx,this,k,v)}
++ #[win32_derive::dllexport]pub fn SetRenderState(ctx:&mut Context,this:u32,k:u32,v:u32)->u32{if k==153{if state(this).recording.is_some(){if !d3d9::IDirect3DDevice9::can_set_software_vertex_processing(this,v){return D3DERR_INVALIDCALL}let mut states=STATE.lock().unwrap();let recording=states.get_mut(&this).unwrap().recording.as_mut().unwrap();recording.values.software_vertex_processing=u32::from(v!=0);recording.mask.software_vertex_processing=true;return D3D_OK}return d3d9::IDirect3DDevice9::SetSoftwareVertexProcessing(ctx,this,v)}d3d9::IDirect3DDevice9::SetRenderState(ctx,this,k,v)}
+  #[win32_derive::dllexport]pub fn GetRenderState(ctx:&mut Context,this:u32,k:u32,out:u32)->u32{if k==153{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}let value=d3d9::IDirect3DDevice9::GetSoftwareVertexProcessing(ctx,this);ctx.memory.write::<u32>(out,value);return D3D_OK}d3d9::IDirect3DDevice9::GetRenderState(ctx,this,k,out)}
+- pub fn BeginStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","BeginStateBlock")}
+- pub fn EndStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","EndStateBlock")}
+- pub fn ApplyStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","ApplyStateBlock")}
+- pub fn CaptureStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CaptureStateBlock")}
+- pub fn DeleteStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","DeleteStateBlock")}
+- pub fn CreateStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","CreateStateBlock")}
++ #[win32_derive::dllexport]pub fn BeginStateBlock(ctx:&mut Context,this:u32)->u32{if state(this).recording.is_some(){return D3DERR_INVALIDCALL}let result=d3d9::IDirect3DDevice9::BeginStateBlock(ctx,this);if result==D3D_OK{let values=wrapper_values(ctx,this);STATE.lock().unwrap().get_mut(&this).unwrap().recording=Some(WrapperRecording{values,mask:Default::default()});}result}
++ #[win32_derive::dllexport]pub fn EndStateBlock(ctx:&mut Context,this:u32,out:u32)->u32{
++  if !valid(ctx,out,4){return D3DERR_INVALIDCALL}let result=d3d9::IDirect3DDevice9::EndStateBlock(ctx,this,out);let recording=STATE.lock().unwrap().get_mut(&this).unwrap().recording.take();if result!=D3D_OK{return result}let Some(recording)=recording else{return D3DERR_INVALIDCALL};let token=ctx.memory.read::<u32>(out);STATE_BLOCKS.lock().unwrap().insert(token,StateBlock{device:this,inner:token,values:recording.values,mask:recording.mask});D3D_OK
++ }
++ #[win32_derive::dllexport]pub fn ApplyStateBlock(ctx:&mut Context,this:u32,token:u32)->u32{
++  if token==0{return D3D_OK}let Some(block)=STATE_BLOCKS.lock().unwrap().get(&token).cloned()else{return D3DERR_INVALIDCALL};if block.device!=this{return D3DERR_INVALIDCALL}let result=d3d9::IDirect3DStateBlock9::Apply(ctx,block.inner);if result!=D3D_OK{return result}apply_wrapper(ctx,&block)
++ }
++ #[win32_derive::dllexport]pub fn CaptureStateBlock(ctx:&mut Context,this:u32,token:u32)->u32{
++  let Some(mut block)=STATE_BLOCKS.lock().unwrap().get(&token).cloned()else{return D3DERR_INVALIDCALL};if block.device!=this{return D3DERR_INVALIDCALL}let result=d3d9::IDirect3DStateBlock9::Capture(ctx,block.inner);if result!=D3D_OK{return result}capture_wrapper(ctx,&mut block);STATE_BLOCKS.lock().unwrap().insert(token,block);D3D_OK
++ }
++ #[win32_derive::dllexport]pub fn DeleteStateBlock(ctx:&mut Context,this:u32,token:u32)->u32{
++  let Some(block)=STATE_BLOCKS.lock().unwrap().remove(&token)else{return D3DERR_INVALIDCALL};if block.device!=this{STATE_BLOCKS.lock().unwrap().insert(token,block);return D3DERR_INVALIDCALL}d3d9::IDirect3DStateBlock9::Release(ctx,block.inner);if !d3d9::IDirect3DDevice9::exists(this){STATE.lock().unwrap().remove(&this);}D3D_OK
++ }
++ #[win32_derive::dllexport]pub fn CreateStateBlock(ctx:&mut Context,this:u32,kind:u32,out:u32)->u32{
++  if !valid(ctx,out,4){return D3DERR_INVALIDCALL}let Some(mask)=wrapper_mask(kind)else{return D3DERR_INVALIDCALL};let values=wrapper_values(ctx,this);let result=d3d9::IDirect3DDevice9::CreateStateBlock(ctx,this,kind,out);if result!=D3D_OK{return result}let token=ctx.memory.read::<u32>(out);STATE_BLOCKS.lock().unwrap().insert(token,StateBlock{device:this,inner:token,values,mask});D3D_OK
++ }
+  pub fn SetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","SetClipStatus")}
+  pub fn GetClipStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetClipStatus")}
+  #[win32_derive::dllexport]pub fn GetTexture(ctx:&mut Context,this:u32,stage:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetTexture(ctx,this,stage,out);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DTexture8::VTABLE});}}r}
+  #[win32_derive::dllexport]pub fn SetTexture(ctx:&mut Context,this:u32,stage:u32,p:u32)->u32{d3d9::IDirect3DDevice9::SetTexture(ctx,this,stage,p)}
+  #[win32_derive::dllexport]pub fn GetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::GetSamplerState(ctx,this,stage,s,out)}if tss_kind(kind).is_some(){return d3d9::IDirect3DDevice9::GetTextureStageState(ctx,this,stage,kind,out)}let value=state(this).tss.get(&(stage,kind)).copied().unwrap_or_else(||default_tss(stage,kind));ctx.memory.write::<u32>(out,value);D3D_OK}
+- #[win32_derive::dllexport]pub fn SetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::SetSamplerState(ctx,this,stage,s,value)}if stage>=8{return D3DERR_INVALIDCALL}if tss_kind(kind).is_some(){return d3d9::IDirect3DDevice9::SetTextureStageState(ctx,this,stage,kind,value)}STATE.lock().unwrap().get_mut(&this).unwrap().tss.insert((stage,kind),value);D3D_OK}
++ #[win32_derive::dllexport]pub fn SetTextureStageState(ctx:&mut Context,this:u32,stage:u32,kind:u32,value:u32)->u32{if let Some(s)=sampler_kind(kind){return d3d9::IDirect3DDevice9::SetSamplerState(ctx,this,stage,s,value)}if stage>=8{return D3DERR_INVALIDCALL}if tss_kind(kind).is_some(){return d3d9::IDirect3DDevice9::SetTextureStageState(ctx,this,stage,kind,value)}let mut states=STATE.lock().unwrap();let state=states.get_mut(&this).unwrap();if let Some(recording)=state.recording.as_mut(){recording.values.tss.insert((stage,kind),value);recording.mask.tss.insert((stage,kind));}else{state.tss.insert((stage,kind),value);}D3D_OK}
+  fn tss_kind(k:u32)->Option<u32>{Some(match k{1..=6|11|12=>k,_=>return None})}
+  fn sampler_kind(k:u32)->Option<u32>{Some(match k{13=>1,14=>2,25=>3,15=>4,16=>5,17=>6,18=>7,19=>8,20=>9,21=>10,_=>return None})}
+  fn default_tss(stage:u32,k:u32)->u32{match(stage,k){(0,1)=>4,(0,2)=>2,(0,3)=>1,(0,4)=>2,(0,5)=>2,(0,6)=>1,(s,1)if s>0=>1,(_,11)=>0,_=>0}}
+@@ -252,8 +280,8 @@
+   let handle=shader_handle();SHADERS.lock().unwrap().insert(handle,ShaderHandle{device:this,stage:0,shader,declaration,decl_words:words,constants});ctx.memory.write::<u32>(out,handle);D3D_OK
+  }
+  #[win32_derive::dllexport]pub fn SetVertexShader(ctx:&mut Context,this:u32,handle:u32)->u32{
+-  if let Some(s)=shader(handle,this,0){let result=d3d9::IDirect3DDevice9::SetVertexDeclaration(ctx,this,s.declaration);if result!=D3D_OK{return result}let result=d3d9::IDirect3DDevice9::SetVertexShader(ctx,this,s.shader);if result!=D3D_OK{return result}if !s.constants.is_empty(){let tmp=kernel32::lock().process_heap.alloc(&mut ctx.memory,16);if tmp==0{return E_OUTOFMEMORY}for(address,values)in &s.constants{for(i,value)in values.iter().enumerate(){ctx.memory.write::<u32>(tmp+i as u32*4,*value)}let result=d3d9::IDirect3DDevice9::SetVertexShaderConstantF(ctx,this,*address,tmp,1);if result!=D3D_OK{kernel32::lock().process_heap.free(&mut ctx.memory,tmp);return result}}kernel32::lock().process_heap.free(&mut ctx.memory,tmp)}STATE.lock().unwrap().get_mut(&this).unwrap().vertex=handle;return D3D_OK}
+-  if handle&0xf0000000!=0{return D3DERR_NOTAVAILABLE}let r=d3d9::IDirect3DDevice9::SetVertexShader(ctx,this,0);if r!=D3D_OK{return r}let r=d3d9::IDirect3DDevice9::SetFVF(ctx,this,handle);if r==D3D_OK{STATE.lock().unwrap().get_mut(&this).unwrap().vertex=handle;}r
++  if let Some(s)=shader(handle,this,0){let result=d3d9::IDirect3DDevice9::SetVertexDeclaration(ctx,this,s.declaration);if result!=D3D_OK{return result}let result=d3d9::IDirect3DDevice9::SetVertexShader(ctx,this,s.shader);if result!=D3D_OK{return result}if !s.constants.is_empty(){let tmp=kernel32::lock().process_heap.alloc(&mut ctx.memory,16);if tmp==0{return E_OUTOFMEMORY}for(address,values)in &s.constants{for(i,value)in values.iter().enumerate(){ctx.memory.write::<u32>(tmp+i as u32*4,*value)}let result=d3d9::IDirect3DDevice9::SetVertexShaderConstantF(ctx,this,*address,tmp,1);if result!=D3D_OK{kernel32::lock().process_heap.free(&mut ctx.memory,tmp);return result}}kernel32::lock().process_heap.free(&mut ctx.memory,tmp)}set_vertex_handle(this,handle);return D3D_OK}
++  if handle&0xf0000000!=0{return D3DERR_NOTAVAILABLE}let r=d3d9::IDirect3DDevice9::SetVertexShader(ctx,this,0);if r!=D3D_OK{return r}let r=d3d9::IDirect3DDevice9::SetFVF(ctx,this,handle);if r==D3D_OK{set_vertex_handle(this,handle);}r
+  }
+  #[win32_derive::dllexport]pub fn GetVertexShader(ctx:&mut Context,this:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,state(this).vertex);D3D_OK}
+  #[win32_derive::dllexport]pub fn DeleteVertexShader(ctx:&mut Context,this:u32,handle:u32)->u32{let Some(s)=shader(handle,this,0)else{return D3DERR_INVALIDCALL};if state(this).vertex==handle{let _=d3d9::IDirect3DDevice9::SetVertexShader(ctx,this,0);let _=d3d9::IDirect3DDevice9::SetVertexDeclaration(ctx,this,0);STATE.lock().unwrap().get_mut(&this).unwrap().vertex=0;}let removed=SHADERS.lock().unwrap().remove(&handle).unwrap();debug_assert_eq!(removed.declaration,s.declaration);release_shader(ctx,removed);D3D_OK}
+@@ -263,10 +291,10 @@
+  #[win32_derive::dllexport]pub fn GetVertexShaderFunction(ctx:&mut Context,this:u32,handle:u32,out:u32,size:u32)->u32{let Some(s)=shader(handle,this,0)else{return D3DERR_INVALIDCALL};if s.shader==0{return D3DERR_INVALIDCALL}d3d9::IDirect3DVertexShader9::GetFunction(ctx,s.shader,out,size)}
+  #[win32_derive::dllexport]pub fn SetStreamSource(ctx:&mut Context,this:u32,stream:u32,buffer:u32,stride:u32)->u32{d3d9::IDirect3DDevice9::SetStreamSource(ctx,this,stream,buffer,0,stride)}
+  #[win32_derive::dllexport]pub fn GetStreamSource(ctx:&mut Context,this:u32,stream:u32,out:u32,stride:u32)->u32{let tmp=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);if tmp==0{return 0x8007000e}let r=d3d9::IDirect3DDevice9::GetStreamSource(ctx,this,stream,out,tmp,stride);kernel32::lock().process_heap.free(&mut ctx.memory,tmp);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DVertexBuffer8::VTABLE});}}r}
+- #[win32_derive::dllexport]pub fn SetIndices(ctx:&mut Context,this:u32,index:u32,base:u32)->u32{let r=d3d9::IDirect3DDevice9::SetIndices(ctx,this,index);if r==D3D_OK{STATE.lock().unwrap().get_mut(&this).unwrap().base=base;}r}
++ #[win32_derive::dllexport]pub fn SetIndices(ctx:&mut Context,this:u32,index:u32,base:u32)->u32{let r=d3d9::IDirect3DDevice9::SetIndices(ctx,this,index);if r==D3D_OK{set_index_base(this,base);}r}
+  #[win32_derive::dllexport]pub fn GetIndices(ctx:&mut Context,this:u32,out:u32,base:u32)->u32{if !valid(ctx,base,4){return D3DERR_INVALIDCALL}let r=d3d9::IDirect3DDevice9::GetIndices(ctx,this,out);if r==D3D_OK{let p=ctx.memory.read::<u32>(out);if p!=0{overwrite_vtable(ctx,p,unsafe{IDirect3DIndexBuffer8::VTABLE});}ctx.memory.write::<u32>(base,state(this).base);}r}
+  #[win32_derive::dllexport]pub fn CreatePixelShader(ctx:&mut Context,this:u32,pfunction:u32,out:u32)->u32{if !valid(ctx,out,4)||pfunction==0{return D3DERR_INVALIDCALL}let tmp=kernel32::lock().process_heap.alloc(&mut ctx.memory,4);if tmp==0{return E_OUTOFMEMORY}let result=d3d9::IDirect3DDevice9::CreatePixelShader(ctx,this,pfunction,tmp);let shader=if result==D3D_OK{ctx.memory.read::<u32>(tmp)}else{0};kernel32::lock().process_heap.free(&mut ctx.memory,tmp);if result!=D3D_OK{return result}let handle=shader_handle();SHADERS.lock().unwrap().insert(handle,ShaderHandle{device:this,stage:1,shader,declaration:0,decl_words:Vec::new(),constants:Vec::new()});ctx.memory.write::<u32>(out,handle);D3D_OK}
+- #[win32_derive::dllexport]pub fn SetPixelShader(ctx:&mut Context,this:u32,handle:u32)->u32{let shader=if handle==0{0}else{let Some(s)=shader(handle,this,1)else{return D3DERR_NOTAVAILABLE};s.shader};let r=d3d9::IDirect3DDevice9::SetPixelShader(ctx,this,shader);if r==D3D_OK{STATE.lock().unwrap().get_mut(&this).unwrap().pixel=handle;}r}
++ #[win32_derive::dllexport]pub fn SetPixelShader(ctx:&mut Context,this:u32,handle:u32)->u32{let shader=if handle==0{0}else{let Some(s)=shader(handle,this,1)else{return D3DERR_NOTAVAILABLE};s.shader};let r=d3d9::IDirect3DDevice9::SetPixelShader(ctx,this,shader);if r==D3D_OK{set_pixel_handle(this,handle);}r}
+  #[win32_derive::dllexport]pub fn GetPixelShader(ctx:&mut Context,this:u32,out:u32)->u32{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,state(this).pixel);D3D_OK}
+  #[win32_derive::dllexport]pub fn DeletePixelShader(ctx:&mut Context,this:u32,handle:u32)->u32{let Some(_s)=shader(handle,this,1)else{return D3DERR_INVALIDCALL};if state(this).pixel==handle{let _=d3d9::IDirect3DDevice9::SetPixelShader(ctx,this,0);STATE.lock().unwrap().get_mut(&this).unwrap().pixel=0;}let removed=SHADERS.lock().unwrap().remove(&handle).unwrap();release_shader(ctx,removed);D3D_OK}
+  #[win32_derive::dllexport]pub fn SetPixelShaderConstant(ctx:&mut Context,this:u32,start:u32,p:u32,count:u32)->u32{d3d9::IDirect3DDevice9::SetPixelShaderConstantF(ctx,this,start,p,count)}
+@@ -324,6 +352,7 @@
+    IDirect3DTexture8::VTABLE=0x1800;
+    IDirect3DVertexBuffer8::VTABLE=0x1a00;
+    IDirect3DIndexBuffer8::VTABLE=0x1c00;
++   d3d9::IDirect3DStateBlock9::VTABLE=0x1c80;
+    d3d9::IDirect3DVertexDeclaration9::VTABLE=0x1e00;
+    d3d9::IDirect3DSurface9::VTABLE=0x1f00;
+   }
+@@ -359,6 +388,15 @@
+   assert_eq!(ctx.cpu.regs.eax,D3D_OK);
+   assert_eq!(IDirect3DDevice8::GetVertexShader(&mut ctx,dev,0x1330),D3D_OK);
+   assert_eq!(ctx.memory.read::<u32>(0x1330),0x142);
++  assert_eq!(IDirect3DDevice8::SetRenderState(&mut ctx,dev,27,0),D3D_OK);
++  ctx.call32_x86(runtime::Cont(IDirect3DDevice8::BeginStateBlock_stdcall),vec![dev]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DDevice8::BeginStateBlock(&mut ctx,dev),D3DERR_INVALIDCALL);
++  assert_eq!(IDirect3DDevice8::SetRenderState(&mut ctx,dev,27,1),D3D_OK);assert_eq!(IDirect3DDevice8::SetVertexShader(&mut ctx,dev,0x2),D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetRenderState(&mut ctx,dev,27,0x13a0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x13a0),0);assert_eq!(IDirect3DDevice8::GetVertexShader(&mut ctx,dev,0x13a0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x13a0),0x142);
++  ctx.call32_x86(runtime::Cont(IDirect3DDevice8::EndStateBlock_stdcall),vec![dev,0x13a0]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);let state_token=ctx.memory.read::<u32>(0x13a0);
++  ctx.call32_x86(runtime::Cont(IDirect3DDevice8::ApplyStateBlock_stdcall),vec![dev,state_token]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DDevice8::GetRenderState(&mut ctx,dev,27,0x13a0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x13a0),1);assert_eq!(IDirect3DDevice8::GetVertexShader(&mut ctx,dev,0x13a0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x13a0),0x2);
++  assert_eq!(IDirect3DDevice8::SetRenderState(&mut ctx,dev,27,0),D3D_OK);assert_eq!(IDirect3DDevice8::SetVertexShader(&mut ctx,dev,0x142),D3D_OK);assert_eq!(IDirect3DDevice8::CaptureStateBlock(&mut ctx,dev,state_token),D3D_OK);assert_eq!(IDirect3DDevice8::SetRenderState(&mut ctx,dev,27,1),D3D_OK);assert_eq!(IDirect3DDevice8::SetVertexShader(&mut ctx,dev,0x2),D3D_OK);assert_eq!(IDirect3DDevice8::ApplyStateBlock(&mut ctx,dev,state_token),D3D_OK);assert_eq!(IDirect3DDevice8::GetRenderState(&mut ctx,dev,27,0x13a0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x13a0),0);assert_eq!(IDirect3DDevice8::GetVertexShader(&mut ctx,dev,0x13a0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x13a0),0x142);
++  assert_eq!(IDirect3DDevice8::ApplyStateBlock(&mut ctx,dev,0),D3D_OK);assert_eq!(IDirect3DDevice8::ApplyStateBlock(&mut ctx,dev,0xdeadbeef),D3DERR_INVALIDCALL);ctx.call32_x86(runtime::Cont(IDirect3DDevice8::DeleteStateBlock_stdcall),vec![dev,state_token]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DDevice8::DeleteStateBlock(&mut ctx,dev,state_token),D3DERR_INVALIDCALL);
++  assert_eq!(IDirect3DDevice8::CreateStateBlock(&mut ctx,dev,1,0x13a0),D3D_OK);let all_token=ctx.memory.read::<u32>(0x13a0);assert_eq!(IDirect3DDevice8::DeleteStateBlock(&mut ctx,dev,all_token),D3D_OK);assert_eq!(IDirect3DDevice8::CreateStateBlock(&mut ctx,dev,4,0x13a0),D3DERR_INVALIDCALL);
+ 
+   let declaration=[0x2000_0000u32,0x4000_0002,0xffff_ffff];
+   for(i,value)in declaration.into_iter().enumerate(){ctx.memory.write::<u32>(0x1400+i as u32*4,value);}
