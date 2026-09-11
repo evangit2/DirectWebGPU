@@ -8,6 +8,12 @@ This repository contains the browser runtime, the original Humus demo package, g
 
 The long-term target is a reusable DirectX compatibility layer: an unmodified 32-bit Windows executable is translated to WebAssembly, its Win32 and Direct3D calls are handled by shared runtime code, and actual graphics are submitted to WebGPU. This is an early DirectX 8/9 implementation, not a Wine distribution and not a recreation of one game's scene. The bundled Humus executable is the reproducible public demo; other user-owned executables can use the same guest build and server flow while compatibility work continues.
 
+## Major components and attribution
+
+[Theseus](https://github.com/evmar/theseus) is a major foundation of DirectWebGPU. It translates the original 32-bit x86 Windows executable into Rust/WebAssembly and supplies the DOS/Win32 compatibility environment that DirectWebGPU extends with Direct3D, input, audio, and browser integration. DirectWebGPU also builds on vkd3d-shader, Naga, MojoShader, libopenmpt, wasm-bindgen, Emscripten, and other open-source projects.
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for component roles, pinned versions, license identifiers, upstream links, and retained license-text locations. Theseus is credited there separately because its pinned checkout does not contain a license declaration; no license is inferred for it.
+
 ## Reproduce
 
 Prerequisites: Python 3, Git, Rust/rustup from https://rustup.rs . Native diagnostic builds also need SDL3 (on this Mac: `brew install sdl3`). A macOS host was tested; other host builds have not been verified.
