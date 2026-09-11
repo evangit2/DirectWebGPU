@@ -17,6 +17,7 @@ import {enqueueInput} from './input-queue.js';
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
 import {GpuCommandScheduler} from './gpu-command-scheduler.js';
+import {issueEventQuery,flushEventQuery} from './event-query.js';
 let gpuTiming=false,profileStutters=false,frameFenceInterval=4;
 let shaderMode=RUNTIME_MODES.WINED3D;
 let sceneEquivalence=false,omitDiagnosticLighting=false;
@@ -206,6 +207,8 @@ async function graphics(op,a,memory){
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
  }
  if(!backend||a[0]!==backend.id)return INVALID;
+ if(op===17&&a.length===2){try{return issueEventQuery(device,backend,memory,a[1],e=>emit('gpu-error',{message:String(e)}));}catch(e){if(e instanceof RangeError)return INVALID;throw e;}}
+ if(op===18&&a.length===2){try{return await flushEventQuery(device,backend,memory,a[1]);}catch(e){if(e instanceof RangeError)return INVALID;throw e;}}
  if(op===2){backend.timer?.dispose();backend.equivalence?.dispose();backend.draws?.dispose();backend.textures.dispose();backend.shaders?.dispose();backend.buffers.dispose();backend.color.destroy();backend.depth.destroy();context.unconfigure();backend=null;return 1}
  if(op===16){
   const [,width,height,format,count,multi,quality,swap,hwnd,windowed,autoDepth,depthFormat,flags,refresh,interval]=a;

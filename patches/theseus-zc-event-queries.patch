@@ -1,0 +1,241 @@
+--- a/host/src/lib.rs
++++ b/host/src/lib.rs
+@@ -115,3 +115,5 @@
+ 
+ #[cfg(not(target_family="wasm"))]
+ pub fn graphics_call(_op:u32,_values:&[u32])->u32{0x8876086a} // native diagnostic has no browser GPU
++#[cfg(not(target_family="wasm"))]
++pub fn graphics_notify(_op:u32,_values:&[u32]){} // native diagnostic has no browser GPU
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -495,3 +495,10 @@
+     for value in values{args.push(&JsValue::from(*value));}
+     host::host().chan.lock().unwrap().send_sync("graphics_call",args) as u32
+ }
++
++/// Ordered graphics notification that does not block the translated CPU.
++pub fn graphics_notify(op:u32, values:&[u32]) {
++    let args=js_sys::Array::new();args.push(&JsValue::from(op));
++    for value in values{args.push(&JsValue::from(*value));}
++    host::host().chan.lock().unwrap().send_async("graphics_call",args);
++}
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -30,9 +30,10 @@
+ pub mod IDirect3DVertexShader9{pub use super::shader::*;pub static mut VTABLE:u32=0;}
+ pub mod IDirect3DPixelShader9{pub use super::shader::*;pub static mut VTABLE:u32=0;}
+ pub mod IDirect3DStateBlock9{pub use super::IDirect3DDevice9::stateblock::*;pub static mut VTABLE:u32=0;}
++pub mod IDirect3DQuery9{pub use super::IDirect3DDevice9::query::*;pub static mut VTABLE:u32=0;}
+ #[path="d3d9/texture.rs"]
+ pub mod IDirect3DTexture9;
+-pub const VTABLES: [(&str, &[&str]);10] = [("IDirect3DTexture9", &IDirect3DTexture9::VTABLE_ENTRIES),("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES),("IDirect3DStateBlock9", &IDirect3DStateBlock9::VTABLE_ENTRIES)];
++pub const VTABLES: [(&str, &[&str]);11] = [("IDirect3DTexture9", &IDirect3DTexture9::VTABLE_ENTRIES),("IDirect3D9", &IDirect3D9::VTABLE_ENTRIES),("IDirect3DDevice9", &IDirect3DDevice9::VTABLE_ENTRIES),("IDirect3DSurface9", &IDirect3DSurface9::VTABLE_ENTRIES),("IDirect3DVertexBuffer9", &IDirect3DVertexBuffer9::VTABLE_ENTRIES),("IDirect3DIndexBuffer9", &IDirect3DIndexBuffer9::VTABLE_ENTRIES),("IDirect3DVertexDeclaration9", &IDirect3DVertexDeclaration9::VTABLE_ENTRIES),("IDirect3DVertexShader9", &IDirect3DVertexShader9::VTABLE_ENTRIES),("IDirect3DPixelShader9", &IDirect3DPixelShader9::VTABLE_ENTRIES),("IDirect3DStateBlock9", &IDirect3DStateBlock9::VTABLE_ENTRIES),("IDirect3DQuery9", &IDirect3DQuery9::VTABLE_ENTRIES)];
+ fn valid(ctx: &Context, p: u32, n: usize) -> bool {
+     p >= 0x1000 && (p as usize).checked_add(n).is_some_and(|end| end <= ctx.memory.bytes.len())
+ }
+@@ -241,7 +242,7 @@
+         ctx.call32_x86(runtime::Cont(IDirect3D9::CheckDeviceFormatConversion_stdcall),vec![obj,0,1,21,22]);
+         assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
+         assert_eq!(IDirect3D9::CheckDeviceFormatConversion(&mut ctx,obj,0,1,23,22),D3DERR_NOTAVAILABLE);
+-        unsafe {IDirect3DDevice9::VTABLE=0x1800;IDirect3DSurface9::VTABLE=0x1a00;IDirect3DStateBlock9::VTABLE=0x1b00;}
++        unsafe {IDirect3DDevice9::VTABLE=0x1800;IDirect3DSurface9::VTABLE=0x1a00;IDirect3DStateBlock9::VTABLE=0x1b00;IDirect3DQuery9::VTABLE=0x1b40;}
+         let dev=IDirect3DDevice9::create(&mut ctx,obj,1,1,0x40,800,600,21);
+         ctx.call32_x86(runtime::Cont(IDirect3DDevice9::TestCooperativeLevel_stdcall),vec![dev]);
+         assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
+@@ -326,6 +327,11 @@
+         assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,recorded_block),D3D_OK);assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,27,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),0);assert_eq!(IDirect3DDevice9::GetSamplerState(&mut ctx,dev,0,1,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),2);assert_eq!(IDirect3DDevice9::GetVertexShaderConstantF(&mut ctx,dev,7,0x1790,1),D3D_OK);assert_eq!(ctx.memory.read::<[u32;4]>(0x1790),[1.0f32,2.0,3.0,4.0].map(f32::to_bits));
+         assert_eq!(IDirect3DDevice9::BeginStateBlock(&mut ctx,dev),D3D_OK);assert_eq!(IDirect3DStateBlock9::Apply(&mut ctx,recorded_block),D3DERR_INVALIDCALL);assert_eq!(IDirect3DStateBlock9::Capture(&mut ctx,recorded_block),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::EndStateBlock(&mut ctx,dev,0x1760),D3D_OK);let empty_block=ctx.memory.read::<u32>(0x1760);assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,empty_block),0);
+         assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,recorded_block),0);assert_eq!(IDirect3DStateBlock9::Release(&mut ctx,pixel_block),0);
++        assert_eq!(IDirect3DDevice9::CreateQuery(&mut ctx,dev,8,0),D3D_OK);assert_eq!(IDirect3DDevice9::CreateQuery(&mut ctx,dev,9,0),D3DERR_NOTAVAILABLE);assert_eq!(IDirect3DDevice9::CreateQuery(&mut ctx,dev,8,u32::MAX),D3DERR_INVALIDCALL);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::CreateQuery_stdcall),vec![dev,8,0x1760]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);let event_query=ctx.memory.read::<u32>(0x1760);assert_eq!(ctx.memory.read::<u32>(event_query),0x1b40);assert_eq!(IDirect3DQuery9::GetType(&mut ctx,event_query),8);assert_eq!(IDirect3DQuery9::GetDataSize(&mut ctx,event_query),4);assert_eq!(IDirect3DQuery9::GetData(&mut ctx,event_query,0,0,0),D3D_OK);
++        ctx.memory.bytes[0x1100..0x1110].copy_from_slice(&[0x60,0x14,0x77,0xd9,0x95,0xa6,0x26,0x4f,0xbb,0xd3,0x27,0xb8,0x40,0xb5,0x41,0xcc]);assert_eq!(IDirect3DQuery9::QueryInterface(&mut ctx,event_query,0x1100,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),event_query);assert_eq!(IDirect3DQuery9::Release(&mut ctx,event_query),1);assert_eq!(IDirect3DQuery9::GetDevice(&mut ctx,event_query,0x1770),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),dev);IDirect3DDevice9::Release(&mut ctx,dev);
++        ctx.call32_x86(runtime::Cont(IDirect3DQuery9::Issue_stdcall),vec![event_query,1]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DQuery9::Issue(&mut ctx,event_query,1),D3DERR_INVALIDCALL);assert_eq!(IDirect3DQuery9::Issue(&mut ctx,event_query,2),D3DERR_INVALIDCALL);assert_eq!(IDirect3DQuery9::GetData(&mut ctx,event_query,0,0,0),1);assert_eq!(IDirect3DQuery9::GetData(&mut ctx,event_query,0,0,1),D3DERR_NOTAVAILABLE);assert_eq!(IDirect3DQuery9::GetData(&mut ctx,event_query,0,4,0),D3DERR_INVALIDCALL);assert_eq!(IDirect3DQuery9::GetData(&mut ctx,event_query,0x1770,4,2),D3DERR_INVALIDCALL);
++        ctx.memory.write::<u32>(event_query+4,1);assert_eq!(IDirect3DQuery9::GetData(&mut ctx,event_query,0x1770,4,0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1770),1);ctx.call32_x86(runtime::Cont(IDirect3DQuery9::Release_stdcall),vec![event_query]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,0);assert_eq!(ctx.memory.read::<u32>(event_query),0);
+         let shader=shader::fixture(&mut ctx,dev,0);
+         assert_eq!(shader::GetFunction(&mut ctx,shader,0,0x1e00),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1e00),20);
+         ctx.memory.write::<u32>(0x1e00,4);ctx.memory.bytes[0x1e10..0x1e24].fill(0xa5);assert_eq!(shader::GetFunction(&mut ctx,shader,0x1e10,0x1e00),D3DERR_INVALIDCALL);assert!(ctx.memory.bytes[0x1e10..0x1e24].iter().all(|b|*b==0xa5));
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -3,6 +3,8 @@
+ use std::collections::HashSet;
+ #[path="stateblock.rs"]
+ pub mod stateblock;
++#[path="query.rs"]
++pub mod query;
+ #[derive(Clone,Copy,Default)]
+ struct Stream{buffer:u32,offset:u32,stride:u32}
+ 
+@@ -596,7 +598,8 @@
+ pub fn DrawRectPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawRectPatch",4)}
+ pub fn DrawTriPatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DrawTriPatch",4)}
+ pub fn DeletePatch_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"DeletePatch",2)}
+-pub fn CreateQuery_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"CreateQuery",3)}
++#[win32_derive::dllexport]
++pub fn CreateQuery(ctx:&mut Context,this:u32,kind:u32,out:u32)->u32{query::create(ctx,this,kind,out)}
+ 
+ fn draw(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32,indexed:Option<(i32,u32,u32)>)->u32{
+  draw_prepared(ctx,this,kind,first,primitives,indexed,None)
+--- /dev/null
++++ b/win32/winapi/src/d3d9/query.rs
+@@ -0,0 +1,161 @@
++//! Direct3D 9 asynchronous event-query COM object and WebGPU fence bridge.
++use super::*;
++use std::sync::atomic::{AtomicU32, Ordering};
++
++const S_FALSE: u32 = 1;
++const E_OUTOFMEMORY: u32 = 0x8007000e;
++const D3DQUERYTYPE_EVENT: u32 = 8;
++const D3DISSUE_END: u32 = 1;
++const D3DGETDATA_FLUSH: u32 = 1;
++const IID_QUERY: [u8; 16] = [
++    0x60, 0x14, 0x77, 0xd9, 0x95, 0xa6, 0x26, 0x4f,
++    0xbb, 0xd3, 0x27, 0xb8, 0x40, 0xb5, 0x41, 0xcc,
++];
++
++#[derive(Clone)]
++struct Query {
++    refs: u32,
++    device: u32,
++    backend: u32,
++    kind: u32,
++    issued: bool,
++}
++
++static QUERIES: LazyLock<Mutex<HashMap<u32, Query>>> =
++    LazyLock::new(|| Mutex::new(HashMap::new()));
++
++pub const VTABLE_ENTRIES: [&str; 8] = [
++    "QueryInterface",
++    "AddRef",
++    "Release",
++    "GetDevice",
++    "GetType",
++    "GetDataSize",
++    "Issue",
++    "GetData",
++];
++
++fn query(this: u32) -> Query {
++    QUERIES.lock().unwrap().get(&this)
++        .expect("invalid/released IDirect3DQuery9").clone()
++}
++
++fn completion(ctx: &Context, this: u32) -> &AtomicU32 {
++    debug_assert!(valid(ctx, this + 4, 4));
++    let pointer = ctx.memory.bytes.as_ptr().wrapping_add((this + 4) as usize) as *mut u32;
++    // The COM allocation is four-byte aligned and guest memory is leaked for
++    // the Context lifetime, so the shared atomic remains aligned and stable.
++    unsafe { AtomicU32::from_ptr(pointer) }
++}
++
++pub(super) fn create(ctx: &mut Context, owner: u32, kind: u32, out: u32) -> u32 {
++    let owner_state = device(owner);
++    if kind != D3DQUERYTYPE_EVENT { return D3DERR_NOTAVAILABLE; }
++    if out == 0 { return D3D_OK; }
++    if !valid(ctx, out, 4) { return D3DERR_INVALIDCALL; }
++    ctx.memory.write::<u32>(out, 0);
++    let vtable = unsafe { crate::d3d9::IDirect3DQuery9::VTABLE };
++    assert!(valid(ctx, vtable, VTABLE_ENTRIES.len() * 4), "query vtable missing");
++    // The second word is an atomic completion flag written by the GPU worker.
++    let this = kernel32::lock().process_heap.alloc(&mut ctx.memory, 8);
++    if this == 0 { return E_OUTOFMEMORY; }
++    ctx.memory.write::<u32>(this, vtable);
++    completion(ctx, this).store(1, Ordering::Release);
++    IDirect3DDevice9::AddRef(ctx, owner);
++    QUERIES.lock().unwrap().insert(this, Query {
++        refs: 1,
++        device: owner,
++        backend: owner_state.backend,
++        kind,
++        issued: false,
++    });
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn QueryInterface(ctx: &mut Context, this: u32, iid: u32, out: u32) -> u32 {
++    query(this);
++    if !valid(ctx, out, 4) { return E_POINTER; }
++    ctx.memory.write::<u32>(out, 0);
++    if !valid(ctx, iid, 16) { return E_POINTER; }
++    let id = &ctx.memory.bytes[iid as usize..iid as usize + 16];
++    if id != IID_UNKNOWN && id != IID_QUERY { return E_NOINTERFACE; }
++    AddRef(ctx, this);
++    ctx.memory.write::<u32>(out, this);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn AddRef(_ctx: &mut Context, this: u32) -> u32 {
++    let mut queries = QUERIES.lock().unwrap();
++    let query = queries.get_mut(&this).expect("invalid query AddRef");
++    query.refs = query.refs.checked_add(1).expect("query ref overflow");
++    query.refs
++}
++
++#[win32_derive::dllexport]
++pub fn Release(ctx: &mut Context, this: u32) -> u32 {
++    let removed = {
++        let mut queries = QUERIES.lock().unwrap();
++        let query = queries.get_mut(&this).expect("invalid query Release");
++        query.refs -= 1;
++        if query.refs != 0 { return query.refs; }
++        queries.remove(&this).unwrap()
++    };
++    // A pending browser marker writes to this+4. Drain it before recycling the
++    // guest allocation so the callback cannot corrupt a later COM object.
++    if removed.issued && completion(ctx, this).load(Ordering::Acquire) == 0 {
++        host::graphics_call(18, &[removed.backend, this + 4]);
++    }
++    IDirect3DDevice9::Release(ctx, removed.device);
++    completion(ctx, this).store(0, Ordering::Release);
++    ctx.memory.write::<u32>(this, 0);
++    kernel32::lock().process_heap.free(&mut ctx.memory, this);
++    0
++}
++
++#[win32_derive::dllexport]
++pub fn GetDevice(ctx: &mut Context, this: u32, out: u32) -> u32 {
++    let query = query(this);
++    if !valid(ctx, out, 4) { return D3DERR_INVALIDCALL; }
++    IDirect3DDevice9::AddRef(ctx, query.device);
++    ctx.memory.write::<u32>(out, query.device);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn GetType(_ctx: &mut Context, this: u32) -> u32 { query(this).kind }
++
++#[win32_derive::dllexport]
++pub fn GetDataSize(_ctx: &mut Context, this: u32) -> u32 {
++    query(this);
++    4
++}
++
++#[win32_derive::dllexport]
++pub fn Issue(ctx: &mut Context, this: u32, flags: u32) -> u32 {
++    let current = query(this);
++    if flags != D3DISSUE_END || current.issued && completion(ctx, this).load(Ordering::Acquire) == 0 {
++        return D3DERR_INVALIDCALL;
++    }
++    completion(ctx, this).store(0, Ordering::Release);
++    QUERIES.lock().unwrap().get_mut(&this).unwrap().issued = true;
++    host::graphics_notify(17, &[current.backend, this + 4]);
++    D3D_OK
++}
++
++#[win32_derive::dllexport]
++pub fn GetData(ctx: &mut Context, this: u32, data: u32, size: u32, flags: u32) -> u32 {
++    let current = query(this);
++    if flags > D3DGETDATA_FLUSH || !matches!(size, 0 | 4) || size != 0 && !valid(ctx, data, 4) {
++        return D3DERR_INVALIDCALL;
++    }
++    if completion(ctx, this).load(Ordering::Acquire) == 0 && flags == D3DGETDATA_FLUSH {
++        let result = host::graphics_call(18, &[current.backend, this + 4]);
++        if result != 1 { return result; }
++    }
++    if completion(ctx, this).load(Ordering::Acquire) == 0 { return S_FALSE; }
++    if size == 4 { ctx.memory.write::<u32>(data, 1); }
++    D3D_OK
++}
