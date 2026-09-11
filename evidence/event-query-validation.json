@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-11",
+  "result": "passed",
+  "scope": "Generic asynchronous D3D9 EVENT query objects backed by ordered WebGPU queue-completion markers",
+  "implementationRevision": "46658cb7fb225b86b0fb8e49b684e01182c02f45",
+  "manifestRevision": "08570a71655c34fd41e0125a8cb1906b3a548e2f",
+  "checks": {
+    "nativeRust": [
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d8::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::constants::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p runtime virtual_cpu_tests -- --nocapture"
+    ],
+    "querySemantics": [
+      "CreateQuery support probes, unsupported types, pointers, COM identity, device ownership and stdcall cleanup are verified",
+      "D3DQUERYTYPE_EVENT accepts D3DISSUE_END and rejects BEGIN or reissue while a marker is pending",
+      "Issue returns without waiting while GetData polls the shared atomic completion word",
+      "D3DGETDATA_FLUSH submits deferred renderer work, drains the WebGPU queue and signals a four-byte BOOL result",
+      "Releasing a pending query drains its marker before recycling guest memory",
+      "Queue rejection remains unsignaled and is routed to the runtime GPU-error channel"
+    ],
+    "javascriptSuite": "all scripts/test_*.mjs and scripts/test_*.py passed",
+    "patchStack": "18 patches reproduce 179 source files from f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "legacyMode": "wined3d-webgpu remains default; legacy-win32 remains explicitly selectable",
+    "browserWebGPU": {
+      "runId": "5eeb0f9e-4624-49ec-84d2-3509d55c0f96",
+      "result": "passed",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "fallback": false
+      },
+      "eventQuery": {
+        "result": "passed",
+        "checks": [
+          "Issue marker stayed asynchronous",
+          "D3DGETDATA_FLUSH boundary completed submitted WebGPU work",
+          "shared completion word signaled"
+        ]
+      },
+      "diagnosticDraws": 17,
+      "checks": [
+        "VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga",
+        "misaligned/truncated bytecode rejected",
+        "asynchronous event-query marker and explicit flush completed on WebGPU",
+        "PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA through persistent texture storage and cached sampler/pipeline",
+        "indexed draw consumed persistent vertex/index buffers",
+        "browser WGSL compilation and pipeline validation passed",
+        "GPU draw completed; sampled interpolated color matched"
+      ]
+    }
+  },
+  "humus": {
+    "runId": "75c353d8-8136-43d4-b496-6107e95afaac",
+    "originalExecutionAttempted": true,
+    "applicationPresents": 21318,
+    "submittedFrames": 21318,
+    "gpuSubmissions": 981193,
+    "firstPresentObservedMs": 1916.9749999940395,
+    "rollingFrameTimeMs": {
+      "p50": 2.05517578125,
+      "p95": 9.68017578125,
+      "p99": 10.97998046875,
+      "min": 1.175048828125,
+      "max": 12.050048828125
+    },
+    "rollingStutterFrames": {
+      "over25": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0
+    },
+    "pipelineCompilations": 8,
+    "pipelineCacheHits": 852569,
+    "errorEvents": [],
+    "visualInspection": "Recognizable lit Humus brick-room scene rendered from the original executable."
+  },
+  "limitations": [
+    "This validates D3D9 EVENT queries with an actual WebGPU queue and one original Humus program; broad game compatibility remains in progress.",
+    "The Humus executable did not issue an EVENT query in this run, so executable integration covers absence of regressions while the browser diagnostic exercises the new queue marker.",
+    "Present submission intervals do not equal display scan-out or GPU shader duration.",
+    "The aggregate WinAPI test binary has pre-existing shared-global test isolation failures; each documented focused suite passes in its own process."
+  ],
+  "fullRun": "evidence/event-query-run.json",
+  "shaderRun": "evidence/event-query-shader-run.json"
+}
