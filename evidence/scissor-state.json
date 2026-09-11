@@ -1,0 +1,106 @@
+{
+  "kind": "Direct3D 8/9 scissor and device-state compatibility milestone",
+  "result": "passed",
+  "sourceRevision": "1609dd6d68bc63126ab9eefc45a7f94a1b483b4b",
+  "runtimeMode": "wined3d-webgpu",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "implementedOperations": {
+    "ScissorRect": "D3D9 SetScissorRect/GetScissorRect state reaches WebGPU dynamic scissor state; disabled draws retain the full render target",
+    "SoftwareVertexProcessing": "D3D9 mixed devices can switch the software-processing state while fixed hardware/software devices reject incompatible switches",
+    "NPatchMode": "disabled values succeed and unsupported tessellation values fail without aborting the guest",
+    "RasterStatus": "D3D8/9 return D3DERR_INVALIDCALL because browser scan-line status is unavailable and READ_SCANLINE is not advertised",
+    "D3D8Forwarding": "D3D8 raster status and software vertex-processing render state use the shared D3D9 device model"
+  },
+  "validation": {
+    "nativeD3D9AbiTest": "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d9::tests (passed)",
+    "nativeD3D8AbiTest": "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d8::tests (passed)",
+    "javascriptTests": "all scripts/test_*.mjs passed",
+    "serverTest": "python3 scripts/test_server.py passed",
+    "patchReverseCheck": "passed",
+    "diffCheck": "passed",
+    "gpuScissorDiagnostic": {
+      "runId": "d40ec593-7622-46cb-a8fe-967a79db4ce9",
+      "result": "passed",
+      "scissor": [
+        0,
+        0,
+        16,
+        32
+      ],
+      "insidePixelBgra": [
+        191,
+        128,
+        64,
+        255
+      ],
+      "outsidePixelBgra": [
+        0,
+        0,
+        0,
+        255
+      ]
+    }
+  },
+  "browser": {
+    "runId": "e4ddeb1e-41c0-4544-8b4c-9684205f2032",
+    "originalExecutionAttempted": true,
+    "direct3DCreate9Reached": true,
+    "direct3D9ObjectCreated": true,
+    "applicationPresentsAtDownload": 7454,
+    "gpuSubmissionsAtDownload": 343139,
+    "firstPresentObservedMs": 1852.1800000071526,
+    "warmAssetCache": {
+      "mode": "warm",
+      "hits": 19,
+      "misses": 0,
+      "cacheBytes": 25736964,
+      "networkBodyBytes": 0,
+      "verifiedBytes": 25736964,
+      "repairedEntries": 0,
+      "limitBytes": 536870912,
+      "scope": "guest assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    "rollingFrameTimeMs": {
+      "p50": 2.0400390625,
+      "p95": 9.530029296875,
+      "p99": 10.594970703125,
+      "min": 1.18505859375,
+      "max": 12.034912109375
+    },
+    "rollingStutterFrames": {
+      "over25": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0
+    },
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "errors": [],
+    "capture": {
+      "present": 1,
+      "width": 800,
+      "height": 600,
+      "evidenceWidth": 320,
+      "evidenceHeight": 240,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428713,
+        "pixels": 428800,
+        "meanRgb": [
+          37,
+          22,
+          12
+        ]
+      }
+    }
+  },
+  "scope": "This milestone adds reusable Direct3D 8/9 state and draw behavior and proves the original Humus executable still presents a recognizable WebGPU frame. It does not establish broad game compatibility."
+}
