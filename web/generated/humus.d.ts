@@ -15,10 +15,20 @@ export interface WasmHost {
     create_window(title: string, width: number, height: number): number;
     resize_window(window_id: number, width: number, height: number): void;
     render(window_id: number, surface_id: number): void;
+    cursor_warp(x: number, y: number): void;
+    cursor_visibility(visible: boolean): void;
 
     set_pixels(surface_id: number, ptr: number, len: number): void;
 
     write_file(path: string, ptr: number, len: number): number;
+
+    audio_open(sample_rate: number, channels: number): number;
+    audio_queued(stream_id: number): number;
+    audio_resume(stream_id: number): void;
+    audio_write(stream_id: number, ptr: number, len: number): void;
+
+    music_load(ptr: number, len: number, flags: number): number;
+    music_command(op: number, handle: number, a: number, b: number, c: number): number;
 
     poll_message(): number[];
     wait_message(): Promise<number[]>;
@@ -27,6 +37,8 @@ export interface WasmHost {
 
 
 export function configure_guest_memory_metrics(enabled: boolean): void;
+
+export function input_queue_address(): number;
 
 export function main(): void;
 
@@ -37,6 +49,8 @@ export function main(): void;
 export function mount_file(path: string, data: Uint8Array): void;
 
 export function seed_registry_dword(root: number, subkey: string, name: string, value: number): void;
+
+export function seed_registry_value(root: number, subkey: string, name: string, kind: number, value: Uint8Array): void;
 
 /**
  * Set the directory the program starts in, the equivalent of launching it
@@ -52,6 +66,8 @@ export interface InitOutput {
     readonly configure_guest_memory_metrics: (a: number) => void;
     readonly main: () => void;
     readonly seed_registry_dword: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly seed_registry_value: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+    readonly input_queue_address: () => number;
     readonly mount_file: (a: number, b: number, c: number, d: number) => void;
     readonly set_current_dir: (a: number, b: number) => void;
     readonly set_trace: (a: number, b: number) => void;
