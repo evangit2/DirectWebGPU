@@ -1,0 +1,63 @@
+{
+  "kind": "Direct3D 8/9 common device operations compatibility milestone",
+  "result": "passed",
+  "sourceRevision": "d300103ed76496428e8f9de314051ed52746c982",
+  "runtimeMode": "wined3d-webgpu",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "implementedOperations": {
+    "TestCooperativeLevel": "reports D3D_OK while the browser-backed device is operational",
+    "GetAvailableTextureMem": "returns a conservative approximate texture-memory budget",
+    "EvictManagedResources": "completes successfully for the current managed-resource model",
+    "GetDisplayMode": "reports the active swap-chain dimensions and format with pointer and index validation",
+    "GetNumberOfSwapChains": "reports the one implicit swap chain currently implemented",
+    "MultiplyTransform": "composes caller and current matrices in documented D3D order for D3D8 and D3D9",
+    "ValidateDevice": "reports one rendering pass for the currently supported state subset"
+  },
+  "validation": {
+    "nativeD3D9AbiTest": "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d9::tests (passed)",
+    "nativeD3D8AbiTest": "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d8::tests (passed)",
+    "javascriptTests": "all scripts/test_*.mjs passed",
+    "serverTest": "python3 scripts/test_server.py passed",
+    "patchReverseCheck": "passed",
+    "diffCheck": "passed"
+  },
+  "browser": {
+    "runId": "5db35967-4af5-4f2e-9359-1741c2717c88",
+    "status": "startup trial completed after first Present",
+    "originalExecutionAttempted": true,
+    "direct3DCreate9Reached": true,
+    "direct3D9ObjectCreated": true,
+    "applicationPresentsAtDownload": 18,
+    "gpuSubmissionsAtDownload": 870,
+    "firstPresentObservedMs": 1964.7849999964237,
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "errors": [],
+    "capture": {
+      "present": 1,
+      "width": 800,
+      "height": 600,
+      "evidenceWidth": 320,
+      "evidenceHeight": 240,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428730,
+        "pixels": 428800,
+        "meanRgb": [
+          37,
+          22,
+          12
+        ]
+      }
+    }
+  },
+  "scope": "These common calls now return validated, conservative results instead of aborting D3D8/9 guests. The browser run proves the original Humus executable still creates Direct3D and presents a recognizable frame; it does not establish broad game compatibility."
+}

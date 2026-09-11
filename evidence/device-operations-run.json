@@ -1,0 +1,1456 @@
+{
+  "summary": "startup trial completed after first Present",
+  "location": "http://127.0.0.1:8791/humus-runtime?mode=wined3d-webgpu&startupTrial=1&assetCache=warm&captureFrames=1&build=device-basics-clean-1",
+  "report": {
+    "applicationPresents": 18,
+    "submittedFrames": 18,
+    "sceneFrames": 0,
+    "performance": {
+      "firstSceneMs": "not measured",
+      "fps": "not measured",
+      "jsHeapBytes": "not measured",
+      "gpuBytes": "not measured",
+      "wasmLinearMemoryBytes": 19202048
+    },
+    "runtime": {
+      "mode": "wined3d-webgpu",
+      "deprecated": false,
+      "shaderCompiler": "vkd3d-shader",
+      "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+    },
+    "registryPreset": null,
+    "runId": "5db35967-4af5-4f2e-9359-1741c2717c88",
+    "status": "startup trial completed after first Present",
+    "events": [
+      {
+        "timeMs": 4606,
+        "type": "probe",
+        "result": {
+          "secureContext": true,
+          "crossOriginIsolated": true,
+          "sharedArrayBuffer": true,
+          "webgpu": true,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "runtime": {
+            "mode": "wined3d-webgpu",
+            "deprecated": false,
+            "shaderCompiler": "vkd3d-shader",
+            "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+          },
+          "adapter": {
+            "vendor": "apple",
+            "architecture": "metal-3",
+            "device": "",
+            "description": "",
+            "isFallbackAdapter": false
+          },
+          "features": [
+            "depth32float-stencil8",
+            "rg11b10ufloat-renderable",
+            "bgra8unorm-storage",
+            "texture-formats-tier1",
+            "texture-compression-bc",
+            "dual-source-blending",
+            "core-features-and-limits",
+            "float32-filterable",
+            "indirect-first-instance",
+            "texture-compression-astc-sliced-3d",
+            "float32-blendable",
+            "subgroup-size-control",
+            "texture-compression-astc",
+            "texture-compression-etc2",
+            "depth-clip-control",
+            "texture-compression-bc-sliced-3d",
+            "shader-f16",
+            "timestamp-query",
+            "texture-formats-tier2",
+            "clip-distances",
+            "primitive-index",
+            "texture-component-swizzle",
+            "subgroups"
+          ],
+          "timestampQuery": {
+            "requested": false,
+            "available": true
+          },
+          "deviceCreated": true,
+          "hardwareAcceleration": "GPU device available; no Humus scene verified"
+        }
+      },
+      {
+        "timeMs": 4640,
+        "type": "identity",
+        "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+      },
+      {
+        "timeMs": 4896,
+        "type": "asset-cache-metrics",
+        "mode": "warm",
+        "hits": 0,
+        "misses": 19,
+        "cacheBytes": 0,
+        "networkBodyBytes": 25729116,
+        "verifiedBytes": 25729116,
+        "repairedEntries": 0,
+        "limitBytes": 536870912,
+        "scope": "guest assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+      },
+      {
+        "timeMs": 4897,
+        "type": "resource-metrics",
+        "resourceCount": 20,
+        "transferSize": 0,
+        "encodedBodySize": 25742929,
+        "decodedBodySize": 25742929,
+        "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+        "cachePolicy": "loopback server Cache-Control: no-store"
+      },
+      {
+        "timeMs": 4898,
+        "type": "execution-start",
+        "wasmLinearMemoryBytes": 19202048
+      },
+      {
+        "timeMs": 4916,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/env.rs:32 stub: using 0"
+      },
+      {
+        "timeMs": 4916,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/env.rs:48 stub: using true"
+      },
+      {
+        "timeMs": 4918,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/dll.rs:121 stub: using 0"
+      },
+      {
+        "timeMs": 4918,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/dll.rs:170 GetProcAddress(0xd110000, IsProcessorFeaturePresent): not supported, returning null"
+      },
+      {
+        "timeMs": 4920,
+        "type": "log",
+        "message": "win32/winapi/src/user32/resource.rs:15 stub: using 0"
+      },
+      {
+        "timeMs": 4921,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:418 stub: using 1"
+      },
+      {
+        "timeMs": 5695,
+        "type": "window-created",
+        "title": "Title",
+        "width": 800,
+        "height": 600
+      },
+      {
+        "timeMs": 5696,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:129 stub: using HANDLE(1)"
+      },
+      {
+        "timeMs": 5697,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:550 stub: using true"
+      },
+      {
+        "timeMs": 5698,
+        "type": "log",
+        "message": "win32/winapi/src/user32/window.rs:179 WINDOW_CREATION_CALLBACKS hwnd=0x1"
+      },
+      {
+        "timeMs": 5698,
+        "type": "d3d9-created",
+        "message": "win32/winapi/src/d3d9.rs:57 D3D9_CREATE9 sdk=31 object=0x004e700c"
+      },
+      {
+        "timeMs": 5698,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:57 D3D9_CREATE9 sdk=31 object=0x004e700c"
+      },
+      {
+        "timeMs": 5699,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 5699,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:180 D3D9_CREATE_DEVICE_PRESENT_PARAMETERS [\n    0x320,\n    0x258,\n    0x15,\n    0x1,\n    0x0,\n    0x0,\n    0x1,\n    0x0,\n    0x1,\n    0x1,\n    0x4b,\n    0x0,\n    0x0,\n    0x80000000,\n]"
+      },
+      {
+        "timeMs": 5717,
+        "type": "d3d9-device-created",
+        "backendId": 1,
+        "width": 800,
+        "height": 600,
+        "colorFormat": "bgra8unorm",
+        "depthFormat": "depth24plus-stencil8",
+        "validation": "passed",
+        "sceneFrames": 0
+      },
+      {
+        "timeMs": 5718,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:184 D3D9_DEVICE_CREATED object=0x4e7014 backend=1"
+      },
+      {
+        "timeMs": 5729,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 5814,
+        "type": "log",
+        "message": "win32/winapi/src/kernel32/dll.rs:170 GetProcAddress(0xd110004, Direct3DShaderValidatorCreate9): not supported, returning null"
+      },
+      {
+        "timeMs": 5845,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 5897,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 5909,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 5914,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      },
+      {
+        "timeMs": 5922,
+        "type": "log",
+        "message": "win32/winapi/src/d3d9.rs:172 D3D9_CAPS_PROFILE vs=1.1 ps=2.0; experimental programmable 2D texture subset"
+      }
+    ],
+    "droppedEvents": 0,
+    "build": {
+      "revision": "d300103ed76496428e8f9de314051ed52746c982",
+      "dirty": false,
+      "guest": {
+        "id": "humus",
+        "title": "Humus",
+        "executablePath": "DynamicBranching/DynamicBranching.exe",
+        "workingDirectory": "/DynamicBranching",
+        "registryDwords": [
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedLeft",
+            0
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedTop",
+            0
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedRight",
+            1280
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "WindowedBottom",
+            720
+          ],
+          [
+            2147483650,
+            "SOFTWARE\\Humus",
+            "Fullscreen",
+            0
+          ]
+        ]
+      },
+      "dependencies": {
+        "executable": {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        "guest": {
+          "id": "humus",
+          "title": "Humus",
+          "executablePath": "DynamicBranching/DynamicBranching.exe",
+          "workingDirectory": "/DynamicBranching",
+          "registryDwords": [
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedLeft",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedTop",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedRight",
+              1280
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedBottom",
+              720
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "Fullscreen",
+              0
+            ]
+          ]
+        }
+      },
+      "files": [
+        {
+          "path": "DynamicBranching/DynamicBranching.dsp",
+          "bytes": 7163,
+          "sha256": "3c086ee7a6b8e32c2c0719e2510fb05d431a8dc96955bf2da574c625d52a2677"
+        },
+        {
+          "path": "DynamicBranching/DynamicBranching.dsw",
+          "bytes": 555,
+          "sha256": "1a9c43ec3187ada28cd6cd25101b6b9b7fd44b31f7e6c5fdcc7a9d5c396c786d"
+        },
+        {
+          "path": "DynamicBranching/DynamicBranching.exe",
+          "bytes": 925696,
+          "sha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5"
+        },
+        {
+          "path": "DynamicBranching/Main.cpp",
+          "bytes": 8514,
+          "sha256": "88d32ac76ce4227fa8924572a3641877129819b5abe3d40667fc379431e680ef"
+        },
+        {
+          "path": "DynamicBranching/depthAmbient.shd",
+          "bytes": 435,
+          "sha256": "b5f89e989b1fb9e367b71fa57500340be28771654941b5bbf82b484f0a087e2e"
+        },
+        {
+          "path": "DynamicBranching/if.shd",
+          "bytes": 411,
+          "sha256": "481045950c8b579040a85208e755abb2251650d68ac0808708b7c9275dd44d1d"
+        },
+        {
+          "path": "DynamicBranching/lighting.shd",
+          "bytes": 1585,
+          "sha256": "865b3f054522da77a1cbd884044ec99ed3d8afdf53340825039c3c8200d8e6e8"
+        },
+        {
+          "path": "Models/PillarRoom/Map.hmdl",
+          "bytes": 57028,
+          "sha256": "bd881f835d4e52b93351194c992f59cbd7187ef8850c4c2f7d9ad72225c492d5"
+        },
+        {
+          "path": "Textures/Fonts/Future.dds",
+          "bytes": 349680,
+          "sha256": "9b7f4ea36194f5ab48e38b33dc8039a8aab0ce905d541aa6dee1ed5f30de2022"
+        },
+        {
+          "path": "Textures/Fonts/Future.font",
+          "bytes": 5124,
+          "sha256": "878c2b3e5fa5961d0f3eacb564901e0e91dc185c834e48e01e4803f8cda1a2e3"
+        },
+        {
+          "path": "Textures/Particle.png",
+          "bytes": 613,
+          "sha256": "3987c11a7d2798dc189cd9309910ddfeecfb0551decfd1238c7a59b2d186e24d"
+        },
+        {
+          "path": "Textures/brick01.dds",
+          "bytes": 174904,
+          "sha256": "0c94736d677faa0d962f9e7f6c7688076652faee93130167813e59cb125a27e4"
+        },
+        {
+          "path": "Textures/brick01Bump.png",
+          "bytes": 74397,
+          "sha256": "3e8ea48fdb25da97f55d3f4c939b8c0a8572e2ad6bbb6f1105d6fd340889c823"
+        },
+        {
+          "path": "Textures/laying_rock7.dds",
+          "bytes": 174904,
+          "sha256": "e8ea9d650264bba9b6267470db2cd0c603b08ca1112e719c4974358806188235"
+        },
+        {
+          "path": "Textures/laying_rock7Bump.png",
+          "bytes": 87309,
+          "sha256": "ecaa27e2311541d0882bd5c1b53a5e4818dc808a29a6081a53a540b318aeebf5"
+        },
+        {
+          "path": "Textures/parqfloor2.dds",
+          "bytes": 174904,
+          "sha256": "b120f827ed239af7919a6ae298463eb70adea325acf330bc69a181698adfb292"
+        },
+        {
+          "path": "Textures/parqfloor2Bump.png",
+          "bytes": 8263,
+          "sha256": "7a4762e961cfc7ccff1cbe6d4793374319257237d7463f49090c30e812102795"
+        },
+        {
+          "path": "readme.txt",
+          "bytes": 1101,
+          "sha256": "56dd528b14422b1bb9e1cfe27197aeb2330647f2181118bd864f8d436438204d"
+        }
+      ],
+      "wasm_available": true,
+      "runtimeBuild": {
+        "guest": {
+          "id": "humus",
+          "title": "Humus",
+          "executablePath": "DynamicBranching/DynamicBranching.exe",
+          "workingDirectory": "/DynamicBranching",
+          "registryDwords": [
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedLeft",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedTop",
+              0
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedRight",
+              1280
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "WindowedBottom",
+              720
+            ],
+            [
+              2147483650,
+              "SOFTWARE\\Humus",
+              "Fullscreen",
+              0
+            ]
+          ]
+        },
+        "wasmProfile": "release",
+        "translatedTreeSha256": "31168ef3b97559be14c426a40f0adcd8680cc6ee89a5a51aeda3d37f6c7cfa90",
+        "cargoLockSha256": "968c5d084c3a8ffaae74c4436735dad977229fbde0141ec4279b7d8a134164fd",
+        "builtAt": "2026-09-11T17:22:37.692603+00:00",
+        "revision": "7ae46275286220ffc474acfa09b606d067895f26",
+        "workingTreeDirty": false,
+        "sourceSha256": "caf200b8dcbda77479f8c4565cb98e48b5a9fcbd7325e861cc9ee5d3864567a9",
+        "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+        "theseusRevision": "f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+        "translationEntryPoints": [
+          "409a00",
+          "004233f4"
+        ],
+        "moduleUrl": "/generated/humus.js",
+        "wasmUrl": "/generated/humus_bg.wasm",
+        "wasmArtifact": "humus_bg.wasm",
+        "artifacts": {
+          "humus.js": {
+            "sha256": "224beabc26d3ca5d7c28305990286745aa3801d9a8a3038f51eb9050951ebe6a",
+            "bytes": 13813
+          },
+          "humus_bg.wasm": {
+            "sha256": "22919b1c479ef5effda8eba971264a85a83291416392fbc93c63e91bdc9040cd",
+            "bytes": 23676530
+          }
+        }
+      }
+    },
+    "startTimeMs": 4468.754999995232,
+    "startedAt": "2026-09-11T17:23:08.725Z",
+    "requestedDurationMs": null,
+    "visibility": "visible",
+    "audio": {
+      "contextState": "running",
+      "streams": 0,
+      "writesReceived": 0,
+      "bytesScheduled": 0,
+      "buffersScheduled": 0,
+      "pendingChunks": 0,
+      "droppedPending": 0,
+      "underruns": 0,
+      "queueResets": 0,
+      "clippedSamples": 0,
+      "peak": 0,
+      "maxQueueAheadMs": 0
+    },
+    "browser": {
+      "secureContext": true,
+      "crossOriginIsolated": true,
+      "sharedArrayBuffer": true,
+      "webgpu": true,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "runtime": {
+        "mode": "wined3d-webgpu",
+        "deprecated": false,
+        "shaderCompiler": "vkd3d-shader",
+        "compatibilityCore": "DirectWebGPU Win32 with WineD3D semantics in progress"
+      },
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "device": "",
+        "description": "",
+        "isFallbackAdapter": false
+      },
+      "features": [
+        "depth32float-stencil8",
+        "rg11b10ufloat-renderable",
+        "bgra8unorm-storage",
+        "texture-formats-tier1",
+        "texture-compression-bc",
+        "dual-source-blending",
+        "core-features-and-limits",
+        "float32-filterable",
+        "indirect-first-instance",
+        "texture-compression-astc-sliced-3d",
+        "float32-blendable",
+        "subgroup-size-control",
+        "texture-compression-astc",
+        "texture-compression-etc2",
+        "depth-clip-control",
+        "texture-compression-bc-sliced-3d",
+        "shader-f16",
+        "timestamp-query",
+        "texture-formats-tier2",
+        "clip-distances",
+        "primitive-index",
+        "texture-component-swizzle",
+        "subgroups"
+      ],
+      "timestampQuery": {
+        "requested": false,
+        "available": true
+      },
+      "deviceCreated": true,
+      "hardwareAcceleration": "GPU device available; no Humus scene verified"
+    },
+    "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+    "inputTransportMode": "wasm-shared",
+    "assetCacheMetrics": {
+      "mode": "warm",
+      "hits": 0,
+      "misses": 19,
+      "cacheBytes": 0,
+      "networkBodyBytes": 25729116,
+      "verifiedBytes": 25729116,
+      "repairedEntries": 0,
+      "limitBytes": 536870912,
+      "scope": "guest assets and executable WASM only; JS modules, shader runtime, browser compilation and OS caches excluded"
+    },
+    "resourceMetrics": {
+      "resourceCount": 20,
+      "transferSize": 0,
+      "encodedBodySize": 25742929,
+      "decodedBodySize": 25742929,
+      "scope": "CPU worker resources loaded before EXE starts; GPU-worker shader runtime and page resources excluded",
+      "cachePolicy": "loopback server Cache-Control: no-store"
+    },
+    "realmResources": {
+      "cpuWorker": {
+        "realm": "cpuWorker",
+        "phase": "before EXE execution",
+        "timeOrigin": 1789147388739.735,
+        "snapshotTime": 413.07000002264977,
+        "snapshotEpoch": 1789147389152.8052,
+        "navigation": [],
+        "resourceCount": 20,
+        "retainedEntries": 20,
+        "transferSize": 0,
+        "encodedBodySize": 25742929,
+        "decodedBodySize": 25742929,
+        "zeroSizeEntries": 0,
+        "entries": [
+          {
+            "path": "/assets/DynamicBranching/DynamicBranching.exe",
+            "initiatorType": "fetch",
+            "startTime": 136.77000001072884,
+            "responseEnd": 143.50500002503395,
+            "transferSize": 0,
+            "encodedBodySize": 925696,
+            "decodedBodySize": 925696
+          },
+          {
+            "path": "/generated/humus.js",
+            "initiatorType": "script",
+            "startTime": 156.60000002384186,
+            "responseEnd": 160.2650000154972,
+            "transferSize": 0,
+            "encodedBodySize": 13813,
+            "decodedBodySize": 13813
+          },
+          {
+            "path": "/generated/humus_bg.wasm",
+            "initiatorType": "fetch",
+            "startTime": 162.4500000178814,
+            "responseEnd": 206.03499999642372,
+            "transferSize": 0,
+            "encodedBodySize": 23676530,
+            "decodedBodySize": 23676530
+          },
+          {
+            "path": "/assets/DynamicBranching/DynamicBranching.dsp",
+            "initiatorType": "fetch",
+            "startTime": 328.3149999976158,
+            "responseEnd": 330.580000013113,
+            "transferSize": 0,
+            "encodedBodySize": 7163,
+            "decodedBodySize": 7163
+          },
+          {
+            "path": "/assets/DynamicBranching/DynamicBranching.dsw",
+            "initiatorType": "fetch",
+            "startTime": 333.830000013113,
+            "responseEnd": 336.7950000166893,
+            "transferSize": 0,
+            "encodedBodySize": 555,
+            "decodedBodySize": 555
+          },
+          {
+            "path": "/assets/DynamicBranching/Main.cpp",
+            "initiatorType": "fetch",
+            "startTime": 340.7300000190735,
+            "responseEnd": 342.8100000023842,
+            "transferSize": 0,
+            "encodedBodySize": 8514,
+            "decodedBodySize": 8514
+          },
+          {
+            "path": "/assets/DynamicBranching/depthAmbient.shd",
+            "initiatorType": "fetch",
+            "startTime": 344.32000002264977,
+            "responseEnd": 346.36500000953674,
+            "transferSize": 0,
+            "encodedBodySize": 435,
+            "decodedBodySize": 435
+          },
+          {
+            "path": "/assets/DynamicBranching/if.shd",
+            "initiatorType": "fetch",
+            "startTime": 348.3700000047684,
+            "responseEnd": 351.2849999964237,
+            "transferSize": 0,
+            "encodedBodySize": 411,
+            "decodedBodySize": 411
+          },
+          {
+            "path": "/assets/DynamicBranching/lighting.shd",
+            "initiatorType": "fetch",
+            "startTime": 353.375,
+            "responseEnd": 356.8149999976158,
+            "transferSize": 0,
+            "encodedBodySize": 1585,
+            "decodedBodySize": 1585
+          },
+          {
+            "path": "/assets/Models/PillarRoom/Map.hmdl",
+            "initiatorType": "fetch",
+            "startTime": 359.07000002264977,
+            "responseEnd": 361.2300000190735,
+            "transferSize": 0,
+            "encodedBodySize": 57028,
+            "decodedBodySize": 57028
+          },
+          {
+            "path": "/assets/Textures/Fonts/Future.dds",
+            "initiatorType": "fetch",
+            "startTime": 363.02500000596046,
+            "responseEnd": 365.9050000011921,
+            "transferSize": 0,
+            "encodedBodySize": 349680,
+            "decodedBodySize": 349680
+          },
+          {
+            "path": "/assets/Textures/Fonts/Future.font",
+            "initiatorType": "fetch",
+            "startTime": 369,
+            "responseEnd": 370.94500002264977,
+            "transferSize": 0,
+            "encodedBodySize": 5124,
+            "decodedBodySize": 5124
+          },
+          {
+            "path": "/assets/Textures/Particle.png",
+            "initiatorType": "fetch",
+            "startTime": 373.9950000047684,
+            "responseEnd": 375.9850000143051,
+            "transferSize": 0,
+            "encodedBodySize": 613,
+            "decodedBodySize": 613
+          },
+          {
+            "path": "/assets/Textures/brick01.dds",
+            "initiatorType": "fetch",
+            "startTime": 377.8250000178814,
+            "responseEnd": 380.50500002503395,
+            "transferSize": 0,
+            "encodedBodySize": 174904,
+            "decodedBodySize": 174904
+          },
+          {
+            "path": "/assets/Textures/brick01Bump.png",
+            "initiatorType": "fetch",
+            "startTime": 383.0900000035763,
+            "responseEnd": 385.86500000953674,
+            "transferSize": 0,
+            "encodedBodySize": 74397,
+            "decodedBodySize": 74397
+          },
+          {
+            "path": "/assets/Textures/laying_rock7.dds",
+            "initiatorType": "fetch",
+            "startTime": 387.5,
+            "responseEnd": 391.1599999964237,
+            "transferSize": 0,
+            "encodedBodySize": 174904,
+            "decodedBodySize": 174904
+          },
+          {
+            "path": "/assets/Textures/laying_rock7Bump.png",
+            "initiatorType": "fetch",
+            "startTime": 393.19500002264977,
+            "responseEnd": 395.3600000143051,
+            "transferSize": 0,
+            "encodedBodySize": 87309,
+            "decodedBodySize": 87309
+          },
+          {
+            "path": "/assets/Textures/parqfloor2.dds",
+            "initiatorType": "fetch",
+            "startTime": 397.7450000047684,
+            "responseEnd": 400.57000002264977,
+            "transferSize": 0,
+            "encodedBodySize": 174904,
+            "decodedBodySize": 174904
+          },
+          {
+            "path": "/assets/Textures/parqfloor2Bump.png",
+            "initiatorType": "fetch",
+            "startTime": 403.3449999988079,
+            "responseEnd": 406.7450000047684,
+            "transferSize": 0,
+            "encodedBodySize": 8263,
+            "decodedBodySize": 8263
+          },
+          {
+            "path": "/assets/readme.txt",
+            "initiatorType": "fetch",
+            "startTime": 408.89500001072884,
+            "responseEnd": 410.830000013113,
+            "transferSize": 0,
+            "encodedBodySize": 1101,
+            "decodedBodySize": 1101
+          }
+        ],
+        "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+      },
+      "gpuWorker": {
+        "realm": "gpuWorker",
+        "phase": "first completed Present",
+        "timeOrigin": 1789147388743.77,
+        "snapshotTime": 1922.4899999797344,
+        "snapshotEpoch": 1789147390666.26,
+        "navigation": [],
+        "resourceCount": 2,
+        "retainedEntries": 2,
+        "transferSize": 0,
+        "encodedBodySize": 3395928,
+        "decodedBodySize": 3395928,
+        "zeroSizeEntries": 0,
+        "entries": [
+          {
+            "path": "/generated/vkd3d_shader.wasm",
+            "initiatorType": "fetch",
+            "startTime": 1343.4300000071526,
+            "responseEnd": 1353.699999988079,
+            "transferSize": 0,
+            "encodedBodySize": 1250990,
+            "decodedBodySize": 1250990
+          },
+          {
+            "path": "/generated/shader_translation_bg.wasm",
+            "initiatorType": "fetch",
+            "startTime": 1343.905000001192,
+            "responseEnd": 1356.1599999964237,
+            "transferSize": 0,
+            "encodedBodySize": 2144938,
+            "decodedBodySize": 2144938
+          }
+        ],
+        "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+      },
+      "page": {
+        "realm": "page",
+        "phase": "first Present observed; includes page setup before Start",
+        "timeOrigin": 1789147384256.365,
+        "snapshotTime": 6433.809999972582,
+        "snapshotEpoch": 1789147390690.175,
+        "navigation": [
+          {
+            "path": "/humus-runtime",
+            "initiatorType": "navigation",
+            "startTime": 0,
+            "responseEnd": 892.8999999761581,
+            "transferSize": 0,
+            "encodedBodySize": 1776,
+            "decodedBodySize": 1776
+          }
+        ],
+        "resourceCount": 53,
+        "retainedEntries": 53,
+        "transferSize": 0,
+        "encodedBodySize": 253822,
+        "decodedBodySize": 253822,
+        "zeroSizeEntries": 3,
+        "entries": [
+          {
+            "path": "/style.css",
+            "initiatorType": "link",
+            "startTime": 895.9149999916553,
+            "responseEnd": 914.9050000011921,
+            "transferSize": 0,
+            "encodedBodySize": 943,
+            "decodedBodySize": 943
+          },
+          {
+            "path": "/coi-serviceworker.js",
+            "initiatorType": "script",
+            "startTime": 896.5399999916553,
+            "responseEnd": 914.9149999916553,
+            "transferSize": 0,
+            "encodedBodySize": 2597,
+            "decodedBodySize": 2597
+          },
+          {
+            "path": "/app.js",
+            "initiatorType": "script",
+            "startTime": 896.6799999773502,
+            "responseEnd": 915.0149999856949,
+            "transferSize": 0,
+            "encodedBodySize": 28174,
+            "decodedBodySize": 28174
+          },
+          {
+            "path": "/app.js",
+            "initiatorType": "script",
+            "startTime": 937.2299999892712,
+            "responseEnd": 940.7699999809265,
+            "transferSize": 0,
+            "encodedBodySize": 28174,
+            "decodedBodySize": 28174
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 1060.2399999797344,
+            "responseEnd": 1068.1349999904633,
+            "transferSize": 0,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/runtime-mode.js",
+            "initiatorType": "script",
+            "startTime": 1060.2899999916553,
+            "responseEnd": 1070.5499999821186,
+            "transferSize": 0,
+            "encodedBodySize": 954,
+            "decodedBodySize": 954
+          },
+          {
+            "path": "/tracker-music.js",
+            "initiatorType": "script",
+            "startTime": 1060.3099999725819,
+            "responseEnd": 1067.3099999725819,
+            "transferSize": 0,
+            "encodedBodySize": 5329,
+            "decodedBodySize": 5329
+          },
+          {
+            "path": "/browser-input.js",
+            "initiatorType": "script",
+            "startTime": 1060.3349999785423,
+            "responseEnd": 1075.419999986887,
+            "transferSize": 0,
+            "encodedBodySize": 15092,
+            "decodedBodySize": 15092
+          },
+          {
+            "path": "/audio-scheduling.js",
+            "initiatorType": "script",
+            "startTime": 1060.3499999940395,
+            "responseEnd": 1072.9449999928474,
+            "transferSize": 0,
+            "encodedBodySize": 361,
+            "decodedBodySize": 361
+          },
+          {
+            "path": "/input-transport.js",
+            "initiatorType": "script",
+            "startTime": 1060.3649999797344,
+            "responseEnd": 1072.8049999773502,
+            "transferSize": 0,
+            "encodedBodySize": 3216,
+            "decodedBodySize": 3216
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 1073.4599999785423,
+            "responseEnd": 1077.4099999964237,
+            "transferSize": 0,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/api/build",
+            "initiatorType": "fetch",
+            "startTime": 1104.7699999809265,
+            "responseEnd": 1146.625,
+            "transferSize": 0,
+            "encodedBodySize": 4952,
+            "decodedBodySize": 4952
+          },
+          {
+            "path": "/worker.js",
+            "initiatorType": "other",
+            "startTime": 1154.5349999964237,
+            "responseEnd": 1151.919999986887,
+            "transferSize": 0,
+            "encodedBodySize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 1155.75,
+            "responseEnd": 1161.3849999904633,
+            "transferSize": 0,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/draw-batch.js",
+            "initiatorType": "script",
+            "startTime": 1155.8799999952316,
+            "responseEnd": 1161.5049999952316,
+            "transferSize": 0,
+            "encodedBodySize": 5985,
+            "decodedBodySize": 5985
+          },
+          {
+            "path": "/asset-cache.js",
+            "initiatorType": "script",
+            "startTime": 1155.9349999725819,
+            "responseEnd": 1161.4899999797344,
+            "transferSize": 0,
+            "encodedBodySize": 2674,
+            "decodedBodySize": 2674
+          },
+          {
+            "path": "/input-transport.js",
+            "initiatorType": "script",
+            "startTime": 1155.969999998808,
+            "responseEnd": 1162.0599999725819,
+            "transferSize": 0,
+            "encodedBodySize": 3216,
+            "decodedBodySize": 3216
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 1162.5199999809265,
+            "responseEnd": 1164.844999998808,
+            "transferSize": 0,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/api/session",
+            "initiatorType": "fetch",
+            "startTime": 4471.254999995232,
+            "responseEnd": 4476.579999983311,
+            "transferSize": 0,
+            "encodedBodySize": 61,
+            "decodedBodySize": 61
+          },
+          {
+            "path": "/worker.js",
+            "initiatorType": "other",
+            "startTime": 4486.954999983311,
+            "responseEnd": 4483.459999978542,
+            "transferSize": 0,
+            "encodedBodySize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 4487.8499999940395,
+            "responseEnd": 4500.155000001192,
+            "transferSize": 0,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/draw-batch.js",
+            "initiatorType": "script",
+            "startTime": 4488.329999983311,
+            "responseEnd": 4522.875,
+            "transferSize": 0,
+            "encodedBodySize": 5985,
+            "decodedBodySize": 5985
+          },
+          {
+            "path": "/asset-cache.js",
+            "initiatorType": "script",
+            "startTime": 4488.780000001192,
+            "responseEnd": 4518.399999976158,
+            "transferSize": 0,
+            "encodedBodySize": 2674,
+            "decodedBodySize": 2674
+          },
+          {
+            "path": "/input-transport.js",
+            "initiatorType": "script",
+            "startTime": 4489,
+            "responseEnd": 4529.564999997616,
+            "transferSize": 0,
+            "encodedBodySize": 3216,
+            "decodedBodySize": 3216
+          },
+          {
+            "path": "/gpu-worker.js",
+            "initiatorType": "other",
+            "startTime": 4492.469999998808,
+            "responseEnd": 4486.924999982119,
+            "transferSize": 0,
+            "encodedBodySize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "path": "/resource-metrics.js",
+            "initiatorType": "script",
+            "startTime": 4494.42999997735,
+            "responseEnd": 4530.119999974966,
+            "transferSize": 0,
+            "encodedBodySize": 2309,
+            "decodedBodySize": 2309
+          },
+          {
+            "path": "/gpu-timing.js",
+            "initiatorType": "script",
+            "startTime": 4494.609999984503,
+            "responseEnd": 4527.639999985695,
+            "transferSize": 0,
+            "encodedBodySize": 2118,
+            "decodedBodySize": 2118
+          },
+          {
+            "path": "/scene-equivalence.js",
+            "initiatorType": "script",
+            "startTime": 4494.819999992847,
+            "responseEnd": 4531.75,
+            "transferSize": 0,
+            "encodedBodySize": 4597,
+            "decodedBodySize": 4597
+          },
+          {
+            "path": "/draw-batch.js",
+            "initiatorType": "script",
+            "startTime": 4494.9749999940395,
+            "responseEnd": 4573.875,
+            "transferSize": 0,
+            "encodedBodySize": 5985,
+            "decodedBodySize": 5985
+          },
+          {
+            "path": "/performance-metrics.js",
+            "initiatorType": "script",
+            "startTime": 4495.114999979734,
+            "responseEnd": 4536.809999972582,
+            "transferSize": 0,
+            "encodedBodySize": 2206,
+            "decodedBodySize": 2206
+          },
+          {
+            "path": "/frame-capture.js",
+            "initiatorType": "script",
+            "startTime": 4495.339999973774,
+            "responseEnd": 4548.889999985695,
+            "transferSize": 0,
+            "encodedBodySize": 2104,
+            "decodedBodySize": 2104
+          },
+          {
+            "path": "/draw-diagnostic.js",
+            "initiatorType": "script",
+            "startTime": 4495.494999974966,
+            "responseEnd": 4542.959999978542,
+            "transferSize": 0,
+            "encodedBodySize": 1969,
+            "decodedBodySize": 1969
+          },
+          {
+            "path": "/d3d9-caps.js",
+            "initiatorType": "script",
+            "startTime": 4495.674999982119,
+            "responseEnd": 4552.204999983311,
+            "transferSize": 0,
+            "encodedBodySize": 1795,
+            "decodedBodySize": 1795
+          },
+          {
+            "path": "/d3d9-draw.js",
+            "initiatorType": "script",
+            "startTime": 4495.92999997735,
+            "responseEnd": 4539.669999986887,
+            "transferSize": 0,
+            "encodedBodySize": 17808,
+            "decodedBodySize": 17808
+          },
+          {
+            "path": "/gpu-textures.js",
+            "initiatorType": "script",
+            "startTime": 4496.314999997616,
+            "responseEnd": 4560.354999989271,
+            "transferSize": 0,
+            "encodedBodySize": 5197,
+            "decodedBodySize": 5197
+          },
+          {
+            "path": "/shader-objects.js",
+            "initiatorType": "script",
+            "startTime": 4497.2249999940395,
+            "responseEnd": 4551.924999982119,
+            "transferSize": 0,
+            "encodedBodySize": 2453,
+            "decodedBodySize": 2453
+          },
+          {
+            "path": "/shaders.js",
+            "initiatorType": "script",
+            "startTime": 4498.2249999940395,
+            "responseEnd": 4559.844999998808,
+            "transferSize": 0,
+            "encodedBodySize": 4121,
+            "decodedBodySize": 4121
+          },
+          {
+            "path": "/runtime-mode.js",
+            "initiatorType": "script",
+            "startTime": 4498.655000001192,
+            "responseEnd": 4554.264999985695,
+            "transferSize": 0,
+            "encodedBodySize": 954,
+            "decodedBodySize": 954
+          },
+          {
+            "path": "/d3d9-presentation.js",
+            "initiatorType": "script",
+            "startTime": 4498.7249999940395,
+            "responseEnd": 4574.119999974966,
+            "transferSize": 0,
+            "encodedBodySize": 1066,
+            "decodedBodySize": 1066
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 4498.829999983311,
+            "responseEnd": 4568.314999997616,
+            "transferSize": 0,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/gpu-buffers.js",
+            "initiatorType": "script",
+            "startTime": 4499.044999986887,
+            "responseEnd": 4578.92999997735,
+            "transferSize": 0,
+            "encodedBodySize": 2071,
+            "decodedBodySize": 2071
+          },
+          {
+            "path": "/d3d9-state.js",
+            "initiatorType": "script",
+            "startTime": 4499.839999973774,
+            "responseEnd": 4576.764999985695,
+            "transferSize": 0,
+            "encodedBodySize": 3345,
+            "decodedBodySize": 3345
+          },
+          {
+            "path": "/gpu-command-scheduler.js",
+            "initiatorType": "script",
+            "startTime": 4501.014999985695,
+            "responseEnd": 4567.504999995232,
+            "transferSize": 0,
+            "encodedBodySize": 1813,
+            "decodedBodySize": 1813
+          },
+          {
+            "path": "/input-queue.js",
+            "initiatorType": "script",
+            "startTime": 4530.139999985695,
+            "responseEnd": 4582.879999995232,
+            "transferSize": 0,
+            "encodedBodySize": 650,
+            "decodedBodySize": 650
+          },
+          {
+            "path": "/d3d9-samplers.js",
+            "initiatorType": "script",
+            "startTime": 4540.759999990463,
+            "responseEnd": 4576.854999989271,
+            "transferSize": 0,
+            "encodedBodySize": 1534,
+            "decodedBodySize": 1534
+          },
+          {
+            "path": "/d3d9-pipelines.js",
+            "initiatorType": "script",
+            "startTime": 4540.909999996424,
+            "responseEnd": 4580.014999985695,
+            "transferSize": 0,
+            "encodedBodySize": 8286,
+            "decodedBodySize": 8286
+          },
+          {
+            "path": "/shader-uniforms.js",
+            "initiatorType": "script",
+            "startTime": 4540.989999979734,
+            "responseEnd": 4578.954999983311,
+            "transferSize": 0,
+            "encodedBodySize": 3143,
+            "decodedBodySize": 3143
+          },
+          {
+            "path": "/generated/mojoshader.js",
+            "initiatorType": "script",
+            "startTime": 4561.7699999809265,
+            "responseEnd": 4586.039999991655,
+            "transferSize": 0,
+            "encodedBodySize": 10965,
+            "decodedBodySize": 10965
+          },
+          {
+            "path": "/generated/shader_translation.js",
+            "initiatorType": "script",
+            "startTime": 4561.989999979734,
+            "responseEnd": 4585.684999972582,
+            "transferSize": 0,
+            "encodedBodySize": 11956,
+            "decodedBodySize": 11956
+          },
+          {
+            "path": "/vkd3d-shaders.js",
+            "initiatorType": "script",
+            "startTime": 4562.084999978542,
+            "responseEnd": 4592.059999972582,
+            "transferSize": 0,
+            "encodedBodySize": 7472,
+            "decodedBodySize": 7472
+          },
+          {
+            "path": "/fixed-function.js",
+            "initiatorType": "script",
+            "startTime": 4580.479999989271,
+            "responseEnd": 4590.919999986887,
+            "transferSize": 0,
+            "encodedBodySize": 8126,
+            "decodedBodySize": 8126
+          },
+          {
+            "path": "/vertex-layout.js",
+            "initiatorType": "script",
+            "startTime": 4580.559999972582,
+            "responseEnd": 4593.674999982119,
+            "transferSize": 0,
+            "encodedBodySize": 2543,
+            "decodedBodySize": 2543
+          },
+          {
+            "path": "/generated/vkd3d_shader.js",
+            "initiatorType": "script",
+            "startTime": 4592.634999990463,
+            "responseEnd": 4596.254999995232,
+            "transferSize": 0,
+            "encodedBodySize": 14756,
+            "decodedBodySize": 14756
+          }
+        ],
+        "limitations": "Browser-exposed resource timing only; module dependencies or cached responses may be missing/zero-sized. Navigation is separate from resource sums. Timestamp origins allow scope comparison, but these snapshots are not an exact total of all network bytes."
+      }
+    },
+    "originalExecutionAttempted": true,
+    "window": {
+      "title": "Title",
+      "width": 800,
+      "height": 600
+    },
+    "direct3DCreate9Reached": true,
+    "direct3D9ObjectCreated": true,
+    "d3d9Device": {
+      "backendId": 1,
+      "width": 800,
+      "height": 600,
+      "colorFormat": "bgra8unorm",
+      "depthFormat": "depth24plus-stencil8",
+      "validation": "passed",
+      "sceneFrames": 0
+    },
+    "gpuSubmissions": 870,
+    "presentationMetrics": {
+      "firstPresentMs": 1941.2451171875,
+      "totalSteadyIntervals": 0,
+      "steadyDurationMs": 0,
+      "submissionFPS": null,
+      "frameTimeMs": {
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "min": null,
+        "max": null
+      },
+      "rollingFrameTimeMs": {
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "min": null,
+        "max": null
+      },
+      "rollingIntervals": 0,
+      "rollingStutterFrames": {
+        "over25": 0,
+        "over33": 0,
+        "over50": 0,
+        "over100": 0
+      },
+      "frameOutliers": [],
+      "retainedIntervals": 0,
+      "warmupMs": 5000,
+      "queueCompletionSamples": [],
+      "limitations": "Present submission intervals after 5-second warmup; lifetime percentiles use the last 8192 intervals and rolling metrics use the last 600; queue-completion latency includes queued work and is not GPU shader duration or scan-out.",
+      "drawBridge": {
+        "drawBatches": 14,
+        "batchedClears": 5,
+        "batchedDraws": 33,
+        "batchedUploads": 81,
+        "uploadedBytes": 4081753,
+        "maxBatchCommands": 39,
+        "stagingBytes": 16777216,
+        "batchCpuMs": 0,
+        "drawDecodeCpuMs": 0,
+        "synchronousPresents": 0,
+        "asynchronousPresents": 1,
+        "pendingCommands": 2,
+        "maxPendingCommands": 2
+      },
+      "rendererWrites": {
+        "sourceGeometryWrites": 7,
+        "versionedGeometryWrites": 7,
+        "versionFallbacks": 0,
+        "sourceUniformWrites": 55,
+        "queueWriteCalls": 3,
+        "queueWriteBytes": 224424,
+        "rendererSubmissions": 1,
+        "renderPasses": 5,
+        "uploadPassBreaks": 0,
+        "stateCalls": 185,
+        "stateCallsSkipped": 128,
+        "drawCpuMs": 0,
+        "pipelineLookupCpuMs": 0,
+        "pendingGeometryBytes": 0,
+        "pendingUniformBytes": [
+          0,
+          0
+        ]
+      },
+      "wasmLinearMemoryBytes": 8409088,
+      "geometryGPUBytes": 16838000,
+      "textureGPUBytes": 4024996.5,
+      "colorLogicalBytes": 1920000,
+      "depthStencilLogicalMinimumBytes": 1920000,
+      "pipelineCacheEntries": 6,
+      "pipelineCompilations": 6,
+      "pipelineCacheHits": 34,
+      "shaderObjects": 6,
+      "gpuTimingEnabled": false,
+      "captureEnabled": true,
+      "sceneEquivalenceEnabled": false,
+      "cameraTestEnabled": false
+    },
+    "stabilitySamples": [
+      {
+        "elapsedMs": 1941.5999999940395,
+        "applicationPresents": 0,
+        "wasmLinearMemoryBytes": 8409088,
+        "geometryGPUBytes": 16838000,
+        "textureGPUBytes": 4024996.5,
+        "pipelineCacheEntries": 6,
+        "pipelineCompilations": 6,
+        "pipelineCacheHits": 34,
+        "shaderObjects": 6,
+        "submissionFPS": null
+      }
+    ],
+    "frameCaptures": [
+      {
+        "present": 1,
+        "readbackCompletedMs": 1943.065185546875,
+        "timingMeaning": "upper bound on frame availability from GPU readback completion; includes readback overhead",
+        "width": 800,
+        "height": 600,
+        "evidenceWidth": 320,
+        "evidenceHeight": 240,
+        "sceneRegion": {
+          "x": 0,
+          "y": 64,
+          "width": 800,
+          "height": 536,
+          "nonblackPixels": 428730,
+          "pixels": 428800,
+          "meanRgb": [
+            37,
+            22,
+            12
+          ]
+        },
+        "jpegBase64": "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"
+      }
+    ],
+    "firstPresentObservedMs": 1964.7849999964237,
+    "inputTransport": {
+      "queued": 0,
+      "dropped": 0
+    },
+    "endedAt": "2026-09-11T17:23:10.791Z",
+    "diagnosticAttemptMs": 2065.9449999928474
+  }
+}
