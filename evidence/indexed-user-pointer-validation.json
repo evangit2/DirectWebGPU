@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-11",
+  "result": "passed",
+  "scope": "Generic Direct3D 8/9 DrawIndexedPrimitiveUP implementation and reproducible Theseus patch stack",
+  "implementationRevision": "320c688f99338a84836423eeae2160b769d6587f",
+  "manifestRevision": "7bc4ea17529a593e4dba4ec572ad73977c5d7c57",
+  "checks": {
+    "nativeRust": [
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::up::tests",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::tests",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d8::tests"
+    ],
+    "javascriptSuite": "all scripts/test_*.mjs and scripts/test_server.py passed",
+    "patchStack": "16 patches reproduce 177 source files from f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "bootstrap": "verified original EXE and pinned translator; no original executable bytes changed",
+    "legacyMode": "wined3d-webgpu remains default; legacy-win32 remains explicitly selectable",
+    "browserWebGPU": {
+      "runId": "c971bdc6-737e-4507-a432-d7f61dc50abf",
+      "result": "passed",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "fallback": false
+      },
+      "drawPackets": 8,
+      "indexedUserPointerPixelRgba": [
+        64,
+        128,
+        191,
+        255
+      ],
+      "check": "deferred indexed user-pointer vertex and index uploads reached the same GPU draw"
+    }
+  },
+  "humus": {
+    "runId": "df01ee9f-54a2-4ae3-a983-8649ec5964ec",
+    "originalExecutionAttempted": true,
+    "applicationPresents": 10512,
+    "submittedFrames": 10512,
+    "gpuSubmissions": 484000,
+    "firstPresentObservedMs": 2308.800000011921,
+    "rollingFrameTimeMs": {
+      "p50": 1.9599609375,
+      "p95": 9.9501953125,
+      "p99": 11.034912109375,
+      "min": 1.179931640625,
+      "max": 12.64501953125
+    },
+    "rollingStutterFrames": {
+      "over25": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0
+    },
+    "pipelineCompilations": 8,
+    "pipelineCacheHits": 420404,
+    "errorEvents": [],
+    "visualInspection": "Recognizable lit Humus brick-room scene rendered from the original executable."
+  },
+  "limitations": [
+    "This validates one original Humus program and focused D3D8/9 diagnostics; broad game compatibility remains in progress.",
+    "Submission timing measures Present intervals and does not equal display scan-out or GPU shader duration."
+  ],
+  "fullRun": "evidence/indexed-user-pointer-run.json"
+}
