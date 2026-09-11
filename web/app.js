@@ -79,7 +79,7 @@ async function start(long=false,registryPreset=null){
   $('start').disabled=true;$('long').disabled=true;$('stop').disabled=false;if($('restart'))$('restart').disabled=false;$('status').textContent=gameHarness?'Starting…':`Executing original ${build.guest.title} binary…`;document.body.classList.add('running');
   // Keep runtime query parameters in the worker URL so a changed runtime mode
   // cannot reuse a browser-cached worker module from another run.
-  const workerVersion=encodeURIComponent(`${build.runtimeBuild?.sourceSha256??build.runtimeBuild?.builtAt??build.revision}:${location.search}`);
+  const workerVersion=encodeURIComponent(`${build.revision}:${build.runtimeBuild?.sourceSha256??build.runtimeBuild?.builtAt??'runtime'}:${location.search}`);
   worker=new Worker(new URL(`./worker.js?guest=${encodeURIComponent(build.guest.id)}&v=${workerVersion}`,import.meta.url),{type:'module'});
   const activeRunId=report.runId;
   worker.onmessage=({data})=>{
