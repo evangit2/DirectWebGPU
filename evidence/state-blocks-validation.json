@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-11",
+  "result": "passed",
+  "scope": "Generic Direct3D 8/9 typed and recorded state blocks with D3D9 COM and D3D8 token frontends",
+  "implementationRevision": "1bae6f9a3a3e458be192e820a2eb4f800876c1e0",
+  "manifestRevision": "80944a5a6334aa1f3d3401bebc6616414591c755",
+  "checks": {
+    "nativeRust": [
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d8::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p winapi constants::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p runtime virtual_cpu_tests"
+    ],
+    "stateSemantics": [
+      "D3D9 typed pixel block restores supported pixel state without overwriting vertex state",
+      "Begin/End recording does not mutate live state and Apply restores only recorded state",
+      "Capture replaces the selected snapshot and retained object bindings survive live unbind/release",
+      "IDirect3DStateBlock9 identity, reference counts, GetDevice and stdcall cleanup are verified",
+      "D3D8 exposes Create/Begin/End/Apply/Capture/Delete through opaque tokens and preserves wrapper-only shader handles, index base, texture-stage values and software vertex-processing state"
+    ],
+    "javascriptSuite": "all scripts/test_*.mjs, scripts/test_shaders.py, scripts/test_record_results.py, and scripts/test_server.py passed",
+    "patchStack": "17 patches reproduce 178 source files from f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "legacyMode": "wined3d-webgpu remains default; legacy-win32 remains explicitly selectable",
+    "browserWebGPU": {
+      "runId": "3bdd4853-1990-4d85-b225-df1eaf0244fd",
+      "result": "passed",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "fallback": false
+      },
+      "diagnosticDraws": 17,
+      "checks": [
+        "VS1.1 and PS2.0 bytecode translated and WGSL validated by Naga",
+        "misaligned/truncated bytecode rejected",
+        "PS2.0 texld combined sampler split; GPU texture sample matched exact RGBA through persistent texture storage and cached sampler/pipeline",
+        "indexed draw consumed persistent vertex/index buffers",
+        "browser WGSL compilation and pipeline validation passed",
+        "GPU draw completed; sampled interpolated color matched"
+      ]
+    }
+  },
+  "humus": {
+    "runId": "a93212bb-026f-464d-9981-59f634b97cf3",
+    "originalExecutionAttempted": true,
+    "applicationPresents": 37484,
+    "submittedFrames": 37484,
+    "gpuSubmissions": 1725757,
+    "firstPresentObservedMs": 1870.1500000059605,
+    "rollingFrameTimeMs": {
+      "p50": 1.925048828125,
+      "p95": 9.77001953125,
+      "p99": 11,
+      "min": 1.1748046875,
+      "max": 11.945068359375
+    },
+    "rollingStutterFrames": {
+      "over25": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0
+    },
+    "pipelineCompilations": 8,
+    "pipelineCacheHits": 1499041,
+    "errorEvents": [],
+    "visualInspection": "Recognizable lit Humus brick-room scene rendered from the original executable."
+  },
+  "limitations": [
+    "This validates one original Humus program and focused D3D8/9 diagnostics; broad game compatibility remains in progress.",
+    "Present submission intervals do not equal display scan-out or GPU shader duration.",
+    "The aggregate WinAPI test binary has pre-existing shared-global test isolation failures; each documented focused suite passes in its own process."
+  ],
+  "fullRun": "evidence/state-blocks-run.json",
+  "shaderRun": "evidence/state-blocks-shader-run.json"
+}
