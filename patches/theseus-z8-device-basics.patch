@@ -1,0 +1,89 @@
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -62,6 +62,13 @@
+ pub const VTABLE_ENTRIES:[&str;119]=["QueryInterface","AddRef","Release","TestCooperativeLevel","GetAvailableTextureMem","EvictManagedResources","GetDirect3D","GetDeviceCaps","GetDisplayMode","GetCreationParameters","SetCursorProperties","SetCursorPosition","ShowCursor","CreateAdditionalSwapChain","GetSwapChain","GetNumberOfSwapChains","Reset","Present","GetBackBuffer","GetRasterStatus","SetDialogBoxMode","SetGammaRamp","GetGammaRamp","CreateTexture","CreateVolumeTexture","CreateCubeTexture","CreateVertexBuffer","CreateIndexBuffer","CreateRenderTarget","CreateDepthStencilSurface","UpdateSurface","UpdateTexture","GetRenderTargetData","GetFrontBufferData","StretchRect","ColorFill","CreateOffscreenPlainSurface","SetRenderTarget","GetRenderTarget","SetDepthStencilSurface","GetDepthStencilSurface","BeginScene","EndScene","Clear","SetTransform","GetTransform","MultiplyTransform","SetViewport","GetViewport","SetMaterial","GetMaterial","SetLight","GetLight","LightEnable","GetLightEnable","SetClipPlane","GetClipPlane","SetRenderState","GetRenderState","CreateStateBlock","BeginStateBlock","EndStateBlock","SetClipStatus","GetClipStatus","GetTexture","SetTexture","GetTextureStageState","SetTextureStageState","GetSamplerState","SetSamplerState","ValidateDevice","SetPaletteEntries","GetPaletteEntries","SetCurrentTexturePalette","GetCurrentTexturePalette","SetScissorRect","GetScissorRect","SetSoftwareVertexProcessing","GetSoftwareVertexProcessing","SetNPatchMode","GetNPatchMode","DrawPrimitive","DrawIndexedPrimitive","DrawPrimitiveUP","DrawIndexedPrimitiveUP","ProcessVertices","CreateVertexDeclaration","SetVertexDeclaration","GetVertexDeclaration","SetFVF","GetFVF","CreateVertexShader","SetVertexShader","GetVertexShader","SetVertexShaderConstantF","GetVertexShaderConstantF","SetVertexShaderConstantI","GetVertexShaderConstantI","SetVertexShaderConstantB","GetVertexShaderConstantB","SetStreamSource","GetStreamSource","SetStreamSourceFreq","GetStreamSourceFreq","SetIndices","GetIndices","CreatePixelShader","SetPixelShader","GetPixelShader","SetPixelShaderConstantF","GetPixelShaderConstantF","SetPixelShaderConstantI","GetPixelShaderConstantI","SetPixelShaderConstantB","GetPixelShaderConstantB","DrawRectPatch","DrawTriPatch","DeletePatch","CreateQuery"];
+-pub fn TestCooperativeLevel_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"TestCooperativeLevel",1)}
+-pub fn GetAvailableTextureMem_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetAvailableTextureMem",1)}
+-pub fn EvictManagedResources_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"EvictManagedResources",1)}
+-pub fn GetDisplayMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetDisplayMode",3)}
++#[win32_derive::dllexport]
++pub fn TestCooperativeLevel(_ctx:&mut Context,this:u32)->u32{device(this);D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetAvailableTextureMem(_ctx:&mut Context,this:u32)->u32{device(this);128<<20}
++#[win32_derive::dllexport]
++pub fn EvictManagedResources(_ctx:&mut Context,this:u32)->u32{device(this);D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetDisplayMode(ctx:&mut Context,this:u32,swap_chain:u32,out:u32)->u32{
++ let d=device(this);if swap_chain!=0||!valid(ctx,out,16){return D3DERR_INVALIDCALL}
++ for(i,value)in[d.target_size[0],d.target_size[1],0,d.target_format].into_iter().enumerate(){ctx.memory.write::<u32>(out+i as u32*4,value)}D3D_OK
++}
+ pub fn SetCursorProperties_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetCursorProperties",4)}
+@@ -75,3 +82,4 @@
+ pub fn GetSwapChain_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSwapChain",3)}
+-pub fn GetNumberOfSwapChains_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetNumberOfSwapChains",1)}
++#[win32_derive::dllexport]
++pub fn GetNumberOfSwapChains(_ctx:&mut Context,this:u32)->u32{device(this);1}
+ #[win32_derive::dllexport]
+@@ -137,4 +145,13 @@
+ }
+-pub fn MultiplyTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"MultiplyTransform",3)}
++fn multiply_matrices(left:[u32;16],right:[u32;16])->[u32;16]{
++ let mut result=[0;16];
++ for row in 0..4{for column in 0..4{let mut value=0.0f32;for k in 0..4{value+=f32::from_bits(left[row*4+k])*f32::from_bits(right[k*4+column]);}result[row*4+column]=value.to_bits();}}
++ result
++}
+ #[win32_derive::dllexport]
++pub fn MultiplyTransform(ctx:&mut Context,this:u32,kind:u32,pointer:u32)->u32{
++ device(this);if !transform_kind(kind)||!valid(ctx,pointer,64){return D3DERR_INVALIDCALL}
++ let left=ctx.memory.read::<[u32;16]>(pointer);let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();let current=d.transforms.get(&kind).copied().unwrap_or_else(identity_transform);d.transforms.insert(kind,multiply_matrices(left,current));D3D_OK
++}
++#[win32_derive::dllexport]
+ pub fn SetViewport(ctx:&mut Context,this:u32,pointer:u32)->u32{
+@@ -201,3 +218,4 @@
+ }
+-pub fn ValidateDevice_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"ValidateDevice",2)}
++#[win32_derive::dllexport]
++pub fn ValidateDevice(ctx:&mut Context,this:u32,out:u32)->u32{device(this);if !valid(ctx,out,4){return D3DERR_INVALIDCALL}ctx.memory.write::<u32>(out,1);D3D_OK}
+ pub fn SetPaletteEntries_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetPaletteEntries",3)}
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -201,3 +201,3 @@
+  #[win32_derive::dllexport]pub fn GetTransform(ctx:&mut Context,this:u32,k:u32,p:u32)->u32{d3d9::IDirect3DDevice9::GetTransform(ctx,this,k,p)}
+- pub fn MultiplyTransform_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","MultiplyTransform")}
++ #[win32_derive::dllexport]pub fn MultiplyTransform(ctx:&mut Context,this:u32,kind:u32,matrix:u32)->u32{d3d9::IDirect3DDevice9::MultiplyTransform(ctx,this,kind,matrix)}
+  #[win32_derive::dllexport]pub fn SetViewport(ctx:&mut Context,this:u32,p:u32)->u32{d3d9::IDirect3DDevice9::SetViewport(ctx,this,p)}
+@@ -348,2 +348,7 @@
+   assert_eq!(ctx.memory.read::<u32>(dev),0x1600);
++  let transform=[1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,0.0, 4.0,5.0,6.0,1.0].map(f32::to_bits);
++  ctx.memory.write::<[u32;16]>(0x1d00,transform);
++  ctx.call32_x86(runtime::Cont(IDirect3DDevice8::MultiplyTransform_stdcall),vec![dev,256,0x1d00]);
++  assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++  assert_eq!(IDirect3DDevice8::GetTransform(&mut ctx,dev,256,0x1d40),D3D_OK);assert_eq!(ctx.memory.read::<[u32;16]>(0x1d40),transform);
+   ctx.call32_x86(runtime::Cont(IDirect3DDevice8::SetVertexShader_stdcall),vec![dev,0x142]);
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -244,2 +244,24 @@
+         let dev=IDirect3DDevice9::create(&mut ctx,obj,1,1,0x40,800,600,21);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::TestCooperativeLevel_stdcall),vec![dev]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(IDirect3DDevice9::GetAvailableTextureMem(&mut ctx,dev),128<<20);
++        assert_eq!(IDirect3DDevice9::EvictManagedResources(&mut ctx,dev),D3D_OK);
++        assert_eq!(IDirect3DDevice9::GetNumberOfSwapChains(&mut ctx,dev),1);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::GetDisplayMode_stdcall),vec![dev,0,0x1fc0]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!((0..4).map(|i|ctx.memory.read::<u32>(0x1fc0+i*4)).collect::<Vec<_>>(),vec![800,600,0,21]);
++        assert_eq!(IDirect3DDevice9::GetDisplayMode(&mut ctx,dev,1,0x1fc0),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::GetDisplayMode(&mut ctx,dev,0,0xfffffff8),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::ValidateDevice(&mut ctx,dev,0x1fd0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1fd0),1);
++        assert_eq!(IDirect3DDevice9::ValidateDevice(&mut ctx,dev,0xfffffff8),D3DERR_INVALIDCALL);
++        let current=[2.0,0.0,0.0,0.0, 0.0,3.0,0.0,0.0, 0.0,0.0,4.0,0.0, 0.0,0.0,0.0,1.0].map(f32::to_bits);
++        let left=[1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,0.0, 5.0,6.0,7.0,1.0].map(f32::to_bits);
++        let expected=[2.0,0.0,0.0,0.0, 0.0,3.0,0.0,0.0, 0.0,0.0,4.0,0.0, 10.0,18.0,28.0,1.0].map(f32::to_bits);
++        ctx.memory.write::<[u32;16]>(0x1f00,left);ctx.memory.write::<[u32;16]>(0x1f40,current);
++        assert_eq!(IDirect3DDevice9::SetTransform(&mut ctx,dev,256,0x1f40),D3D_OK);
++        ctx.call32_x86(runtime::Cont(IDirect3DDevice9::MultiplyTransform_stdcall),vec![dev,256,0x1f00]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(IDirect3DDevice9::GetTransform(&mut ctx,dev,256,0x1f80),D3D_OK);assert_eq!(ctx.memory.read::<[u32;16]>(0x1f80),expected);
++        assert_eq!(IDirect3DDevice9::MultiplyTransform(&mut ctx,dev,1,0x1f00),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::MultiplyTransform(&mut ctx,dev,256,0xfffffff0),D3DERR_INVALIDCALL);
+         assert_eq!(IDirect3DDevice9::GetTransform(&mut ctx,dev,3,0x1700),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1700),1.0f32.to_bits());ctx.memory.write::<u32>(0x1700,2.0f32.to_bits());
