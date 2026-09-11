@@ -104,6 +104,15 @@ self.onmessage=async({data})=>{
    for(const [root,subkey,name,value] of guest.registryDwords??[])exe.seed_registry_dword(root,subkey,name,value);
    if(guest.registryDwords?.length)send('launch-settings',{source:'guest manifest registry seed',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
   }
+  if(data.registryPreset!==null&&data.registryPreset!==undefined){
+   if(typeof data.registryPreset!=='string'||data.registryPreset.length>64)throw Error('invalid registry preset');
+   const preset=guest.registryPresets?.[data.registryPreset];if(!preset||!Array.isArray(preset.values))throw Error('unknown registry preset');
+   for(const value of preset.values){
+    if(!Array.isArray(value)||value.length!==5||!Array.isArray(value[4])||value[4].some(byte=>!Number.isInteger(byte)||byte<0||byte>255))throw Error('invalid registry preset value');
+    exe.seed_registry_value(value[0],value[1],value[2],value[3],Uint8Array.from(value[4]));
+   }
+   send('launch-settings',{source:'guest registry preset',preset:data.registryPreset,values:preset.values.length});
+  }
   exe.configure_guest_memory_metrics(data.guestMemory===true);
   exe.set_trace(data.trace??'');
   send('asset-cache-metrics',{...cache.stats});

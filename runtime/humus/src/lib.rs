@@ -16,6 +16,11 @@ pub fn seed_registry_dword(root:u32, subkey:&str, name:&str, value:u32)->Result<
 }
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen)]
+pub fn seed_registry_value(root:u32, subkey:&str, name:&str, kind:u32, value:&[u8])->Result<(),String> {
+    winapi::advapi32::seed_registry_value(root,subkey,name,kind,value)
+}
+
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
 pub fn configure_guest_memory_metrics(enabled: bool) {
     winapi::memory_metrics::configure(enabled);
 }

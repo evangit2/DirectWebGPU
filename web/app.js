@@ -5,7 +5,7 @@ import {bindBrowserInput} from './browser-input.js';
 import {audioQueueNeedsReset} from './audio-scheduling.js';
 function boundedPayload(){const copy={...report,events:[...report.events]};let data=JSON.stringify({token,report:copy});while(new TextEncoder().encode(data).length>240000&&copy.events.length){copy.events.shift();copy.droppedEvents++;data=JSON.stringify({token,report:copy})}return data}
 const $=id=>document.getElementById(id);
-let build,worker,gpuWorker,inputWorker,token,timer,probeWorker,inputBinding,HAS_BACKEND=false;
+let build,worker,gpuWorker,inputWorker,token,timer,probeWorker,inputBinding,activeRegistryPreset=null,HAS_BACKEND=false;
 const selectedMode=runtimeMode(),selectedModeInfo=runtimeModeInfo(selectedMode);
 const gameHarness=document.body.dataset.harness==='game';
 const coarsePointer=globalThis.matchMedia?.('(pointer: coarse)')?.matches??false;
@@ -61,7 +61,7 @@ function diagnosticsText(){return JSON.stringify({summary:report.status,location
 function downloadDiagnostics(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([diagnosticsText()],{type:'application/json'}));a.download=`${build?.guest?.id??'directwebgpu'}-${report.runId??'probe'}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function crashActions(status){const button=$('crash-details');if(!button)return;const crashed=!!report.blocker||/^(failed:|gpu-error:|gpu-lost:|startup watchdog:)/.test(status);button.hidden=!crashed;if(crashed)$('crash-output').textContent=diagnosticsText();}
 function stop(status='stopped'){clearTimeout(timer);timer=null;inputBinding?.release();inputBinding?.destroy();inputBinding=null;worker?.terminate();worker=null;gpuWorker?.terminate();gpuWorker=null;inputWorker?.terminate();inputWorker=null;browserMusic.reset();browserAudio.reset();report.status=status;report.endedAt=new Date().toISOString();report.diagnosticAttemptMs=report.startTimeMs?performance.now()-report.startTimeMs:0;$('status').textContent=status;$('start').disabled=false;$('long').disabled=false;$('stop').disabled=true;if($('restart'))$('restart').disabled=false;document.body.classList.remove('running');crashActions(status);void upload()}
-async function start(long=false){
+async function start(long=false,registryPreset=null){
  if(worker||!build||$('start').disabled)return;
  const audioUnlock=browserAudio.unlock();
  $('start').disabled=true;$('long').disabled=true;
@@ -70,7 +70,7 @@ async function start(long=false){
  try{
   const params=new URL(location.href).searchParams,measurementMs=params.has('benchmark')?benchmarkDuration():null;
   probeWorker?.terminate();probeWorker=null;
-  report={applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'},runtime:selectedModeInfo,runId:crypto.randomUUID(),status:'starting',events:[],droppedEvents:0,build,startTimeMs:performance.now(),startedAt:new Date().toISOString(),requestedDurationMs:long?14400000:new URL(location.href).searchParams.has('benchmark')?measurementMs:null,visibility:document.visibilityState};
+  activeRegistryPreset=registryPreset;report={applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'},runtime:selectedModeInfo,registryPreset,runId:crypto.randomUUID(),status:'starting',events:[],droppedEvents:0,build,startTimeMs:performance.now(),startedAt:new Date().toISOString(),requestedDurationMs:long?14400000:new URL(location.href).searchParams.has('benchmark')?measurementMs:null,visibility:document.visibilityState};
   $('crash-details').hidden=true;$('crash-dialog')?.close();
   if(HAS_BACKEND){const response=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok)throw Error('session creation '+response.status);token=(await response.json()).token;}
   $('start').disabled=true;$('long').disabled=true;$('stop').disabled=false;if($('restart'))$('restart').disabled=false;$('status').textContent=gameHarness?'Starting…':`Executing original ${build.guest.title} binary…`;document.body.classList.add('running');
@@ -119,14 +119,14 @@ async function start(long=false){
   const drawDiagnosticsParam=params.get('drawDiagnostics'),drawStateTraceParam=params.get('drawStateTrace');
   const diagnosticAfterPresentParam=params.get('drawDiagnosticsAfterPresent'),diagnosticSkipParam=params.get('drawDiagnosticsSkip');
   gpuWorker.postMessage({type:'init',runtimeMode:selectedMode,gpuTiming:params.has('gpuTiming'),profileStutters:params.has('profileStutters'),sceneEquivalenceControl:params.get('sceneEquivalenceControl'),sceneEquivalence:params.has('sceneEquivalence'),canvas:offscreen,port:channel.port1,startEpoch:performance.timeOrigin+report.startTimeMs,drawDiagnostics:drawDiagnosticsParam===null?0:(/^\d+$/.test(drawDiagnosticsParam)?Math.min(64,Number(drawDiagnosticsParam)):3),diagnosticAfterPresent:diagnosticAfterPresentParam&&/^\d+$/.test(diagnosticAfterPresentParam)?Number(diagnosticAfterPresentParam):0,diagnosticSkip:diagnosticSkipParam&&/^\d+$/.test(diagnosticSkipParam)?Math.min(4096,Number(diagnosticSkipParam)):0,drawStateTrace:drawStateTraceParam&&/^\d+$/.test(drawStateTraceParam)?Math.min(256,Number(drawStateTraceParam)):0,captureFrames:params.has('captureFrames'),cameraTest:params.has('cameraTest')},[offscreen,channel.port1]);
-  worker.postMessage({type:'start',guestMemory:new URL(location.href).searchParams.get('guestMemory')==='1',resolution:new URL(location.href).searchParams.get('resolution'),build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),trace:new URL(location.href).searchParams.get('trace'),gpuPort:channel.port2,inputPort:inputChannel.port2},[channel.port2,inputChannel.port2]);
+  worker.postMessage({type:'start',guestMemory:new URL(location.href).searchParams.get('guestMemory')==='1',resolution:new URL(location.href).searchParams.get('resolution'),registryPreset,build,assetCache:new URL(location.href).searchParams.get('assetCache')??'warm',benchmark:new URL(location.href).searchParams.has('benchmark'),trace:new URL(location.href).searchParams.get('trace'),gpuPort:channel.port2,inputPort:inputChannel.port2},[channel.port2,inputChannel.port2]);
   // Ordinary play/test sessions keep running. This only catches startup
   // failures; the first Present clears it. Long sessions keep a 4-hour cap.
   timer=setTimeout(()=>stop(long?'session deadline reached':'startup watchdog: no Present within 60 seconds'),long?14400000:60000);
  }catch(e){log('failed',{message:e.message});stop('failed: '+e.message)}
 }
 $('start').onclick=()=>start();$('long').onclick=()=>start(true);$('stop').onclick=()=>stop();
-$('restart')?.addEventListener('click',()=>{if(worker)stop('restarting');setTimeout(()=>start(),0)});
+$('restart')?.addEventListener('click',()=>{if(worker)stop('restarting');setTimeout(()=>start(false,activeRegistryPreset),0)});
 $('capture')?.addEventListener('click',()=>inputBinding?.capture());
 $('fullscreen')?.addEventListener('click',()=>void(document.fullscreenElement?document.exitFullscreen():$('stage')?.requestFullscreen?.()));
 document.addEventListener('fullscreenchange',()=>{if($('fullscreen'))$('fullscreen').textContent=document.fullscreenElement?'Exit fullscreen':'Fullscreen'});
@@ -142,6 +142,7 @@ try{
  let response=await fetch('./build-manifest.json',{cache:'no-store'});
  if(response.ok){HAS_BACKEND=false;}else{response=await fetch('/api/build',{cache:'no-store'});if(!response.ok)throw Error('build manifest '+response.status);HAS_BACKEND=true;}
  build=await response.json();if(!Array.isArray(build.files)||!build.dependencies?.executable||!build.guest?.title)throw Error('invalid build manifest');report.build=build;
+ if(gameHarness){for(const [name,preset] of Object.entries(build.guest.registryPresets??{})){if(!/^[a-z0-9-]{1,64}$/.test(name)||typeof preset?.label!=='string'||!preset.label||preset.label.length>40||!Array.isArray(preset.values))throw Error('invalid guest registry preset');const button=document.createElement('button');button.type='button';button.textContent=preset.label;button.dataset.registryPreset=name;button.addEventListener('click',()=>{if(worker)stop(`restarting with ${name}`);setTimeout(()=>start(false,name),0)});$('restart').before(button);}}
  $('runtime').textContent=`Runtime: Theseus x86 → WASM · Graphics: ${selectedModeInfo.shaderCompiler} → WebGPU · Mode: ${selectedMode}${selectedModeInfo.deprecated?' (deprecated)':''}`;
  document.title=`${build.guest.title} · DirectWebGPU`;$('title').textContent=gameHarness?build.guest.title:`${build.guest.title} binary runtime`;$('start').textContent=`Start ${build.guest.title}`;$('revision').textContent=`Loading ${build.guest.title} runtime…`;
  $('start').disabled=false;$('long').disabled=false;
