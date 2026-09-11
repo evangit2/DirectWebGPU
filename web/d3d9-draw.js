@@ -10,6 +10,7 @@ const EMPTY_REGISTERS=new Uint32Array(0);
 const alignUniform=value=>(value+255)&~255;
 const floatBitsView=new DataView(new ArrayBuffer(4));
 const floatFromBits=value=>{floatBitsView.setUint32(0,value,true);return floatBitsView.getFloat32(0,true);};
+function drawScissor(packet,backend){const enabled=packet.state.get(RS.SCISSORTESTENABLE)!==0,rect=enabled?packet.scissor:[0,0,backend.color.width,backend.color.height];if(!rect||rect.length!==4)return null;const [left,top,right,bottom]=rect;if(![left,top,right,bottom].every(Number.isInteger)||left<0||top<0||right<=left||bottom<=top||right>backend.color.width||bottom>backend.color.height)return null;return[left,top,right,bottom]}
 const DEFAULT_TEXTURE_STAGES=Object.freeze(Array.from({length:8},(_,stage)=>new Uint32Array(stage===0?[4,2,1,2,2,1,0,0]:[1,2,1,1,2,1,stage,0])));
 function defaultTextureStages(){return DEFAULT_TEXTURE_STAGES}
 const samplerAt=(samplers,index)=>samplers instanceof Uint32Array?samplers.subarray(index*14,index*14+14):samplers[index];
@@ -22,17 +23,17 @@ export function decodeDraw(memory,pointer,length){
  // typed arrays to produce visible garbage-collection stalls.
  const w=new Uint32Array(memory,pointer,length/4);let p=0;const take=n=>{if(p+n>w.length)throw RangeError('truncated draw packet');const v=w.subarray(p,p+n);p+=n;return v};
  const [magic,vertex,pixel,kind,count,first,index,base,max,declarationLength,stateCount]=take(11);
- const fixedHeader=vertex===0&&pixel===0,compactFixed=magic===0x32445246;
- if(magic!==0x39445246&&!(compactFixed&&fixedHeader)||![1,2,4].includes(kind)||count<1||count>1048576||count%({1:1,2:2,4:3})[kind]||declarationLength<16||declarationLength>520||declarationLength%8||![20,21].includes(stateCount))throw RangeError('invalid draw header');
+ const fixedHeader=vertex===0&&pixel===0,compactFixed=magic===0x32445246||magic===0x33445246,hasScissor=magic===0x41445246||magic===0x33445246;
+ if(![0x39445246,0x41445246].includes(magic)&&!(compactFixed&&fixedHeader)||![1,2,4].includes(kind)||count<1||count>1048576||count%({1:1,2:2,4:3})[kind]||declarationLength<16||declarationLength>520||declarationLength%8||![20,21,22].includes(stateCount))throw RangeError('invalid draw header');
  const streams=Array.from({length:16},()=>{const [id,offset,stride]=take(3);return{id,offset,stride}}),state=new D3D9RenderState();
  for(let i=0;i<stateCount;i++){const [type,value]=take(2);if(state.has(type))throw RangeError('duplicate render state');state.set(type,value)}
  const declarationWords=take(declarationLength/4),declaration=new Uint8Array(declarationWords.buffer,declarationWords.byteOffset,declarationWords.byteLength);let registers=compactFixed?null:[[take(1024),take(64),take(16)],[take(128),take(64),take(16)]];
  const textures=take(16),samplers=take(16*14),remaining=w.length-p;
- const hasTextureStages=remaining===(fixedHeader?214:70)||remaining===(fixedHeader?118:70),textureStages=hasTextureStages?Array.from({length:8},()=>take(8)):defaultTextureStages(),viewport=take(6);
+ const hasTextureStages=remaining===(fixedHeader?(hasScissor?218:214):(hasScissor?74:70))||remaining===(fixedHeader?(hasScissor?122:118):(hasScissor?74:70)),textureStages=hasTextureStages?Array.from({length:8},()=>take(8)):defaultTextureStages(),viewport=take(6),scissor=hasScissor?take(4):null;
  const fixed=fixedHeader?take(48):null,lighting=fixedHeader&&p+96===w.length?take(96):null;
  if(compactFixed){const floatWords=new Uint32Array(fixed.buffer,fixed.byteOffset,fixed.length+(lighting?.length??0));registers=[[floatWords,EMPTY_REGISTERS,EMPTY_REGISTERS],[EMPTY_REGISTERS,EMPTY_REGISTERS,EMPTY_REGISTERS]];}
  if(p!==w.length)throw RangeError('trailing draw packet data');
- return{fixed,lighting,vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,textureStages,viewport};
+ return{fixed,lighting,vertex,pixel,kind,count,first,index,base:base|0,max,streams,state,declaration,registers,textures,samplers,textureStages,viewport,scissor};
 }
 export class DrawRenderer{
  constructor(device,backend){this.device=device;this.backend=backend;this.cache=new PipelineCache(device,backend.shaders);this.samplers=new SamplerCache(device);this.uniformBytes=UNIFORM_STRIDE*UNIFORM_SLOTS;this.uniforms=[0,1].map(stage=>device.createBuffer({label:`D3D9 ${stage?'pixel':'vertex'} uniform ring`,size:this.uniformBytes,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}));this.uniformShadow=[new Uint8Array(this.uniformBytes),new Uint8Array(this.uniformBytes)];this.uniformWords=this.uniformShadow.map(bytes=>new Uint32Array(bytes.buffer));this.pendingUniformBytes=[0,0];this.uniformCursors=[0,0];this.stagingSize=16*1024*1024;this.staging=device.createBuffer({label:'D3D9 dynamic geometry ring',size:this.stagingSize,usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST|GPUBufferUsage.VERTEX|GPUBufferUsage.INDEX});this.stagingShadow=new Uint8Array(this.stagingSize);this.stagingCursor=0;this.deferredCopies=[];this.versionedResources=new Set();this.bindingCaches=new WeakMap();this.encoder=null;this.pass=null;this.passState=null;this.writeMetrics={sourceGeometryWrites:0,versionedGeometryWrites:0,versionFallbacks:0,sourceUniformWrites:0,queueWriteCalls:0,queueWriteBytes:0,rendererSubmissions:0,renderPasses:0,uploadPassBreaks:0,stateCalls:0,stateCallsSkipped:0,drawCpuMs:0,pipelineLookupCpuMs:0};}
@@ -42,6 +43,7 @@ export class DrawRenderer{
   const d=this.device,b=this.backend,topology=({1:'point-list',2:'line-list',4:'triangle-list'})[packet.kind];
   const [x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=floatFromBits(minBits),maxDepth=floatFromBits(maxBits);
   if(!width||!height||x+width>b.color.width||y+height>b.color.height||!Number.isFinite(minDepth)||!Number.isFinite(maxDepth)||minDepth<0||maxDepth>1||minDepth>maxDepth)throw RangeError('invalid draw viewport');
+  if(!drawScissor(packet,b))throw RangeError('invalid draw scissor');
   const textureStages=packet.textureStages??defaultTextureStages(),textured=!!packet.textures[0]&&textureStages[0][0]!==1;
   const cached=this.cache.get(packet.vertex,packet.pixel,packet.declaration,packet.streams,packet.state,{topology,fixed:!!packet.fixed,textured,textureStages,lighting:packet.lighting,viewportSize:[width,height]});
   if(b.profileStutters)this.writeMetrics.pipelineLookupCpuMs+=performance.now()-timingStart;
@@ -78,7 +80,7 @@ present(target){
   packShaderUniformsInto(shader,registers,this.uniformWords[stage],offset/4);this.pendingUniformBytes[stage]=Math.max(this.pendingUniformBytes[stage],offset+bytes);this.writeMetrics.sourceUniformWrites++;return bytes;
  }
  drawWithEntry(packet,entry,timingStart){
-  const d=this.device,b=this.backend,[x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=floatFromBits(minBits),maxDepth=floatFromBits(maxBits);
+  const d=this.device,b=this.backend,[x,y,width,height,minBits,maxBits]=packet.viewport,minDepth=floatFromBits(minBits),maxDepth=floatFromBits(maxBits),[left,top,right,bottom]=drawScissor(packet,b);
   const vertexResources=entry.layout.map(layout=>{const s=packet.streams[layout.stream],resource=b.buffers.get(s.id),extent=Math.max(...layout.attributes.map(a=>a.offset+(a.format==='float32'?1:Number(a.format.at(-1)))*4)),required=s.offset+packet.max*s.stride+extent;if(resource.kind!==6||s.offset%4||required>resource.size)throw RangeError('draw exceeds vertex buffer');return{resource,s,required};});
   let index,indexWidth=0,indexRequired=0,indexStart=0;if(packet.index){index=b.buffers.get(packet.index);indexWidth=index.format===101?2:4;indexStart=packet.first*indexWidth;indexRequired=(packet.first+packet.count)*indexWidth;if(index.kind!==7||indexRequired>index.size)throw RangeError('draw exceeds index buffer');}else if(packet.max!==packet.first+packet.count-1)throw RangeError('invalid nonindexed vertex range');
   const vertexCovered=({resource,s,required})=>!resource.dynamicVersion||(s.offset>=resource.dynamicVersion.offset&&required<=resource.dynamicVersion.offset+resource.dynamicVersion.length),indexCovered=!index?.dynamicVersion||(indexStart>=index.dynamicVersion.offset&&indexRequired<=index.dynamicVersion.offset+index.dynamicVersion.length&&index.dynamicVersion.offset%indexWidth===0);
@@ -126,9 +128,10 @@ present(target){
   // same submitted command buffer. Replacing it here silently discarded every
   // upload after the first renderer warm-up, which particularly broke
   // DrawPrimitiveUP/D3D8 user-pointer geometry.
-  if(!this.pass){this.encoder??=d.createCommandEncoder();this.pass=this.encoder.beginRenderPass({...(timestampWrites?{timestampWrites}:{}),colorAttachments:[{view:b.color.createView(),loadOp:'load',storeOp:'store'}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:'load',depthStoreOp:'store',stencilLoadOp:'load',stencilStoreOp:'store'}});this.passState={pipeline:null,viewport:null,stencil:-1,vertices:[],groups:[],index:null};this.writeMetrics.renderPasses++;}
+  if(!this.pass){this.encoder??=d.createCommandEncoder();this.pass=this.encoder.beginRenderPass({...(timestampWrites?{timestampWrites}:{}),colorAttachments:[{view:b.color.createView(),loadOp:'load',storeOp:'store'}],depthStencilAttachment:{view:b.depth.createView(),depthLoadOp:'load',depthStoreOp:'store',stencilLoadOp:'load',stencilStoreOp:'store'}});this.passState={pipeline:null,viewport:null,scissor:null,stencil:-1,vertices:[],groups:[],index:null};this.writeMetrics.renderPasses++;}
   const pass=this.pass,state=this.passState,call=()=>this.writeMetrics.stateCalls++,skip=()=>this.writeMetrics.stateCallsSkipped++;
   if(!state.viewport||state.viewport[0]!==x||state.viewport[1]!==y||state.viewport[2]!==width||state.viewport[3]!==height||state.viewport[4]!==minDepth||state.viewport[5]!==maxDepth){pass.setViewport(x,y,width,height,minDepth,maxDepth);state.viewport=[x,y,width,height,minDepth,maxDepth];call();}else skip();
+  if(!state.scissor||state.scissor[0]!==left||state.scissor[1]!==top||state.scissor[2]!==right||state.scissor[3]!==bottom){pass.setScissorRect(left,top,right-left,bottom-top);state.scissor=[left,top,right,bottom];call();}else skip();
   if(state.pipeline!==entry.pipeline){pass.setPipeline(entry.pipeline);state.pipeline=entry.pipeline;call();}else skip();
   const stencil=packet.state.get(RS.STENCILREF)&255;if(state.stencil!==stencil){pass.setStencilReference(stencil);state.stencil=stencil;call();}else skip();
   bindings.forEach((binding,slot)=>{const previous=state.vertices[slot];if(!previous||previous.buffer!==binding.buffer||previous.offset!==binding.offset||previous.size!==binding.size){pass.setVertexBuffer(slot,binding.buffer,binding.offset,binding.size);state.vertices[slot]=binding;call();}else skip();});

@@ -8,25 +8,27 @@ const identity=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1].map(Math.fround).map(value=>new
 const declaration=[0x02000000,0x00000000,0x000000ff,0x00000011];
 const textureStages=Array.from({length:8},(_,stage)=>stage===0?[4,2,1,2,2,1,0,0]:[1,0,0,1,0,0,stage,0]).flat();
 
-function packet(compact,clipping=null){
+function packet(compact,clipping=null,versioned=true){
  const packetStates=clipping===null?states:[...states,[136,clipping]];
- const words=[compact?0x32445246:0x39445246,0,0,4,3,0,0,0,2,16,packetStates.length];
+ const words=[versioned?(compact?0x33445246:0x41445246):(compact?0x32445246:0x39445246),0,0,4,3,0,0,0,2,16,packetStates.length];
  for(let stream=0;stream<16;stream++)words.push(stream===0?1:0,0,stream===0?16:0);
  for(const state of packetStates)words.push(...state);
  words.push(...declaration);
  if(!compact)words.push(...new Array(1312).fill(0));
- words.push(...new Array(16).fill(0),...new Array(16*14).fill(0),...textureStages,0,0,800,600,0,0x3f800000,...identity,...identity,...identity,...new Array(96).fill(0));
+ words.push(...new Array(16).fill(0),...new Array(16*14).fill(0),...textureStages,0,0,800,600,0,0x3f800000,...(versioned?[10,20,700,500]:[]),...identity,...identity,...identity,...new Array(96).fill(0));
  const memory=new SharedArrayBuffer(4096+words.length*4),view=new Uint32Array(memory,4096,words.length);view.set(words);
  return {memory,length:words.length*4};
 }
 
 const compact=packet(true),decoded=decodeDraw(compact.memory,4096,compact.length);
-assert.equal(compact.length,2228);
+assert.equal(compact.length,2244);
 assert.equal(decoded.declaration.buffer,compact.memory);assert.equal(decoded.fixed.buffer,compact.memory);assert.equal(decoded.registers[0][0].buffer,compact.memory);
 assert.equal(decoded.fixed.length,48);assert.equal(decoded.lighting.length,96);assert.equal(decoded.textureStages[0][0],4);
+assert.deepEqual([...decoded.scissor],[10,20,700,500]);
 assert.equal(decoded.state.get(136),1);
 assert.equal(decoded.registers[0][0][0],0x3f800000);assert(decoded.registers[1].every(words=>words.every(value=>value===0)));
-const legacy=packet(false);assert.equal(legacy.length,7476);assert(decodeDraw(legacy.memory,4096,legacy.length).fixed);
+const oldCompact=packet(true,null,false),oldDecoded=decodeDraw(oldCompact.memory,4096,oldCompact.length);assert.equal(oldCompact.length,2228);assert.equal(oldDecoded.scissor,null);
+const legacy=packet(false,null,false);assert.equal(legacy.length,7476);assert(decodeDraw(legacy.memory,4096,legacy.length).fixed);
 const unclipped=packet(true,0),unclippedDecoded=decodeDraw(unclipped.memory,4096,unclipped.length);assert.equal(unclippedDecoded.state.get(136),0);assert.equal(unclipped.length,compact.length+8);
 const positionT=new Uint8Array([0,0,0,0,3,0,9,0,0,0,16,0,3,0,10,0,255,0,0,0,17,0,0,0]);
 assert.match(fixedFunctionPair(positionT,false,[800,600],null,null,false).vertex.wgsl,/clamp\(position\.z,0\.0,1\.0\)/);
@@ -50,4 +52,4 @@ assert.deepEqual(renderer.snapshotMetrics(),{sourceGeometryWrites:2,versionedGeo
 const color={createView(){return'color-view'}},depth={createView(){return'depth-view'}};renderer.backend={color,depth,width:800,height:600};renderer.clear(7,{r:0,g:0,b:0,a:1},1,0);renderer.present('swap-texture');
 assert.equal(passes.length,1);assert.equal(textureCopies.length,1);assert.equal(submissions.length,2);assert.equal(renderer.snapshotMetrics().rendererSubmissions,2);
 renderer.dispose();
-console.log('Compact fixed-function, clipping state, legacy packets, and coalesced renderer writes passed');
+console.log('Versioned scissor packets, compact fixed-function state, legacy packets, and coalesced renderer writes passed');

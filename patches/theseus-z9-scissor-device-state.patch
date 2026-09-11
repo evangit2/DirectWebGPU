@@ -1,0 +1,101 @@
+--- a/win32/winapi/src/d3d9/device.rs
++++ b/win32/winapi/src/d3d9/device.rs
+@@ -5,3 +5,3 @@
+ #[derive(Clone)]
+-struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
++struct Device{refs:u32,parent:u32,backend:u32,focus:u32,flags:u32,scene:bool,cursor_visible:bool,software_vertex_processing:bool,color:u32,depth:u32,up_buffer:u32,up_offset:u32,states:HashMap<u32,u32>,texture_stages:[[u32;8];8],material:[u32;17],lights:HashMap<u32,[u32;26]>,light_enabled:HashMap<u32,bool>,transforms:HashMap<u32,[u32;16]>,streams:[Stream;16],indices:u32,declaration:u32,fvf:u32,shaders:[u32;2],textures:[u32;16],samplers:[[u32;14];16],viewport:[u32;6],scissor:[u32;4],target_size:[u32;2],target_format:u32,constants:std::sync::Arc<Mutex<super::constants::Registers>>}
+ static DEVICES:LazyLock<Mutex<HashMap<u32,Device>>>=LazyLock::new(||Mutex::new(HashMap::new()));
+@@ -18,3 +18,3 @@
+  let color=IDirect3DSurface9::create_owned(ctx,p,width,height,format,1);let depth=IDirect3DSurface9::create_owned(ctx,p,width,height,75,2);
+- IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,color,depth,up_buffer:0,up_offset:0,states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
++ IDirect3D9::AddRef(ctx,parent);assert!(DEVICES.lock().unwrap().insert(p,Device{refs:1,parent,backend,focus,flags,scene:false,cursor_visible:false,software_vertex_processing:flags&0x20!=0,color,depth,up_buffer:0,up_offset:0,states:default_states(),texture_stages:default_texture_stages(),material:default_material(),lights:HashMap::new(),light_enabled:HashMap::new(),transforms:HashMap::new(),streams:[Stream::default();16],indices:0,declaration:0,fvf:0,shaders:[0;2],textures:[0;16],samplers:default_samplers(),viewport:default_viewport(width,height),scissor:[0,0,width,height],target_size:[width,height],target_format:format,constants:Default::default()}).is_none());p
+ }
+@@ -100,3 +100,3 @@
+  let color=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],params[2],1);let depth=IDirect3DSurface9::create_owned(ctx,this,params[0],params[1],75,2);
+- let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();D3D_OK
++ let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).unwrap();d.color=color;d.depth=depth;d.up_buffer=0;d.up_offset=0;d.states=default_states();d.texture_stages=default_texture_stages();d.material=default_material();d.lights.clear();d.light_enabled.clear();d.transforms.clear();d.streams=[Stream::default();16];d.indices=0;d.declaration=0;d.fvf=0;d.shaders=[0;2];d.textures=[0;16];d.samplers=default_samplers();d.viewport=default_viewport(params[0],params[1]);d.scissor=[0,0,params[0],params[1]];d.target_size=[params[0],params[1]];d.target_format=params[2];d.constants=Default::default();D3D_OK
+ }
+@@ -104,3 +104,4 @@
+ pub fn GetBackBuffer(ctx:&mut Context,this:u32,swap:u32,index:u32,kind:u32,out:u32)->u32{if swap!=0||index!=0||kind!=0{return D3DERR_INVALIDCALL}GetRenderTarget(ctx,this,0,out)}
+-pub fn GetRasterStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetRasterStatus",3)}
++#[win32_derive::dllexport]
++pub fn GetRasterStatus(ctx:&mut Context,this:u32,swap:u32,out:u32)->u32{device(this);if swap!=0||!valid(ctx,out,8){return D3DERR_INVALIDCALL}D3DERR_INVALIDCALL}
+ pub fn SetDialogBoxMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetDialogBoxMode",2)}
+@@ -176,3 +177,3 @@
+ pub fn GetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetClipPlane",3)}
+-fn default_states()->HashMap<u32,u32>{[(7,1),(14,1),(15,0),(19,2),(20,1),(22,3),(23,4),(24,0),(25,8),(27,0),(52,0),(53,1),(54,1),(55,1),(56,8),(57,0),(58,u32::MAX),(59,u32::MAX),(136,1),(137,1),(139,0),(168,15),(171,1)].into_iter().collect()}
++fn default_states()->HashMap<u32,u32>{[(7,1),(14,1),(15,0),(19,2),(20,1),(22,3),(23,4),(24,0),(25,8),(27,0),(52,0),(53,1),(54,1),(55,1),(56,8),(57,0),(58,u32::MAX),(59,u32::MAX),(136,1),(137,1),(139,0),(168,15),(171,1),(174,0)].into_iter().collect()}
+ fn default_material()->[u32;17]{[1.0f32.to_bits(),1.0f32.to_bits(),1.0f32.to_bits(),1.0f32.to_bits(),0,0,0,1.0f32.to_bits(),0,0,0,1.0f32.to_bits(),0,0,0,0,0]}
+@@ -192,3 +193,3 @@
+  if !d.states.contains_key(&kind){return D3D_OK}
+- let valid=match kind{7|14|15|27|52|136|137=>value<=1,19|20=>(1..=11).contains(&value),22=>(1..=3).contains(&value),23|25|53|54|55|56=>(1..=8).contains(&value),24=>value<=255,168=>value<=15,171=>(1..=5).contains(&value),_=>true};
++ let valid=match kind{7|14|15|27|52|136|137|174=>value<=1,19|20=>(1..=11).contains(&value),22=>(1..=3).contains(&value),23|25|53|54|55|56=>(1..=8).contains(&value),24=>value<=255,168=>value<=15,171=>(1..=5).contains(&value),_=>true};
+  if !valid{return D3DERR_INVALIDCALL}d.states.insert(kind,value);D3D_OK
+@@ -224,9 +225,19 @@
+ pub fn GetCurrentTexturePalette_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetCurrentTexturePalette",2)}
+-pub fn SetScissorRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetScissorRect",2)}
+-pub fn GetScissorRect_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetScissorRect",2)}
+-pub fn SetSoftwareVertexProcessing_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetSoftwareVertexProcessing",2)}
+-pub fn GetSoftwareVertexProcessing_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetSoftwareVertexProcessing",1)}
+-pub fn SetNPatchMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"SetNPatchMode",2)}
+-pub fn GetNPatchMode_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"GetNPatchMode",1)}
+ #[win32_derive::dllexport]
++pub fn SetScissorRect(ctx:&mut Context,this:u32,pointer:u32)->u32{
++ let d=device(this);if !valid(ctx,pointer,16){return D3DERR_INVALIDCALL}let rect=ctx.memory.read::<[i32;4]>(pointer);
++ if rect[0]<0||rect[1]<0||rect[2]<=rect[0]||rect[3]<=rect[1]||rect[2]as u32>d.target_size[0]||rect[3]as u32>d.target_size[1]{return D3DERR_INVALIDCALL}
++ DEVICES.lock().unwrap().get_mut(&this).unwrap().scissor=rect.map(|v|v as u32);D3D_OK
++}
++#[win32_derive::dllexport]
++pub fn GetScissorRect(ctx:&mut Context,this:u32,pointer:u32)->u32{let d=device(this);if !valid(ctx,pointer,16){return D3DERR_INVALIDCALL}ctx.memory.write::<[u32;4]>(pointer,d.scissor);D3D_OK}
++#[win32_derive::dllexport]
++pub fn SetSoftwareVertexProcessing(_ctx:&mut Context,this:u32,software:u32)->u32{let mut map=DEVICES.lock().unwrap();let d=map.get_mut(&this).expect("invalid vertex-processing device");let requested=software!=0;if d.flags&0x80==0{return if d.software_vertex_processing==requested{D3D_OK}else{D3DERR_INVALIDCALL}}d.software_vertex_processing=requested;D3D_OK}
++#[win32_derive::dllexport]
++pub fn GetSoftwareVertexProcessing(_ctx:&mut Context,this:u32)->u32{u32::from(device(this).software_vertex_processing)}
++#[win32_derive::dllexport]
++pub fn SetNPatchMode(_ctx:&mut Context,this:u32,segments:u32)->u32{device(this);let segments=f32::from_bits(segments);if !segments.is_finite(){return D3DERR_INVALIDCALL}if segments<1.0{D3D_OK}else{D3DERR_NOTAVAILABLE}}
++#[win32_derive::dllexport]
++pub fn GetNPatchMode(_ctx:&mut Context,this:u32)->u32{device(this);0.0f32.to_bits()}
++#[win32_derive::dllexport]
+ pub fn DrawPrimitive(ctx:&mut Context,this:u32,kind:u32,first:u32,primitives:u32)->u32{draw(ctx,this,kind,first,primitives,None)}
+@@ -358,6 +369,6 @@
+  let owned_declaration=IDirect3DVertexDeclaration9::draw_bytes(d.declaration);let declaration=up.map(|u|u.3).unwrap_or(&owned_declaration);let mut states:Vec<_>=d.states.iter().filter(|(k,_)|**k!=137&&**k!=139).map(|(k,v)|(*k,*v)).collect();states.sort_unstable();
+- let mut words=vec![if fixed{0x32445246}else{0x39445246},if fixed{0}else{super::shader::gpu_handle(d.shaders[0])},if fixed{0}else{super::shader::gpu_handle(d.shaders[1])},kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
++ let mut words=vec![if fixed{0x33445246}else{0x41445246},if fixed{0}else{super::shader::gpu_handle(d.shaders[0])},if fixed{0}else{super::shader::gpu_handle(d.shaders[1])},kind,count,first,index,base,max,declaration.len()as u32,states.len()as u32];
+  for (slot,stream) in d.streams.into_iter().enumerate(){if let Some((gpu,offset,stride,_))=up{words.extend_from_slice(&if slot==0{[gpu,offset,stride]}else{[0,0,0]});continue;}let gpu=if stream.buffer==0{0}else{let Some(gpu)=super::buffers::draw_handle(stream.buffer)else{return D3DERR_INVALIDCALL};gpu};words.extend_from_slice(&[gpu,stream.offset,stream.stride]);}
+  for(k,v)in states{words.extend_from_slice(&[k,v])}for chunk in declaration.chunks_exact(4){words.push(u32::from_le_bytes(chunk.try_into().unwrap()))}if !fixed{d.constants.lock().unwrap().draw_words(&mut words);}
+- for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}for stage in d.texture_stages{words.extend_from_slice(&stage);}words.extend_from_slice(&d.viewport);
++ for texture in d.textures{let gpu=if texture==0{0}else{let Some(gpu)=IDirect3DTexture9::draw_handle(texture)else{return D3DERR_INVALIDCALL};gpu};words.push(gpu);}for sampler in d.samplers{words.extend_from_slice(&sampler);}for stage in d.texture_stages{words.extend_from_slice(&stage);}words.extend_from_slice(&d.viewport);words.extend_from_slice(&d.scissor);
+  if fixed{for kind in [256,2,3]{words.extend_from_slice(d.transforms.get(&kind).unwrap_or(&identity_transform()));}words.extend_from_slice(&fixed_lighting_words(&d));}
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -256,2 +256,10 @@
+         assert_eq!(IDirect3DDevice9::ValidateDevice(&mut ctx,dev,0xfffffff8),D3DERR_INVALIDCALL);
++        ctx.memory.write::<[i32;4]>(0x1fc0,[10,20,300,400]);ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetScissorRect_stdcall),vec![dev,0x1fc0]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DDevice9::GetScissorRect(&mut ctx,dev,0x1fe0),D3D_OK);assert_eq!(ctx.memory.read::<[u32;4]>(0x1fe0),[10,20,300,400]);
++        ctx.memory.write::<[i32;4]>(0x1fc0,[-1,0,20,20]);assert_eq!(IDirect3DDevice9::SetScissorRect(&mut ctx,dev,0x1fc0),D3DERR_INVALIDCALL);ctx.memory.write::<[i32;4]>(0x1fc0,[0,0,801,20]);assert_eq!(IDirect3DDevice9::SetScissorRect(&mut ctx,dev,0x1fc0),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::SetRenderState(&mut ctx,dev,174,1),D3D_OK);assert_eq!(IDirect3DDevice9::GetRenderState(&mut ctx,dev,174,0x1fd0),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1fd0),1);
++        assert_eq!(IDirect3DDevice9::GetRasterStatus(&mut ctx,dev,0,0x1fd0),D3DERR_INVALIDCALL);assert_eq!(IDirect3DDevice9::GetRasterStatus(&mut ctx,dev,1,0x1fd0),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3DDevice9::GetSoftwareVertexProcessing(&mut ctx,dev),0);assert_eq!(IDirect3DDevice9::SetSoftwareVertexProcessing(&mut ctx,dev,0),D3D_OK);assert_eq!(IDirect3DDevice9::SetSoftwareVertexProcessing(&mut ctx,dev,1),D3DERR_INVALIDCALL);
++        let mixed=IDirect3DDevice9::create(&mut ctx,obj,1,1,0x80,800,600,21);ctx.call32_x86(runtime::Cont(IDirect3DDevice9::SetSoftwareVertexProcessing_stdcall),vec![mixed,1]);assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(IDirect3DDevice9::GetSoftwareVertexProcessing(&mut ctx,mixed),1);assert_eq!(IDirect3DDevice9::Release(&mut ctx,mixed),0);
++        assert_eq!(IDirect3DDevice9::SetNPatchMode(&mut ctx,dev,0.5f32.to_bits()),D3D_OK);assert_eq!(IDirect3DDevice9::GetNPatchMode(&mut ctx,dev),0);assert_eq!(IDirect3DDevice9::SetNPatchMode(&mut ctx,dev,1.0f32.to_bits()),D3DERR_NOTAVAILABLE);assert_eq!(IDirect3DDevice9::SetNPatchMode(&mut ctx,dev,f32::NAN.to_bits()),D3DERR_INVALIDCALL);
+         let current=[2.0,0.0,0.0,0.0, 0.0,3.0,0.0,0.0, 0.0,0.0,4.0,0.0, 0.0,0.0,0.0,1.0].map(f32::to_bits);
+--- a/win32/winapi/src/d3d8.rs
++++ b/win32/winapi/src/d3d8.rs
+@@ -156,3 +156,3 @@
+  #[win32_derive::dllexport]pub fn GetBackBuffer(ctx:&mut Context,this:u32,index:u32,kind:u32,out:u32)->u32{let r=d3d9::IDirect3DDevice9::GetBackBuffer(ctx,this,0,index,kind,out);if r==D3D_OK{overwrite_vtable(ctx,ctx.memory.read::<u32>(out),unsafe{IDirect3DSurface8::VTABLE});}r}
+- pub fn GetRasterStatus_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetRasterStatus")}
++ #[win32_derive::dllexport]pub fn GetRasterStatus(ctx:&mut Context,this:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetRasterStatus(ctx,this,0,out)}
+  #[win32_derive::dllexport]pub fn SetGammaRamp(_ctx:&mut Context,_this:u32,_flags:u32,_ramp:u32){}
+@@ -212,4 +212,4 @@
+  pub fn GetClipPlane_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","GetClipPlane")}
+- #[win32_derive::dllexport]pub fn SetRenderState(ctx:&mut Context,this:u32,k:u32,v:u32)->u32{d3d9::IDirect3DDevice9::SetRenderState(ctx,this,k,v)}
+- #[win32_derive::dllexport]pub fn GetRenderState(ctx:&mut Context,this:u32,k:u32,out:u32)->u32{d3d9::IDirect3DDevice9::GetRenderState(ctx,this,k,out)}
++ #[win32_derive::dllexport]pub fn SetRenderState(ctx:&mut Context,this:u32,k:u32,v:u32)->u32{if k==153{return d3d9::IDirect3DDevice9::SetSoftwareVertexProcessing(ctx,this,v)}d3d9::IDirect3DDevice9::SetRenderState(ctx,this,k,v)}
++ #[win32_derive::dllexport]pub fn GetRenderState(ctx:&mut Context,this:u32,k:u32,out:u32)->u32{if k==153{if !valid(ctx,out,4){return D3DERR_INVALIDCALL}let value=d3d9::IDirect3DDevice9::GetSoftwareVertexProcessing(ctx,this);ctx.memory.write::<u32>(out,value);return D3D_OK}d3d9::IDirect3DDevice9::GetRenderState(ctx,this,k,out)}
+  pub fn BeginStateBlock_stdcall(ctx:&mut Context)->runtime::Cont{fail(ctx,"IDirect3DDevice8","BeginStateBlock")}
+@@ -348,2 +348,5 @@
+   assert_eq!(ctx.memory.read::<u32>(dev),0x1600);
++  assert_eq!(IDirect3DDevice8::GetRasterStatus(&mut ctx,dev,0x1390),D3DERR_INVALIDCALL);
++  assert_eq!(IDirect3DDevice8::SetRenderState(&mut ctx,dev,153,0),D3D_OK);assert_eq!(IDirect3DDevice8::GetRenderState(&mut ctx,dev,153,0x1390),D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1390),0);
++  assert_eq!(IDirect3DDevice8::SetRenderState(&mut ctx,dev,153,1),D3DERR_INVALIDCALL);
+   let transform=[1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,0.0, 4.0,5.0,6.0,1.0].map(f32::to_bits);
