@@ -7,7 +7,8 @@ const blendOp=[null,'add','subtract','reverse-subtract','min','max'];
 export const RS={ZENABLE:7,ZWRITEENABLE:14,ALPHATESTENABLE:15,SRCBLEND:19,DESTBLEND:20,CULLMODE:22,ZFUNC:23,ALPHAREF:24,ALPHAFUNC:25,ALPHABLENDENABLE:27,STENCILENABLE:52,STENCILFAIL:53,STENCILZFAIL:54,STENCILPASS:55,STENCILFUNC:56,STENCILREF:57,STENCILMASK:58,STENCILWRITEMASK:59,CLIPPING:136,COLORWRITEENABLE:168,BLENDOP:171};
 const defaults={7:1,14:1,15:0,19:2,20:1,22:3,23:4,24:0,25:8,27:0,52:0,53:1,54:1,55:1,56:8,57:0,58:0xffffffff,59:0xffffffff,136:1,168:15,171:1};
 export class D3D9RenderState{
- constructor(){this.values={...defaults};}
+ constructor(){this.values=Object.create(defaults);}
+ has(type){return Object.hasOwn(this.values,type)}
  set(type,value){
   if(!Number.isInteger(value)||value<0||value>0xffffffff)throw Error(`invalid D3D9 state value ${value}`);
   if(!Number.isInteger(type)||!Object.hasOwn(defaults,type))throw Error(`unsupported D3D9 render state ${type}`);

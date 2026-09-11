@@ -1,0 +1,56 @@
+--- a/win32/winapi/src/d3d9.rs
++++ b/win32/winapi/src/d3d9.rs
+@@ -137,4 +137,9 @@
+     pub fn RegisterSoftwareDevice_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"RegisterSoftwareDevice",2)}
+-    pub fn CheckDeviceType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceType",6)}
+     #[win32_derive::dllexport]
++    pub fn CheckDeviceType(_ctx:&mut Context,this:u32,index:u32,device_type:u32,adapter_format:u32,back_buffer_format:u32,windowed:u32)->u32{
++        if !adapter(this,index){return D3DERR_INVALIDCALL}
++        if device_type!=1||windowed>1{return D3DERR_NOTAVAILABLE}
++        if adapter_format==22&&[21,22].contains(&back_buffer_format){D3D_OK}else{D3DERR_NOTAVAILABLE}
++    }
++    #[win32_derive::dllexport]
+     pub fn CheckDeviceFormat(ctx:&mut Context,this:u32,index:u32,device_type:u32,adapter_format:u32,usage:u32,resource_type:u32,format:u32)->u32{
+@@ -143,5 +148,19 @@
+     }
+-    pub fn CheckDeviceMultiSampleType_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceMultiSampleType",7)}
+-    pub fn CheckDepthStencilMatch_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDepthStencilMatch",6)}
+-    pub fn CheckDeviceFormatConversion_stdcall(ctx: &mut Context) -> runtime::Cont {unsupported(ctx,"CheckDeviceFormatConversion",5)}
++    #[win32_derive::dllexport]
++    pub fn CheckDeviceMultiSampleType(ctx:&mut Context,this:u32,index:u32,device_type:u32,surface_format:u32,windowed:u32,multisample:u32,quality_levels:u32)->u32{
++        if !adapter(this,index)||multisample>16||(quality_levels!=0&&!valid(ctx,quality_levels,4)){return D3DERR_INVALIDCALL}
++        if device_type!=1||windowed>1||multisample!=0||![21,22,75].contains(&surface_format){return D3DERR_NOTAVAILABLE}
++        if quality_levels!=0{ctx.memory.write::<u32>(quality_levels,1)}
++        D3D_OK
++    }
++    #[win32_derive::dllexport]
++    pub fn CheckDepthStencilMatch(_ctx:&mut Context,this:u32,index:u32,device_type:u32,adapter_format:u32,render_target_format:u32,depth_stencil_format:u32)->u32{
++        if !adapter(this,index){return D3DERR_INVALIDCALL}
++        if device_type==1&&adapter_format==22&&[21,22].contains(&render_target_format)&&depth_stencil_format==75{D3D_OK}else{D3DERR_NOTAVAILABLE}
++    }
++    #[win32_derive::dllexport]
++    pub fn CheckDeviceFormatConversion(_ctx:&mut Context,this:u32,index:u32,device_type:u32,source_format:u32,target_format:u32)->u32{
++        if !adapter(this,index){return D3DERR_INVALIDCALL}
++        if device_type==1&&[21,22].contains(&source_format)&&[21,22].contains(&target_format){D3D_OK}else{D3DERR_NOTAVAILABLE}
++    }
+     #[win32_derive::dllexport]
+@@ -206,2 +225,19 @@
+         assert_eq!(ctx.memory.read::<u32>(0x1300),1280);
++        ctx.call32_x86(runtime::Cont(IDirect3D9::CheckDeviceType_stdcall),vec![obj,0,1,22,21,1]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(IDirect3D9::CheckDeviceType(&mut ctx,obj,1,1,22,21,1),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3D9::CheckDeviceType(&mut ctx,obj,0,2,22,21,1),D3DERR_NOTAVAILABLE);
++        assert_eq!(IDirect3D9::CheckDeviceType(&mut ctx,obj,0,1,22,23,1),D3DERR_NOTAVAILABLE);
++        ctx.memory.write::<u32>(0x1300,0xa5a5a5a5);
++        ctx.call32_x86(runtime::Cont(IDirect3D9::CheckDeviceMultiSampleType_stdcall),vec![obj,0,1,21,1,0,0x1300]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);assert_eq!(ctx.memory.read::<u32>(0x1300),1);
++        assert_eq!(IDirect3D9::CheckDeviceMultiSampleType(&mut ctx,obj,0,1,21,1,2,0),D3DERR_NOTAVAILABLE);
++        assert_eq!(IDirect3D9::CheckDeviceMultiSampleType(&mut ctx,obj,0,1,21,1,17,0),D3DERR_INVALIDCALL);
++        assert_eq!(IDirect3D9::CheckDeviceMultiSampleType(&mut ctx,obj,0,1,21,1,0,0xfffffff0),D3DERR_INVALIDCALL);
++        ctx.call32_x86(runtime::Cont(IDirect3D9::CheckDepthStencilMatch_stdcall),vec![obj,0,1,22,21,75]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(IDirect3D9::CheckDepthStencilMatch(&mut ctx,obj,0,1,22,21,71),D3DERR_NOTAVAILABLE);
++        ctx.call32_x86(runtime::Cont(IDirect3D9::CheckDeviceFormatConversion_stdcall),vec![obj,0,1,21,22]);
++        assert_eq!(ctx.cpu.regs.esp,original_sp);assert_eq!(ctx.cpu.regs.eax,D3D_OK);
++        assert_eq!(IDirect3D9::CheckDeviceFormatConversion(&mut ctx,obj,0,1,23,22),D3DERR_NOTAVAILABLE);
+         unsafe {IDirect3DDevice9::VTABLE=0x1800;IDirect3DSurface9::VTABLE=0x1a00;}

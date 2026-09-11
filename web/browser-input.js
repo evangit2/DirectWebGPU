@@ -25,20 +25,46 @@ export function keyboardMessage(type,code,repeat=false){
 
 function browserButtons(buttons){return(buttons&1)|((buttons&4)>>1)|((buttons&2)<<1);}
 function changedButton(button){return({0:1,1:2,2:4})[button]??0;}
+const OPPOSITE_DIRECTION=Object.freeze({ArrowLeft:'ArrowRight',ArrowRight:'ArrowLeft',ArrowUp:'ArrowDown',ArrowDown:'ArrowUp'});
+function axisSign(value){return value===-1?-1:1;}
 
-export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureChange=()=>{},debug=()=>{}}){
+export function directionalCode(code,profile={},cursorVisible=true,source='desktop',relativePointer=false){
+ const sourceProfile=source==='desktop'?profile:(profile?.[source]??{});
+ const axes=relativePointer?sourceProfile?.relativePointer:cursorVisible?sourceProfile?.cursorVisible:sourceProfile?.cursorHidden;
+ if(!axes)return code;
+ if(axes.horizontalSign===-1&&['ArrowLeft','ArrowRight'].includes(code))return OPPOSITE_DIRECTION[code];
+ if(axes.verticalSign===-1&&['ArrowUp','ArrowDown'].includes(code))return OPPOSITE_DIRECTION[code];
+ return code;
+}
+
+export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureChange=()=>{},onCursorVisibilityChange=()=>{},onVirtualCursor=()=>{},debug=()=>{},profile={},touchRoot=null}){
  const pressed=new Map();
  const captureSupported=typeof canvas.requestPointerLock==='function';
- let virtualX=canvas.width>>1,virtualY=canvas.height>>1;
+ const touchListeners=[],touchKeys=new Map();
+ let guestCursorVisible=true,virtualX=canvas.width>>1,virtualY=canvas.height>>1,displayX=virtualX,displayY=virtualY,ignoreLockedMovement=false,captureRequestPending=false,relativeCapturePending=false,relativeCaptureLatched=false,lastGuestWarpMs=-Infinity,lastCenterWarpMs=-Infinity,centerWarpCount=0,pointerDownCenterWarpCount=0,joystickPointer=null,joystickDirections=[];
+ const now=()=>globalThis.performance?.now?.()??Date.now();
+ const hasRelativeProfile=!!(profile?.keyboard?.relativePointer||profile?.pointer?.relativePointer||profile?.touchJoystick?.relativePointer);
+ const relativePointerActive=()=>hasRelativeProfile&&now()-lastGuestWarpMs<250;
+ const centerWarpActive=()=>hasRelativeProfile&&centerWarpCount>=3&&now()-lastCenterWarpMs<500;
  const emit=message=>{debug(message);send(message);};
  const focused=()=>document.pointerLockElement===canvas||document.activeElement===canvas;
- const releaseKeys=()=>{for(const code of pressed.keys()){const message=keyboardMessage('keyup',code);if(message)emit(message);}pressed.clear();};
+ const cursorUpdate=()=>onVirtualCursor({x:displayX,y:displayY,visible:guestCursorVisible&&document.pointerLockElement===canvas&&!(relativeCaptureLatched&&centerWarpActive())});
+ const requestCapture=(relative=false)=>{
+  if(!captureSupported||captureRequestPending||document.pointerLockElement===canvas)return;
+  captureRequestPending=true;
+  relativeCapturePending=relative;
+  try{void canvas.requestPointerLock().catch?.(()=>{captureRequestPending=false;relativeCapturePending=false;});}catch(_){captureRequestPending=false;relativeCapturePending=false;}
+ };
+ const mappedCode=code=>directionalCode(code,profile,guestCursorVisible,'keyboard',relativePointerActive());
+ const releaseKeys=()=>{for(const code of pressed.values()){const message=keyboardMessage('keyup',code);if(message)emit(message);}pressed.clear();};
  const onKey=event=>{
   if(!isRunning()||!focused())return;
-  const message=keyboardMessage(event.type,event.code,event.repeat);if(!message)return;
+  const code=event.type==='keyup'?(pressed.get(event.code)??mappedCode(event.code)):mappedCode(event.code);
+  const message=keyboardMessage(event.type,code,event.repeat);if(!message)return;
   event.preventDefault();
-  if(event.type==='keydown'){unlock();pressed.set(event.code,true);}else pressed.delete(event.code);
+  if(event.type==='keydown'){unlock();pressed.set(event.code,code);}else pressed.delete(event.code);
   emit(message);
+  if(event.type==='keydown'&&centerWarpActive())requestCapture(true);
  };
  const absolutePosition=event=>{const rect=canvas.getBoundingClientRect();return[
   Math.floor((event.clientX-rect.left)*canvas.width/rect.width),
@@ -46,32 +72,97 @@ export function bindBrowserInput(canvas,{isRunning,send,unlock=()=>{},onCaptureC
  ];};
  const onPointer=event=>{
   if(!isRunning())return;
+  const enteringRelativeCapture=event.type==='pointerdown'&&(!guestCursorVisible||centerWarpActive());
   if(event.type==='pointerdown'){
    unlock();canvas.focus({preventScroll:true});
-   try{canvas.setPointerCapture(event.pointerId);}catch(_){}
-   if(document.pointerLockElement!==canvas)void canvas.requestPointerLock?.().catch?.(()=>{});
+   pointerDownCenterWarpCount=centerWarpCount;
+   if(enteringRelativeCapture)requestCapture(centerWarpActive());
+   else try{canvas.setPointerCapture(event.pointerId);}catch(_){}
   }
-  if(document.pointerLockElement===canvas&&event.type==='pointermove'){
-   const rect=canvas.getBoundingClientRect();
-   virtualX=(virtualX+Math.round(event.movementX*canvas.width/rect.width))|0;
-   virtualY=(virtualY+Math.round(event.movementY*canvas.height/rect.height))|0;
-  }else{
+  const locked=document.pointerLockElement===canvas;
+  let relativeDelta=null;
+  if(locked&&event.type==='pointermove'){
+   // Entering pointer lock can synthesize one large movement as the browser
+   // recenters its hidden host cursor.  It is not user input and must not move
+   // either the guest pointer or the visible in-game menu cursor.
+   if(ignoreLockedMovement){
+    ignoreLockedMovement=false;
+    // A browser may report its pre-lock cursor displacement as the first
+    // movement. Keep an ordinary first hand movement and discard only a
+    // recenter-sized jump.
+    if(Math.abs(event.movementX)>canvas.width/4||Math.abs(event.movementY)>canvas.height/4){cursorUpdate();return;}
+   }
+   // Pointer-lock movement is already an OS-level mouse delta. Scaling it by
+   // the canvas layout makes sensitivity change with window size and aspect.
+   const axes=relativePointerActive()?profile?.pointer?.relativePointer:guestCursorVisible?null:profile?.pointer?.cursorHidden;
+   const dx=Math.round(event.movementX*axisSign(axes?.horizontalSign));
+   const dy=Math.round(event.movementY*axisSign(axes?.verticalSign));
+   virtualX=(virtualX+dx)|0;virtualY=(virtualY+dy)|0;
+   displayX=(displayX+dx)|0;displayY=(displayY+dy)|0;
+   virtualX=Math.max(0,Math.min(canvas.width-1,virtualX));virtualY=Math.max(0,Math.min(canvas.height-1,virtualY));
+   // Relative Win32 input is unbounded. Clamping this delta at the canvas
+   // edge made pointer-lock motion stall until a delayed guest warp arrived.
+   relativeDelta=[dx,dy];
+  }else if(!locked&&!enteringRelativeCapture){
    [virtualX,virtualY]=absolutePosition(event);
+   displayX=virtualX;displayY=virtualY;
   }
+  virtualX=Math.max(0,Math.min(canvas.width-1,virtualX));virtualY=Math.max(0,Math.min(canvas.height-1,virtualY));
+  displayX=Math.max(0,Math.min(canvas.width-1,displayX));displayY=Math.max(0,Math.min(canvas.height-1,displayY));
   const buttons=browserButtons(event.buttons),changed=event.type==='pointermove'?0:changedButton(event.button);
-  emit([event.type==='pointerdown'?2:event.type==='pointerup'?3:4,virtualX,virtualY,changed|(buttons<<16)]);
+  emit(relativeDelta?[7,...relativeDelta,buttons<<16]:[event.type==='pointerdown'?2:event.type==='pointerup'?3:4,virtualX,virtualY,changed|(buttons<<16)]);
+  // A menu click can be the action that enters relative-mouse gameplay. If
+  // the guest starts repeatedly recentering while that click is held, use the
+  // pointer-up activation to lock immediately. One-off menu warps do not pass
+  // the sustained-center test and remain ordinary absolute input.
+  if(event.type==='pointerup'&&document.pointerLockElement!==canvas&&centerWarpCount>pointerDownCenterWarpCount&&centerWarpActive())requestCapture(true);
+  cursorUpdate();
  };
- const onLock=()=>{const locked=document.pointerLockElement===canvas;if(!locked)releaseKeys();onCaptureChange(locked,captureSupported);};
+ const onLock=()=>{const locked=document.pointerLockElement===canvas;if(locked)relativeCaptureLatched=relativeCapturePending;else{relativeCaptureLatched=false;releaseKeys();}captureRequestPending=false;relativeCapturePending=false;ignoreLockedMovement=locked;onCaptureChange(locked,captureSupported);cursorUpdate();};
+ const onLockError=()=>{captureRequestPending=false;relativeCapturePending=false;onCaptureChange(false,captureSupported);cursorUpdate();};
+ const releaseTouchDirections=()=>{for(const code of joystickDirections){const message=keyboardMessage('keyup',code);if(message)emit(message);}joystickDirections=[];};
+ const setTouchDirections=codes=>{
+  const next=[...new Set(codes.map(code=>directionalCode(code,profile,guestCursorVisible,'touchJoystick',relativePointerActive())))];
+  for(const code of joystickDirections)if(!next.includes(code)){const message=keyboardMessage('keyup',code);if(message)emit(message);}
+  for(const code of next)if(!joystickDirections.includes(code)){const message=keyboardMessage('keydown',code);if(message)emit(message);}
+  joystickDirections=next;
+ };
+ const listen=(element,type,listener)=>{element.addEventListener(type,listener);touchListeners.push([element,type,listener]);};
+ if(touchRoot){
+  const suppressNativeGesture=event=>event.preventDefault();
+  for(const type of ['contextmenu','dragstart','selectstart'])listen(touchRoot,type,suppressNativeGesture);
+  for(const button of touchRoot.querySelectorAll('[data-touch-key]')){
+   const down=event=>{if(!isRunning())return;event.preventDefault();unlock();try{button.setPointerCapture(event.pointerId);}catch(_){}const code=button.dataset.touchKey,mapped=mappedCode(code);touchKeys.set(event.pointerId,mapped);const message=keyboardMessage('keydown',mapped);if(message)emit(message);};
+   const up=event=>{const code=touchKeys.get(event.pointerId);if(!code)return;event.preventDefault();touchKeys.delete(event.pointerId);const message=keyboardMessage('keyup',code);if(message)emit(message);};
+   listen(button,'pointerdown',down);for(const type of ['pointerup','pointercancel','lostpointercapture'])listen(button,type,up);
+  }
+  const joystick=touchRoot.querySelector('[data-touch-joystick]'),knob=touchRoot.querySelector('[data-touch-knob]');
+  if(joystick){
+   const move=event=>{if(event.pointerId!==joystickPointer)return;event.preventDefault();const rect=joystick.getBoundingClientRect(),radius=Math.min(rect.width,rect.height)/2,cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;let dx=event.clientX-cx,dy=event.clientY-cy;const length=Math.hypot(dx,dy),limit=radius*.62;if(length>limit){dx*=limit/length;dy*=limit/length;}if(knob)knob.style.transform=`translate(${dx}px,${dy}px)`;const dead=radius*.18,codes=[];if(dx < -dead)codes.push('ArrowLeft');else if(dx > dead)codes.push('ArrowRight');if(dy < -dead)codes.push('ArrowUp');else if(dy > dead)codes.push('ArrowDown');setTouchDirections(codes);};
+   const down=event=>{if(!isRunning()||joystickPointer!==null)return;event.preventDefault();unlock();joystickPointer=event.pointerId;try{joystick.setPointerCapture(event.pointerId);}catch(_){}move(event);};
+   const up=event=>{if(event.pointerId!==joystickPointer)return;event.preventDefault();joystickPointer=null;releaseTouchDirections();if(knob)knob.style.transform='translate(0px,0px)';};
+   listen(joystick,'pointerdown',down);listen(joystick,'pointermove',move);for(const type of ['pointerup','pointercancel','lostpointercapture'])listen(joystick,type,up);
+  }
+ }
  document.addEventListener('keydown',onKey);
  document.addEventListener('keyup',onKey);
  document.addEventListener('pointerlockchange',onLock);
+ document.addEventListener('pointerlockerror',onLockError);
  window.addEventListener('blur',releaseKeys);
+ window.addEventListener('resize',cursorUpdate);
  for(const type of ['pointerdown','pointerup','pointermove'])canvas.addEventListener(type,onPointer);
  const contextMenu=event=>event.preventDefault();canvas.addEventListener('contextmenu',contextMenu);
  onCaptureChange(false,captureSupported);
+ onCursorVisibilityChange(guestCursorVisible);
+ cursorUpdate();
  return{
-  capture(){if(!isRunning())return;unlock();canvas.focus({preventScroll:true});if(captureSupported)void canvas.requestPointerLock().catch?.(()=>{});else onCaptureChange(false,false);},
-  release(){if(document.pointerLockElement===canvas)void document.exitPointerLock?.();releaseKeys();},
-  destroy(){releaseKeys();document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onKey);document.removeEventListener('pointerlockchange',onLock);window.removeEventListener('blur',releaseKeys);for(const type of ['pointerdown','pointerup','pointermove'])canvas.removeEventListener(type,onPointer);canvas.removeEventListener('contextmenu',contextMenu);},
- };
+  warp(x,y){if(Number.isInteger(x)&&Number.isInteger(y)){const time=now();lastGuestWarpMs=time;const centered=Math.abs(x-(canvas.width>>1))<=2&&Math.abs(y-(canvas.height>>1))<=2;if(centered){centerWarpCount=time-lastCenterWarpMs<=500?centerWarpCount+1:1;lastCenterWarpMs=time;}else centerWarpCount=0;virtualX=Math.max(0,Math.min(canvas.width-1,x));virtualY=Math.max(0,Math.min(canvas.height-1,y));const captured=document.pointerLockElement===canvas;if(!(captured&&guestCursorVisible)){displayX=virtualX;displayY=virtualY;}cursorUpdate();}},
+  setCursorVisible(visible){
+   if(typeof visible!=='boolean'||visible===guestCursorVisible)return;
+   releaseTouchDirections();guestCursorVisible=visible;if(visible&&document.pointerLockElement!==canvas){displayX=virtualX;displayY=virtualY;}onCursorVisibilityChange(visible);cursorUpdate();
+  },
+  capture(){if(!isRunning())return;unlock();canvas.focus({preventScroll:true});if(captureSupported)requestCapture();else onCaptureChange(false,false);},
+  release(){if(document.pointerLockElement===canvas)void document.exitPointerLock?.();releaseKeys();releaseTouchDirections();},
+  destroy(){releaseKeys();releaseTouchDirections();for(const code of touchKeys.values()){const message=keyboardMessage('keyup',code);if(message)emit(message);}touchKeys.clear();document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onKey);document.removeEventListener('pointerlockchange',onLock);document.removeEventListener('pointerlockerror',onLockError);window.removeEventListener('blur',releaseKeys);window.removeEventListener('resize',cursorUpdate);for(const type of ['pointerdown','pointerup','pointermove'])canvas.removeEventListener(type,onPointer);canvas.removeEventListener('contextmenu',contextMenu);for(const [element,type,listener] of touchListeners)element.removeEventListener(type,listener);onCursorVisibilityChange(true);onVirtualCursor({x:displayX,y:displayY,visible:false});},
+  };
 }

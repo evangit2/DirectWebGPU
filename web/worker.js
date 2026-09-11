@@ -1,7 +1,8 @@
 import {resourceMetrics} from './resource-metrics.js';
 import {DrawBatch} from './draw-batch.js';
 import {AssetCache} from './asset-cache.js';
-let memory, device, lastPanic, gpuPort, drawBatch, logCount=0, persistedFiles=new Map();
+import {takeSharedInput,writeInputReply} from './input-transport.js';
+let memory, device, lastPanic, gpuPort, inputQueue, drawBatch, logCount=0, persistedFiles=new Map();
 const send=(type,data={})=>{if(type==='log'&&String(data.message).startsWith('GUEST_MEMORY ')){postMessage({type:'guest-memory',sample:JSON.parse(String(data.message).slice(13))});return;}if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
@@ -38,7 +39,11 @@ self.send_to_host=(func,args,retAddr)=>{
   if(Number.isInteger(retAddr)&&retAddr>=4&&retAddr%4===0&&retAddr+4<=memory.buffer.byteLength){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);Atomics.notify(new Int32Array(memory.buffer),retAddr/4,1);}
   return;
  }
- if(['create_window','graphics_call','poll_message','wait_message','audio_open','audio_queued','audio_resume','audio_write','music_load','music_command'].includes(func)){
+ if(func==='poll_message'||func==='wait_message'){
+  if(!inputQueue)throw Error('input transport unavailable');
+  writeInputReply(memory.buffer,retAddr,takeSharedInput(inputQueue,func==='wait_message'));return;
+ }
+ if(['create_window','cursor_warp','cursor_visibility','graphics_call','audio_open','audio_queued','audio_resume','audio_write','music_load','music_command'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
   const values=Array.from(args);
   if(func==='audio_write'){
@@ -51,9 +56,16 @@ self.send_to_host=(func,args,retAddr)=>{
    const copy=new Uint8Array(values[1]);copy.set(new Uint8Array(memory.buffer,values[0],values[1]));
    gpuPort.postMessage({func,args:[values[1],values[2]],payload:copy.buffer,buffer:memory.buffer,retAddr},[copy.buffer]);return;
   }
-  if(func==='graphics_call'&&[3,6,11,13].includes(values[0])){
+  if(func==='graphics_call'&&[3,4,6,11,13].includes(values[0])){
    if(!Number.isInteger(retAddr)||retAddr<4||retAddr%4||retAddr+4>memory.buffer.byteLength)throw Error('invalid queued draw reply pointer');
-   if(drawBatch.enqueue(values,memory.buffer)){Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;}
+   if(drawBatch.enqueue(values,memory.buffer)){
+    // Present is the frame boundary. Posting it in the batch keeps all work
+    // ordered and lets the GPU worker retain this ring slot until the submitted
+    // frame actually completes. A second slot still lets the translated CPU
+    // prepare one frame ahead without creating an unbounded WebGPU queue.
+    if(values[0]===4)drawBatch.flush();
+    Atomics.store(new Int32Array(memory.buffer),retAddr/4,1);return;
+   }
   }
   drawBatch.flush();
   gpuPort.postMessage({func,args:values,buffer:memory.buffer,retAddr});return;
@@ -65,7 +77,7 @@ self.onmessage=async({data})=>{
  try{
   if(data.type==='probe'){send('probe',{result:await gpuProbe()});return}
   if(data.type!=='start')throw Error('unsupported worker command');
-  gpuPort=data.gpuPort;drawBatch=new DrawBatch(message=>gpuPort.postMessage(message));
+  gpuPort=data.gpuPort;inputQueue=data.inputQueue;drawBatch=new DrawBatch(message=>gpuPort.postMessage(message));
   await new Promise((resolve,reject)=>{gpuPort.onmessage=({data})=>{if(data.ready)resolve(data.result);else reject(Error(data.error??'GPU initialization failed'))};gpuPort.start();});
   const build=data.build;
   const guest=build.guest??build.runtimeBuild?.guest;
@@ -90,6 +102,7 @@ self.onmessage=async({data})=>{
   if(await hash(wasmBytes)!==wasmEntry.sha256)throw Error('WASM artifact hash mismatch');
   if(build.runtimeBuild.executableSha256!==actual)throw Error('WASM was built for a different EXE');
   await exe.default({memory,module_or_path:wasmBytes});
+  if(typeof exe.input_queue_address==='function')postMessage({type:'input-queue-ready',buffer:memory.buffer,address:exe.input_queue_address()});
   for(const f of build.files){
    const fileBytes=f.path===exeFile.path?bytes:await cache.load(assetUrl(f.path));
    if(await hash(fileBytes)!==f.sha256)throw Error('asset integrity mismatch: '+f.path);
@@ -100,6 +113,15 @@ self.onmessage=async({data})=>{
    for(const [root,subkey,name,value] of guest.registryDwords??[])exe.seed_registry_dword(root,subkey,name,value);
    if(guest.registryDwords?.length)send('launch-settings',{source:'guest manifest registry seed',resolution:'1280x720',mechanism:'original EXE enumerates saved window bounds'});
   }
+  if(data.registryPreset!==null&&data.registryPreset!==undefined){
+   if(typeof data.registryPreset!=='string'||data.registryPreset.length>64)throw Error('invalid registry preset');
+   const preset=guest.registryPresets?.[data.registryPreset];if(!preset||!Array.isArray(preset.values))throw Error('unknown registry preset');
+   for(const value of preset.values){
+    if(!Array.isArray(value)||value.length!==5||!Array.isArray(value[4])||value[4].some(byte=>!Number.isInteger(byte)||byte<0||byte>255))throw Error('invalid registry preset value');
+    exe.seed_registry_value(value[0],value[1],value[2],value[3],Uint8Array.from(value[4]));
+   }
+   send('launch-settings',{source:'guest registry preset',preset:data.registryPreset,values:preset.values.length});
+  }
   exe.configure_guest_memory_metrics(data.guestMemory===true);
   exe.set_trace(data.trace??'');
   send('asset-cache-metrics',{...cache.stats});
@@ -108,7 +130,7 @@ self.onmessage=async({data})=>{
   send('execution-start',{wasmLinearMemoryBytes:memory.buffer.byteLength});
   const started=performance.now();
   exe.main();
-  drawBatch.flush();
+  drawBatch.drain();
   send('returned',{executionMs:performance.now()-started,wasmLinearMemoryBytes:memory.buffer.byteLength});
  }catch(error){send('failed',{message:text(lastPanic||error.stack||error),wasmLinearMemoryBytes:memory?.buffer.byteLength??null});}
 };

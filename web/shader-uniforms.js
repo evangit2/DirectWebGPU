@@ -22,8 +22,11 @@ function planFor(shader){
  }
  plan={groups,count,bindings};plan.constants=constants;plans.set(shader,plan);return plan;
 }
-export function packShaderUniforms(shader,registers){
- const plan=planFor(shader),result=new Uint32Array(plan.bindings?.length?4608/4:plan.count*4);let offset=0;
+export function shaderUniformByteLength(shader){const plan=planFor(shader);return(plan.bindings?.length?4608:plan.count*16);}
+export function packShaderUniformsInto(shader,registers,result,wordOffset=0){
+ const plan=planFor(shader),words=(plan.bindings?.length?4608/4:plan.count*4);
+ if(!(result instanceof Uint32Array)||!Number.isInteger(wordOffset)||wordOffset<0||wordOffset+words>result.length)throw RangeError('shader uniform destination too small');
+ result.fill(0,wordOffset,wordOffset+words);let offset=0;
  for(let type=0;type<3;type++){
   const width=type===2?1:4,source=registers[type];
   if(!(source instanceof Uint32Array))throw Error('shader registers must contain DWORD bit patterns');
@@ -32,11 +35,14 @@ export function packShaderUniforms(shader,registers){
    for(let i=0;i<u.count;i++){
     if(plan.bindings)offset=[0,4096,4352][type]/4+(u.index+i)*4;
     const index=u.index+i,constant=plan.constants.get(type*1048576+index);
-    if(constant)for(let component=0;component<width;component++)result[offset+component]=constant[component];
-    else for(let component=0;component<width;component++)result[offset+component]=source[index*width+component];
+    if(constant)for(let component=0;component<width;component++)result[wordOffset+offset+component]=constant[component];
+    else for(let component=0;component<width;component++)result[wordOffset+offset+component]=source[index*width+component];
     if(!plan.bindings)offset+=4;
    }
   }
  }
- return result;
+ return words*4;
+}
+export function packShaderUniforms(shader,registers){
+ const result=new Uint32Array(shaderUniformByteLength(shader)/4);packShaderUniformsInto(shader,registers,result);return result;
 }

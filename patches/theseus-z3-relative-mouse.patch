@@ -1,0 +1,106 @@
+--- a/host/src/lib.rs
++++ b/host/src/lib.rs
+@@ -44,6 +44,14 @@
+     pub buttons: MouseButton,
+ }
+ 
++/// Pointer-lock motion has no stable host screen coordinate. Keep it relative
++/// until the Win32 input thread can apply it against the latest SetCursorPos.
++pub struct RelativeMouseMessage {
++    pub dx: i32,
++    pub dy: i32,
++    pub buttons: MouseButton,
++}
++
+ /// A key press/release, described the way DOS-era Windows apps expect: by
+ /// PC/AT scan code (what DirectInput calls DIK_*) plus virtual key code.
+ pub struct KeyMessage {
+@@ -68,6 +76,7 @@
+     MouseDown(MouseMessage),
+     MouseUp(MouseMessage),
+     MouseMove(MouseMessage),
++    MouseMoveRelative(RelativeMouseMessage),
+     KeyDown(KeyMessage),
+     KeyUp(KeyMessage),
+ }
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -393,6 +393,12 @@
+                     _ => unreachable!(),
+                 }
+             }
++            7 => host::Message::MouseMoveRelative(host::RelativeMouseMessage {
++                dx: buf[1],
++                dy: buf[2],
++                buttons: host::MouseButton::from_bits((buf[3] >> 16) as u16)
++                    .unwrap_or_default(),
++            }),
+             5 | 6 => {
+                 // The front end translates the browser's KeyboardEvent.code
+                 // into the PC scan code and VK_* pair the guest expects; see
+--- a/win32/winapi/src/user32/input.rs
++++ b/win32/winapi/src/user32/input.rs
+@@ -97,6 +97,35 @@
+         self.x = x;
+         self.y = y;
+         self.have_position = true;
++    }
++
++    /// Resolve browser pointer-lock motion at the point where Win32 consumes
++    /// it. This keeps a preceding SetCursorPos ordered with the next delta.
++    pub fn resolve_relative(&self, mouse: &host::RelativeMouseMessage) -> host::MouseMessage {
++        host::MouseMessage {
++            x: self.x.saturating_add(mouse.dx).max(0) as u32,
++            y: self.y.saturating_add(mouse.dy).max(0) as u32,
++            button: host::MouseButton::empty(),
++            buttons: mouse.buttons,
++        }
++    }
++}
++
++#[cfg(test)]
++mod relative_mouse_tests {
++    use super::Mouse;
++
++    #[test]
++    fn pointer_lock_delta_resolves_after_guest_warp() {
++        let mut mouse = Mouse::default();
++        mouse.warp(400, 300);
++        let resolved = mouse.resolve_relative(&host::RelativeMouseMessage {
++            dx: 7,
++            dy: -4,
++            buttons: host::MouseButton::Left,
++        });
++        assert_eq!((resolved.x, resolved.y), (407, 296));
++        assert_eq!(resolved.buttons, host::MouseButton::Left);
+     }
+ }
+ 
+--- a/win32/winapi/src/user32/message.rs
++++ b/win32/winapi/src/user32/message.rs
+@@ -277,6 +277,17 @@
+             return;
+         }
+ 
++        // Resolve pointer-lock deltas only after earlier guest cursor warps
++        // have run. Converting them to page-side absolute coordinates races
++        // asynchronous SetCursorPos notifications under load.
++        let msg = match msg {
++            host::Message::MouseMoveRelative(relative) => {
++                let mouse = state().input.borrow().mouse.resolve_relative(&relative);
++                host::Message::MouseMove(mouse)
++            }
++            msg => msg,
++        };
++
+         // Every host input event updates the shared input state, whether or not
+         // the app reads it through the message queue: DirectInput reads the
+         // same state, and this is the only place host events are consumed.
+@@ -322,6 +333,7 @@
+             MouseDown(mouse) => mouse_msg(mouse_button_to_wm(true, &mouse), hwnd, &mouse),
+             MouseUp(mouse) => mouse_msg(mouse_button_to_wm(false, &mouse), hwnd, &mouse),
+             MouseMove(mouse) => mouse_msg(WM::MOUSEMOVE, hwnd, &mouse),
++            MouseMoveRelative(_) => unreachable!("relative mouse input is resolved before dispatch"),
+             KeyDown(key) => key_msg(hwnd, &key, true),
+             KeyUp(key) => key_msg(hwnd, &key, false),
+             #[cfg(not(target_family = "wasm"))]

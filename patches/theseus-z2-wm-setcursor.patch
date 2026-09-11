@@ -1,0 +1,114 @@
+--- a/win32/winapi/src/user32/mod.rs
++++ b/win32/winapi/src/user32/mod.rs
+@@ -38,6 +38,7 @@
+     message_queue: RefCell<MessageQueue>,
+     pub input: RefCell<Input>,
+     pub(crate) cursor: RefCell<CursorState>,
++    pub(crate) capture: RefCell<HWND>,
+ }
+ 
+ #[derive(Debug)]
+@@ -82,6 +83,7 @@
+         message_queue: Default::default(),
+         input: Default::default(),
+         cursor: Default::default(),
++        capture: Default::default(),
+     })
+ }
+ 
+--- a/win32/winapi/src/user32/message.rs
++++ b/win32/winapi/src/user32/message.rs
+@@ -24,6 +24,7 @@
+     QUIT = 0x12,
+     SHOWWINDOW = 0x18,
+     ACTIVATEAPP = 0x1c,
++    SETCURSOR = 0x20,
+     KEYDOWN = 0x100,
+     KEYUP = 0x101,
+     CHAR = 0x102,
+@@ -114,6 +115,18 @@
+             x: message.x as i32,
+             y: message.y as i32,
+         },
++    }
++}
++
++fn set_cursor_msg(hwnd: HWND, mouse_message: WM, message: &host::MouseMessage) -> MSG {
++    MSG {
++        hwnd,
++        message: WM::SETCURSOR as u32,
++        wParam: hwnd.to_raw(),
++        // HTCLIENT in the low word and the triggering mouse message in the high.
++        lParam: (mouse_message as u32) << 16 | 1,
++        time: 0,
++        pt: POINT { x: message.x as i32, y: message.y as i32 },
+     }
+ }
+ 
+@@ -279,12 +292,22 @@
+             }
+         }
+ 
++        let cursor_message = match &msg {
++            host::Message::MouseMove(mouse) if state().capture.borrow().is_null() => {
++                let hwnd = self.window.as_ref().unwrap().borrow().hwnd;
++                Some(set_cursor_msg(hwnd, WM::MOUSEMOVE, mouse))
++            }
++            _ => None,
++        };
+         let msg = self.msg_from_message(msg);
+         if *LOG_MESSAGES {
+             log::info!("{:#x?}", msg);
+         }
+ 
+         // PAINT/TIMER/QUIT are in special queues.
++        if let Some(cursor_message) = cursor_message {
++            self.messages.push_back(cursor_message);
++        }
+         if msg.message == WM::QUIT as u32 {
+             self.quit = Some(msg);
+         } else {
+@@ -519,4 +542,22 @@
+         assert_eq!(queue.pop().unwrap().message, WM::QUIT as u32);
+         assert!(queue.pop().is_none());
+     }
++
++    #[test]
++    fn set_cursor_message_identifies_client_mouse_move() {
++        let hwnd = HWND::from_raw(7);
++        let mouse = host::MouseMessage {
++            x: 123,
++            y: 456,
++            button: host::MouseButton::empty(),
++            buttons: host::MouseButton::empty(),
++        };
++        let message = set_cursor_msg(hwnd, WM::MOUSEMOVE, &mouse);
++        assert_eq!(message.hwnd, hwnd);
++        assert_eq!(message.message, WM::SETCURSOR as u32);
++        assert_eq!(message.wParam, 7);
++        assert_eq!(message.lParam, (WM::MOUSEMOVE as u32) << 16 | 1);
++        assert_eq!(message.pt.x, 123);
++        assert_eq!(message.pt.y, 456);
++    }
+ }
+--- a/win32/winapi/src/user32/misc.rs
++++ b/win32/winapi/src/user32/misc.rs
+@@ -45,12 +45,15 @@
+ 
+ #[win32_derive::dllexport]
+ pub fn ReleaseCapture(_ctx: &mut Context) -> bool {
+-    stub!(true)
++    let mut capture = state().capture.borrow_mut();
++    let had_capture = !capture.is_null();
++    *capture = HWND::null();
++    had_capture
+ }
+ 
+ #[win32_derive::dllexport]
+-pub fn SetCapture(_ctx: &mut Context, _hWnd: HWND) -> HWND {
+-    stub!(HWND::null())
++pub fn SetCapture(_ctx: &mut Context, hWnd: HWND) -> HWND {
++    std::mem::replace(&mut *state().capture.borrow_mut(), hWnd)
+ }
+ 
+ #[win32_derive::dllexport]

@@ -1,0 +1,137 @@
+--- a/runtime/src/memory.rs
++++ b/runtime/src/memory.rs
+@@ -52,11 +52,12 @@
+         panic!("guest null-page read/write");
+     }
+ 
+-    #[inline]
++    #[inline(always)]
+     pub fn set_last_eip(&mut self, eip: u32) {
+         self.last_eip = eip;
+     }
+ 
++    #[inline(always)]
+     pub fn set_last_regs(&mut self, regs: [u32; 8]) {
+         self.last_regs = regs;
+     }
+@@ -77,10 +78,9 @@
+         )
+     }
+ 
+-    fn check_range(&self, addr: u32, size: usize, operation: &str) {
+-        if addr < 0x1000 && self.null_page {
+-            panic!("guest null-page access at {addr:#010x}");
+-        }
++    #[cold]
++    #[inline(never)]
++    fn invalid_range(&self, addr: u32, size: usize, operation: &str) -> ! {
+         let start = addr as usize;
+         let Some(end) = start.checked_add(size) else {
+             panic!(
+@@ -98,21 +98,47 @@
+                 self.diagnostic_context()
+             );
+         }
+-    }
+-
++        panic!("guest null-page access at {addr:#010x}");
++    }
++
++    /// Validate a guest range once, before an unchecked slice access. Keeping
++    /// the detailed diagnostics on this cold branch avoids paying for both our
++    /// guest bounds check and Rust's slice bounds check on every translated
++    /// x86 load and store.
++    #[inline(always)]
++    fn check_range(&self, addr: u32, size: usize, operation: &str) {
++        let start = addr as usize;
++        if (addr < 0x1000 && self.null_page)
++            || start > self.bytes.len()
++            || size > self.bytes.len().wrapping_sub(start)
++        {
++            self.invalid_range(addr, size, operation);
++        }
++    }
++
++    #[inline(always)]
+     pub fn read<T: MemRead>(&self, addr: u32) -> T {
+         let size = std::mem::size_of::<T>();
+         self.check_range(addr, size, "read");
+         let addr = addr as usize;
+-        T::read_from_bytes(&self.bytes[addr..addr + size]).unwrap()
+-    }
+-
++        // SAFETY: check_range proved this exact range is in guest memory and
++        // MemRead guarantees every bit pattern is valid for T.
++        unsafe {
++            T::read_from_bytes(self.bytes.get_unchecked(addr..addr + size)).unwrap_unchecked()
++        }
++    }
++
++    #[inline(always)]
+     pub fn write<T: MemWrite>(&mut self, addr: u32, val: T) {
+         let size = std::mem::size_of::<T>();
+         self.check_range(addr, size, "write");
+         let addr = addr as usize;
+-        val.write_to(&mut self.bytes[addr..addr + size])
+-            .unwrap();
++        // SAFETY: check_range proved this exact range is in guest memory and
++        // the destination length exactly matches T.
++        unsafe {
++            val.write_to(self.bytes.get_unchecked_mut(addr..addr + size))
++                .unwrap_unchecked();
++        }
+     }
+ 
+     pub fn read_str(&self, addr: u32) -> &str {
+@@ -162,14 +188,16 @@
+ 
+     fn index(&self, addr: u32) -> &Self::Output {
+         self.check_range(addr, 1, "index");
+-        &self.bytes[addr as usize]
++        // SAFETY: check_range validated this byte.
++        unsafe { self.bytes.get_unchecked(addr as usize) }
+     }
+ }
+ 
+ impl<'a> std::ops::IndexMut<u32> for Memory<'a> {
+     fn index_mut(&mut self, addr: u32) -> &mut Self::Output {
+         self.check_range(addr, 1, "index_mut");
+-        &mut self.bytes[addr as usize]
++        // SAFETY: check_range validated this byte.
++        unsafe { self.bytes.get_unchecked_mut(addr as usize) }
+     }
+ }
+ 
+--- a/runtime/src/lib.rs
++++ b/runtime/src/lib.rs
+@@ -88,8 +88,13 @@
+ 
+ impl Context {
+     /// Record translated execution context for diagnostics on a later memory fault.
++    #[inline(always)]
+     pub fn mark_eip(&mut self, eip: u32) {
+         self.memory.set_last_eip(eip);
++        // Copying every register at every translated basic block is useful in
++        // development builds but disproportionately expensive in a release
++        // runtime. The block EIP remains available in production diagnostics.
++        #[cfg(debug_assertions)]
+         self.memory.set_last_regs([
+             self.cpu.regs.eax,
+             self.cpu.regs.ecx,
+@@ -117,10 +122,14 @@
+     }
+ 
+     pub fn cpu_loop(&mut self, mut f: Cont, target_esp: u32) {
++        #[cfg(debug_assertions)]
+         let mut i = 0;
+         while self.cpu.regs.esp != target_esp {
+-            self.recent[i] = f.0;
+-            i = (i + 1) % self.recent.len();
++            #[cfg(debug_assertions)]
++            {
++                self.recent[i] = f.0;
++                i = (i + 1) & (self.recent.len() - 1);
++            }
+             f = f.0(self);
+         }
+     }

@@ -1,0 +1,77 @@
+{
+  "change": "Synchronous Direct3D batch commands execute inline on the GPU worker without allocating a Promise per command; asynchronous Present, shader, and fence work retains FIFO ordering.",
+  "scope": "Generic Direct3D 8/9 clear, draw, geometry-upload, texture-upload, and command scheduling paths.",
+  "sourceRevision": "1b20f77b8cfb2867332cffea3fa3500fc4de1f14",
+  "testProgram": "Original Humus Dynamic Branching executable",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "adapter": {
+    "vendor": "apple",
+    "architecture": "metal-3",
+    "device": "",
+    "description": "",
+    "isFallbackAdapter": false
+  },
+  "resolution": "800x600",
+  "run": {
+    "status": "60-second frame-delivery measurement completed",
+    "applicationPresents": 6559,
+    "measurementSeconds": 60,
+    "submissionFPS": 109.55563847060633,
+    "frameTimeMs": {
+      "p50": 8.6650390625,
+      "p95": 14.130126953125,
+      "p99": 19.715087890625,
+      "min": 3.7548828125,
+      "max": 105.369873046875
+    },
+    "rollingFrameTimeMs": {
+      "p50": 8.64501953125,
+      "p95": 14.775146484375,
+      "p99": 21.125,
+      "min": 4.375,
+      "max": 105.369873046875
+    },
+    "rollingStutterFrames": {
+      "over25": 3,
+      "over33": 3,
+      "over50": 1,
+      "over100": 1
+    },
+    "maxQueueCompletionLatencyMs": 7.659999996423721,
+    "maxPendingCommands": 2,
+    "maxBatchCommands": 39,
+    "batchedClears": 32700,
+    "batchedDraws": 262147,
+    "batchedUploads": 46408,
+    "batchCpuMs": 16554.364998430014,
+    "batchCpuMicrosecondsPerCommand": 47.5954533124889,
+    "drawDecodeCpuMs": 5083.314995795488,
+    "drawCpuMs": 5157.800005227327,
+    "droppedEvents": 0,
+    "errorEvents": [],
+    "blocker": null
+  },
+  "comparisonToSharedRecordBaseline": {
+    "sourceRevision": "79a1a86571c504110950441c7243ea2b4d61b6a0",
+    "submissionFPS": 107.92257239410674,
+    "frameP95Ms": 15.070068359375,
+    "batchCpuMicrosecondsPerCommand": 48.464968631697914,
+    "note": "Single-run comparison on the same browser and adapter; system scheduling can affect outliers, so it is supporting evidence rather than an isolated causal benchmark."
+  },
+  "sourceReport": {
+    "path": "evidence/synchronous-batches-run.json",
+    "sha256": "eb6e2bd91a2a1ed1f1960ca6f08a283b2b5923227704d25c64ecfcca199a8e5c"
+  },
+  "validation": [
+    "all scripts/test_*.mjs",
+    "python3 scripts/test_server.py",
+    "60-second original-executable browser run",
+    "visual inspection of the rendered Humus scene"
+  ],
+  "limitations": [
+    "Present submission timing is not display scan-out.",
+    "This run verifies the original Humus executable; broader compatibility still requires additional DirectX 8/9 programs.",
+    "One 105 ms outlier occurred in the final 600-frame window; GPU queue completion stayed below 7.66 ms, so the report does not attribute that outlier to GPU backlog."
+  ]
+}

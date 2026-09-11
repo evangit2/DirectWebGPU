@@ -9,7 +9,6 @@ __pycache__/
 /.restore-check/
 /evidence/missing-addresses.txt
 /evidence/hamsterball-*.json
-/evidence/hamsterball-entry-points.txt
 /web/generated/*/
 
 /runtime/shaders/target/

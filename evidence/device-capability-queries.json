@@ -1,0 +1,59 @@
+{
+  "kind": "Direct3D 9 device capability query compatibility milestone",
+  "result": "passed",
+  "sourceRevision": "41fde554325b8c01654ca7870a8de905750a36da",
+  "runtimeMode": "wined3d-webgpu",
+  "executableSha256": "7664f1f55d71593b6af9475bef06aba811bbe8a5ec3ba690ec559064d6207bc5",
+  "implementedQueries": {
+    "CheckDeviceType": "HAL windowed/fullscreen compatibility for the implemented X8R8G8B8/A8R8G8B8 backbuffer path",
+    "CheckDeviceMultiSampleType": "D3DMULTISAMPLE_NONE with optional quality-level output; unsupported multisampling returns D3DERR_NOTAVAILABLE",
+    "CheckDepthStencilMatch": "implemented color targets with D24S8",
+    "CheckDeviceFormatConversion": "implemented X8R8G8B8/A8R8G8B8 presentation conversions"
+  },
+  "validation": {
+    "nativeAbiTest": "cargo test --manifest-path vendor/theseus/Cargo.toml -p winapi d3d9::tests (passed)",
+    "javascriptTests": "all scripts/test_*.mjs passed",
+    "serverTest": "python3 scripts/test_server.py passed",
+    "patchReverseCheck": "passed",
+    "fullWinapiSuite": "21 passed; 3 pre-existing aggregate-test failures caused by an incorrect D3DDECLTYPE expectation followed by shared global-state poisoning; the targeted D3D9 test passes independently"
+  },
+  "browser": {
+    "runId": "8ed5cf7c-8d69-485e-a05e-35b152931259",
+    "status": "startup trial completed after first Present",
+    "originalExecutionAttempted": true,
+    "direct3DCreate9Reached": true,
+    "direct3D9ObjectCreated": true,
+    "applicationPresentsAtDownload": 18,
+    "gpuSubmissionsAtDownload": 862,
+    "firstPresentObservedMs": 1721.2249999940395,
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "errors": [],
+    "capture": {
+      "present": 1,
+      "width": 800,
+      "height": 600,
+      "evidenceWidth": 320,
+      "evidenceHeight": 240,
+      "sceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 800,
+        "height": 536,
+        "nonblackPixels": 428707,
+        "pixels": 428800,
+        "meanRgb": [
+          37,
+          22,
+          12
+        ]
+      }
+    }
+  },
+  "scope": "These calls now return conservative capability results instead of aborting the guest. This removes a common pre-device-creation blocker, but it does not establish broad Direct3D 9 compatibility or add multisampling."
+}

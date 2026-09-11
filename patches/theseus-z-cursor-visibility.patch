@@ -1,0 +1,183 @@
+diff --git a/host/src/wasm.rs b/host/src/wasm.rs
+index 56ecfb4..b44a662 100644
+--- a/host/src/wasm.rs
++++ b/host/src/wasm.rs
+@@ -182,6 +182,12 @@ impl Host {
+         self.chan.lock().unwrap().cursor_warp(x, y);
+     }
+ 
++    /// Mirror Win32 ShowCursor/SetCursor state while pointer lock owns the
++    /// operating-system cursor.
++    pub fn set_cursor_visible(&self, visible: bool) {
++        self.chan.lock().unwrap().cursor_visibility(visible);
++    }
++
+     /// Hand a written file to the page, which keeps it across reloads.
+     pub fn persist_file(&self, path: &str, data: &[u8]) {
+         self.chan.lock().unwrap().write_file(path, data);
+@@ -223,6 +229,7 @@ export interface WasmHost {
+     resize_window(window_id: number, width: number, height: number): void;
+     render(window_id: number, surface_id: number): void;
+     cursor_warp(x: number, y: number): void;
++    cursor_visibility(visible: boolean): void;
+ 
+     set_pixels(surface_id: number, ptr: number, len: number): void;
+ 
+@@ -295,6 +302,12 @@ impl WebHostSendChannel {
+         self.send_async("cursor_warp", args);
+     }
+ 
++    pub fn cursor_visibility(&mut self, visible: bool) {
++        let args = js_sys::Array::new();
++        args.push(&JsValue::from(visible));
++        self.send_async("cursor_visibility", args);
++    }
++
+     pub fn write_file(&mut self, path: &str, data: &[u8]) {
+         let args = js_sys::Array::new();
+         args.push(&JsValue::from(path));
+diff --git a/win32/winapi/src/user32/misc.rs b/win32/winapi/src/user32/misc.rs
+index dae9d08..8e63b5f 100644
+--- a/win32/winapi/src/user32/misc.rs
++++ b/win32/winapi/src/user32/misc.rs
+@@ -18,7 +18,14 @@ pub fn GetSystemMetrics(_ctx: &mut Context, nIndex: u32 /* SYSTEM_METRICS_INDEX
+ 
+ #[win32_derive::dllexport]
+ pub fn ShowCursor(_ctx: &mut Context, bShow: bool) -> i32 {
+-    if bShow { stub!(1) } else { stub!(0) }
++    let (count,changed,visible)={
++        let mut cursor=state().cursor.borrow_mut();
++        let before=cursor.visible();
++        let count=cursor.show(bShow);
++        (count,before!=cursor.visible(),cursor.visible())
++    };
++    if changed { notify_cursor_visibility(visible); }
++    count
+ }
+ 
+ #[win32_derive::dllexport]
+diff --git a/win32/winapi/src/user32/mod.rs b/win32/winapi/src/user32/mod.rs
+index 7147370..7935a9f 100644
+--- a/win32/winapi/src/user32/mod.rs
++++ b/win32/winapi/src/user32/mod.rs
+@@ -37,6 +37,35 @@ pub struct State {
+     pub window: RefCell<Option<Rc<RefCell<Window>>>>,
+     message_queue: RefCell<MessageQueue>,
+     pub input: RefCell<Input>,
++    pub(crate) cursor: RefCell<CursorState>,
++}
++
++#[derive(Debug)]
++pub(crate) struct CursorState {
++    display_count: i32,
++    handle: HCURSOR,
++}
++
++impl Default for CursorState {
++    fn default() -> Self { Self { display_count: 0, handle: 0 } }
++}
++
++impl CursorState {
++    pub(crate) fn visible(&self) -> bool { self.display_count >= 0 && self.handle != 0 }
++    pub(crate) fn show(&mut self, show: bool) -> i32 {
++        self.display_count = if show { self.display_count.saturating_add(1) } else { self.display_count.saturating_sub(1) };
++        self.display_count
++    }
++    pub(crate) fn set(&mut self, handle: HCURSOR) -> HCURSOR {
++        std::mem::replace(&mut self.handle, handle)
++    }
++}
++
++pub(crate) fn notify_cursor_visibility(visible: bool) {
++    #[cfg(target_family = "wasm")]
++    host::host().set_cursor_visible(visible);
++    #[cfg(not(target_family = "wasm"))]
++    let _ = visible;
+ }
+ 
+ // TODO: reuse locking pattern from kernel32
+@@ -52,5 +81,24 @@ pub fn state() -> &'static State {
+         wndclass: Default::default(),
+         message_queue: Default::default(),
+         input: Default::default(),
++        cursor: Default::default(),
+     })
+ }
++
++#[cfg(test)]
++mod cursor_tests {
++    use super::CursorState;
++
++    #[test]
++    fn show_cursor_uses_the_windows_display_counter() {
++        let mut cursor=CursorState::default();
++        cursor.set(0x1234);
++        assert!(cursor.visible());
++        assert_eq!(cursor.show(false),-1);
++        assert!(!cursor.visible());
++        assert_eq!(cursor.show(true),0);
++        assert!(cursor.visible());
++        assert_eq!(cursor.set(0),0x1234);
++        assert!(!cursor.visible());
++    }
++}
+diff --git a/win32/winapi/src/user32/resource.rs b/win32/winapi/src/user32/resource.rs
+index 22534fb..8b68374 100644
+--- a/win32/winapi/src/user32/resource.rs
++++ b/win32/winapi/src/user32/resource.rs
+@@ -4,8 +4,10 @@ use super::*;
+ use crate::{Ptr, dllexport::win32flags, gdi32, handle::HANDLE, kernel32, stub};
+ 
+ #[win32_derive::dllexport]
+-pub fn LoadCursorA(_ctx: &mut Context, _hInstance: HINSTANCE, _lpCursorName: Ptr<u8>) -> HCURSOR {
+-    stub!(0)
++pub fn LoadCursorA(_ctx: &mut Context, _hInstance: HINSTANCE, lpCursorName: Ptr<u8>) -> HCURSOR {
++    // Cursor handles are opaque to applications. Keep the resource identity as
++    // a stable nonzero pseudo-handle; the browser draws its own standard cursor.
++    lpCursorName.addr.max(1)
+ }
+ 
+ #[win32_derive::dllexport]
+@@ -87,9 +89,9 @@ pub fn LoadAcceleratorsW(
+ pub fn LoadCursorW(
+     _ctx: &mut Context,
+     _hInstance: HINSTANCE,
+-    _lpCursorName: Ptr<u16>, /* WSTR */
++    lpCursorName: Ptr<u16>, /* WSTR */
+ ) -> HCURSOR {
+-    stub!(0)
++    lpCursorName.addr.max(1)
+ }
+ 
+ #[win32_derive::dllexport]
+diff --git a/win32/winapi/src/user32/window.rs b/win32/winapi/src/user32/window.rs
+index 5f25e42..c3c6c64 100644
+--- a/win32/winapi/src/user32/window.rs
++++ b/win32/winapi/src/user32/window.rs
+@@ -6,7 +6,7 @@ use crate::{
+     FromABIParam, POINT, Ptr, RECT,
+     gdi32::{self, Brush, COLORREF, DC, HBRUSH, HDC},
+     kernel32, stub,
+-    user32::{self, HCURSOR, HICON, HINSTANCE, HMENU, HWND, State, WM, state},
++    user32::{self, HCURSOR, HICON, HINSTANCE, HMENU, HWND, State, WM, notify_cursor_visibility, state},
+ };
+ 
+ pub struct Window {
+@@ -556,8 +556,15 @@ pub fn EnableWindow(_ctx: &mut Context, _hWnd: HWND, _bEnable: bool) -> bool {
+ }
+ 
+ #[win32_derive::dllexport]
+-pub fn SetCursor(_ctx: &mut Context, _hCursor: u32) -> u32 {
+-    stub!(0)
++pub fn SetCursor(_ctx: &mut Context, hCursor: u32) -> u32 {
++    let (previous,changed,visible)={
++        let mut cursor=state().cursor.borrow_mut();
++        let before=cursor.visible();
++        let previous=cursor.set(hCursor);
++        (previous,before!=cursor.visible(),cursor.visible())
++    };
++    if changed { notify_cursor_visibility(visible); }
++    previous
+ }
+ 
+ #[win32_derive::dllexport]

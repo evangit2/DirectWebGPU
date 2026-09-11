@@ -1,0 +1,357 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index cd538e7..34b2cb2 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -56,3 +56,4 @@ overflow-checks = false
+ 
+ [profile.release]
+ debug = true
++opt-level = 3
+diff --git a/runtime/src/fpu.rs b/runtime/src/fpu.rs
+index 5778ad1..e00666d 100644
+--- a/runtime/src/fpu.rs
++++ b/runtime/src/fpu.rs
+@@ -56,10 +56,12 @@ impl FPU {
+     }
+ 
+     /// Get st(0), the current top of the FPU stack.
++    #[inline(always)]
+     pub fn st0(&mut self) -> &mut f64 {
+         &mut self.st[self.st_top]
+     }
+ 
++    #[inline(always)]
+     pub fn push(&mut self, val: f64) {
+         if self.st_top == 0 {
+             Self::exception("fpu stack overflow");
+@@ -69,6 +71,7 @@ impl FPU {
+         self.st[self.st_top] = val;
+     }
+ 
++    #[inline(always)]
+     pub fn pop(&mut self) {
+         if self.st_top == 8 {
+             Self::exception("fpu stack underflow");
+@@ -78,6 +81,7 @@ impl FPU {
+     }
+ 
+     /// Index in self.st for a given ST0, ST1 etc reg.
++    #[inline(always)]
+     fn st_offset(&self, ofs: usize) -> usize {
+         let new = self.st_top + ofs;
+         if new >= 8 {
+@@ -93,14 +97,17 @@ impl FPU {
+         self.st.swap(o1, o2);
+     }
+ 
++    #[inline(always)]
+     pub fn get(&self, ofs: usize) -> f64 {
+         self.st[self.st_offset(ofs)]
+     }
+ 
++    #[inline(always)]
+     pub fn set(&mut self, ofs: usize, val: f64) {
+         self.st[self.st_offset(ofs)] = val;
+     }
+ 
++    #[inline]
+     pub fn compare(&mut self, a: f64, b: f64, unordered_instruction: bool) {
+         let signaling = |v: f64| v.is_nan() && v.to_bits() & (1u64 << 51) == 0;
+         if (a.is_nan() || b.is_nan()) && (!unordered_instruction || signaling(a) || signaling(b)) {
+@@ -118,6 +125,7 @@ impl FPU {
+         self.invalid = false;
+         self.status_extra &= !0x80ff;
+     }
++    #[inline(always)]
+     pub fn status(&self) -> u16 {
+         let status = if self.unordered {
+             Status::C0 | Status::C2 | Status::C3
+diff --git a/runtime/src/machine.rs b/runtime/src/machine.rs
+index 0b2a536..654bf33 100644
+--- a/runtime/src/machine.rs
++++ b/runtime/src/machine.rs
+@@ -38,10 +38,12 @@ pub struct BlockCache {
+ impl BlockCache {
+     const SIZE: usize = 64;
+ 
++    #[inline(always)]
+     fn slot(addr: u32) -> usize {
+         addr as usize & (Self::SIZE - 1)
+     }
+ 
++    #[inline(always)]
+     fn get(&self, addr: u32) -> Option<ContFn> {
+         match self.slots[Self::slot(addr)].get() {
+             Some((cached, func)) if cached == addr => Some(func),
+@@ -49,6 +51,7 @@ impl BlockCache {
+         }
+     }
+ 
++    #[inline(always)]
+     fn insert(&self, addr: u32, func: ContFn) {
+         self.slots[Self::slot(addr)].set(Some((addr, func)));
+     }
+@@ -80,11 +83,13 @@ impl Context {
+     }
+ 
+     /// Given an address (jump target), look up the Cont registered for it.
++    #[inline(always)]
+     pub fn indirect32(&self, addr: u32) -> Cont {
+         self.indirect(addr)
+     }
+ 
+     /// Given an address (jump target), look up the Cont registered for it.
++    #[inline]
+     pub fn indirect(&self, addr: u32) -> Cont {
+         if addr == 0 {
+             self.dump();
+diff --git a/runtime/src/ops/control_flow.rs b/runtime/src/ops/control_flow.rs
+index 8ca53a3..057e87a 100644
+--- a/runtime/src/ops/control_flow.rs
++++ b/runtime/src/ops/control_flow.rs
+@@ -1,6 +1,7 @@
+ use crate::{Cont, ContFn, Context, Flags, RETURN_FROM_X86_ADDR32, segofs};
+ 
+ impl Context {
++    #[inline(always)]
+     pub fn call32(&mut self, ret: u32, addr: Cont) -> Cont {
+         self.push32(ret);
+         addr
+@@ -146,6 +147,7 @@ impl Context {
+         from
+     }
+ 
++    #[inline]
+     pub fn ret32(&mut self, n: u16) -> Cont {
+         let ret = self.pop32();
+         self.cpu.regs.esp += n as u32;
+diff --git a/runtime/src/ops/misc.rs b/runtime/src/ops/misc.rs
+index bc21678..67bfcbd 100644
+--- a/runtime/src/ops/misc.rs
++++ b/runtime/src/ops/misc.rs
+@@ -1,6 +1,7 @@
+ use crate::{Context, Flags, segofs};
+ 
+ impl Context {
++    #[inline(always)]
+     pub fn push32(&mut self, x: u32) {
+         self.cpu.regs.esp -= 4;
+         self.memory.write::<u32>(self.cpu.regs.esp, x);
+@@ -12,6 +13,7 @@ impl Context {
+             .write::<u16>(segofs(self.cpu.regs.ss, self.cpu.regs.get_sp()), x);
+     }
+ 
++    #[inline(always)]
+     pub fn pop32(&mut self) -> u32 {
+         let x = self.memory.read::<u32>(self.cpu.regs.esp);
+         self.cpu.regs.esp += 4;
+diff --git a/runtime/src/sse.rs b/runtime/src/sse.rs
+index 4c007c5..9f67bdf 100644
+--- a/runtime/src/sse.rs
++++ b/runtime/src/sse.rs
+@@ -15,31 +15,66 @@ impl Default for SSE {
+ }
+ 
+ impl SSE {
++    #[inline(always)]
+     pub fn get(&self, index: usize) -> [u32; 4] {
+         self.xmm[index]
+     }
+ 
++    #[inline(always)]
+     pub fn set(&mut self, index: usize, value: [u32; 4]) {
+         self.xmm[index] = value;
+     }
+ }
+ 
++#[inline(always)]
+ fn map_ps(a: [u32; 4], b: [u32; 4], f: impl Fn(f32, f32) -> f32) -> [u32; 4] {
+     std::array::from_fn(|i| f(f32::from_bits(a[i]), f32::from_bits(b[i])).to_bits())
+ }
+ 
++#[cfg(target_arch = "wasm32")]
++#[inline(always)]
++fn map_ps_simd(
++    a: [u32; 4],
++    b: [u32; 4],
++    f: impl FnOnce(core::arch::wasm32::v128, core::arch::wasm32::v128) -> core::arch::wasm32::v128,
++) -> [u32; 4] {
++    // Every v128 bit pattern is valid and both arrays have the same 16-byte
++    // representation. The x86 SSE lane order matches WebAssembly SIMD.
++    unsafe {
++        std::mem::transmute(f(
++            std::mem::transmute::<[u32; 4], core::arch::wasm32::v128>(a),
++            std::mem::transmute::<[u32; 4], core::arch::wasm32::v128>(b),
++        ))
++    }
++}
+ 
++#[inline(always)]
+ pub fn sse_add_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
+-    map_ps(a, b, |x, y| x + y)
++    #[cfg(target_arch = "wasm32")]
++    { map_ps_simd(a, b, |x, y| core::arch::wasm32::f32x4_add(x, y)) }
++    #[cfg(not(target_arch = "wasm32"))]
++    { map_ps(a, b, |x, y| x + y) }
+ }
++#[inline(always)]
+ pub fn sse_sub_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
+-    map_ps(a, b, |x, y| x - y)
++    #[cfg(target_arch = "wasm32")]
++    { map_ps_simd(a, b, |x, y| core::arch::wasm32::f32x4_sub(x, y)) }
++    #[cfg(not(target_arch = "wasm32"))]
++    { map_ps(a, b, |x, y| x - y) }
+ }
++#[inline(always)]
+ pub fn sse_mul_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
+-    map_ps(a, b, |x, y| x * y)
++    #[cfg(target_arch = "wasm32")]
++    { map_ps_simd(a, b, |x, y| core::arch::wasm32::f32x4_mul(x, y)) }
++    #[cfg(not(target_arch = "wasm32"))]
++    { map_ps(a, b, |x, y| x * y) }
+ }
++#[inline(always)]
+ pub fn sse_div_ps(a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
+-    map_ps(a, b, |x, y| x / y)
++    #[cfg(target_arch = "wasm32")]
++    { map_ps_simd(a, b, |x, y| core::arch::wasm32::f32x4_div(x, y)) }
++    #[cfg(not(target_arch = "wasm32"))]
++    { map_ps(a, b, |x, y| x / y) }
+ }
+ 
+ pub fn sse_add_ss(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
+@@ -118,6 +153,7 @@ pub fn sse_movlhps(mut a: [u32; 4], b: [u32; 4]) -> [u32; 4] {
+     a
+ }
+ 
++#[inline(always)]
+ pub fn sse_shuffle(a: [u32; 4], b: [u32; 4], imm: u8) -> [u32; 4] {
+     [
+         a[(imm & 3) as usize],
+diff --git a/tc/src/codegen/fpu.rs b/tc/src/codegen/fpu.rs
+index aef73a1..86682cf 100644
+--- a/tc/src/codegen/fpu.rs
++++ b/tc/src/codegen/fpu.rs
+@@ -16,6 +16,15 @@ fn reg_to_index(register: iced_x86::Register) -> usize {
+ }
+ 
+ impl<'a> CodeGen<'a> {
++    pub(super) fn flush_fpu_pointers(&mut self) {
++        if let Some(line) = self.pending_fpu_instruction.take() {
++            self.line(line);
++        }
++        if let Some(line) = self.pending_fpu_operand.take() {
++            self.line(line);
++        }
++    }
++
+     fn fpu_get_mem(&self, instr: &iced_x86::Instruction) -> String {
+         let size = mem_size(instr);
+         if size != 64 {
+@@ -71,7 +80,18 @@ impl<'a> CodeGen<'a> {
+ 
+     pub fn codegen_fpu(&mut self, instr: &iced_x86::Instruction) -> bool {
+         use iced_x86::Mnemonic::*;
+-        if format!("{:?}", instr.mnemonic()).starts_with('F')
++        if self.track_fpu_pointers {
++            match instr.mnemonic() {
++                Fnsave | Fnstenv => self.flush_fpu_pointers(),
++                Fninit | Frstor | Fldenv => {
++                    self.pending_fpu_instruction = None;
++                    self.pending_fpu_operand = None;
++                }
++                _ => {}
++            }
++        }
++        if self.track_fpu_pointers
++            && format!("{:?}", instr.mnemonic()).starts_with('F')
+             && !matches!(
+                 instr.mnemonic(),
+                 Fnclex | Fninit | Fnstsw | Fnstcw | Fldcw | Fnsave | Frstor | Fnstenv | Fldenv
+@@ -81,13 +101,13 @@ impl<'a> CodeGen<'a> {
+             let bytes = self.mem.slice(instr.ip32(), instr.len() as u32);
+             if let Some(i) = bytes.iter().position(|b| (0xd8..=0xdf).contains(b)) {
+                 let opcode = (u16::from(bytes[i] & 7) << 8) | u16::from(bytes[i + 1]);
+-                self.line(format!(
++                self.pending_fpu_instruction = Some(format!(
+                     "ctx.cpu.fpu.instruction = ({}, ctx.cpu.regs.cs, {});",
+                     instr.ip32(),
+                     opcode
+                 ));
+                 if (0..instr.op_count()).any(|n| instr.op_kind(n) == iced_x86::OpKind::Memory) {
+-                    self.line(format!(
++                    self.pending_fpu_operand = Some(format!(
+                         "ctx.cpu.fpu.operand = ({}, {});",
+                         self.gen_addr(instr),
+                         crate::codegen::get_reg(instr.memory_segment())
+diff --git a/tc/src/codegen/mod.rs b/tc/src/codegen/mod.rs
+index d43111f..af7e63d 100644
+--- a/tc/src/codegen/mod.rs
++++ b/tc/src/codegen/mod.rs
+@@ -225,6 +225,12 @@ pub struct CodeGen<'a> {
+     mem: &'a Memory,
+     blocks: &'a HashMap<u32, Block>,
+     trace: bool,
++    /// x87 instruction/operand pointers are only observable through the
++    /// environment-save instructions. Avoid updating them for every x87 op
++    /// when the translated program never reads that environment.
++    track_fpu_pointers: bool,
++    pending_fpu_instruction: Option<String>,
++    pending_fpu_operand: Option<String>,
+     /// Statically-known jump targets with no discovered block; each gets a
+     /// panicking stub function so the output still compiles and runs.
+     unknown: std::collections::BTreeSet<u32>,
+@@ -234,11 +240,24 @@ pub struct CodeGen<'a> {
+ 
+ impl<'a> CodeGen<'a> {
+     pub fn new(state: &'a State, trace: bool) -> Self {
++        let track_fpu_pointers = state.blocks.values().any(|block| {
++            let BlockType::Instrs(instrs) = &block.ty else { return false };
++            instrs.iter().any(|instr| matches!(
++                instr.iced.mnemonic(),
++                iced_x86::Mnemonic::Fnsave
++                    | iced_x86::Mnemonic::Fsave
++                    | iced_x86::Mnemonic::Fnstenv
++                    | iced_x86::Mnemonic::Fstenv
++            ))
++        });
+         Self {
+             module: &state.module,
+             mem: &state.mem,
+             blocks: &state.blocks,
+             trace,
++            track_fpu_pointers,
++            pending_fpu_instruction: None,
++            pending_fpu_operand: None,
+             unknown: Default::default(),
+             buf: Default::default(),
+         }
+@@ -278,7 +297,7 @@ impl<'a> CodeGen<'a> {
+                     instrs.first().unwrap().ip.to_addr()
+                 ));
+                 // self.line(format!("println!(\"{name}\");", name = block.name()));
+-                for instr in instrs {
++                for (index, instr) in instrs.iter().enumerate() {
+                     if self.trace {
+                         match self.module {
+                             Module::DOS(_) => {
+@@ -287,11 +306,19 @@ impl<'a> CodeGen<'a> {
+                             Module::Windows(_) => todo!(),
+                         }
+                     }
++                    if index + 1 == instrs.len()
++                        && instr.iced.flow_control() != iced_x86::FlowControl::Next
++                    {
++                        self.flush_fpu_pointers();
++                    }
+                     if let Err(e) = self.gen_instr(instr) {
+                         self.line(format!("panic!({:?});", e.to_string()));
+                         break;
+                     }
+                 }
++                if instrs.last().unwrap().iced.flow_control() == iced_x86::FlowControl::Next {
++                    self.flush_fpu_pointers();
++                }
+ 
+                 let last = instrs.last().unwrap();
+                 if last.iced.flow_control() == iced_x86::FlowControl::Next

@@ -12,34 +12,55 @@ import {ShaderObjects} from './shader-objects.js';
 import {createShaderTranslator} from './shaders.js';
 import {RUNTIME_MODES,runtimeModeInfo} from './runtime-mode.js';
 import {presentationParametersValid} from './d3d9-presentation.js';
+import {enqueueInput} from './input-queue.js';
 // Owns WebGPU resources and the canvas. CPU execution runs in another worker.
 import {GeometryBuffers} from './gpu-buffers.js';
 import {D3D9RenderState,RS} from './d3d9-state.js';
-let gpuTiming=false;
+import {GpuCommandScheduler} from './gpu-command-scheduler.js';
+let gpuTiming=false,profileStutters=false,frameFenceInterval=4;
 let shaderMode=RUNTIME_MODES.WINED3D;
 let sceneEquivalence=false,omitDiagnosticLighting=false;
-let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024};
-let device,canvas,context,windowSize,backend,nextId=1,port,pending=0,waitingInput;
+let diagnosticDraws=0,diagnosticAfterPresent=0,diagnosticSkip=0,drawStateTrace=0,captureFrames=false,cameraTest=false;const cameraSamples=new Set(),drawStateFingerprints=new Set();let metrics;const bridgeMetrics={drawBatches:0,batchedClears:0,batchedDraws:0,batchedUploads:0,uploadedBytes:0,maxBatchCommands:0,stagingBytes:16*1024*1024,batchCpuMs:0,drawDecodeCpuMs:0,synchronousPresents:0,asynchronousPresents:0};
+let device,canvas,context,windowSize,backend,nextId=1,port,commandScheduler,waitingInput,lastPresentWork=null,outlierQueueProbePending=false;
 let nextAudioId=1;const audioStreams=new Map();
 let nextMusicId=1;const musicTracks=new Set();
 const inputQueue=[];
 const emit=(type,data={})=>postMessage({type,...data});
 const INVALID=0x8876086c,UNAVAILABLE=0x8876086a;
+const clearBits=new DataView(new ArrayBuffer(4)),clearColor={r:0,g:0,b:0,a:0};
+function presentWork(){
+ const writes=backend?.draws?.snapshotMetrics()??{};
+ return{draws:bridgeMetrics.batchedDraws,uploads:bridgeMetrics.batchedUploads,uploadedBytes:bridgeMetrics.uploadedBytes,batchCpuMs:bridgeMetrics.batchCpuMs,drawDecodeCpuMs:bridgeMetrics.drawDecodeCpuMs,drawCpuMs:writes.drawCpuMs??0,pipelineLookupCpuMs:writes.pipelineLookupCpuMs??0,queueWriteCalls:writes.queueWriteCalls??0,queueWriteBytes:writes.queueWriteBytes??0,rendererSubmissions:writes.rendererSubmissions??0,renderPasses:writes.renderPasses??0,uploadPassBreaks:writes.uploadPassBreaks??0,versionedGeometryWrites:writes.versionedGeometryWrites??0,versionFallbacks:writes.versionFallbacks??0,pipelineCompilations:backend?.draws?.cache.compilations??0,pipelineCacheHits:backend?.draws?.cache.hits??0};
+}
+function workDelta(current,previous){const result={};for(const [key,value] of Object.entries(current))result[key]=previous?value-(previous[key]??0):0;return result;}
 async function init(data){
- canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;shaderMode=runtimeModeInfo(data.runtimeMode??RUNTIME_MODES.WINED3D).mode;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;diagnosticAfterPresent=Number.isInteger(data.diagnosticAfterPresent)?Math.max(0,data.diagnosticAfterPresent):0;diagnosticSkip=Number.isInteger(data.diagnosticSkip)?Math.max(0,Math.min(4096,data.diagnosticSkip)):0;drawStateTrace=Number.isInteger(data.drawStateTrace)?Math.max(0,Math.min(256,data.drawStateTrace)):0;drawStateFingerprints.clear();captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));
+ canvas=data.canvas;port=data.port;gpuTiming=!!data.gpuTiming;profileStutters=!!data.profileStutters;frameFenceInterval=Number.isInteger(data.frameFenceInterval)?Math.max(1,Math.min(12,data.frameFenceInterval)):4;shaderMode=runtimeModeInfo(data.runtimeMode??RUNTIME_MODES.WINED3D).mode;sceneEquivalence=!!data.sceneEquivalence;omitDiagnosticLighting=data.sceneEquivalenceControl==='omitLighting';diagnosticDraws=Number.isInteger(data.drawDiagnostics)?Math.max(0,Math.min(64,data.drawDiagnostics)):data.drawDiagnostics?3:0;diagnosticAfterPresent=Number.isInteger(data.diagnosticAfterPresent)?Math.max(0,data.diagnosticAfterPresent):0;diagnosticSkip=Number.isInteger(data.diagnosticSkip)?Math.max(0,Math.min(4096,data.diagnosticSkip)):0;drawStateTrace=Number.isInteger(data.drawStateTrace)?Math.max(0,Math.min(256,data.drawStateTrace)):0;drawStateFingerprints.clear();captureFrames=!!data.captureFrames;cameraTest=!!data.cameraTest;cameraSamples.clear();metrics=new PresentationMetrics(data.startEpoch??(performance.timeOrigin+performance.now()));lastPresentWork=null;outlierQueueProbePending=false;
  const result={secureContext:isSecureContext,crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer!=='undefined',webgpu:!!navigator.gpu,userAgent:navigator.userAgent,runtime:runtimeModeInfo(shaderMode)};
  const adapter=await navigator.gpu?.requestAdapter();if(!adapter)throw Error('no WebGPU adapter');
  const i=adapter.info;result.adapter=Object.fromEntries(['vendor','architecture','device','description','isFallbackAdapter'].map(k=>[k,i[k]??null]));result.features=[...adapter.features];
  const requiredFeatures=adapter.features.has('texture-compression-bc')?['texture-compression-bc']:[];result.timestampQuery={requested:gpuTiming,available:adapter.features.has('timestamp-query')};if(gpuTiming&&result.timestampQuery.available)requiredFeatures.push('timestamp-query');
  device=await adapter.requestDevice({requiredFeatures});device.addEventListener('uncapturederror',e=>emit('gpu-error',{message:e.error.message}));device.lost.then(i=>emit('gpu-lost',{reason:i.reason,message:i.message}));
  result.deviceCreated=true;result.hardwareAcceleration='GPU device available; no Humus scene verified';
- let chain=Promise.resolve();port.onmessage=({data})=>{if(++pending>64){emit('gpu-error',{message:'GPU command queue limit exceeded'});return}chain=chain.then(()=>dispatch(data)).catch(e=>emit('gpu-error',{message:String(e)})).finally(()=>pending--)};
+ commandScheduler=new GpuCommandScheduler(dispatch,error=>emit('gpu-error',{message:String(error)}),(pending,maxPending)=>{bridgeMetrics.pendingCommands=pending;bridgeMetrics.maxPendingCommands=maxPending;});
+ port.onmessage=({data})=>commandScheduler.enqueue(data);
  port.start();port.postMessage({ready:true,result});emit('probe',{result});
 }
 function reply(buffer,address,result){if(!(buffer instanceof SharedArrayBuffer)||!Number.isInteger(address)||address<4||address%4||address+4>buffer.byteLength)throw Error('invalid GPU reply pointer');const words=new Int32Array(buffer);Atomics.store(words,address/4,result|0);Atomics.notify(words,address/4,1);}
-async function dispatch(data){
+async function ensureShaderObjects(){
+ if(!backend)throw Error('Direct3D device is not available');
+ backend.shaders??=new ShaderObjects(await createShaderTranslator(shaderMode));
+ backend.draws?.setShaderObjects(backend.shaders);
+ return backend.shaders;
+}
+function recordBatch(summary,started){if(profileStutters)bridgeMetrics.batchCpuMs+=performance.now()-started;bridgeMetrics.drawBatches++;bridgeMetrics.batchedClears+=summary.clears;bridgeMetrics.batchedDraws+=summary.draws;bridgeMetrics.batchedUploads+=summary.uploads;bridgeMetrics.uploadedBytes+=summary.uploadedBytes;bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,summary.commands);}
+function dispatch(data){
+ if(data.func!=='draw_batch')return dispatchAsync(data);
+ const started=profileStutters?performance.now():0,pending=executeDrawBatch(data,graphics,batchCommand);
+ if(pending?.then)return pending.then(summary=>recordBatch(summary,started));
+ recordBatch(pending,started);
+}
+async function dispatchAsync(data){
  const {func,args,buffer,retAddr,payload}=data;
- if(func==='draw_batch'){await executeDrawBatch(data,graphics,drawPacket);bridgeMetrics.drawBatches++;for(const a of data.commands){if(a[0]===3)bridgeMetrics.batchedClears++;else if(a[0]===13)bridgeMetrics.batchedDraws++;else if(a[0]===6||a[0]===11){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
@@ -50,6 +71,12 @@ async function dispatch(data){
   if(func==='create_window'){
    const [title,width,height]=args;if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>4096||height>4096)throw Error('invalid window size');
    canvas.width=width;canvas.height=height;windowSize=[width,height];emit('window-created',{title,width,height});result=1;
+  }else if(func==='cursor_warp'){
+   const [x,y]=args;if(!Number.isInteger(x)||!Number.isInteger(y))throw Error('invalid cursor warp');
+   emit('cursor-warp',{x,y});result=1;
+  }else if(func==='cursor_visibility'){
+   const [visible]=args;if(typeof visible!=='boolean')throw Error('invalid cursor visibility');
+   emit('cursor-visibility',{visible});result=1;
   }else if(func==='audio_open'){
    const [sampleRate,channels]=args;
    if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000||!Number.isInteger(channels)||channels<1||channels>8)throw Error('invalid audio format');
@@ -85,15 +112,17 @@ async function dispatch(data){
  }catch(e){emit('gpu-error',{message:String(e.stack??e)});}
  finally{if(retAddr)reply(buffer,retAddr,result)}
 }
-function drawPacket(a,memory){
- if(a.length!==3)return INVALID;
- let packet;
+function drawPacket(id,pointer,length,memory){
+ if(id!==backend?.id)return INVALID;
+ let packet;const decodeStarted=profileStutters?performance.now():0;
  try{
-  packet=decodeDraw(memory,a[1],a[2]);
+  packet=decodeDraw(memory,pointer,length);
+  if(profileStutters)bridgeMetrics.drawDecodeCpuMs+=performance.now()-decodeStarted;
   if(drawStateTrace>0){
    const textureStages=packet.textureStages.map(stage=>Array.from(stage)),textures=Array.from(packet.textures.slice(0,8));
    const textureInfo=textures.map(id=>{if(!id)return null;const texture=backend.textures.get(id);return{id,width:texture.width,height:texture.height,levels:texture.levels,format:texture.format,gpuFormat:texture.gpuFormat,uploads:texture.uploads};});
-   const sample={present:backend.presents+1,fixed:Boolean(packet.fixed),vertex:packet.vertex,pixel:packet.pixel,kind:packet.kind,count:packet.count,textures,textureInfo,sampler0:Array.from(packet.samplers[0]),textureStages,lightingHeader:packet.lighting?Array.from(packet.lighting.slice(0,4)):null,state:packet.state.values,declaration:Array.from(packet.declaration)};
+   const sampler0=packet.samplers instanceof Uint32Array?packet.samplers.subarray(0,14):packet.samplers[0];
+   const sample={present:backend.presents+1,fixed:Boolean(packet.fixed),vertex:packet.vertex,pixel:packet.pixel,kind:packet.kind,count:packet.count,textures,textureInfo,sampler0:Array.from(sampler0),textureStages,lightingHeader:packet.lighting?Array.from(packet.lighting.slice(0,4)):null,state:packet.state.values,declaration:Array.from(packet.declaration)};
    const fingerprint=JSON.stringify([sample.fixed,sample.vertex,sample.pixel,sample.kind,textures,textureStages,sample.lightingHeader,sample.state,sample.declaration]);
    if(!drawStateFingerprints.has(fingerprint)){drawStateFingerprints.add(fingerprint);drawStateTrace--;emit('draw-state',{sample});}
   }
@@ -106,9 +135,55 @@ function drawPacket(a,memory){
    const equivalent=backend.equivalence?.draw(packet);
    return equivalent?.then?equivalent.then(()=>{backend.submissions++;return 1;}):(backend.submissions++,1);
   };
-  if(diagnosticDraws>0&&backend.presents>=diagnosticAfterPresent){if(diagnosticSkip>0){diagnosticSkip--;}else{diagnosticDraws--;backend.draws.flush();return captureDraw(device,backend,packet).then(sample=>{emit('draw-diagnostic',{sample});return submit();});}}
-  return submit();
+  const submitReady=()=>{
+   if(diagnosticDraws>0&&backend.presents>=diagnosticAfterPresent){if(diagnosticSkip>0){diagnosticSkip--;}else{diagnosticDraws--;backend.draws.flush();return captureDraw(device,backend,packet).then(sample=>{emit('draw-diagnostic',{sample});return submit();});}}
+   return submit();
+  };
+  return packet.state.get(15)!==0&&!backend.draws.cache.objects?ensureShaderObjects().then(submitReady):submitReady();
  }catch(e){const message=String(e.stack??e);emit('draw-rejected',{message:`${message} declaration=${JSON.stringify(packet?Array.from(packet.declaration):null)}`});return INVALID;}
+}
+function clearCommand(a){
+ const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
+ clearBits.setUint32(0,zBits,true);const z=clearBits.getFloat32(0,true);if(!Number.isFinite(z)||z<0||z>1)return INVALID;
+ clearColor.r=((argb>>>16)&255)/255;clearColor.g=((argb>>>8)&255)/255;clearColor.b=(argb&255)/255;clearColor.a=(argb>>>24)/255;
+ backend.draws??=new DrawRenderer(device,backend);backend.draws.clear(flags,clearColor,z,stencil&255);backend.equivalence?.clear(flags,clearColor,z,stencil&255);emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
+}
+function finishPresent(present,memory){
+ if(present===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first completed Present')});backend.submissions++;
+ const currentWork=presentWork(),interval=metrics.present(performance.timeOrigin+performance.now(),{present,work:workDelta(currentWork,lastPresentWork)});lastPresentWork=currentWork;
+ if(profileStutters&&interval?.intervalMs>=25&&!outlierQueueProbePending){const began=performance.now(),completedPresent=present;outlierQueueProbePending=true;device.queue.onSubmittedWorkDone().then(()=>metrics.completeOutlier(completedPresent,performance.now()-began)).finally(()=>{outlierQueueProbePending=false;});}
+ if(present===1||present%60===0){const began=performance.now(),completedPresent=present;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},rendererWrites:backend.draws?.snapshotMetrics()??null,wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,pipelineCompilations:backend.draws?.cache.compilations??0,pipelineCacheHits:backend.draws?.cache.hits??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}
+ const complete=()=>{if(cameraTest&&[1,30].includes(present)){const message=[present===1?5:6,72,38,1];input(message);emit('controlled-input',{present,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:present,submittedFrames:present,completedFrames:backend.completedPresents,sceneFrames:0});return 1;};
+ if(captureFrames&&[1,30,60].includes(present))return captureFrame(device,backend.color,present,metrics.startEpoch).then(sample=>{emit('frame-capture',{sample});return complete();});
+ return complete();
+}
+function completePresent(present,memory){
+ backend.presents=present;
+ // Keep a bounded number of submitted frames while allowing unfenced Presents
+ // to return a plain result and avoid a worker microtask on the common path.
+ if(present===1||present-backend.completedPresents>=frameFenceInterval)return device.queue.onSubmittedWorkDone().then(()=>{backend.completedPresents=present;return finishPresent(present,memory);});
+ return finishPresent(present,memory);
+}
+function presentCommand(a,memory){
+ if(a.length!==1||!backend||a[0]!==backend.id)return INVALID;
+ if(backend.draws)backend.draws.present(context.getCurrentTexture());else{const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);}
+ const present=backend.presents+1,willFence=present===1||present-backend.completedPresents>=frameFenceInterval,willCapture=captureFrames&&[1,30,60].includes(present),willWait=!!backend.timer||!!backend.equivalence||willFence||willCapture;
+ bridgeMetrics[willWait?'asynchronousPresents':'synchronousPresents']++;
+ const afterEquivalence=()=>backend.equivalence?backend.equivalence.compare(present).then(sample=>{if(sample)emit('scene-equivalence',{sample});return completePresent(present,memory);}):completePresent(present,memory);
+ return backend.timer?backend.timer.finish(present).then(sample=>{if(sample)emit('gpu-timing',{sample});return afterEquivalence();}):afterEquivalence();
+}
+function batchCommand(op,a,memory){
+ if(!backend||a[0]!==backend.id)return INVALID;
+ if(op===13&&a.length===3)return drawPacket(a[0],a[1],a[2],memory);
+ if(op===3)return clearCommand(a);
+ if(op===4)return presentCommand(a,memory);
+ if(op===6&&a.length===5){
+  try{backend.equivalence?.flush();backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ if(op===11&&a.length===6){
+  try{backend.draws?.flush();backend.equivalence?.flush();backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}catch(e){if(e instanceof RangeError)return INVALID;throw e;}
+ }
+ return graphics(op,a,memory);
 }
 async function graphics(op,a,memory){
  if(op===14){if(a.length!==1||!(memory instanceof SharedArrayBuffer)||a[0]<4096||a[0]%4||a[0]+304>memory.byteLength)return INVALID;new Uint32Array(memory,a[0],76).set(deviceCaps());return 1;}
@@ -125,7 +200,7 @@ async function graphics(op,a,memory){
   const color=device.createTexture({label:'D3D9 backbuffer',size:[width,height],format:'bgra8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
   const depth=device.createTexture({label:'D3D9 D24S8',size:[width,height],format:'depth24plus-stencil8',usage:GPUTextureUsage.RENDER_ATTACHMENT});
   const oom=await device.popErrorScope(),validation=await device.popErrorScope();if(oom||validation){color.destroy();depth.destroy();throw Error((oom??validation).message)}
-  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,submissions:0};
+  backend={id:nextId++,color,depth,width,height,state:new D3D9RenderState(),buffers:new GeometryBuffers(device),textures:new TextureStorage(device,{traceUploads:drawStateTrace>0}),shaders:null,presents:0,completedPresents:0,submissions:0,profileStutters};
   if(gpuTiming&&device.features.has('timestamp-query'))backend.timer=new GpuTiming(device);
   if(sceneEquivalence)backend.equivalence=new SceneEquivalence(device,backend,omitDiagnosticLighting);
   emit('d3d9-device-created',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed',sceneFrames:0});return backend.id;
@@ -145,26 +220,16 @@ async function graphics(op,a,memory){
   emit('window-resized',{width,height,source:'IDirect3DDevice Reset'});emit('d3d9-device-reset',{backendId:backend.id,width,height,colorFormat:'bgra8unorm',depthFormat:'depth24plus-stencil8',validation:'passed'});return 1;
  }
  if(op===3){ // Clear full attachment; rectangle clears remain unsupported.
-  backend.draws?.flush();
-  const [,flags,argb,zBits,stencil]=a;if(a.length!==5||!flags||(flags&~7))return INVALID;
-  const z=new Float32Array(new Uint32Array([zBits]).buffer)[0];if(!Number.isFinite(z)||z<0||z>1)return INVALID;
-  const colorValue={r:((argb>>>16)&255)/255,g:((argb>>>8)&255)/255,b:(argb&255)/255,a:(argb>>>24)/255};
-  const enc=device.createCommandEncoder();
-  const pass=enc.beginRenderPass({colorAttachments:[{view:backend.color.createView(),loadOp:flags&1?'clear':'load',storeOp:'store',clearValue:colorValue}],depthStencilAttachment:{view:backend.depth.createView(),depthLoadOp:flags&2?'clear':'load',depthStoreOp:'store',depthClearValue:z,stencilLoadOp:flags&4?'clear':'load',stencilStoreOp:'store',stencilClearValue:stencil&255}});pass.end();device.queue.submit([enc.finish()]);
-  backend.equivalence?.clear(flags,colorValue,z,stencil&255);
-  emit('gpu-submission',{kind:'clear',count:++backend.submissions,sceneFrames:0});return 1;
+  return clearCommand(a);
  }
  if(op===4){ // Ordinary presentation is GPU-to-GPU; opt-in diagnostic samples separately.
-  backend.draws?.flush();
-  if(backend.timer){const sample=await backend.timer.finish(backend.presents+1);if(sample)emit('gpu-timing',{sample});}
-  if(backend.equivalence){const sample=await backend.equivalence.compare(backend.presents+1);if(sample)emit('scene-equivalence',{sample});}
-  const enc=device.createCommandEncoder();enc.copyTextureToTexture({texture:backend.color},{texture:context.getCurrentTexture()},[backend.width,backend.height]);device.queue.submit([enc.finish()]);backend.presents++;if(backend.presents===1)emit('realm-resources',{sample:resourceMetrics(performance,'gpuWorker','first Present submission')});backend.submissions++;metrics.present(performance.timeOrigin+performance.now());if(backend.presents===1||backend.presents%60===0){const began=performance.now(),completedPresent=backend.presents;device.queue.onSubmittedWorkDone().then(()=>{metrics.completions.push({present:completedPresent,latencyMs:performance.now()-began});if(metrics.completions.length>32)metrics.completions.shift();});emit('performance-sample',{sample:{...metrics.snapshot(),drawBridge:{...bridgeMetrics},rendererWrites:backend.draws?.snapshotMetrics()??null,wasmLinearMemoryBytes:memory.byteLength,geometryGPUBytes:backend.buffers.bytes,textureGPUBytes:backend.textures.bytes,colorLogicalBytes:backend.width*backend.height*4,depthStencilLogicalMinimumBytes:backend.width*backend.height*4,pipelineCacheEntries:backend.draws?.cache.items.size??0,shaderObjects:backend.shaders?.objects.size??0,gpuTimingEnabled:gpuTiming,captureEnabled:captureFrames,sceneEquivalenceEnabled:sceneEquivalence,cameraTestEnabled:cameraTest}});}if(captureFrames&&[1,30,60].includes(backend.presents))emit('frame-capture',{sample:await captureFrame(device,backend.color,backend.presents,metrics.startEpoch)});if(cameraTest&&[1,30].includes(backend.presents)){const message=[backend.presents===1?5:6,72,38,1];input(message);emit('controlled-input',{present:backend.presents,message,key:'ArrowUp',action:message[0]===5?'down':'up'});}emit('application-present',{count:backend.presents,submittedFrames:backend.presents,sceneFrames:0});return 1;
+  return presentCommand(a,memory);
  }
  if(op>=5&&op<=7){
   try{
    if(op===5&&a.length===4)return await backend.buffers.create(a[1],a[2],a[3]);
-   if(op===6&&a.length===5){await backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}
-   if(op===7&&a.length===2){backend.draws?.flush();backend.buffers.destroy(a[1]);return 1;}
+   if(op===6&&a.length===5){backend.equivalence?.flush();await backend.buffers.upload(a[1],a[2],memory,a[3],a[4],backend.draws);return 1;}
+   if(op===7&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();backend.buffers.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
@@ -173,8 +238,8 @@ async function graphics(op,a,memory){
    if(op===8&&a.length===4){
     const [,stage,pointer,length]=a;
     if(!(memory instanceof SharedArrayBuffer)||pointer<4096||length<8||length>1048576||length%4||pointer+length>memory.byteLength)return INVALID;
-    backend.shaders??=new ShaderObjects(await createShaderTranslator(shaderMode));
-    return backend.shaders.create(stage,new Uint8Array(memory,pointer,length));
+    const shaders=await ensureShaderObjects();
+    return shaders.create(stage,new Uint8Array(memory,pointer,length));
    }
    if(op===9&&a.length===2){if(!backend.shaders)return INVALID;backend.draws?.flush();backend.shaders.destroy(a[1]);return 1;}
    return INVALID;
@@ -183,13 +248,13 @@ async function graphics(op,a,memory){
  if(op>=10&&op<=12){
   try{
    if(op===10&&a.length===5)return await backend.textures.create(a[1],a[2],a[3],a[4]);
-   if(op===11&&a.length===6){backend.draws?.flush();await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
-   if(op===12&&a.length===2){backend.draws?.flush();backend.textures.destroy(a[1]);return 1;}
+   if(op===11&&a.length===6){backend.draws?.flush();backend.equivalence?.flush();await backend.textures.upload(a[1],a[2],memory,a[3],a[4],a[5]);return 1;}
+   if(op===12&&a.length===2){backend.draws?.flush();backend.equivalence?.flush();backend.textures.destroy(a[1]);return 1;}
    return INVALID;
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  if(op===13&&a.length===3){
-  return drawPacket(a,memory);
+  return drawPacket(a[0],a[1],a[2],memory);
  }
  throw Error('unsupported graphics opcode '+op);
 }
@@ -198,10 +263,8 @@ function inputReply(buffer,address,message){
  const words=new Int32Array(buffer);for(let i=1;i<4;i++)Atomics.store(words,address/4+i,message[i]);reply(buffer,address,message[0]);
 }
 function input(message){
- if(!Array.isArray(message)||message.length!==4||message.some(v=>!Number.isInteger(v))||![2,3,4,5,6].includes(message[0]))throw Error('invalid input message');
+ if(!Array.isArray(message)||message.length!==4||message.some(v=>!Number.isInteger(v))||![2,3,4,5,6,7].includes(message[0]))throw Error('invalid input message');
  if(waitingInput){const w=waitingInput;waitingInput=null;inputReply(w.buffer,w.retAddr,message);return}
- if(message[0]===4&&inputQueue.at(-1)?.[0]===4)inputQueue[inputQueue.length-1]=message;
- else if(inputQueue.length<256)inputQueue.push(message);
- else emit('gpu-error',{message:'input queue capacity exceeded'});
+ if(!enqueueInput(inputQueue,message))emit('gpu-error',{message:'input queue capacity exceeded'});
 }
 self.onmessage=({data})=>{if(data.type==='input'){try{input(data.message)}catch(e){emit('gpu-error',{message:String(e)})}return}if(data.type==='init')init(data).catch(e=>{port?.postMessage({ready:false,error:String(e)});emit('gpu-error',{message:String(e)})})};

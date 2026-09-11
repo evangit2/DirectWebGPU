@@ -3,6 +3,8 @@
 export const configure_guest_memory_metrics: (a: number) => void;
 export const main: () => void;
 export const seed_registry_dword: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const seed_registry_value: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+export const input_queue_address: () => number;
 export const mount_file: (a: number, b: number, c: number, d: number) => void;
 export const set_current_dir: (a: number, b: number) => void;
 export const set_trace: (a: number, b: number) => void;
