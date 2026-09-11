@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-11",
+  "result": "passed",
+  "scope": "Generic sampled D3D8 and D3D9 cube textures through the DirectWebGPU WebGPU backend",
+  "implementationRevision": "0bceb49e1eec76bac699a368971e8fd33b10e6d7",
+  "artifactRevision": "c50866c0d0c1a1f266fe6f5fc6f506593cc71e1c",
+  "manifestRevision": "ab7a9842adc3eb4b03444c0b46c64b66493a36da",
+  "runtimeArtifact": {
+    "path": "web/generated/humus_bg.wasm",
+    "bytes": 23713377,
+    "sha256": "e8b735dcd89bdba8db014f329939b0894f68c41beb373784f37c41dbf82abe7c"
+  },
+  "checks": {
+    "nativeRust": [
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::IDirect3DTexture9::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d9::tests -- --nocapture",
+      "cargo test --manifest-path Cargo.toml -p winapi d3d8::tests -- --nocapture"
+    ],
+    "javascriptSuite": "all scripts/test_*.mjs passed",
+    "pythonSuite": "all scripts/test_*.py passed",
+    "capabilityProfile": "scripts/test_d3d9_caps.mjs passed with sampled, mipmapped cube texture caps enabled",
+    "patchStack": "19 patches reproduce 180 source files from f8c1a2351b8b605812076d2dc34e84d20d95de4b",
+    "legacyMode": "wined3d-webgpu remains default; legacy-win32 remains explicitly selectable",
+    "browserWebGPU": {
+      "runId": "da35e443-1b3a-49e8-bd9e-c435ba1bb122",
+      "result": "passed",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "isFallbackAdapter": false
+      },
+      "textureChecks": [
+        "L8 luminance replication, opaque alpha, pitch and tail mip verified",
+        "GPU readback verifies pitched BGRA rows",
+        "XRGB samples opaque without modifying guest",
+        "compressed mip payloads including 2x2 and 1x1 copied exactly",
+        "six D3D cube faces upload, orient, and sample through a cube view",
+        "invalid ranges, cube layers, descriptions, and stale handles rejected",
+        "resource budget released"
+      ],
+      "diagnosticDraws": 17
+    }
+  },
+  "humus": {
+    "runId": "7cb0db88-2e76-4d45-b01f-6b2373aef092",
+    "originalExecutionAttempted": true,
+    "status": "60-second frame-delivery measurement completed",
+    "applicationPresents": 15806,
+    "submittedFrames": 15806,
+    "firstPresentObservedMs": 2139.5049999952316,
+    "rollingFrameTimeMs": {
+      "p50": 2.1748046875,
+      "p95": 10.64501953125,
+      "p99": 11.994873046875,
+      "min": 1.22998046875,
+      "max": 52.89501953125
+    },
+    "rollingStutterFrames": {
+      "over25": 1,
+      "over33": 1,
+      "over50": 1,
+      "over100": 0
+    },
+    "pipelineCompilations": 8,
+    "pipelineCacheHits": 632522,
+    "errorEvents": [],
+    "frameEvidence": {
+      "captures": 3,
+      "firstSceneRegion": {
+        "x": 0,
+        "y": 64,
+        "width": 1280,
+        "height": 656,
+        "nonblackPixels": 839370,
+        "pixels": 839680,
+        "meanRgb": [
+          37,
+          21,
+          12
+        ]
+      },
+      "visualInspection": "Recognizable lit Humus brick-room scene rendered from the original executable."
+    }
+  },
+  "limitations": [
+    "This validates sampled cube textures with actual WebGPU hardware and checks one original Humus program for regressions; broad game compatibility remains in progress.",
+    "The Humus executable did not exercise the new cube-texture API in this run; the browser diagnostic performs the six-face upload, orientation, cube-view, and sampling checks.",
+    "Render-target cube-map surfaces and volume textures remain unsupported.",
+    "Present submission intervals do not equal display scan-out or GPU shader duration."
+  ],
+  "humusRun": "evidence/cube-texture-humus-run.json",
+  "shaderRun": "evidence/cube-texture-shader-run.json"
+}
