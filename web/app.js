@@ -74,7 +74,7 @@ async function start(long=false,registryPreset=null){
   const params=new URL(location.href).searchParams,measurementMs=params.has('benchmark')?benchmarkDuration():null;
   probeWorker?.terminate();probeWorker=null;
   activeRegistryPreset=registryPreset;report={applicationPresents:0,submittedFrames:0,sceneFrames:0,performance:{firstSceneMs:'not measured',fps:'not measured',jsHeapBytes:'not measured',gpuBytes:'not measured'},runtime:selectedModeInfo,registryPreset,runId:crypto.randomUUID(),status:'starting',events:[],droppedEvents:0,build,startTimeMs:performance.now(),startedAt:new Date().toISOString(),requestedDurationMs:long?14400000:new URL(location.href).searchParams.has('benchmark')?measurementMs:null,visibility:document.visibilityState};
-  $('crash-details').hidden=true;$('crash-dialog')?.close();
+  const crashDetails=$('crash-details');if(crashDetails)crashDetails.hidden=true;$('crash-dialog')?.close();
   if(HAS_BACKEND){const response=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok)throw Error('session creation '+response.status);const sessionToken=(await response.json()).token;if(generation!==launchGeneration)return;token=sessionToken;}
   $('start').disabled=true;$('long').disabled=true;$('stop').disabled=false;if($('restart'))$('restart').disabled=false;$('status').textContent=gameHarness?'Starting…':`Executing original ${build.guest.title} binary…`;document.body.classList.add('running');
   // Keep runtime query parameters in the worker URL so a changed runtime mode

@@ -53,7 +53,7 @@ async function ensureShaderObjects(){
 }
 async function dispatch(data){
  const {func,args,buffer,retAddr,payload}=data;
- if(func==='draw_batch'){const started=profileStutters?performance.now():0;await executeDrawBatch(data,graphics,drawPacket);if(profileStutters)bridgeMetrics.batchCpuMs+=performance.now()-started;bridgeMetrics.drawBatches++;for(const a of data.commands){if(a[0]===3)bridgeMetrics.batchedClears++;else if(a[0]===13)bridgeMetrics.batchedDraws++;else if(a[0]===6||a[0]===11){bridgeMetrics.batchedUploads++;bridgeMetrics.uploadedBytes+=a.at(-1);}}bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,data.commands.length);return;}
+ if(func==='draw_batch'){const started=profileStutters?performance.now():0,summary=await executeDrawBatch(data,graphics,drawPacket);if(profileStutters)bridgeMetrics.batchCpuMs+=performance.now()-started;bridgeMetrics.drawBatches++;bridgeMetrics.batchedClears+=summary.clears;bridgeMetrics.batchedDraws+=summary.draws;bridgeMetrics.batchedUploads+=summary.uploads;bridgeMetrics.uploadedBytes+=summary.uploadedBytes;bridgeMetrics.maxBatchCommands=Math.max(bridgeMetrics.maxBatchCommands,summary.commands);return;}
  let result=INVALID;
  if(func==='poll_message'||func==='wait_message'){
   if(!inputQueue.length&&func==='wait_message'){if(waitingInput)throw Error('duplicate input wait');waitingInput={buffer,retAddr};return}
@@ -105,11 +105,11 @@ async function dispatch(data){
  }catch(e){emit('gpu-error',{message:String(e.stack??e)});}
  finally{if(retAddr)reply(buffer,retAddr,result)}
 }
-function drawPacket(a,memory){
- if(a.length!==3)return INVALID;
+function drawPacket(id,pointer,length,memory){
+ if(id!==backend?.id)return INVALID;
  let packet;const decodeStarted=profileStutters?performance.now():0;
  try{
-  packet=decodeDraw(memory,a[1],a[2]);
+  packet=decodeDraw(memory,pointer,length);
   if(profileStutters)bridgeMetrics.drawDecodeCpuMs+=performance.now()-decodeStarted;
   if(drawStateTrace>0){
    const textureStages=packet.textureStages.map(stage=>Array.from(stage)),textures=Array.from(packet.textures.slice(0,8));
@@ -221,7 +221,7 @@ async function graphics(op,a,memory){
   }catch(e){if(e instanceof RangeError)return INVALID;throw e;}
  }
  if(op===13&&a.length===3){
-  return drawPacket(a,memory);
+  return drawPacket(a[0],a[1],a[2],memory);
  }
  throw Error('unsupported graphics opcode '+op);
 }
