@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {InputBroker} from '../web/input-transport.js';
+import {InputBroker,createSharedInputQueue,pushSharedInput,takeSharedInput,sharedInputStats} from '../web/input-transport.js';
 
 function reply(){return{buffer:new SharedArrayBuffer(32),address:4};}
 function values(target){return Array.from(new Int32Array(target.buffer,target.address,4));}
@@ -19,5 +19,14 @@ assert.equal(broker.push([7,4,5,0x10000]),true);
 const motion=reply();broker.request('poll_message',motion.buffer,motion.address);
 assert.deepEqual(values(motion),[7,7,3,0x10000]);
 assert.throws(()=>broker.push([8,0,0,0]),/invalid input message/);
+
+const shared=createSharedInputQueue();
+assert.deepEqual(takeSharedInput(shared),[-1,0,0,0]);
+assert.equal(pushSharedInput(shared,[5,0x48,0x26,1]),true);
+assert.equal(pushSharedInput(shared,[7,3,-2,0]),true);
+assert.deepEqual(sharedInputStats(shared),{queued:2,dropped:0});
+assert.deepEqual(takeSharedInput(shared),[5,0x48,0x26,1]);
+assert.deepEqual(takeSharedInput(shared),[7,3,-2,0]);
+assert.deepEqual(sharedInputStats(shared),{queued:0,dropped:0});
 
 console.log('Dedicated input transport polls, waits, validates, and coalesces motion');

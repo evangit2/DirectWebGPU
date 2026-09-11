@@ -1,40 +1,72 @@
 {
   "benchmark": "Hamsterball Impossible Race",
+  "acceptance": "Original executable navigated into the real Impossible Race level; menu-only runs are excluded",
   "environment": {
-    "browser": "Chrome 152 headless",
-    "renderer": "SwiftShader WebGPU",
+    "browser": "Google Chrome 152, headed",
+    "adapterVendor": "apple",
+    "adapterArchitecture": "metal-3",
     "resolution": "1280x720",
     "input": "ArrowUp + ArrowLeft",
-    "measurementSeconds": 15
+    "measurementSecondsPerTrial": 15
   },
   "baseline": {
-    "completedFrameRate": 23.53,
-    "frameTimeMs": {
-      "p50": 33.9548,
-      "p95": 83.165,
-      "p99": 123.9048,
-      "max": 198.6001
+    "frames": 327,
+    "seconds": 15.07732,
+    "actualFrameRate": 21.6882,
+    "rollingFrameTimeMs": {
+      "p50": 23.7751,
+      "p95": 134.1199,
+      "p99": 182.2649
     },
-    "over100ms": 19,
-    "measurementSeconds": 30
+    "rollingStutterFrames": {
+      "over33ms": 240,
+      "over50ms": 207,
+      "over100ms": 123
+    }
   },
-  "optimized": {
-    "completedFrameRate": 53.53,
-    "frameTimeMs": {
-      "p50": 17.3398,
-      "p95": 28.165,
-      "p99": 53.145,
-      "max": 151.47
+  "optimizedTrials": [
+    {
+      "frames": 570,
+      "seconds": 15.03769,
+      "actualFrameRate": 37.9048,
+      "rollingFrameTimeMs": {
+        "p50": 20.1199,
+        "p95": 94.26,
+        "p99": 108.1702
+      },
+      "rollingStutterFrames": {
+        "over33ms": 141,
+        "over50ms": 77,
+        "over100ms": 14
+      }
     },
-    "over100ms": 1,
-    "completedFrames": 803
+    {
+      "frames": 618,
+      "seconds": 15.08907,
+      "actualFrameRate": 40.9568,
+      "rollingFrameTimeMs": {
+        "p50": 20.05,
+        "p95": 84.645,
+        "p99": 102.645
+      },
+      "rollingStutterFrames": {
+        "over33ms": 95,
+        "over50ms": 49,
+        "over100ms": 9
+      }
+    }
+  ],
+  "optimizedMeanActualFrameRate": 39.4308,
+  "artifacts": {
+    "executableSha256": "3379e9041c7ab83abd07da1bcf974529280aeff36b3c52e7a3d3bbb93e2da94d",
+    "wasmSha256": "abf3a341d8aa22c327f2cf5bcf8d08677f472bb70a0536e29b0d433c5b746301"
   },
   "changes": [
-    "single-check translated memory access",
-    "release diagnostic bookkeeping removed from translated hot path",
-    "two-slot CPU/GPU frame overlap",
-    "completed-GPU-frame backpressure",
-    "lower-allocation D3D8/D3D9 draw decoding"
+    "cross-crate inlining for translated x87, SSE, stack, call, and indirect-dispatch primitives",
+    "WebAssembly SIMD implementation for packed SSE arithmetic",
+    "deferred but exact x87 instruction-pointer bookkeeping at translated block boundaries",
+    "direct shared-memory input ring replacing a synchronous cross-worker poll round trip",
+    "bounded four-frame WebGPU completion fence"
   ],
-  "limitations": "Automated software-renderer benchmark. User-visible performance depends on browser, GPU and system load. Frame rate counts completed WebGPU Presents; it does not claim physical display scan-out."
+  "limitations": "This is a substantial improvement, not a 60 FPS result. The test measures original-executable Present delivery in the verified level; display scan-out is not directly observable from the browser."
 }

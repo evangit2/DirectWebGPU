@@ -1,7 +1,8 @@
 import {resourceMetrics} from './resource-metrics.js';
 import {DrawBatch} from './draw-batch.js';
 import {AssetCache} from './asset-cache.js';
-let memory, device, lastPanic, gpuPort, inputPort, drawBatch, logCount=0, persistedFiles=new Map();
+import {takeSharedInput,writeInputReply} from './input-transport.js';
+let memory, device, lastPanic, gpuPort, inputQueue, drawBatch, logCount=0, persistedFiles=new Map();
 const send=(type,data={})=>{if(type==='log'&&String(data.message).startsWith('GUEST_MEMORY ')){postMessage({type:'guest-memory',sample:JSON.parse(String(data.message).slice(13))});return;}if(type==='log'&&String(data.message).includes('kernel32/heap.rs:'))return;if(type==='log'&&String(data.message).includes('D3D9_CREATE9 sdk='))postMessage({type:'d3d9-created',message:data.message});if(type==='log'&&++logCount>500&&!String(data.message).includes('panicked at'))return;postMessage({type,...data})};
 const text=(value)=>String(value).slice(0,4096);
 const originalError=console.error;
@@ -39,8 +40,8 @@ self.send_to_host=(func,args,retAddr)=>{
   return;
  }
  if(func==='poll_message'||func==='wait_message'){
-  if(!inputPort)throw Error('input transport unavailable');
-  inputPort.postMessage({func,buffer:memory.buffer,retAddr});return;
+  if(!inputQueue)throw Error('input transport unavailable');
+  writeInputReply(memory.buffer,retAddr,takeSharedInput(inputQueue,func==='wait_message'));return;
  }
  if(['create_window','cursor_warp','cursor_visibility','graphics_call','audio_open','audio_queued','audio_resume','audio_write','music_load','music_command'].includes(func)){
   if(!gpuPort)throw Error('GPU transport unavailable');
@@ -76,7 +77,7 @@ self.onmessage=async({data})=>{
  try{
   if(data.type==='probe'){send('probe',{result:await gpuProbe()});return}
   if(data.type!=='start')throw Error('unsupported worker command');
-  gpuPort=data.gpuPort;inputPort=data.inputPort??gpuPort;inputPort.start?.();drawBatch=new DrawBatch(message=>gpuPort.postMessage(message));
+  gpuPort=data.gpuPort;inputQueue=data.inputQueue;drawBatch=new DrawBatch(message=>gpuPort.postMessage(message));
   await new Promise((resolve,reject)=>{gpuPort.onmessage=({data})=>{if(data.ready)resolve(data.result);else reject(Error(data.error??'GPU initialization failed'))};gpuPort.start();});
   const build=data.build;
   const guest=build.guest??build.runtimeBuild?.guest;
